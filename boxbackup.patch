@@ -1,0 +1,19 @@
+diff -ru boxbackup-0.09/infrastructure/makebuildenv.pl boxbackup/infrastructure/makebuildenv.pl
+--- boxbackup-0.09/infrastructure/makebuildenv.pl	2004-12-06 12:58:50.000000000 +0000
++++ boxbackup/infrastructure/makebuildenv.pl	2005-02-16 20:26:00.000000000 +0000
+@@ -784,13 +784,13 @@
+ AR = ar
+ RANLIB = ranlib
+ .ifdef RELEASE
+-CXXFLAGS = -DNDEBUG -O2 -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
++CXXFLAGS = -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
+ OUTBASE = ../../release
+ OUTDIR = ../../release/$mod
+ DEPENDMAKEFLAGS = -D RELEASE
+ VARIENT = RELEASE
+ .else
+-CXXFLAGS = -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
++CXXFLAGS = O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
+ OUTBASE = ../../debug
+ OUTDIR = ../../debug/$mod
+ DEPENDMAKEFLAGS =

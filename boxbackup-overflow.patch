@@ -1,0 +1,14 @@
+diff -ru ../boxbackup-0.09/lib/common/DebugMemLeakFinder.cpp boxbackup/lib/common/DebugMemLeakFinder.cpp
+--- ../boxbackup-0.09/lib/common/DebugMemLeakFinder.cpp	2004-12-06 12:58:47.000000000 +0000
++++ boxbackup/lib/common/DebugMemLeakFinder.cpp	2005-03-02 22:06:03.998138792 +0000
+@@ -215,7 +215,9 @@
+ 	}
+ 	else
+ 	{
+-		sNotLeaksPre[sNotLeaksPreNum++] = ptr;
++		if (sNotLeaksPreNum < 
++			sizeof(sNotLeaksPre)/sizeof(*sNotLeaksPre))
++			sNotLeaksPre[sNotLeaksPreNum++] = ptr;
+ 	}
+ /*	{
+ 		std::map<void *, MallocBlockInfo>::iterator i(sMallocBlocks.find(ptr));

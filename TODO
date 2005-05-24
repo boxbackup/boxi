@@ -1,0 +1,72 @@
+=head1 To Do List
+
+Boxi is a work in progress, and many features are not implemented yet.
+Patches, suggestions and comments are most welcome, but please check
+this list before proposing a "new" feature, to make sure that it really
+is new.
+
+=over
+
+=item *
+Implement the Compare function.
+
+Allows users to determine whether their files have been backed up,
+and whether they should be backed up according to the configuration.
+
+=item *
+Display properties of server objects
+
+When a file or directory on the server is selected, we should show
+everything we know about it, including last modification date, other versions,
+Box Backup flags, size in blocks and bytes, etc.
+
+=item *
+Show progress dialog while restoring files
+
+Show in a separate window, allow restore operations to be cancelled.
+
+=item *
+Provide dialog boxes for selecting paths
+
+Several config items specify paths of files or directories.
+It should be possible to enter these using a dialog box to select
+a file or directory, instead of requiring the user to memorise
+and enter the path.
+
+=item *
+Prompt to save changes
+
+When closing Boxi, if the configuration has changed, ask the user whether
+they want to save it. Also ask before restarting Box Backup daemon.
+
+=item *
+Provide a better GUI for adding and removing backup locations.
+
+=item *
+Stricter error checking of the configuration
+
+Warn users of configuration errors, before connecting to the server. 
+Especially those errors which could cause Box Backup to fail to start!
+
+=item *
+Default location for configuration file 
+
+Look for the configuration file in /etc/boxbackup/bbackupd.conf, if it's
+not specified on the command line.
+
+=item *
+Cache directory listings on the client
+
+Avoids the need to requery the server, when browsing a directory 
+whose contents we downloaded before.
+
+=item *
+Fix Cygwin bugs
+
+Missing tree icons in Local Files and Server Files.
+Location matching in Local Files. 
+Kill button in Backup Daemon Panel.
+
+=back
+
+Last updated: 2005-05-14 by Chris Wilson.

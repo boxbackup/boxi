@@ -1,0 +1,164 @@
+# Anjuta Version 1.2.1 
+Compatibility Level: 1 
+
+<PROJECT_DESCRIPTION_START>
+Boxi is a graphical user interface (GUI) to the BoxBackup project by Ben Summers
+[http://www.fluffy.co.uk/boxbackup]<PROJECT_DESCRIPTION_END>
+<CONFIG_PROGS_START>
+<CONFIG_PROGS_END>
+<CONFIG_LIBS_START>
+if cd boxbackup; then
+	./configure
+	mv Makefile Makefile.in
+	cd ..
+else
+	false
+fi<CONFIG_LIBS_END>
+<CONFIG_HEADERS_START>
+<CONFIG_HEADERS_END>
+<CONFIG_CHARACTERISTICS_START>
+<CONFIG_CHARACTERISTICS_END>
+<CONFIG_LIB_FUNCS_START>
+<CONFIG_LIB_FUNCS_END>
+<CONFIG_ADDITIONAL_START>
+<CONFIG_ADDITIONAL_END>
+<CONFIG_FILES_START>
+<CONFIG_FILES_END>
+<MAKEFILE_AM_START>
+<MAKEFILE_AM_END>
+
+props.file.type=project
+
+anjuta.version=1.2.1
+anjuta.compatibility.level=1
+
+project.name=boxi
+project.type=wxWINDOWS
+project.target.type=EXECUTABLE
+project.version=0.0.1
+project.author=Chris Wilson <boxi-author@qwirx.com>
+project.source.target=boxi
+project.has.gettext=1
+project.gui.command=
+project.programming.language=C++
+project.excluded.modules=intl
+
+project.config.extra.modules.before=boxbackup
+project.config.extra.modules.after=
+project.config.blocked=0
+project.config.disable.overwriting=1 0 1 0 0 0 0 0 0 
+
+project.menu.entry=boxi Version 0.1
+project.menu.group=Applications
+project.menu.comment=boxi Version 0.1
+project.menu.icon=
+project.menu.need.terminal=0
+
+project.configure.options=
+anjuta.program.arguments=
+preferences.build.option.jobs=2
+preferences.build.option.silent=0
+preferences.build.option.autosave=0
+preferences.anjuta.make.options=-k
+preferences.make=make
+preferences.build.option.keep.going=0
+preferences.build.option.warn.undef=0
+preferences.autoformat.custom.style= -i8 -sc -bli0 -bl0 -cbi0 -ss
+preferences.indent.opening=0
+preferences.autoformat.disable=0
+preferences.indent.automatic=1
+preferences.use.tabs=1
+preferences.indent.size=4
+preferences.tabsize=4
+preferences.indent.closing=0
+
+module.include.name=include
+module.include.type=
+module.include.files=\
+	main.h\
+	ServerFilesPanel.h\
+	Location.h\
+	BackupFilesPanel.h\
+	BackupLocationsPanel.h\
+	ClientConfig.h\
+	ClientInfoPanel.h\
+	Property.h\
+	ServerConnection.h\
+	StaticImage.h\
+	BackupDaemonPanel.h\
+	ClientConnection.h\
+	ComparePanel.h
+
+module.source.name=src
+module.source.type=
+module.source.files=\
+	main.cc\
+	ServerFilesPanel.cc\
+	ClientConfig.cc\
+	Location.cc\
+	ClientInfoPanel.cc\
+	BackupFilesPanel.cc\
+	BackupLocationsPanel.cc\
+	Restore.cc\
+	cross16.png.c\
+	tick16.png.c\
+	ServerConnection.cc\
+	equal16.png.c\
+	hourglass16.png.c\
+	notequal16.png.c\
+	sametime16.png.c\
+	unknown16.png.c\
+	oldfile16.png.c\
+	exclam16.png.c\
+	partial16.png.c\
+	folder16.png.c\
+	alien16.png.c\
+	BackupDaemonPanel.cc\
+	ClientConnection.cc\
+	cross16a.png.c\
+	tick16a.png.c\
+	ComparePanel.cc
+
+module.pixmap.name=pixmaps
+module.pixmap.type=
+module.pixmap.files=
+
+module.data.name=data
+module.data.type=
+module.data.files=
+
+module.help.name=help
+module.help.type=
+module.help.files=
+
+module.doc.name=doc
+module.doc.type=
+module.doc.files=
+
+module.po.files=
+
+compiler.options.supports=WXWINDOWS 
+compiler.options.include.paths=\
+	../boxbackup/lib/common\
+	../boxbackup/lib/backupclient\
+	../boxbackup/lib/server\
+	../include
+compiler.options.library.paths=
+compiler.options.libraries=\
+	ssl\
+	pcre
+compiler.options.libraries.selected=1 1 
+compiler.options.defines=\
+	PLATFORM_LINUX\
+	PLATFORM_GCC3
+compiler.options.defines.selected=1 1 
+compiler.options.warning.buttons=0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 
+compiler.options.optimize.buttons=1 0 0 0 
+compiler.options.other.buttons=1 0 
+compiler.options.other.c.flags=
+compiler.options.other.l.flags=
+compiler.options.other.l.libs=../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/backupstore/backupstore.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a
+
+project.src.paths=/home/chris/project/boxi/boxbackup-0.09-orig/release/lib/common/common.a \
+/home/chris/project/boxi/boxbackup-0.09-orig/release/lib/backupclient/backupclient.a
+

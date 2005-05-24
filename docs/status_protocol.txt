@@ -1,0 +1,189 @@
+TITLE Status Protocol
+
+Describes the protocol written to the status socket to allow a user interface
+client to display information about the state and workings of the backup
+client.
+
+
+
+SUBTITLE Grammar
+
+Messages adhere to the following BNF grammar:
+
+diatribe	::= message*
+message 	::= tag newline
+tag 		::= open_tag tag* close_tag | empty_tag
+open_tag	::= '<' tag_contents '>'
+close_tag	::= '<' '/' tag_contents '>'
+empty_tag	::= '<' tag_contents '/' '>'
+tag_contents	::= tag_name sp_tag_attr*
+tag_name	::= name_space ':' name_unique
+name_space	::= valid_name
+name_unique	::= valid_name
+sp_tag_attr	::= ' ' valid_name '=' '"' quoted_value '"'
+valid_name	::= 'A' .. 'Z' | 'a' .. 'z' | '-' | '0' .. '9'
+quoted_value	::= quoted_char*
+quoted_char	::= (ASCII 0x20 to 0x7F, excluding '"' and '\') | escaped_char
+escaped_char	::= '\' 'x' (two hex digits representing a binary character)
+newline		::= 0x13 0x10 | 0x10 0x13 | 0x10 | 0x13
+
+Servers must not emit a diatribe which does not obey this format, nor may
+they prefix the diatribe with any other data. However, the diatribe may end
+and be followed by other data which clients may ignore.
+
+If a client cannot parse the diatribe from the server according to the
+above grammar, and does not have any alternative interpretation, it should 
+warn the user and disconnect from the server.
+
+The client is expected to send nothing to the server, and may be disconnected
+by the server if it does.
+
+
+
+SUBTITLE Introduction Message
+
+The server always starts a diatribe with a message like this:
+
+	<box:client-status-protocol version="1.0">
+
+The attribute "version" must be present, and the version must start with the
+characters "1.", if and only if the server complies with the specifications
+in this document. It may optionally comply with later specifications as well,
+in which case multiple "version" attributes may be present.
+
+If the client does not understand any of the version attributes present,
+it should warn the user and disconnect. If it sees any version attributes other
+than ones it understands, it should be prepared to:
+
+* ignore messages and attributes that it does not recognise
+* ignore unknown values for attributes whose vaues are drawn from a fixed
+  set or range
+
+If it is not prepared to deal with such unknown protocol elements in an
+appropriate way, it should warn the user and disconnect from the server.
+
+
+
+SUBTITLE State Messages
+
+This message immediately follows the introduction message, and is repeated
+whenever the daemon's state changes, which may happen at any time:
+
+	<box:daemon state="..." [...]/>
+	
+where the state is one of the following strings, indicating the current or 
+new state of the daemon at the time that the message was sent:
+
+	"init"		Initialising, reading configuration files, or scanning targets
+	
+	"idle"		Waiting for an automatic or manual synchronisation to occur. 
+				The attribute "nextsync" may optionally be present, to 
+				indicate the Unix timestamp when the next automatic 
+				synchronisation will occur
+				
+	"scan"		Checking directories for changes, maybe connected to a server.
+				The optional "dir" attribute may indicate which directory
+				is being scanned.
+	
+	"conn" 		In the process of connecting to a server. The optional 
+				"server" attribute may indicate the IP address, and they
+				optional "port" attribute the port, of the store to which
+				the client is connecting.
+
+	"sync"		Synchronising a file with the server. The optional "file"
+				attribute may indicate the name of the file being synchronised
+	
+	"done" 		the number of encrypted, compressed kilobytes of this files
+				successfully synced with the server so far
+				
+	"total"		the number of encrypted, compressed kilobytes required to
+				store the file on the server (total size on the server when
+				the sync will be finished).
+
+	"error"		Daemon is in error state, waiting to retry synchronisation.
+				The "reason" attribute specifies the reason for the error,
+				which may be one of "overlimit" or "neterror".
+				
+This message may be sent multiple times per file, in which case the "size"
+attribute need not be repeated after the first message, unless it has changed.
+				
+
+
+SUBTITLE File Messages
+
+While in the "scan" or "sync" state, the daemon will emit one of these
+messages for each file or directory scanned:
+
+	<box:file state="..." [nextsync="..."] [/>
+	
+The message is normally emitted after a sync has finished or failed for
+the specified file, and indicates this result to the client.
+
+The following attributes are required:
+
+	"id"		ID number for the file on the server
+	
+	"parent" 	ID of the parent directory containing the file
+	
+	"name" 		Name of the file
+	
+	"lastmod"	Unix timestamp of the file on disk
+	
+	"lastsync"	Unix timestamp of the file on the server, or not present if the
+				file is missing from the server
+	
+	"state" 	One of "unchanged",	"toonew", "synced", "error" or "excluded".
+	
+	"done"		The number of compressed, encrypted kilobytes of files
+				synced with the server so far in this sync
+	
+	"total"		The number of kilobytes of files scanned in total last time,
+				plus the number of kilobytes difference in size between
+				encrypted versions of local files, and those on the server
+				(an estimate of how many kilobytes will be on the server
+				when this sync finishes).
+	
+If the state is "error", the attribute "code" specifies a Box exception code
+if known, otherwise "desc" specifies a textual description of an unexpected 
+error. If both are present, then "desc"	provides extra contextual information,
+such as the name of a file or directory, or an operating system error
+description.
+
+
+
+SUBTITLE Stats Messages
+
+Always sent just after the daemon changes state from "scan" or "sync", to
+"idle" or "error".
+
+The following attributes are required:
+
+	"count"		Number of files and dirs scanned for changes
+	"unchanged"	Number of files and dirs unchanged and skipped
+	"encoded"	Number of bytes encrypted and compressed for comparison
+	"sent"		Number of bytes sent to the store in total
+	"rcvd"		Number of bytes received from the store in total
+	"time"		Number of seconds taken for the sync in total
+
+
+
+SUBTITLE Goodbye Messages
+
+Always the last message in the diatribe, looks like this:
+
+		</box:client-status-protocol reason="...">
+
+The attribute "reason" must always be present, and specify the reason why
+the server is closing the connection to the client. It may have one of the
+following values:
+
+	"server-shutdown"	The server has been ordered to shut down
+	"protocol-error"	The client has broken the protocol (e.g. by writing
+						to the server when not allowed to) and will be
+						disconnected.
+	"admin-kill"		The server has been ordered to kill the connection
+						to the client.
+						
+After the server sends this message, it would normally disconnect.
+
+After the client reads this message, it would normally disconnect.

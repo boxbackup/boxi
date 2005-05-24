@@ -1,0 +1,1746 @@
+2005-04-27  Chris Wilson 
+
+	* ChangeLog, README, TODO, include/main.h: 
+	- Updated for release of 0.0.6pre1
+
+	* configure.in: 
+	- Added position marker for boxbackup patch patch
+
+	* configure.in, make-dist.sh: 
+	-More bug fixes
+
+	* make-dist.sh: 
+	- More bug fixes
+
+	* make-dist.sh: 
+	- Typo fix
+
+	* make-dist.sh: 
+	- Diff the BoxBackup CVS against pristine sources to generate a patch for release
+	- Apply that patch when building boxi
+
+	* src/BackupDaemonPanel.cc: 
+	- Fixed call to GetClientPid to handle new return codes properly
+
+	* src/ClientConnection.cc: 
+	- Normalise path to boxi, to help find the boxbackup executable
+
+	* src/ClientConnection.cc: 
+	- Reduced debug logging verbosity
+	- Fixed KillClient command
+
+2005-04-26  Chris Wilson 
+
+	* include/ClientConfig.h: 
+	- Disabled ClientConfig's copy constructor for safety
+
+2005-04-25  Chris Wilson 
+
+	* README, README.pod, make-dist.sh: 
+	- Renamed README.pod back to README, as Make insists on building it
+	- Renamed README to README.txt (in make-dist.sh)
+
+	* boxi.prj: 
+	- Disable overwriting configure.in and src/Makefile.am, to preserve custom changes for the Cygwin build
+
+	* configure.in: 
+	- Hacked by hand to remove test for GTK, not relevant on Win32
+
+	* include/BackupFilesPanel.h: 
+	- Added missing include of wx/imaglist.h
+
+	* include/ClientConnection.h, 
+	  src/ClientConnection.cc: 
+	- Added new ClientConnection error codes, and used them
+	- Added process existence check to GetClientPid()
+	- Fixed StopClient to stop the client, not start it :-)
+	- Fixed (I hope) PID file reading error, which was returning wrong PIDs sometimes
+	- Changed GetClientPid to return an Error, not bool
+
+	* include/ClientConnection.h, 
+	  src/ClientConnection.cc: 
+	- Renamed ST_ states to BST_
+
+	* src/BackupDaemonPanel.cc: 
+	- Renamed ST_ states to BST_, to avoid conflict with a Win32 macro
+
+	* src/BackupDaemonPanel.cc: 
+	- Changed use of ClientConnection::GetClientPid() to match new Error return
+
+	* src/BackupFilesPanel.cc: 
+	- Changed to use GNU regex library instead of PCRE
+
+	* src/Makefile.am: 
+	- Removed -DNDEBUG, which causes build errors against a debugging build of wx 2.4. Will have to find another solution for Cygwin
+
+	* src/Makefile.am: 
+	- Hacked by hand to compile on Cygwin
+
+	* src/Restore.cc: 
+	- Removed dependency on Box Backup's debug tracing code
+
+	* src/ServerFilesPanel.cc: 
+	- Removed dependency on lldiv, which doesn't exist in Cygwin?
+
+2005-04-24  Chris Wilson 
+
+	* boxbackup/bin/bbackupd/CommandSocketManager.cpp: 
+	- Avoid pinging the command socket client when waiting with no timeout, to avoid flooding the connection during idle polling
+
+	* boxbackup/infrastructure/makebuildenv.pl: 
+	- Fixed compiler flags when compiling in debug (not release) mode
+
+	* include/BackupDaemonPanel.h, 
+	  src/BackupDaemonPanel.cc: 
+	- Added more text boxes for status display
+	- Added ability to forcibly kill client
+	- Improved button layout
+	- Disable buttons which aren't useful in the current state
+
+	* include/BackupDaemonPanel.h, 
+	  src/BackupDaemonPanel.cc: 
+	- Implemented buttons to restart, sync and reload client
+
+	* include/ClientConnection.h, 
+	  src/ClientConnection.cc: 
+	- Added strings for worker and client states
+	- Added methods to retrieve state strings
+	- Added method to forcibly kill client
+	- Improved concurrency: most worker code runs without holding locks on mMutex
+	- Improved design simplicity and safety
+	- Moved some methods from header to source file
+
+	* include/ClientConnection.h, 
+	  src/ClientConnection.cc: 
+	- Factored out some duplicate code
+	- Added ability to restart, sync and reload bbackupd
+
+2005-04-22  Chris Wilson 
+
+	* Makefile.am, boxi.prj, 
+	  include/Makefile.am, po/POTFILES.in: 
+	- Integrated Box Backup build with GNU automess
+	- Added ClientConnection to sources
+
+	* boxbackup/bin/bbackupctl/bbackupctl.cpp, 
+	  boxbackup/bin/bbackupd/BackupDaemon.cpp, 
+	  boxbackup/bin/bbackupd/CommandSocketManager.h, 
+	  configure.in, test/config/bbackupd.conf: 
+	- Listen to command socket when sleeping after a backup error
+
+	* boxbackup/bin/bbackupd/CommandSocketManager.cpp: 
+	- Trace when a new connection from a control client is established
+
+	* boxbackup/lib/common/DebugMemLeakFinder.cpp: 
+	- Fixed signedness warning when compiling boxbackup
+
+	* include/BackupDaemonPanel.h, 
+	  src/BackupDaemonPanel.cc: 
+	- Moved client control functions to a separate class, ClientConnection
+
+	* include/ClientConnection.h, 
+	  src/ClientConnection.cc: 
+	New file.
+
+	* include/main.h: 
+	- Added IDs for client daemon controls and timer events
+
+	* src/Makefile.am: 
+	- Added ClientConnection to project files
+
+2005-04-19  Chris Wilson 
+
+	* TODO: 
+	- Added an item to fix compile on Cygwin
+
+	* boxbackup/lib/common/DebugMemLeakFinder.cpp: 
+	- Fixed buffer overflow in DebugMemLeakFinder
+
+	* include/Property.h: 
+	- Replace stringstream formatting with wxString, since sstream doesn't seem to work on Cygwin
+
+	* make-dist.sh: 
+	- Current directory might not be in the PATH
+
+	* src/BackupFilesPanel.cc: 
+	- Include iostream for std::cout
+
+	* src/ServerFilesPanel.cc: 
+	- Include wx/imaglist.h, needed to build on Cygwin (Gary <gniemcew@yahoo.com>)
+
+2005-04-09  Chris Wilson 
+
+	* boxbackup/BUGS.txt, 
+	  boxbackup/CONTACT.txt, 
+	  boxbackup/DOCUMENTATION.txt, 
+	  boxbackup/LICENSE.txt, 
+	  boxbackup/LINUX.txt, 
+	  boxbackup/NETBSD.txt, 
+	  boxbackup/THANKS.txt, boxbackup/TODO.txt, 
+	  boxbackup/VERSION.txt, 
+	  boxbackup/bin/bbackupctl/bbackupctl.cpp, 
+	  boxbackup/bin/bbackupd/BackupClientContext.cpp, 
+	  boxbackup/bin/bbackupd/BackupClientContext.h, 
+	  boxbackup/bin/bbackupd/BackupClientDeleteList.cpp, 
+	  boxbackup/bin/bbackupd/BackupClientDeleteList.h, 
+	  boxbackup/bin/bbackupd/BackupClientDirectoryRecord.cpp, 
+	  boxbackup/bin/bbackupd/BackupClientDirectoryRecord.h, 
+	  boxbackup/bin/bbackupd/BackupClientInodeToIDMap.cpp, 
+	  boxbackup/bin/bbackupd/BackupClientInodeToIDMap.h, 
+	  boxbackup/bin/bbackupd/BackupDaemon.cpp, 
+	  boxbackup/bin/bbackupd/BackupDaemon.h, 
+	  boxbackup/bin/bbackupd/bbackupd-config, 
+	  boxbackup/bin/bbackupd/bbackupd.cpp, 
+	  boxbackup/bin/bbackupobjdump/bbackupobjdump.cpp, 
+	  boxbackup/bin/bbackupquery/BackupQueries.cpp, 
+	  boxbackup/bin/bbackupquery/BackupQueries.h, 
+	  boxbackup/bin/bbackupquery/Makefile.extra, 
+	  boxbackup/bin/bbackupquery/bbackupquery.cpp, 
+	  boxbackup/bin/bbackupquery/documentation.txt, 
+	  boxbackup/bin/bbackupquery/makedocumentation.pl, 
+	  boxbackup/bin/bbstoreaccounts/bbstoreaccounts.cpp, 
+	  boxbackup/bin/bbstored/BBStoreDHousekeeping.cpp, 
+	  boxbackup/bin/bbstored/BackupCommands.cpp, 
+	  boxbackup/bin/bbstored/BackupConstants.h, 
+	  boxbackup/bin/bbstored/BackupContext.cpp, 
+	  boxbackup/bin/bbstored/BackupContext.h, 
+	  boxbackup/bin/bbstored/BackupStoreDaemon.cpp, 
+	  boxbackup/bin/bbstored/BackupStoreDaemon.h, 
+	  boxbackup/bin/bbstored/HousekeepStoreAccount.cpp, 
+	  boxbackup/bin/bbstored/HousekeepStoreAccount.h, 
+	  boxbackup/bin/bbstored/Makefile.extra, 
+	  boxbackup/bin/bbstored/backupprotocol.txt, 
+	  boxbackup/bin/bbstored/bbstored-certs, 
+	  boxbackup/bin/bbstored/bbstored-config, 
+	  boxbackup/bin/bbstored/bbstored.cpp, 
+	  boxbackup/configure, 
+	  boxbackup/contrib/cygwin/README.txt, 
+	  boxbackup/contrib/cygwin/install-cygwin-service.pl, 
+	  boxbackup/contrib/cygwin/remove-cygwin-service.sh, 
+	  boxbackup/contrib/redhat/README.txt, 
+	  boxbackup/contrib/redhat/bbackupd, 
+	  boxbackup/contrib/redhat/bbstored, 
+	  boxbackup/contrib/rpm/README.txt, 
+	  boxbackup/contrib/rpm/boxbackup.spec, 
+	  boxbackup/contrib/suse/README.txt, 
+	  boxbackup/contrib/suse/bbackupd, 
+	  boxbackup/contrib/suse/bbstored, 
+	  boxbackup/infrastructure/BoxPlatform.pm, 
+	  boxbackup/infrastructure/buildenv-testmain-template.cpp, 
+	  boxbackup/infrastructure/makebuildenv.pl, 
+	  boxbackup/infrastructure/makeparcels.pl, 
+	  boxbackup/infrastructure/tests/common_tests.pl, 
+	  boxbackup/lib/backupclient/BackupClientCryptoKeys.cpp, 
+	  boxbackup/lib/backupclient/BackupClientCryptoKeys.h, 
+	  boxbackup/lib/backupclient/BackupClientFileAttributes.cpp, 
+	  boxbackup/lib/backupclient/BackupClientFileAttributes.h, 
+	  boxbackup/lib/backupclient/BackupClientMakeExcludeList.cpp, 
+	  boxbackup/lib/backupclient/BackupClientMakeExcludeList.h, 
+	  boxbackup/lib/backupclient/BackupClientRestore.cpp, 
+	  boxbackup/lib/backupclient/BackupClientRestore.h, 
+	  boxbackup/lib/backupclient/BackupDaemonConfigVerify.cpp, 
+	  boxbackup/lib/backupclient/BackupDaemonConfigVerify.h, 
+	  boxbackup/lib/backupclient/BackupStoreConstants.h, 
+	  boxbackup/lib/backupclient/BackupStoreDirectory.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreDirectory.h, 
+	  boxbackup/lib/backupclient/BackupStoreException.h, 
+	  boxbackup/lib/backupclient/BackupStoreException.txt, 
+	  boxbackup/lib/backupclient/BackupStoreFile.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFile.h, 
+	  boxbackup/lib/backupclient/BackupStoreFileCmbDiff.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileCmbIdx.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileCombine.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileCryptVar.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileCryptVar.h, 
+	  boxbackup/lib/backupclient/BackupStoreFileDiff.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileEncodeStream.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileEncodeStream.h, 
+	  boxbackup/lib/backupclient/BackupStoreFileRevDiff.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileWire.h, 
+	  boxbackup/lib/backupclient/BackupStoreFilename.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFilename.h, 
+	  boxbackup/lib/backupclient/BackupStoreFilenameClear.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFilenameClear.h, 
+	  boxbackup/lib/backupclient/BackupStoreObjectDump.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreObjectMagic.h, 
+	  boxbackup/lib/backupclient/Makefile.extra, 
+	  boxbackup/lib/backupstore/BackupStoreAccountDatabase.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreAccountDatabase.h, 
+	  boxbackup/lib/backupstore/BackupStoreAccounts.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreAccounts.h, 
+	  boxbackup/lib/backupstore/BackupStoreCheck.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreCheck.h, 
+	  boxbackup/lib/backupstore/BackupStoreCheck2.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreCheckData.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreConfigVerify.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreConfigVerify.h, 
+	  boxbackup/lib/backupstore/BackupStoreInfo.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreInfo.h, 
+	  boxbackup/lib/backupstore/StoreStructure.cpp, 
+	  boxbackup/lib/backupstore/StoreStructure.h, 
+	  boxbackup/lib/common/BannerText.h, 
+	  boxbackup/lib/common/BeginStructPackForWire.h, 
+	  boxbackup/lib/common/Box.h, 
+	  boxbackup/lib/common/BoxException.cpp, 
+	  boxbackup/lib/common/BoxException.h, 
+	  boxbackup/lib/common/BoxPlatform.h, 
+	  boxbackup/lib/common/BoxPortsAndFiles.h, 
+	  boxbackup/lib/common/BoxTime.cpp, 
+	  boxbackup/lib/common/BoxTime.h, 
+	  boxbackup/lib/common/BoxTimeToText.cpp, 
+	  boxbackup/lib/common/BoxTimeToText.h, 
+	  boxbackup/lib/common/BoxTimeToUnix.h, 
+	  boxbackup/lib/common/CollectInBufferStream.cpp, 
+	  boxbackup/lib/common/CollectInBufferStream.h, 
+	  boxbackup/lib/common/CommonException.h, 
+	  boxbackup/lib/common/CommonException.txt, 
+	  boxbackup/lib/common/Configuration.cpp, 
+	  boxbackup/lib/common/Configuration.h, 
+	  boxbackup/lib/common/Conversion.h, 
+	  boxbackup/lib/common/ConversionException.txt, 
+	  boxbackup/lib/common/ConversionString.cpp, 
+	  boxbackup/lib/common/DebugAssertFailed.cpp, 
+	  boxbackup/lib/common/DebugMemLeakFinder.cpp, 
+	  boxbackup/lib/common/DebugPrintf.cpp, 
+	  boxbackup/lib/common/EndStructPackForWire.h, 
+	  boxbackup/lib/common/EventWatchFilesystemObject.cpp, 
+	  boxbackup/lib/common/EventWatchFilesystemObject.h, 
+	  boxbackup/lib/common/ExcludeList.cpp, 
+	  boxbackup/lib/common/ExcludeList.h, 
+	  boxbackup/lib/common/FdGetLine.cpp, 
+	  boxbackup/lib/common/FdGetLine.h, 
+	  boxbackup/lib/common/FileModificationTime.h, 
+	  boxbackup/lib/common/FileStream.cpp, 
+	  boxbackup/lib/common/FileStream.h, 
+	  boxbackup/lib/common/Guards.h, 
+	  boxbackup/lib/common/IOStream.cpp, 
+	  boxbackup/lib/common/IOStream.h, 
+	  boxbackup/lib/common/IOStreamGetLine.cpp, 
+	  boxbackup/lib/common/IOStreamGetLine.h, 
+	  boxbackup/lib/common/LinuxWorkaround.cpp, 
+	  boxbackup/lib/common/LinuxWorkaround.h, 
+	  boxbackup/lib/common/MainHelper.h, 
+	  boxbackup/lib/common/Makefile.extra, 
+	  boxbackup/lib/common/MemBlockStream.cpp, 
+	  boxbackup/lib/common/MemBlockStream.h, 
+	  boxbackup/lib/common/MemLeakFindOff.h, 
+	  boxbackup/lib/common/MemLeakFindOn.h, 
+	  boxbackup/lib/common/MemLeakFinder.h, 
+	  boxbackup/lib/common/NamedLock.cpp, 
+	  boxbackup/lib/common/NamedLock.h, 
+	  boxbackup/lib/common/PartialReadStream.cpp, 
+	  boxbackup/lib/common/PartialReadStream.h, 
+	  boxbackup/lib/common/ReadGatherStream.cpp, 
+	  boxbackup/lib/common/ReadGatherStream.h, 
+	  boxbackup/lib/common/StreamableMemBlock.cpp, 
+	  boxbackup/lib/common/StreamableMemBlock.h, 
+	  boxbackup/lib/common/TemporaryDirectory.h, 
+	  boxbackup/lib/common/Test.h, 
+	  boxbackup/lib/common/UnixUser.cpp, 
+	  boxbackup/lib/common/UnixUser.h, 
+	  boxbackup/lib/common/Utils.cpp, 
+	  boxbackup/lib/common/Utils.h, 
+	  boxbackup/lib/common/WaitForEvent.cpp, 
+	  boxbackup/lib/common/WaitForEvent.h, 
+	  boxbackup/lib/common/makeexception.pl, 
+	  boxbackup/lib/compress/Compress.h, 
+	  boxbackup/lib/compress/CompressException.h, 
+	  boxbackup/lib/compress/CompressException.txt, 
+	  boxbackup/lib/compress/CompressStream.cpp, 
+	  boxbackup/lib/compress/CompressStream.h, 
+	  boxbackup/lib/compress/Makefile.extra, 
+	  boxbackup/lib/crypto/CipherAES.cpp, 
+	  boxbackup/lib/crypto/CipherAES.h, 
+	  boxbackup/lib/crypto/CipherBlowfish.cpp, 
+	  boxbackup/lib/crypto/CipherBlowfish.h, 
+	  boxbackup/lib/crypto/CipherContext.cpp, 
+	  boxbackup/lib/crypto/CipherContext.h, 
+	  boxbackup/lib/crypto/CipherDescription.cpp, 
+	  boxbackup/lib/crypto/CipherDescription.h, 
+	  boxbackup/lib/crypto/CipherException.h, 
+	  boxbackup/lib/crypto/CipherException.txt, 
+	  boxbackup/lib/crypto/MD5Digest.cpp, 
+	  boxbackup/lib/crypto/MD5Digest.h, 
+	  boxbackup/lib/crypto/Makefile.extra, 
+	  boxbackup/lib/crypto/Random.cpp, 
+	  boxbackup/lib/crypto/Random.h, 
+	  boxbackup/lib/crypto/RollingChecksum.cpp, 
+	  boxbackup/lib/crypto/RollingChecksum.h, 
+	  boxbackup/lib/raidfile/Makefile.extra, 
+	  boxbackup/lib/raidfile/RaidFileController.cpp, 
+	  boxbackup/lib/raidfile/RaidFileController.h, 
+	  boxbackup/lib/raidfile/RaidFileException.h, 
+	  boxbackup/lib/raidfile/RaidFileException.txt, 
+	  boxbackup/lib/raidfile/RaidFileRead.cpp, 
+	  boxbackup/lib/raidfile/RaidFileRead.h, 
+	  boxbackup/lib/raidfile/RaidFileUtil.cpp, 
+	  boxbackup/lib/raidfile/RaidFileUtil.h, 
+	  boxbackup/lib/raidfile/RaidFileWrite.cpp, 
+	  boxbackup/lib/raidfile/RaidFileWrite.h, 
+	  boxbackup/lib/raidfile/raidfile-config, 
+	  boxbackup/lib/server/ConnectionException.txt, 
+	  boxbackup/lib/server/Daemon.cpp, 
+	  boxbackup/lib/server/Daemon.h, 
+	  boxbackup/lib/server/LocalProcessStream.cpp, 
+	  boxbackup/lib/server/LocalProcessStream.h, 
+	  boxbackup/lib/server/Makefile.extra, 
+	  boxbackup/lib/server/Protocol.cpp, 
+	  boxbackup/lib/server/Protocol.h, 
+	  boxbackup/lib/server/ProtocolObject.cpp, 
+	  boxbackup/lib/server/ProtocolObject.h, 
+	  boxbackup/lib/server/ProtocolUncertainStream.cpp, 
+	  boxbackup/lib/server/ProtocolUncertainStream.h, 
+	  boxbackup/lib/server/ProtocolWire.h, 
+	  boxbackup/lib/server/SSLLib.cpp, 
+	  boxbackup/lib/server/SSLLib.h, 
+	  boxbackup/lib/server/ServerException.h, 
+	  boxbackup/lib/server/ServerException.txt, 
+	  boxbackup/lib/server/ServerStream.h, 
+	  boxbackup/lib/server/ServerTLS.h, 
+	  boxbackup/lib/server/Socket.cpp, 
+	  boxbackup/lib/server/Socket.h, 
+	  boxbackup/lib/server/SocketListen.h, 
+	  boxbackup/lib/server/SocketStream.cpp, 
+	  boxbackup/lib/server/SocketStream.h, 
+	  boxbackup/lib/server/SocketStreamTLS.cpp, 
+	  boxbackup/lib/server/SocketStreamTLS.h, 
+	  boxbackup/lib/server/TLSContext.cpp, 
+	  boxbackup/lib/server/TLSContext.h, 
+	  boxbackup/lib/server/makeprotocol.pl, 
+	  boxbackup/modules.txt, 
+	  boxbackup/notes/INDEX.txt, 
+	  boxbackup/notes/backup_encryption.txt, 
+	  boxbackup/notes/bin_bbackupd.txt, 
+	  boxbackup/notes/bin_bbstored.txt, 
+	  boxbackup/notes/encryt_rsync.txt, 
+	  boxbackup/notes/lib_backupclient.txt, 
+	  boxbackup/notes/lib_backupstore.txt, 
+	  boxbackup/notes/lib_common.txt, 
+	  boxbackup/notes/lib_common/BoxTime.txt, 
+	  boxbackup/notes/lib_common/CollectInBufferStream.txt, 
+	  boxbackup/notes/lib_common/Configuration.txt, 
+	  boxbackup/notes/lib_common/Conversion.txt, 
+	  boxbackup/notes/lib_common/ExcludeList.txt, 
+	  boxbackup/notes/lib_common/FdGetLine.txt, 
+	  boxbackup/notes/lib_common/Guards.txt, 
+	  boxbackup/notes/lib_common/IOStream.txt, 
+	  boxbackup/notes/lib_common/IOStreamGetLine.txt, 
+	  boxbackup/notes/lib_common/MainHelper.txt, 
+	  boxbackup/notes/lib_common/WaitForEvent.txt, 
+	  boxbackup/notes/lib_common/xStream.txt, 
+	  boxbackup/notes/lib_compress.txt, 
+	  boxbackup/notes/lib_crypto.txt, 
+	  boxbackup/notes/lib_crypto/CipherContext.txt, 
+	  boxbackup/notes/lib_crypto/RollingChecksum.txt, 
+	  boxbackup/notes/lib_raidfile.txt, 
+	  boxbackup/notes/lib_raidfile/RaidFileRead.txt, 
+	  boxbackup/notes/lib_raidfile/RaidFileWrite.txt, 
+	  boxbackup/notes/lib_server.txt, 
+	  boxbackup/notes/lib_server/Daemon.txt, 
+	  boxbackup/notes/lib_server/Protocol.txt, 
+	  boxbackup/notes/lib_server/ServerStream.txt, 
+	  boxbackup/notes/lib_server/ServerTLS.txt, 
+	  boxbackup/notes/lib_server/SocketStream.txt, 
+	  boxbackup/notes/lib_server/SocketStreamTLS.txt, 
+	  boxbackup/notes/lib_server/TLSContext.txt, 
+	  boxbackup/notes/memory_leaks.txt, 
+	  boxbackup/notes/windows_porting.txt, 
+	  boxbackup/parcels.txt, 
+	  boxbackup/runtest.pl, 
+	  boxbackup/test/backupdiff/difftestfiles.cpp, 
+	  boxbackup/test/backupdiff/testbackupdiff.cpp, 
+	  boxbackup/test/backupdiff/testextra, 
+	  boxbackup/test/backupstore/testbackupstore.cpp, 
+	  boxbackup/test/backupstore/testextra, 
+	  boxbackup/test/backupstore/testfiles/accounts.txt, 
+	  boxbackup/test/backupstore/testfiles/bbackupd.keys, 
+	  boxbackup/test/backupstore/testfiles/bbstored.conf, 
+	  boxbackup/test/backupstore/testfiles/bbstored_multi.conf, 
+	  boxbackup/test/backupstore/testfiles/clientCerts.pem, 
+	  boxbackup/test/backupstore/testfiles/clientPrivKey.pem, 
+	  boxbackup/test/backupstore/testfiles/clientReq.pem, 
+	  boxbackup/test/backupstore/testfiles/clientTrustedCAs.pem, 
+	  boxbackup/test/backupstore/testfiles/query.conf, 
+	  boxbackup/test/backupstore/testfiles/raidfile.conf, 
+	  boxbackup/test/backupstore/testfiles/root.pem, 
+	  boxbackup/test/backupstore/testfiles/root.srl, 
+	  boxbackup/test/backupstore/testfiles/rootcert.pem, 
+	  boxbackup/test/backupstore/testfiles/rootkey.pem, 
+	  boxbackup/test/backupstore/testfiles/rootreq.pem, 
+	  boxbackup/test/backupstore/testfiles/serverCerts.pem, 
+	  boxbackup/test/backupstore/testfiles/serverPrivKey.pem, 
+	  boxbackup/test/backupstore/testfiles/serverReq.pem, 
+	  boxbackup/test/backupstore/testfiles/serverTrustedCAs.pem, 
+	  boxbackup/test/backupstorefix/testbackupstorefix.cpp, 
+	  boxbackup/test/backupstorefix/testextra, 
+	  boxbackup/test/backupstorefix/testfiles/testbackupstorefix.pl, 
+	  boxbackup/test/backupstorepatch/testbackupstorepatch.cpp, 
+	  boxbackup/test/backupstorepatch/testextra, 
+	  boxbackup/test/basicserver/Makefile.extra, 
+	  boxbackup/test/basicserver/TestCommands.cpp, 
+	  boxbackup/test/basicserver/TestContext.cpp, 
+	  boxbackup/test/basicserver/TestContext.h, 
+	  boxbackup/test/basicserver/testbasicserver.cpp, 
+	  boxbackup/test/basicserver/testfiles/clientCerts.pem, 
+	  boxbackup/test/basicserver/testfiles/clientPrivKey.pem, 
+	  boxbackup/test/basicserver/testfiles/clientReq.pem, 
+	  boxbackup/test/basicserver/testfiles/clientTrustedCAs.pem, 
+	  boxbackup/test/basicserver/testfiles/key-creation.txt, 
+	  boxbackup/test/basicserver/testfiles/root.pem, 
+	  boxbackup/test/basicserver/testfiles/root.srl, 
+	  boxbackup/test/basicserver/testfiles/rootcert.pem, 
+	  boxbackup/test/basicserver/testfiles/rootkey.pem, 
+	  boxbackup/test/basicserver/testfiles/rootreq.pem, 
+	  boxbackup/test/basicserver/testfiles/serverCerts.pem, 
+	  boxbackup/test/basicserver/testfiles/serverPrivKey.pem, 
+	  boxbackup/test/basicserver/testfiles/serverReq.pem, 
+	  boxbackup/test/basicserver/testfiles/serverTrustedCAs.pem, 
+	  boxbackup/test/basicserver/testfiles/srv1.conf, 
+	  boxbackup/test/basicserver/testfiles/srv1b.conf, 
+	  boxbackup/test/basicserver/testfiles/srv2.conf, 
+	  boxbackup/test/basicserver/testfiles/srv3.conf, 
+	  boxbackup/test/basicserver/testfiles/srv4.conf, 
+	  boxbackup/test/basicserver/testprotocol.txt, 
+	  boxbackup/test/bbackupd/testbbackupd.cpp, 
+	  boxbackup/test/bbackupd/testextra, 
+	  boxbackup/test/bbackupd/testfiles/accounts.txt, 
+	  boxbackup/test/bbackupd/testfiles/bbackupd.conf, 
+	  boxbackup/test/bbackupd/testfiles/bbackupd.keys, 
+	  boxbackup/test/bbackupd/testfiles/bbstored.conf, 
+	  boxbackup/test/bbackupd/testfiles/clientCerts.pem, 
+	  boxbackup/test/bbackupd/testfiles/clientPrivKey.pem, 
+	  boxbackup/test/bbackupd/testfiles/clientTrustedCAs.pem, 
+	  boxbackup/test/bbackupd/testfiles/extcheck1.pl, 
+	  boxbackup/test/bbackupd/testfiles/extcheck2.pl, 
+	  boxbackup/test/bbackupd/testfiles/notifyscript.pl, 
+	  boxbackup/test/bbackupd/testfiles/raidfile.conf, 
+	  boxbackup/test/bbackupd/testfiles/serverCerts.pem, 
+	  boxbackup/test/bbackupd/testfiles/serverPrivKey.pem, 
+	  boxbackup/test/bbackupd/testfiles/serverTrustedCAs.pem, 
+	  boxbackup/test/bbackupd/testfiles/spacetest1.tgz, 
+	  boxbackup/test/bbackupd/testfiles/spacetest2.tgz, 
+	  boxbackup/test/bbackupd/testfiles/test2.tgz, 
+	  boxbackup/test/bbackupd/testfiles/test3.tgz, 
+	  boxbackup/test/bbackupd/testfiles/test_base.tgz, 
+	  boxbackup/test/bbackupd/testfiles/testexclude.tgz, 
+	  boxbackup/test/common/testcommon.cpp, 
+	  boxbackup/test/common/testfiles/config1.txt, 
+	  boxbackup/test/common/testfiles/config10.txt, 
+	  boxbackup/test/common/testfiles/config11.txt, 
+	  boxbackup/test/common/testfiles/config12.txt, 
+	  boxbackup/test/common/testfiles/config13.txt, 
+	  boxbackup/test/common/testfiles/config14.txt, 
+	  boxbackup/test/common/testfiles/config15.txt, 
+	  boxbackup/test/common/testfiles/config16.txt, 
+	  boxbackup/test/common/testfiles/config2.txt, 
+	  boxbackup/test/common/testfiles/config3.txt, 
+	  boxbackup/test/common/testfiles/config4.txt, 
+	  boxbackup/test/common/testfiles/config5.txt, 
+	  boxbackup/test/common/testfiles/config6.txt, 
+	  boxbackup/test/common/testfiles/config7.txt, 
+	  boxbackup/test/common/testfiles/config8.txt, 
+	  boxbackup/test/common/testfiles/config9.txt, 
+	  boxbackup/test/common/testfiles/config9b.txt, 
+	  boxbackup/test/common/testfiles/config9c.txt, 
+	  boxbackup/test/common/testfiles/config9d.txt, 
+	  boxbackup/test/common/testfiles/fdgetlinetest.txt, 
+	  boxbackup/test/compress/testcompress.cpp, 
+	  boxbackup/test/crypto/testcrypto.cpp, 
+	  boxbackup/test/raidfile/Darwin-SYS.h, 
+	  boxbackup/test/raidfile/Makefile.extra.Darwin, 
+	  boxbackup/test/raidfile/intercept.cpp, 
+	  boxbackup/test/raidfile/make-darwin-intercepts.pl, 
+	  boxbackup/test/raidfile/testextra, 
+	  boxbackup/test/raidfile/testfiles/raidfile.conf, 
+	  boxbackup/test/raidfile/testraidfile.cpp: 
+	branches:  1.1.1;
+	Initial revision
+
+	* boxbackup/BUGS.txt, 
+	  boxbackup/CONTACT.txt, 
+	  boxbackup/DOCUMENTATION.txt, 
+	  boxbackup/LICENSE.txt, 
+	  boxbackup/LINUX.txt, 
+	  boxbackup/NETBSD.txt, 
+	  boxbackup/THANKS.txt, boxbackup/TODO.txt, 
+	  boxbackup/VERSION.txt, 
+	  boxbackup/bin/bbackupctl/bbackupctl.cpp, 
+	  boxbackup/bin/bbackupd/BackupClientContext.cpp, 
+	  boxbackup/bin/bbackupd/BackupClientContext.h, 
+	  boxbackup/bin/bbackupd/BackupClientDeleteList.cpp, 
+	  boxbackup/bin/bbackupd/BackupClientDeleteList.h, 
+	  boxbackup/bin/bbackupd/BackupClientDirectoryRecord.cpp, 
+	  boxbackup/bin/bbackupd/BackupClientDirectoryRecord.h, 
+	  boxbackup/bin/bbackupd/BackupClientInodeToIDMap.cpp, 
+	  boxbackup/bin/bbackupd/BackupClientInodeToIDMap.h, 
+	  boxbackup/bin/bbackupd/BackupDaemon.cpp, 
+	  boxbackup/bin/bbackupd/BackupDaemon.h, 
+	  boxbackup/bin/bbackupd/bbackupd-config, 
+	  boxbackup/bin/bbackupd/bbackupd.cpp, 
+	  boxbackup/bin/bbackupobjdump/bbackupobjdump.cpp, 
+	  boxbackup/bin/bbackupquery/BackupQueries.cpp, 
+	  boxbackup/bin/bbackupquery/BackupQueries.h, 
+	  boxbackup/bin/bbackupquery/Makefile.extra, 
+	  boxbackup/bin/bbackupquery/bbackupquery.cpp, 
+	  boxbackup/bin/bbackupquery/documentation.txt, 
+	  boxbackup/bin/bbackupquery/makedocumentation.pl, 
+	  boxbackup/bin/bbstoreaccounts/bbstoreaccounts.cpp, 
+	  boxbackup/bin/bbstored/BBStoreDHousekeeping.cpp, 
+	  boxbackup/bin/bbstored/BackupCommands.cpp, 
+	  boxbackup/bin/bbstored/BackupConstants.h, 
+	  boxbackup/bin/bbstored/BackupContext.cpp, 
+	  boxbackup/bin/bbstored/BackupContext.h, 
+	  boxbackup/bin/bbstored/BackupStoreDaemon.cpp, 
+	  boxbackup/bin/bbstored/BackupStoreDaemon.h, 
+	  boxbackup/bin/bbstored/HousekeepStoreAccount.cpp, 
+	  boxbackup/bin/bbstored/HousekeepStoreAccount.h, 
+	  boxbackup/bin/bbstored/Makefile.extra, 
+	  boxbackup/bin/bbstored/backupprotocol.txt, 
+	  boxbackup/bin/bbstored/bbstored-certs, 
+	  boxbackup/bin/bbstored/bbstored-config, 
+	  boxbackup/bin/bbstored/bbstored.cpp, 
+	  boxbackup/configure, 
+	  boxbackup/contrib/cygwin/README.txt, 
+	  boxbackup/contrib/cygwin/install-cygwin-service.pl, 
+	  boxbackup/contrib/cygwin/remove-cygwin-service.sh, 
+	  boxbackup/contrib/redhat/README.txt, 
+	  boxbackup/contrib/redhat/bbackupd, 
+	  boxbackup/contrib/redhat/bbstored, 
+	  boxbackup/contrib/rpm/README.txt, 
+	  boxbackup/contrib/rpm/boxbackup.spec, 
+	  boxbackup/contrib/suse/README.txt, 
+	  boxbackup/contrib/suse/bbackupd, 
+	  boxbackup/contrib/suse/bbstored, 
+	  boxbackup/infrastructure/BoxPlatform.pm, 
+	  boxbackup/infrastructure/buildenv-testmain-template.cpp, 
+	  boxbackup/infrastructure/makebuildenv.pl, 
+	  boxbackup/infrastructure/makeparcels.pl, 
+	  boxbackup/infrastructure/tests/common_tests.pl, 
+	  boxbackup/lib/backupclient/BackupClientCryptoKeys.cpp, 
+	  boxbackup/lib/backupclient/BackupClientCryptoKeys.h, 
+	  boxbackup/lib/backupclient/BackupClientFileAttributes.cpp, 
+	  boxbackup/lib/backupclient/BackupClientFileAttributes.h, 
+	  boxbackup/lib/backupclient/BackupClientMakeExcludeList.cpp, 
+	  boxbackup/lib/backupclient/BackupClientMakeExcludeList.h, 
+	  boxbackup/lib/backupclient/BackupClientRestore.cpp, 
+	  boxbackup/lib/backupclient/BackupClientRestore.h, 
+	  boxbackup/lib/backupclient/BackupDaemonConfigVerify.cpp, 
+	  boxbackup/lib/backupclient/BackupDaemonConfigVerify.h, 
+	  boxbackup/lib/backupclient/BackupStoreConstants.h, 
+	  boxbackup/lib/backupclient/BackupStoreDirectory.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreDirectory.h, 
+	  boxbackup/lib/backupclient/BackupStoreException.h, 
+	  boxbackup/lib/backupclient/BackupStoreException.txt, 
+	  boxbackup/lib/backupclient/BackupStoreFile.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFile.h, 
+	  boxbackup/lib/backupclient/BackupStoreFileCmbDiff.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileCmbIdx.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileCombine.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileCryptVar.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileCryptVar.h, 
+	  boxbackup/lib/backupclient/BackupStoreFileDiff.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileEncodeStream.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileEncodeStream.h, 
+	  boxbackup/lib/backupclient/BackupStoreFileRevDiff.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFileWire.h, 
+	  boxbackup/lib/backupclient/BackupStoreFilename.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFilename.h, 
+	  boxbackup/lib/backupclient/BackupStoreFilenameClear.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreFilenameClear.h, 
+	  boxbackup/lib/backupclient/BackupStoreObjectDump.cpp, 
+	  boxbackup/lib/backupclient/BackupStoreObjectMagic.h, 
+	  boxbackup/lib/backupclient/Makefile.extra, 
+	  boxbackup/lib/backupstore/BackupStoreAccountDatabase.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreAccountDatabase.h, 
+	  boxbackup/lib/backupstore/BackupStoreAccounts.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreAccounts.h, 
+	  boxbackup/lib/backupstore/BackupStoreCheck.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreCheck.h, 
+	  boxbackup/lib/backupstore/BackupStoreCheck2.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreCheckData.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreConfigVerify.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreConfigVerify.h, 
+	  boxbackup/lib/backupstore/BackupStoreInfo.cpp, 
+	  boxbackup/lib/backupstore/BackupStoreInfo.h, 
+	  boxbackup/lib/backupstore/StoreStructure.cpp, 
+	  boxbackup/lib/backupstore/StoreStructure.h, 
+	  boxbackup/lib/common/BannerText.h, 
+	  boxbackup/lib/common/BeginStructPackForWire.h, 
+	  boxbackup/lib/common/Box.h, 
+	  boxbackup/lib/common/BoxException.cpp, 
+	  boxbackup/lib/common/BoxException.h, 
+	  boxbackup/lib/common/BoxPlatform.h, 
+	  boxbackup/lib/common/BoxPortsAndFiles.h, 
+	  boxbackup/lib/common/BoxTime.cpp, 
+	  boxbackup/lib/common/BoxTime.h, 
+	  boxbackup/lib/common/BoxTimeToText.cpp, 
+	  boxbackup/lib/common/BoxTimeToText.h, 
+	  boxbackup/lib/common/BoxTimeToUnix.h, 
+	  boxbackup/lib/common/CollectInBufferStream.cpp, 
+	  boxbackup/lib/common/CollectInBufferStream.h, 
+	  boxbackup/lib/common/CommonException.h, 
+	  boxbackup/lib/common/CommonException.txt, 
+	  boxbackup/lib/common/Configuration.cpp, 
+	  boxbackup/lib/common/Configuration.h, 
+	  boxbackup/lib/common/Conversion.h, 
+	  boxbackup/lib/common/ConversionException.txt, 
+	  boxbackup/lib/common/ConversionString.cpp, 
+	  boxbackup/lib/common/DebugAssertFailed.cpp, 
+	  boxbackup/lib/common/DebugMemLeakFinder.cpp, 
+	  boxbackup/lib/common/DebugPrintf.cpp, 
+	  boxbackup/lib/common/EndStructPackForWire.h, 
+	  boxbackup/lib/common/EventWatchFilesystemObject.cpp, 
+	  boxbackup/lib/common/EventWatchFilesystemObject.h, 
+	  boxbackup/lib/common/ExcludeList.cpp, 
+	  boxbackup/lib/common/ExcludeList.h, 
+	  boxbackup/lib/common/FdGetLine.cpp, 
+	  boxbackup/lib/common/FdGetLine.h, 
+	  boxbackup/lib/common/FileModificationTime.h, 
+	  boxbackup/lib/common/FileStream.cpp, 
+	  boxbackup/lib/common/FileStream.h, 
+	  boxbackup/lib/common/Guards.h, 
+	  boxbackup/lib/common/IOStream.cpp, 
+	  boxbackup/lib/common/IOStream.h, 
+	  boxbackup/lib/common/IOStreamGetLine.cpp, 
+	  boxbackup/lib/common/IOStreamGetLine.h, 
+	  boxbackup/lib/common/LinuxWorkaround.cpp, 
+	  boxbackup/lib/common/LinuxWorkaround.h, 
+	  boxbackup/lib/common/MainHelper.h, 
+	  boxbackup/lib/common/Makefile.extra, 
+	  boxbackup/lib/common/MemBlockStream.cpp, 
+	  boxbackup/lib/common/MemBlockStream.h, 
+	  boxbackup/lib/common/MemLeakFindOff.h, 
+	  boxbackup/lib/common/MemLeakFindOn.h, 
+	  boxbackup/lib/common/MemLeakFinder.h, 
+	  boxbackup/lib/common/NamedLock.cpp, 
+	  boxbackup/lib/common/NamedLock.h, 
+	  boxbackup/lib/common/PartialReadStream.cpp, 
+	  boxbackup/lib/common/PartialReadStream.h, 
+	  boxbackup/lib/common/ReadGatherStream.cpp, 
+	  boxbackup/lib/common/ReadGatherStream.h, 
+	  boxbackup/lib/common/StreamableMemBlock.cpp, 
+	  boxbackup/lib/common/StreamableMemBlock.h, 
+	  boxbackup/lib/common/TemporaryDirectory.h, 
+	  boxbackup/lib/common/Test.h, 
+	  boxbackup/lib/common/UnixUser.cpp, 
+	  boxbackup/lib/common/UnixUser.h, 
+	  boxbackup/lib/common/Utils.cpp, 
+	  boxbackup/lib/common/Utils.h, 
+	  boxbackup/lib/common/WaitForEvent.cpp, 
+	  boxbackup/lib/common/WaitForEvent.h, 
+	  boxbackup/lib/common/makeexception.pl, 
+	  boxbackup/lib/compress/Compress.h, 
+	  boxbackup/lib/compress/CompressException.h, 
+	  boxbackup/lib/compress/CompressException.txt, 
+	  boxbackup/lib/compress/CompressStream.cpp, 
+	  boxbackup/lib/compress/CompressStream.h, 
+	  boxbackup/lib/compress/Makefile.extra, 
+	  boxbackup/lib/crypto/CipherAES.cpp, 
+	  boxbackup/lib/crypto/CipherAES.h, 
+	  boxbackup/lib/crypto/CipherBlowfish.cpp, 
+	  boxbackup/lib/crypto/CipherBlowfish.h, 
+	  boxbackup/lib/crypto/CipherContext.cpp, 
+	  boxbackup/lib/crypto/CipherContext.h, 
+	  boxbackup/lib/crypto/CipherDescription.cpp, 
+	  boxbackup/lib/crypto/CipherDescription.h, 
+	  boxbackup/lib/crypto/CipherException.h, 
+	  boxbackup/lib/crypto/CipherException.txt, 
+	  boxbackup/lib/crypto/MD5Digest.cpp, 
+	  boxbackup/lib/crypto/MD5Digest.h, 
+	  boxbackup/lib/crypto/Makefile.extra, 
+	  boxbackup/lib/crypto/Random.cpp, 
+	  boxbackup/lib/crypto/Random.h, 
+	  boxbackup/lib/crypto/RollingChecksum.cpp, 
+	  boxbackup/lib/crypto/RollingChecksum.h, 
+	  boxbackup/lib/raidfile/Makefile.extra, 
+	  boxbackup/lib/raidfile/RaidFileController.cpp, 
+	  boxbackup/lib/raidfile/RaidFileController.h, 
+	  boxbackup/lib/raidfile/RaidFileException.h, 
+	  boxbackup/lib/raidfile/RaidFileException.txt, 
+	  boxbackup/lib/raidfile/RaidFileRead.cpp, 
+	  boxbackup/lib/raidfile/RaidFileRead.h, 
+	  boxbackup/lib/raidfile/RaidFileUtil.cpp, 
+	  boxbackup/lib/raidfile/RaidFileUtil.h, 
+	  boxbackup/lib/raidfile/RaidFileWrite.cpp, 
+	  boxbackup/lib/raidfile/RaidFileWrite.h, 
+	  boxbackup/lib/raidfile/raidfile-config, 
+	  boxbackup/lib/server/ConnectionException.txt, 
+	  boxbackup/lib/server/Daemon.cpp, 
+	  boxbackup/lib/server/Daemon.h, 
+	  boxbackup/lib/server/LocalProcessStream.cpp, 
+	  boxbackup/lib/server/LocalProcessStream.h, 
+	  boxbackup/lib/server/Makefile.extra, 
+	  boxbackup/lib/server/Protocol.cpp, 
+	  boxbackup/lib/server/Protocol.h, 
+	  boxbackup/lib/server/ProtocolObject.cpp, 
+	  boxbackup/lib/server/ProtocolObject.h, 
+	  boxbackup/lib/server/ProtocolUncertainStream.cpp, 
+	  boxbackup/lib/server/ProtocolUncertainStream.h, 
+	  boxbackup/lib/server/ProtocolWire.h, 
+	  boxbackup/lib/server/SSLLib.cpp, 
+	  boxbackup/lib/server/SSLLib.h, 
+	  boxbackup/lib/server/ServerException.h, 
+	  boxbackup/lib/server/ServerException.txt, 
+	  boxbackup/lib/server/ServerStream.h, 
+	  boxbackup/lib/server/ServerTLS.h, 
+	  boxbackup/lib/server/Socket.cpp, 
+	  boxbackup/lib/server/Socket.h, 
+	  boxbackup/lib/server/SocketListen.h, 
+	  boxbackup/lib/server/SocketStream.cpp, 
+	  boxbackup/lib/server/SocketStream.h, 
+	  boxbackup/lib/server/SocketStreamTLS.cpp, 
+	  boxbackup/lib/server/SocketStreamTLS.h, 
+	  boxbackup/lib/server/TLSContext.cpp, 
+	  boxbackup/lib/server/TLSContext.h, 
+	  boxbackup/lib/server/makeprotocol.pl, 
+	  boxbackup/modules.txt, 
+	  boxbackup/notes/INDEX.txt, 
+	  boxbackup/notes/backup_encryption.txt, 
+	  boxbackup/notes/bin_bbackupd.txt, 
+	  boxbackup/notes/bin_bbstored.txt, 
+	  boxbackup/notes/encryt_rsync.txt, 
+	  boxbackup/notes/lib_backupclient.txt, 
+	  boxbackup/notes/lib_backupstore.txt, 
+	  boxbackup/notes/lib_common.txt, 
+	  boxbackup/notes/lib_common/BoxTime.txt, 
+	  boxbackup/notes/lib_common/CollectInBufferStream.txt, 
+	  boxbackup/notes/lib_common/Configuration.txt, 
+	  boxbackup/notes/lib_common/Conversion.txt, 
+	  boxbackup/notes/lib_common/ExcludeList.txt, 
+	  boxbackup/notes/lib_common/FdGetLine.txt, 
+	  boxbackup/notes/lib_common/Guards.txt, 
+	  boxbackup/notes/lib_common/IOStream.txt, 
+	  boxbackup/notes/lib_common/IOStreamGetLine.txt, 
+	  boxbackup/notes/lib_common/MainHelper.txt, 
+	  boxbackup/notes/lib_common/WaitForEvent.txt, 
+	  boxbackup/notes/lib_common/xStream.txt, 
+	  boxbackup/notes/lib_compress.txt, 
+	  boxbackup/notes/lib_crypto.txt, 
+	  boxbackup/notes/lib_crypto/CipherContext.txt, 
+	  boxbackup/notes/lib_crypto/RollingChecksum.txt, 
+	  boxbackup/notes/lib_raidfile.txt, 
+	  boxbackup/notes/lib_raidfile/RaidFileRead.txt, 
+	  boxbackup/notes/lib_raidfile/RaidFileWrite.txt, 
+	  boxbackup/notes/lib_server.txt, 
+	  boxbackup/notes/lib_server/Daemon.txt, 
+	  boxbackup/notes/lib_server/Protocol.txt, 
+	  boxbackup/notes/lib_server/ServerStream.txt, 
+	  boxbackup/notes/lib_server/ServerTLS.txt, 
+	  boxbackup/notes/lib_server/SocketStream.txt, 
+	  boxbackup/notes/lib_server/SocketStreamTLS.txt, 
+	  boxbackup/notes/lib_server/TLSContext.txt, 
+	  boxbackup/notes/memory_leaks.txt, 
+	  boxbackup/notes/windows_porting.txt, 
+	  boxbackup/parcels.txt, 
+	  boxbackup/runtest.pl, 
+	  boxbackup/test/backupdiff/difftestfiles.cpp, 
+	  boxbackup/test/backupdiff/testbackupdiff.cpp, 
+	  boxbackup/test/backupdiff/testextra, 
+	  boxbackup/test/backupstore/testbackupstore.cpp, 
+	  boxbackup/test/backupstore/testextra, 
+	  boxbackup/test/backupstore/testfiles/accounts.txt, 
+	  boxbackup/test/backupstore/testfiles/bbackupd.keys, 
+	  boxbackup/test/backupstore/testfiles/bbstored.conf, 
+	  boxbackup/test/backupstore/testfiles/bbstored_multi.conf, 
+	  boxbackup/test/backupstore/testfiles/clientCerts.pem, 
+	  boxbackup/test/backupstore/testfiles/clientPrivKey.pem, 
+	  boxbackup/test/backupstore/testfiles/clientReq.pem, 
+	  boxbackup/test/backupstore/testfiles/clientTrustedCAs.pem, 
+	  boxbackup/test/backupstore/testfiles/query.conf, 
+	  boxbackup/test/backupstore/testfiles/raidfile.conf, 
+	  boxbackup/test/backupstore/testfiles/root.pem, 
+	  boxbackup/test/backupstore/testfiles/root.srl, 
+	  boxbackup/test/backupstore/testfiles/rootcert.pem, 
+	  boxbackup/test/backupstore/testfiles/rootkey.pem, 
+	  boxbackup/test/backupstore/testfiles/rootreq.pem, 
+	  boxbackup/test/backupstore/testfiles/serverCerts.pem, 
+	  boxbackup/test/backupstore/testfiles/serverPrivKey.pem, 
+	  boxbackup/test/backupstore/testfiles/serverReq.pem, 
+	  boxbackup/test/backupstore/testfiles/serverTrustedCAs.pem, 
+	  boxbackup/test/backupstorefix/testbackupstorefix.cpp, 
+	  boxbackup/test/backupstorefix/testextra, 
+	  boxbackup/test/backupstorefix/testfiles/testbackupstorefix.pl, 
+	  boxbackup/test/backupstorepatch/testbackupstorepatch.cpp, 
+	  boxbackup/test/backupstorepatch/testextra, 
+	  boxbackup/test/basicserver/Makefile.extra, 
+	  boxbackup/test/basicserver/TestCommands.cpp, 
+	  boxbackup/test/basicserver/TestContext.cpp, 
+	  boxbackup/test/basicserver/TestContext.h, 
+	  boxbackup/test/basicserver/testbasicserver.cpp, 
+	  boxbackup/test/basicserver/testfiles/clientCerts.pem, 
+	  boxbackup/test/basicserver/testfiles/clientPrivKey.pem, 
+	  boxbackup/test/basicserver/testfiles/clientReq.pem, 
+	  boxbackup/test/basicserver/testfiles/clientTrustedCAs.pem, 
+	  boxbackup/test/basicserver/testfiles/key-creation.txt, 
+	  boxbackup/test/basicserver/testfiles/root.pem, 
+	  boxbackup/test/basicserver/testfiles/root.srl, 
+	  boxbackup/test/basicserver/testfiles/rootcert.pem, 
+	  boxbackup/test/basicserver/testfiles/rootkey.pem, 
+	  boxbackup/test/basicserver/testfiles/rootreq.pem, 
+	  boxbackup/test/basicserver/testfiles/serverCerts.pem, 
+	  boxbackup/test/basicserver/testfiles/serverPrivKey.pem, 
+	  boxbackup/test/basicserver/testfiles/serverReq.pem, 
+	  boxbackup/test/basicserver/testfiles/serverTrustedCAs.pem, 
+	  boxbackup/test/basicserver/testfiles/srv1.conf, 
+	  boxbackup/test/basicserver/testfiles/srv1b.conf, 
+	  boxbackup/test/basicserver/testfiles/srv2.conf, 
+	  boxbackup/test/basicserver/testfiles/srv3.conf, 
+	  boxbackup/test/basicserver/testfiles/srv4.conf, 
+	  boxbackup/test/basicserver/testprotocol.txt, 
+	  boxbackup/test/bbackupd/testbbackupd.cpp, 
+	  boxbackup/test/bbackupd/testextra, 
+	  boxbackup/test/bbackupd/testfiles/accounts.txt, 
+	  boxbackup/test/bbackupd/testfiles/bbackupd.conf, 
+	  boxbackup/test/bbackupd/testfiles/bbackupd.keys, 
+	  boxbackup/test/bbackupd/testfiles/bbstored.conf, 
+	  boxbackup/test/bbackupd/testfiles/clientCerts.pem, 
+	  boxbackup/test/bbackupd/testfiles/clientPrivKey.pem, 
+	  boxbackup/test/bbackupd/testfiles/clientTrustedCAs.pem, 
+	  boxbackup/test/bbackupd/testfiles/extcheck1.pl, 
+	  boxbackup/test/bbackupd/testfiles/extcheck2.pl, 
+	  boxbackup/test/bbackupd/testfiles/notifyscript.pl, 
+	  boxbackup/test/bbackupd/testfiles/raidfile.conf, 
+	  boxbackup/test/bbackupd/testfiles/serverCerts.pem, 
+	  boxbackup/test/bbackupd/testfiles/serverPrivKey.pem, 
+	  boxbackup/test/bbackupd/testfiles/serverTrustedCAs.pem, 
+	  boxbackup/test/bbackupd/testfiles/spacetest1.tgz, 
+	  boxbackup/test/bbackupd/testfiles/spacetest2.tgz, 
+	  boxbackup/test/bbackupd/testfiles/test2.tgz, 
+	  boxbackup/test/bbackupd/testfiles/test3.tgz, 
+	  boxbackup/test/bbackupd/testfiles/test_base.tgz, 
+	  boxbackup/test/bbackupd/testfiles/testexclude.tgz, 
+	  boxbackup/test/common/testcommon.cpp, 
+	  boxbackup/test/common/testfiles/config1.txt, 
+	  boxbackup/test/common/testfiles/config10.txt, 
+	  boxbackup/test/common/testfiles/config11.txt, 
+	  boxbackup/test/common/testfiles/config12.txt, 
+	  boxbackup/test/common/testfiles/config13.txt, 
+	  boxbackup/test/common/testfiles/config14.txt, 
+	  boxbackup/test/common/testfiles/config15.txt, 
+	  boxbackup/test/common/testfiles/config16.txt, 
+	  boxbackup/test/common/testfiles/config2.txt, 
+	  boxbackup/test/common/testfiles/config3.txt, 
+	  boxbackup/test/common/testfiles/config4.txt, 
+	  boxbackup/test/common/testfiles/config5.txt, 
+	  boxbackup/test/common/testfiles/config6.txt, 
+	  boxbackup/test/common/testfiles/config7.txt, 
+	  boxbackup/test/common/testfiles/config8.txt, 
+	  boxbackup/test/common/testfiles/config9.txt, 
+	  boxbackup/test/common/testfiles/config9b.txt, 
+	  boxbackup/test/common/testfiles/config9c.txt, 
+	  boxbackup/test/common/testfiles/config9d.txt, 
+	  boxbackup/test/common/testfiles/fdgetlinetest.txt, 
+	  boxbackup/test/compress/testcompress.cpp, 
+	  boxbackup/test/crypto/testcrypto.cpp, 
+	  boxbackup/test/raidfile/Darwin-SYS.h, 
+	  boxbackup/test/raidfile/Makefile.extra.Darwin, 
+	  boxbackup/test/raidfile/intercept.cpp, 
+	  boxbackup/test/raidfile/make-darwin-intercepts.pl, 
+	  boxbackup/test/raidfile/testextra, 
+	  boxbackup/test/raidfile/testfiles/raidfile.conf, 
+	  boxbackup/test/raidfile/testraidfile.cpp: 
+	New file.
+
+	* boxbackup/bin/bbackupd/BackupClientDirectoryRecord.cpp: 
+	- Listen for connections and commands over the command socket even while a backup is in progress
+
+	* boxbackup/bin/bbackupd/BackupClientDirectoryRecord.h: 
+	- Added a pointer to the CommandSocketManager in the Params object
+
+	* boxbackup/bin/bbackupd/BackupDaemon.cpp, 
+	  boxbackup/bin/bbackupd/BackupDaemon.h, 
+	  boxbackup/bin/bbackupd/CommandSocketManager.cpp: 
+	- Moved code for handling command socket connections to a separate class, CommandSocketManager
+	- Made BackupDaemon use this new class and implement the Listener interface which it defines
+
+	* boxbackup/infrastructure/makebuildenv.pl: 
+	- Enable debugging and disable optimisations even in release mode (useful for testing)
+
+	* boxbackup/infrastructure/makeparcels.pl: 
+	- Fixed "make all" target to work on second invocation, by deleting the parcels if they exist
+	- Fixed "make clean" to really clean the source
+
+2005-04-04  Chris Wilson 
+
+	* Makefile.am, configure.in: 
+	- Auto-generated by Anjuta
+
+	* TODO: 
+	- Removed a done item from TODO list
+
+	* boxi.prj: 
+	- Added BackupDaemonPanel sources to project
+
+	* boxi.prj: 
+	- Added new static image files to project
+
+	* images/alien16.png, images/cross16.png, 
+	  images/equal16.png, images/exclam16.png, 
+	  images/folder16.png, images/grey16.png, 
+	  images/hourglass16.png, 
+	  images/linked16.png, 
+	  images/notequal16.png, 
+	  images/oldfile16.png, 
+	  images/partial16.png, 
+	  images/sametime16.png, images/tick16.png, 
+	  images/unknown16.png: 
+	New file.
+
+	* include/BackupDaemonPanel.h, 
+	  src/BackupDaemonPanel.cc, src/main.cc: 
+	- Added a panel to control the backup client daemon (bbackupd)
+	- Automatically find the path to bbackupd and check if it's already running
+
+	* include/BackupFilesPanel.h: 
+	- Added better comments on classes
+
+	* include/BackupFilesPanel.h, 
+	  src/BackupFilesPanel.cc: 
+	- Optionally scan directory on server to determine backed-up state of files
+
+	* include/Makefile.am: 
+	- Auto-generated by Anjuta after adding StaticImage.h to project
+
+	* include/Makefile.am, po/POTFILES.in, 
+	  src/Makefile.am: 
+	- Auto-generated by Anjuta after adding BackupDaemonPanel to sources
+
+	* include/Property.h: 
+	- Return bool from GetInto methods to show whether configured or not
+
+	* include/ServerConnection.h, 
+	  src/ServerConnection.cc: 
+	- Distinguish between read-only and read-write connections
+	- Disconnect and reconnect if the current connection is read-write but read-only requested, or vice versa
+	- Moved ErrorStrings function from header to source file
+
+	* include/StaticImage.h: 
+	New file.
+
+	* include/main.h: 
+	- Added an ID for the "connect to server" checkbox
+
+	* make-image-headers.pl: 
+	- Added more images
+	- Import StaticImage.h header file
+	- Use a structure to store data and length together
+	- Moved PNG files to images/ subdirectory
+
+	* po/POTFILES.in: 
+	- Auto-generated by Anjuta after adding new image files to project
+
+	* src/Makefile.am: 
+	- Auto-generated by Anjuta after adding more image files to project
+
+	* src/cross16.png, src/tick16.png: 
+	- Moved to images/ directory
+
+	* src/main.cc: 
+	- Improved formatting
+	- Pass a ServerConnection object to BackupFilesPanel
+
+	* test/config/bbackupd.conf: 
+	- Added another backup location, and more includes/excludes for testing
+
+2005-03-30  Chris Wilson 
+
+	* ChangeLog: 
+	- Regenerated ChangeLog
+
+	* Makefile.am, configure.in: 
+	- Auto-generated by Anjuta
+
+	* boxi.prj, include/Makefile.am, 
+	  src/Makefile.am: 
+	- Added ServerConnection class to project, regenerated automess files
+
+	* include/Makefile.in, include/Restore.h: 
+	- Removed auto-generated files from CVS
+
+	* include/ServerConnection.h, 
+	  src/ServerConnection.cc: 
+	New file.
+
+	* include/ServerFilesPanel.h, 
+	  src/ServerFilesPanel.cc: 
+	- Moved server connection code out to ServerConnection class
+	- Don't connect explicitly, use ServerConnection's ability to connect implicitly
+	_ Handle case where usage information was not available due to failure to connect to server, or failure to retrieve it
+	- Disable Delete/Undelete button when a file is selected (doesn't work on files yet)
+	- Zero all members of BoxiTreeNodeInfo on construction, to prevent random logic errors and bad pointer dereferences later
+
+	* po/POTFILES.in: 
+	- Added ServerConnection class to sources list
+
+	* src/Restore.cc: 
+	- Changed BoxiRestore to a method of ServerConnection
+
+	* src/main.cc: 
+	- Initialise SSL library before constructing objects, in case they need to connect to server immediately
+
+2005-03-28  Chris Wilson 
+
+	* boxi.prj: 
+	- Compile image files into binary
+
+	* include/BackupFilesPanel.h: 
+	- Changed images from wxBitmap to wxImage format
+
+	* include/BackupFilesPanel.h, 
+	  src/BackupFilesPanel.cc: 
+	- Add a listener for config change events
+	- Update included/excluded files on config change events
+
+	* include/ClientConfig.h, 
+	  src/ClientConfig.cc: 
+	- Added listeners class for config change events
+
+	* make-dist.sh: 
+	- Compile image files to C headers when creating distribution from CVS
+
+	* make-image-headers.pl: 
+	New file.
+
+	* po/POTFILES.in: 
+	- Auto-generated after project update
+
+	* src/BackupFilesPanel.cc, src/Makefile.am, 
+	  src/cross16.png, src/tick16.png: 
+	- Added PNG images for use in local files view, for included/excluded files
+
+	* src/BackupLocationsPanel.cc: 
+	- Fixed enable/disable of location add/edit/remove buttons
+	- Notify config change listeners when configuration changed
+
+2005-03-27  Chris Wilson 
+
+	* TODO: 
+	- Added better descriptions for TODO items
+
+	* boxi.prj, src/Makefile.am: 
+	- Link against libpcre for regular expression matching
+
+	* include/BackupFilesPanel.h, 
+	  src/BackupFilesPanel.cc: 
+	- Added ability to view include/exclude status and reasons for local files
+
+	* src/BackupLocationsPanel.cc: 
+	- Reformatted for easier reading
+
+	* src/BackupLocationsPanel.cc: 
+	- Added ability to edit and remove backup locations
+
+	* test/config/bbackupd.conf: 
+	- Added more relevant examples for testing
+
+2005-03-24  Chris Wilson 
+
+	* TODO: 
+	- Removed the item to toggle display of old and deleted files, which is now complete
+
+2005-03-23  Chris Wilson 
+
+	* README.pod: 
+	- Added screenshots
+
+	* TODO: 
+	- Turned into real POD
+
+	* include/ServerFilesPanel.h, 
+	  include/main.h, src/ServerFilesPanel.cc: 
+	- Added ability to show and hide old file versions and deleted files on the server
+
+	* make-dist.sh: 
+	- Removed unsupported option from pod2text
+
+	* make-dist.sh: 
+	- Removed index from top of generated HTML
+
+	* src/main.cc: 
+	- Changed About and Exit menu IDs to the standard wxWidgets IDs for these menu items
+	- Added ability to show and hide old file versions and deleted files on the server
+	- Added more descriptive text to the About message
+
+2005-03-20  Chris Wilson 
+
+	* ChangeLog: 
+	- Updated for release of 0.0.5
+
+	* README.pod, TODO, include/main.h: 
+	- Updated for release of version 0.0.5
+
+2005-03-19  Chris Wilson 
+
+	* Makefile.am: 
+	White space
+
+	* boxi.prj: 
+	- Added Restore.h and Restore.cc to project
+
+	* configure.in: 
+	Updated by Anjuta
+
+	* include/ClientInfoPanel.h: 
+	- Minor formatting changes
+
+	* include/Makefile.am, include/Makefile.in: 
+	- Added Restore.h to project
+
+	* include/Restore.h: 
+	New file.
+
+	* include/ServerFilesPanel.h: 
+	- Added initial support framework for sorting file list and showing file/directory icons
+
+	* include/ServerFilesPanel.h: 
+	- Added status bar update method used by BoxiRestore callback, pointer to status bar (member and constructor parameter) and a counter used by update method
+
+	* include/ServerFilesPanel.h, 
+	  src/ServerFilesPanel.cc: 
+	- Display file modification time instead of flags, and allow sorting by time
+
+	* include/ServerFilesPanel.h, 
+	  src/ServerFilesPanel.cc: 
+	- Added ability to sort the file list and descend into directories by double-clicking on them in the file list
+
+	* make-dist.sh: 
+	- Renamed README.txt to README, to stop Make from balking
+
+	* po/POTFILES.in: 
+	- Added Restore.cc to project
+
+	* src/BackupFilesPanel.cc: 
+	- Return mouse cursor to normal when browsing directory structure
+
+	* src/ClientInfoPanel.cc: 
+	- Replaced macros for initialising properties with member functions
+	- Separated properties into two groups, basic and advanced
+	- Added a class for notebook properties pages
+
+	* src/Makefile.am: 
+	- Added Restore.cc to project (contains our own restore function, based on Box Backup's, which uses a callback to report progress)
+
+	* src/Restore.cc: 
+	New file.
+
+	* src/ServerFilesPanel.cc: 
+	- Changed error message box titles to avoid offending those with delicate sensitivities
+	- Wrote a callback to update status bar during restores
+	- Call our own restore function rather than Box Backup's, with callback function
+
+	* src/ServerFilesPanel.cc: 
+	- Added file/directory icons in file list
+	- Added handler for clicking on column headings (not functional yet)
+
+	* src/main.cc: 
+	Reinstated the status bar, and pass it to ServerFilesPanel for use
+	during restores and other slow operations
+
+	* test/config/bbackupd.conf: 
+	Removed double / in paths
+
+2005-03-15  Chris Wilson 
+
+	* make-dist.sh: 
+	* make-dist.sh
+	- Delete temporary files from generating README.html
+
+2005-03-14  Chris Wilson 
+
+	* ChangeLog: 
+	*** empty log message ***
+
+	* ChangeLog, cvs2log: 
+	* cvs2log
+	- Added script to convert CVS logs to ChangeLog format
+
+	* README, README.pod, make-dist.sh: 
+	* make-dist.sh
+	- Make HTML and text documentation from POD-format README
+	
+	* README README.pod
+	- Renamed README to README.pod. README will be generated automatically using pod2text
+
+	* boxi.prj, configure.in: 
+	* boxi.prj configure.in
+	- Apply patch to prevent buffer overflows in memory leak checking code
+
+	* config.guess, config.sub, 
+	  include/Makefile.in, ltmain.sh: 
+	* config.guess config.sub ltmain.sh
+	- Removed auto-generated files from repository
+
+	* include/Makefile.am: 
+	New file.
+
+	* include/Makefile.in, include/main.h: 
+	* main.h
+	- Updated for release of 0.0.4
+	
+	* Makefile.in
+	- Added to repository (auto-generated by Anjuta)
+
+	* include/ServerFilesPanel.h, 
+	  include/main.h: 
+	* ServerFilesPanel.h
+	- Store filename as a real wxString, not a pointer to a wxString
+	- Store deleted status, flags, attribute status and size in blocks in the tree node
+	- Removed AddChildren method: call ShowChildren with NULL for the wxListCtrl instead
+	- ShowChildren returns a bool for success or failure status
+	- Server files panel contains a pointer to the delete button, to allow it to be enabled/disabled and label to be changed at run time depending on selection
+	- Added OnFileRestore and OnFileDelete event handlers to server files panel
+	- Added a global function to get a nice string description of a server-side exception (by number or by exception object)
+	
+	* main.h
+	- Added IDs for Delete, Restore and Compare buttons
+
+	* make-dist.sh: 
+	New file.
+
+	* src/ServerFilesPanel.cc: 
+	* include/Makefile.in
+	- Added to repository
+	
+	* include/ServerFilesPanel.h
+	- No changes?
+	
+	* src/ServerFilesPanel.cc
+	- Added ability to restore individual files
+
+	* src/ServerFilesPanel.cc, src/main.cc: 
+	* ServerFilesPanel.cc
+	- Added buttons to (un)delete, restore and compare objects
+	- Adapted to removal of AddChildren method
+	- Change label on Delete button to Undelete if object is already deleted
+	- Added support for restoring directories (not files yes)
+	- Added support for deleting and undeleting directories (not files yet)
+	- Don't abort if we try to disconnect from server when not connected or after TLSReadFailed error breaks the stream
+	- Decode exceptions in Connect method and show friendly error message if possible
+	- Log in with a read-write session instead of read-only to allow (un)deleting files from server
+	- Close connection to server and delete tree nodes if connection fails or is damaged
+	- Sort list of files on server with directories first, then in alphabetical order
+	- Use a wxString to prevent buffer overflows when generating string of flags
+	
+	* main.cc
+	- Removed commented-out #include's
+	- Catch SIGPIPE to stop it from killing application when connection to server is dead
+
+	* test/config/bbackupd.conf, 
+	  test/config/bbstored.conf, 
+	  test/config/raidfile.conf: 
+	New file.
+
+	* test/config/bbackupd/2-FileEncKeys.raw, 
+	  test/config/bbackupd/2-cert.pem, 
+	  test/config/bbackupd/2-csr.pem, 
+	  test/config/bbackupd/2-key.pem, 
+	  test/config/bbackupd/NotifySysadmin.sh, 
+	  test/config/bbackupd/serverCA.pem: 
+	New file.
+
+2005-03-05  Chris Wilson 
+
+	* boxbackup-overflow.patch: 
+	New file.
+
+	* boxi.prj: 
+	* boxi.prj:
+	- Added missing header files
+
+	* include/ServerFilesPanel.h, 
+	  include/main.h: 
+	* ServerFilesPanel.h
+	- Added pointer to store usage information (including server block size)
+	* main.h
+	- Increased version to 0.0.3
+
+	* src/ServerFilesPanel.cc: 
+	* ServerFilesPanel.cc
+	- Made Restore/Delete buttons do something (not much)
+
+	* src/ServerFilesPanel.cc, src/main.cc: 
+	* ServerFilesPanel.cc
+	- Store usage information in mpUsage pointer
+	- Calculate file sizes (on server) properly and format them nicely
+	
+	* main.cc
+	- Resurrected local files panel
+
+2005-03-01  Chris Wilson 
+
+	* README: 
+	* README
+	- Updated for 0.0.3 release
+
+	* boxi.prj: 
+	* boxi.prj
+	- Split main.cc into multiple class and header files
+
+	* include/BackupFilesPanel.h, 
+	  include/BackupLocationsPanel.h, 
+	  include/ClientConfig.h, 
+	  include/ClientInfoPanel.h, 
+	  include/Location.h, include/Property.h, 
+	  include/ServerFilesPanel.h, 
+	  include/main.h: 
+	New file.
+
+	* po/POTFILES.in: 
+	* POTFILES.in
+	- Split main.cc into multiple class and header files
+
+	* src/BackupFilesPanel.cc, 
+	  src/BackupLocationsPanel.cc, 
+	  src/ClientConfig.cc, 
+	  src/ClientInfoPanel.cc, src/Location.cc, 
+	  src/Makefile.am, src/ServerFilesPanel.cc, 
+	  src/main.cc: 
+	* Makefile.am main.cc BackupFilesPanel.cc BackupLocationsPanel.cc ClientConfig.cc ClientInfoPanel.cc Location.cc ServerFilesPanel.cc
+	- Split main.cc into multiple class and header files
+
+	* src/ServerFilesPanel.cc, src/main.cc: 
+	* ServerFilesPanel.cc
+	- Disable everything (and show hourglass) while connecting to server
+	
+	* main.cc
+	- Include Boxi version in title bar
+
+2005-02-28  Chris Wilson 
+
+	* Makefile.am, boxi.prj, configure.in: 
+	* Makefile.am boxi.prj configure.in
+	- Added the "include" subdirectory to the compiler include path
+
+	* src/Makefile.am, src/main.cc: 
+	* Makefile.am:
+	- Added ../include directory to include search path
+	
+	* main.cc:
+	- Made Connect2() return a boolean for success/failure
+	- Fixed handling of private keys, which was broken since before 0.0.2 release (oops!). Can now connect to the store again!
+
+	* src/main.cc: 
+	* main.cc
+	- Finally separated out the ServerFilesPanel into its own class, ridding MainFrame of its pestilence
+
+	* src/main.cc: 
+	* main.cc
+	- Improved exception handling. Exceptions on connect to server now show the real error message.
+	- Changed cursor to hourglass when connecting to server
+
+2005-02-27  Chris Wilson 
+
+	* README: 
+	* README
+	- Updated for release of 0.0.2
+
+	* src/main.cc: 
+	* main.cc
+	- Added ability to rewrite entire config file - seems to work!
+
+	* src/main.cc: 
+	* main.cc
+	- Don't append ".new" to saved config file names any more
+
+	* src/main.cc: 
+	* main.cc
+	- Added ability to set all other properties! Boxi is now actually useful!
+
+	* src/main.cc: 
+	* main.cc
+	- Set contents of text boxes by direct access to parameters, with the help of More Evil Macros(TM)
+
+	* src/main.cc: 
+	* main.cc
+	- Added missing parameters to Client Settings page
+
+	* src/main.cc: 
+	* main.cc
+	- More Evil Macros to reduce redundancy in property control definitions
+	- Store pointers to property controls in ClientInfoPanel
+	- Allow updating the StoreHostname - and it works!
+
+	* src/main.h: 
+	* main.h
+	- Moved to include/ directory
+
+	* src/main.h: 
+	New file.
+
+2005-02-26  Chris Wilson 
+
+	* src/main.cc: 
+	* main.cc
+	- Moved non-GUI code closer to start of file, to clearly separate it from the GUI code
+	- Renamed some wx ID constants to better reflect the objects they identify
+
+	* src/main.cc: 
+	* main.cc
+	- Added initial support for saving config files (not finished yet)
+	- Added initial support for missing config directives
+	- Does not run, throws an exception about a missing directive!
+
+	* src/main.cc: 
+	* main.cc
+	- Catch exceptions due to missing parameters. Now runs again.
+
+	* src/main.cc: 
+	* main.cc
+	- Removed duplicated code between MyExcludeEntry and MyExcludeType
+	- Constructing a MyExcludeEntry now requires a pointer to a MyExcludeType
+
+	* src/main.cc: 
+	* main.cc
+	- Use new Property objects and the Evil Macros of Doom(TM) for ClientConfig properties
+
+	* src/main.cc: 
+	* main.cc
+	- Store the list of locations in the ClientConfig object, rather than BackupLocationsPanel
+
+	* src/main.cc: 
+	* main.cc
+	- More ID constants renamed
+	- Update the list of locations when the exclusions are modified
+	- Added code to enable and disable location controls when they become (in)valid
+	- Moved the code that populates the locations list to its own member function
+
+	* src/main.cc: 
+	* main.cc
+	- Fixed bug where you could add two locations with same path
+
+	* src/main.cc: 
+	* main.cc
+	- Moved ClientConfig to follow Location, on which it is about to become dependent
+
+	* src/main.cc: 
+	* main.cc
+	- Allow adding new backup locations!
+	- Locations stored as pointers in BackupLocationsPanel
+	- Don't allow adding a location if the name or path is the same as an existing on
+
+	* src/main.cc: 
+	* main.cc
+	- Added ability to edit location exclusions!
+	- Enable and disable buttons automatically when they are applicable
+	- Fixed exception handling on connect errors
+
+2005-02-25  Chris Wilson 
+
+	* Makefile.in, aclocal.m4, config.h.in: 
+	* Makefile.in aclocal.m4 config.h.in
+	- removed auto-generated files
+
+	* ltmain.sh: 
+	*** empty log message ***
+
+	* src/Makefile.in, src/main.cc: 
+	* main.cc
+	- show exclude entry in text box when selected from list
+	
+	* Makefile.in
+	- removed auto-generated file
+
+	* src/main.cc: 
+	* main.cc
+	- Use new MyExcludeEntry class everywhere. Excludes should now work properly!
+
+	* src/main.cc: 
+	* main.cc
+	Changed exclude entry type control to a drop-down list
+
+2005-02-24  Chris Wilson 
+
+	* README: 
+	* README
+	- improved layout
+
+2005-02-23  Chris Wilson 
+
+	* COPYING: 
+	* COPYING
+	- Added a note about the boxbackup license
+
+	* Makefile.in, boxi.prj, configure.in, 
+	  ltmain.sh: 
+	* Makefile.in
+	- ltmain.sh no longer generated - why?
+	
+	* boxi.prj configure.in
+	- abort if any part of building boxbackup fails
+	
+	* ltmain.sh
+	- added a file which is needed to build but no longer auto-generated
+
+	* README: 
+	* README
+	- Added some useful general information about Boxi
+
+	* boxbackup-0.09.tgz: 
+	New file.
+
+	* boxbackup.patch: 
+	New file.
+
+	* boxi.prj: 
+	* boxi.prj
+	- build up to two files at once
+	- don't keep going on build failure
+
+	* makebuildenv.pl: 
+	* makebuildenv.pl
+	- not needed any more
+
+	* src/main.cc: 
+	* main.cc
+	- Added a new class to represent exclusions (not used yet)
+
+	* src/main.cc: 
+	* main.cc
+	- Added a header to describe the source code file and its license
+	- Parse the command line for the name of the client config file
+
+	* src/main.cc: 
+	* main.cc
+	- Added attribution to Ben Summers
+
+2005-02-22  Chris Wilson 
+
+	* src/main.cc: 
+	* main.cc
+	- Removed comments (again?)
+	- Made AddParam a global function, so that it can work on both ClientInfoPanel and BackupLocationsPanel
+	- Removed unneeded pointers from ClientInfoPanel
+	- Split backup location settings into a new panel, BackupLocationsPanel, and added to tab bar
+	- Added buttons for actions on the exlude list. Not working yet
+	- Removed status bar, not used
+
+2005-02-21  Chris Wilson 
+
+	* src/main.cc: 
+	* main.cc
+	- made more things private that should be private (need to know)
+	- display list of exceptions in theExceptionList when a location is selected
+
+	* src/main.cc: 
+	* main.cc
+	- reorganised headers, removed some that weren't needed any more
+	- added storage and retrieval of config file name from ClientConfig
+	- added a method to retrieve backup locations from ClientConfig
+	- ScanChildrenAndList needed more space for all Boxbackup flags
+	- removed old code from ScanChildrenAndList, it's in CVS if u need it :-)
+	- added more client IDs
+	- added a custom ExcludeList class, as Box hides the contents of the list (bah!)
+	- added a Location class to store information about backup locations
+	- added backup config controls to ClientInfoPanel
+	- abstracted four-step process of creating these controls into AddParam method
+	- display backup locations in a wxListCtrl
+
+2005-02-16  Chris Wilson 
+
+	* ABOUT-NLS, AUTHORS, COPYING, ChangeLog, 
+	  Makefile.am, Makefile.in, NEWS, README, 
+	  TODO, acconfig.h, acinclude.m4, 
+	  aclocal.m4, autogen.sh, boxi.prj, 
+	  config.guess, config.h.in, config.sub, 
+	  configure, configure.in, depcomp, 
+	  docs/.status_protocol.txt.swp, 
+	  docs/accounts.html, docs/bbackupctl.html, 
+	  docs/client.html, docs/index.html, 
+	  docs/install.html, docs/license.html, 
+	  docs/nonroot.html, docs/restore.html, 
+	  docs/retrieve.html, docs/server.html, 
+	  docs/serverfix.html, docs/space.html, 
+	  docs/status_protocol.txt, 
+	  docs/trouble.html, install-sh, 
+	  intl/ChangeLog, intl/Makefile.in, 
+	  intl/VERSION, intl/bindtextdom.c, 
+	  intl/config.charset, intl/dcgettext.c, 
+	  intl/dcigettext.c, intl/dcngettext.c, 
+	  intl/dgettext.c, intl/dngettext.c, 
+	  intl/explodename.c, intl/finddomain.c, 
+	  intl/gettext.c, intl/gettext.h, 
+	  intl/gettextP.h, intl/hash-string.h, 
+	  intl/intl-compat.c, intl/l10nflist.c, 
+	  intl/libgettext.h, intl/libgnuintl.h, 
+	  intl/loadinfo.h, intl/loadmsgcat.c, 
+	  intl/localcharset.c, intl/locale.alias, 
+	  intl/localealias.c, intl/ngettext.c, 
+	  intl/plural.c, intl/plural.y, 
+	  intl/ref-add.sin, intl/ref-del.sin, 
+	  intl/textdomain.c, ltmain.sh, 
+	  m4/codeset.m4, m4/gettext.m4, 
+	  m4/glibc21.m4, m4/iconv.m4, 
+	  m4/isc-posix.m4, m4/lcmessage.m4, 
+	  m4/progtest.m4, makebuildenv.pl, missing, 
+	  mkinstalldirs, po/ChangeLog, 
+	  po/Makefile.in.in, po/POTFILES.in, 
+	  setup-gettext, src/Makefile.am, 
+	  src/Makefile.in, src/main.cc, 
+	  src/socketlisten.pl, src/test.cc, 
+	  stamp-h.in: 
+	branches:  1.1.1;
+	Initial revision
+
+	* ABOUT-NLS, AUTHORS, COPYING, ChangeLog, 
+	  Makefile.am, Makefile.in, NEWS, README, 
+	  TODO, acconfig.h, acinclude.m4, 
+	  aclocal.m4, autogen.sh, boxi.prj, 
+	  config.guess, config.h.in, config.sub, 
+	  configure, configure.in, depcomp, 
+	  docs/.status_protocol.txt.swp, 
+	  docs/accounts.html, docs/bbackupctl.html, 
+	  docs/client.html, docs/index.html, 
+	  docs/install.html, docs/license.html, 
+	  docs/nonroot.html, docs/restore.html, 
+	  docs/retrieve.html, docs/server.html, 
+	  docs/serverfix.html, docs/space.html, 
+	  docs/status_protocol.txt, 
+	  docs/trouble.html, install-sh, 
+	  intl/ChangeLog, intl/Makefile.in, 
+	  intl/VERSION, intl/bindtextdom.c, 
+	  intl/config.charset, intl/dcgettext.c, 
+	  intl/dcigettext.c, intl/dcngettext.c, 
+	  intl/dgettext.c, intl/dngettext.c, 
+	  intl/explodename.c, intl/finddomain.c, 
+	  intl/gettext.c, intl/gettext.h, 
+	  intl/gettextP.h, intl/hash-string.h, 
+	  intl/intl-compat.c, intl/l10nflist.c, 
+	  intl/libgettext.h, intl/libgnuintl.h, 
+	  intl/loadinfo.h, intl/loadmsgcat.c, 
+	  intl/localcharset.c, intl/locale.alias, 
+	  intl/localealias.c, intl/ngettext.c, 
+	  intl/plural.c, intl/plural.y, 
+	  intl/ref-add.sin, intl/ref-del.sin, 
+	  intl/textdomain.c, ltmain.sh, 
+	  m4/codeset.m4, m4/gettext.m4, 
+	  m4/glibc21.m4, m4/iconv.m4, 
+	  m4/isc-posix.m4, m4/lcmessage.m4, 
+	  m4/progtest.m4, makebuildenv.pl, missing, 
+	  mkinstalldirs, po/ChangeLog, 
+	  po/Makefile.in.in, po/POTFILES.in, 
+	  setup-gettext, src/Makefile.am, 
+	  src/Makefile.in, src/main.cc, 
+	  src/socketlisten.pl, src/test.cc, 
+	  stamp-h.in: 
+	New file.
+
+	* INSTALL, Makefile.am, boxi.prj, 
+	  configure, configure.in, ltmain.sh: 
+	* Makefile.am boxi.prj configure.in
+	- Changed to relative paths
+	- Changed location of boxbackup
+	- Cleaned for release
+	- Made to build again :-)
+	
+	* INSTALL
+	- added a copy from GNU automake 1.7
+	
+	* configure ltmain.sh
+	- Removed these auto-generated files
+
+	* src/Makefile.am, src/Makefile.in, 
+	  src/main.cc: 
+	* Makefile.am Makefile.in main.cc
+	- Converted to relative paths
+	- Made it build properly again
+

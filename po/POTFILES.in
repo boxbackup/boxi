@@ -1,0 +1,35 @@
+# List of source files containing translatable strings.
+
+## Created by Anjuta - will be overwritten
+## If you don't want it to overwrite it,
+## 	Please disable it in the Anjuta project configuration
+
+# Source files
+src/main.cc
+src/ServerFilesPanel.cc
+src/ClientConfig.cc
+src/Location.cc
+src/ClientInfoPanel.cc
+src/BackupFilesPanel.cc
+src/BackupLocationsPanel.cc
+src/Restore.cc
+src/cross16.png.c
+src/tick16.png.c
+src/ServerConnection.cc
+src/equal16.png.c
+src/hourglass16.png.c
+src/notequal16.png.c
+src/sametime16.png.c
+src/unknown16.png.c
+src/oldfile16.png.c
+src/exclam16.png.c
+src/partial16.png.c
+src/folder16.png.c
+src/alien16.png.c
+src/BackupDaemonPanel.cc
+src/ClientConnection.cc
+src/cross16a.png.c
+src/tick16a.png.c
+src/ComparePanel.cc
+
+
