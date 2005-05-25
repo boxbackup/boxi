@@ -34,10 +34,12 @@ rm -rf boxbackup-0.09 boxbackup
 
 ./make-image-headers.pl || abort "compiling image files failed"
 NOCONFIGURE=1 ./autogen.sh || abort "autogen.sh failed"
-pod2html README -t "Boxi README" --noindex > README.html
-pod2text README                            > README.txt
+cd docs
+pod2html README.pod -t "Boxi README" --noindex > README.html
+pod2text README.pod                            > README.txt
 rm -f pod2htm*.tmp
-cp README.html ..
+cp README.html ../..
+cd ..
 
 rm -rf autom4te.cache acinclude.m4
 mkdir -p test/clientdata
