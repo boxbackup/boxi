@@ -87,6 +87,9 @@ enum {
 	ID_Daemon_Restart,
 	ID_Daemon_Reload,
 	ID_Daemon_Sync,
+	
+	ID_Compare_List,
+	ID_Compare_Button,
 };
 
 void AddParam(wxPanel* panel, const char* label, wxWindow* editor, 

@@ -47,6 +47,10 @@ class ComparePanel : public wxPanel {
 	private:
 	ClientConfig*     mpConfig;
 	ServerConnection* mpServerConnection;
+	wxListCtrl*       mpCompareList;
+	wxTextCtrl*       mpCompareThreadStateCtrl;
+
+	void UpdateCompareThreadStateCtrl();
 	
 	DECLARE_EVENT_TABLE()
 };
