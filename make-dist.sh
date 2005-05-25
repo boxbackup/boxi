@@ -1,5 +1,7 @@
 #!/bin/sh
 
+CVSROOT=:ext:gcc@cvs.sourceforge.net:/cvsroot/boxi
+
 abort() {
 	echo "$*"
 	exit 1
@@ -12,14 +14,10 @@ fi
 
 [ -d "boxi-$1" ] && abort "boxi-$1 already exists"
 
-cvs -q -d :pserver:chris@gcc.flexdns.net:/home/cvs/root \
-	co -r $2 -d boxi-$1 boxi \
+cvs -q -d $CVSROOT co -r $2 -d boxi-$1 boxi \
 || abort "Failed to check out boxi $2 from repository"
 
 cd boxi-$1 || abort "version directory missing"
-
-cvs -q -d :pserver:chris@gcc.flexdns.net:/home/cvs/root co -r $2 boxbackup \
-|| abort "Failed to check out boxbackup $2 from repository"
 
 tar xzvf boxbackup-0.09.tgz \
 || abort "Failed to extract BoxBackup 0.09 pristine sources"

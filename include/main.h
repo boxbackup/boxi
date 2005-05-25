@@ -27,7 +27,7 @@
 
 #include <wx/wx.h>
 
-#define BOXI_VERSION "0.0.7"
+#define BOXI_VERSION "0.1.0"
 
 // Define these four macros (STR_PROP, STR_PROP_SUBCONF, INT_PROP and BOOL_PROP)
 // and then use the ALL_PROPS macro, to insert code for every configuration 
