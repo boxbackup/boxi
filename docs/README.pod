@@ -73,25 +73,27 @@ The latest stable version of Boxi is 0.1.0.
 
 =over
 
-=item Source code
+=item Source code for all platforms (version 0.1.0)
 
-L<http://www.qwirx.com/boxi/boxi-0.1.0.tar.gz>
+L<http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz?download>
 
-=item Compiled executable for Windows (Cygwin) (version 0.0.7)
+=item Compiled executable for Windows/Cygwin (version 0.0.7)
 
-L<http://www.qwirx.com/boxi/boxi-0_0_7.zip>
+L<http://prdownloads.sourceforge.net/boxi/boxi-0_0_7.zip?download>
+
+=item Latest source code from CVS
+
+The latest source code is experimental, a work in progress, and not guaranteed
+to compile or run on any system. Your mileage may vary. You can get it from
+Sourceforge's CVS server:
+
+ cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/boxi login 
+ 
+ cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/boxi co -P boxi
+
+L<http://sourceforge.net/cvs/?group_id=135105>
 
 =back
-
-You can get the latest CVS source code (experimental, not guaranteed
-to compile or run on any system, YYMV) from Sourceforge:
-
-	cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/boxi login 
- 
-	cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/boxi \
-		co -P boxi
-
-	[http://sourceforge.net/cvs/?group_id=135105]
 
 =head2 Compiling
 
@@ -158,9 +160,9 @@ one day).
 
 =over
 
-=item Version 0.1.0 (released 2005-05-25)
+=item Version 0.1.0 (released 2005-05-26)
 
-L<http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz>
+L<http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz?download>
 
 Commemorates the release of public CVS, and interest of other developers
 in joining in the project, with a minor version number increase. 
@@ -301,6 +303,10 @@ Contains a copy of Box Backup by Ben Summers, which is separately licensed
 under a license very similar to the BSD license, which can be seen at
 L<http://www.fluffy.co.uk/boxbackup/license.html>. This component is NOT
 covered by the GPL.
+
+The file boxbackup.patch contains all the changes to Box Backup which
+are made by Boxi. That file is under the same license as Box Backup,
+i.e. a BSD-like license, and copyright assigned to Ben Summers.
 
 Portions of Boxi are copied, based on or inspired by Box Backup
 itself, and it is not possible to compile Boxi without linking to 
