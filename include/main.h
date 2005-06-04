@@ -59,6 +59,7 @@ enum {
 	#undef STR_PROP
 	#undef STR_PROP_SUBCONF
 
+	ID_Backup_Locations_Tree,
 	ID_Backup_LocationsAddButton,
 	ID_Backup_LocationsEditButton,
 	ID_Backup_LocationsDelButton,
