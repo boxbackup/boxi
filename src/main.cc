@@ -123,7 +123,7 @@ MainFrame::MainFrame(
 		mpConfig,
 		theTopNotebook, 
 		ID_Client_Panel);
-	theTopNotebook->AddPage(theClientPanel, "Configuration");
+	theTopNotebook->AddPage(theClientPanel, "Settings");
 
 	wxPanel* pBackupDaemonPanel = new BackupDaemonPanel(
 		mpConfig,
@@ -136,22 +136,24 @@ MainFrame::MainFrame(
 		mpConfig,
 		theTopNotebook, 
 		ID_Client_Panel);
-	theTopNotebook->AddPage(theLocationsPanel, "Locations");
+	theTopNotebook->AddPage(theLocationsPanel, "Backup");
 
+	/*
 	theBackupFilesPanel = new BackupFilesPanel(
 		mpConfig,
 		mpServerConnection,
 		theTopNotebook, 
 		ID_Backup_Files_Panel);
 	theTopNotebook->AddPage(theBackupFilesPanel, "Local Files");
-
+	*/
+	
 	theServerFilesPanel = new ServerFilesPanel(
 		mpConfig,
 		mpServerConnection, 
 		theTopNotebook, 
 		mpStatusBar, 
 		ID_Backup_Files_Panel);
-	theTopNotebook->AddPage(theServerFilesPanel, "Server Files");
+	theTopNotebook->AddPage(theServerFilesPanel, "Restore");
 	
 	wxMenu *menuFile = new wxMenu;
 	menuFile->Append(ID_File_New,  "&New...\tCtrl-N", 
