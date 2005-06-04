@@ -21,10 +21,357 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
-#include "BackupLocationsPanel.h"
 
+#include <regex.h>
+
+#include <wx/dir.h>
+#include <wx/filename.h>
+#include <wx/mstream.h>
+#include <wx/splitter.h>
+#include <wx/treectrl.h>
+
+#include "BackupLocationsPanel.h"
+#include "StaticImage.h"
+
+void BackupTreeNode::AddChildren() {
+	mpTreeCtrl->SetCursor(*wxHOURGLASS_CURSOR);
+	wxSafeYield();
+	
+	try {
+		_AddChildrenSlow(false);
+	} catch (std::exception& e) {
+		mpTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
+		throw(e);
+	}
+	
+	mpTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
+}
+
+void BackupTreeNode::_AddChildrenSlow(bool recursive) 
+{
+	wxDir dir(mFullPath);
+	
+	if ( !dir.IsOpened() )
+    {
+        // wxDir would already show an error message explaining the 
+		// exact reason of the failure, and the user can always click [+]
+		// another time :-)
+        return;
+    }
+
+	// delete any existing children of the parent
+	mpTreeCtrl->DeleteChildren(mTreeId);
+	
+	/*
+	// update the exclude status of this node 
+	// and its parents, just once for efficiency (!)
+	this->UpdateExcludedState(TRUE);
+	*/
+	
+	wxString theCurrentFileName;
+	
+	bool cont = dir.GetFirst(&theCurrentFileName);
+	while ( cont )
+	{
+		wxFileName fileNameObject = wxFileName(mFullPath, theCurrentFileName);
+
+		// add to the tree
+		BackupTreeNode *newNode = new BackupTreeNode(
+			this, fileNameObject.GetFullPath()
+		);
+		newNode->SetTreeId(
+			mpTreeCtrl->AppendItem(this->mTreeId,
+				theCurrentFileName, -1, -1, newNode)
+			);
+		mpTreeCtrl->UpdateExcludedStateIcon(newNode, false);
+		
+		/*
+		newNode->mpTreeCtrl = this->mpTreeCtrl;
+		newNode->mpRootNode = this->mpRootNode;
+		newNode->mpParentNode = this;
+		newNode->mFileName = theCurrentFileName;
+		newNode->mpServerSettings  = mpServerSettings;
+		newNode->mpServerConnection = mpServerConnection;
+		*/
+		
+		if (newNode->IsDirectory())
+		{
+			if (recursive) {
+				newNode->_AddChildrenSlow(false);
+			} else {
+				mpTreeCtrl->SetItemHasChildren(newNode->GetTreeId(), TRUE);
+			}
+		}
+
+		cont = dir.GetNext(&theCurrentFileName);
+    }
+	
+	mpTreeCtrl->SortChildren(this->mTreeId);
+}
+
+void BackupTreeCtrl::UpdateExcludedStateIcon(
+	BackupTreeNode* pNode, bool updateParents) 
+{
+	int iconId = mEmptyImageId;
+	pNode->UpdateExcludedState(updateParents);
+	BackupTreeNode* pParent = pNode->GetParentNode();
+	
+	if (pNode->GetIncludedBy() != NULL)
+	{
+		if (pParent && pNode->GetIncludedBy() == pParent->GetIncludedBy())
+			iconId = mAlwaysGreyImageId;
+		else
+			iconId = mAlwaysImageId;
+	}
+	else if (pNode->GetExcludedBy() != NULL)
+	{
+		if (pParent && pNode->GetExcludedBy() == pParent->GetExcludedBy())
+			iconId = mCrossedGreyImageId;
+		else
+			iconId = mCrossedImageId;
+	}
+	else if (pNode->GetLocation() != NULL)
+	{
+		if (pParent && pNode->GetLocation() == pParent->GetLocation())
+			iconId = mCheckedGreyImageId;
+		else
+			iconId = mCheckedImageId;
+	}
+	SetItemImage(pNode->GetTreeId(), iconId, wxTreeItemIcon_Normal);
+}
+
+void BackupTreeNode::UpdateExcludedState(bool updateParents) 
+{
+	if (updateParents && mpParentNode != NULL)
+		mpParentNode->UpdateExcludedState(TRUE);
+	
+	// by default, inherit our include/exclude state
+	// from our parent node, if we have one
+	
+	if (mpParentNode) {
+		mpLocation = mpParentNode->mpLocation;
+		mpExcludedBy = mpParentNode->mpExcludedBy;
+		mpIncludedBy = mpParentNode->mpIncludedBy;
+	} else {
+		mpLocation    = NULL;
+		mpExcludedBy  = NULL;
+		mpIncludedBy  = NULL;
+	}
+		
+	const std::vector<Location*>& rLocations = 
+		mpConfig->GetLocations();
+
+	if (!mpLocation) {
+		// determine whether or not this node's path
+		// is inside a backup location.
+	
+		for (size_t i = 0; i < rLocations.size(); i++) {
+			Location* pLoc = rLocations[i];
+			const wxString& rPath = pLoc->GetPath();
+			// std::cout << "Compare " << mFullPath 
+			//	<< " against " << rPath << "\n";
+			if (mFullPath.CompareTo(rPath) == 0) {
+				// std::cout << "Found location: " << pLoc->GetName() << "\n";
+				mpLocation = pLoc;
+				break;
+			}
+		}
+		
+		// if this node doesn't belong to a location, then by definition
+		// our parent node doesn't have one either, so the inherited
+		// values are fine, leave them alone.
+		
+		if (!mpLocation)
+			return;
+	}
+	
+	if (!(mFullPath.StartsWith(mpLocation->GetPath().c_str())))
+	{
+		wxMessageBox("Full path does not start with location path!",
+			"Boxi Error", wxOK | wxICON_ERROR, NULL);
+	}
+		
+	wxLogDebug("Checking %s against exclude list for %s",
+		mFullPath.c_str(), mpLocation->GetPath().c_str());
+
+	const std::vector<MyExcludeEntry*>& rExcludeList =
+		mpLocation->GetExcludeList().GetEntries();
+	
+	// on pass 1, remove Excluded files
+	// on pass 2, re-add AlwaysInclude files
+	
+	for (int pass = 1; pass <= 2; pass++) {
+		wxLogDebug(" pass %d", pass);
+		
+		// std::cout << "Pass " << pass << "\n";
+
+		if (pass == 1 && !mpLocation) {
+			// not included, so don't bother checking the Exclude entries
+			continue;
+		} else if (pass == 2 && !mpExcludedBy) {
+			// not excluded, so don't bother checking the AlwaysInclude entries
+			continue;
+		}
+		
+		for (size_t i = 0; i < rExcludeList.size(); i++) {
+			MyExcludeEntry* pExclude = rExcludeList[i];
+			ExcludeMatch match = pExclude->GetMatch();
+			std::string  value = pExclude->GetValue();
+			bool matched = false;
+			
+			wxLogDebug("  checking against %s",
+				pExclude->ToString().c_str());
+			
+			ExcludeSense sense = pExclude->GetSense();
+			if (pass == 1 && sense != ES_EXCLUDE) {
+				wxLogDebug("   not an Exclude entry");
+				continue;
+			}
+			if (pass == 2 && sense != ES_ALWAYSINCLUDE) {
+				wxLogDebug("   not an AlwaysInclude entry");
+				continue;
+			}
+			
+			ExcludeFileDir fileOrDir = pExclude->GetFileDir();
+			if (fileOrDir == EFD_FILE && mIsDirectory) {
+				wxLogDebug("   doesn't match directories");
+				continue;
+			}
+			if (fileOrDir == EFD_DIR && !mIsDirectory) {
+				wxLogDebug("   doesn't match files");
+				continue;
+			}
+			
+			if (match == EM_EXACT) {
+				if (mFullPath.CompareTo(value.c_str()) == 0) {
+					matched = true;
+				}
+			} else if (match == EM_REGEX) {
+				std::auto_ptr<regex_t> apr = 
+					std::auto_ptr<regex_t>(new regex_t);
+				if (::regcomp(apr.get(), value.c_str(),
+					REG_EXTENDED | REG_NOSUB) != 0) 
+				{
+					wxLogError("Regular expression "
+						"compile failed (%s)",
+						value.c_str());
+				}
+				else
+				{
+					matched = ( regexec(apr.get(), 
+							mFullPath.c_str(),
+							0, 0, 0)
+						    == 0 );
+				}
+			}
+			
+			if (!matched) {
+				wxLogDebug("   no match.");
+				// std::cout << "No match.\n";
+				continue;
+			}
+
+			wxLogDebug("   matched!");
+			
+			// std::cout << "Matched!\n";
+			
+			if (sense == ES_EXCLUDE) {
+				mpExcludedBy = pExclude;
+			} else if (sense == ES_ALWAYSINCLUDE) {
+				mpIncludedBy = pExclude;
+			}
+		}
+	}
+}
+
+static int AddImage(
+	const struct StaticImage & rImageData, 
+	wxImageList & rImageList)
+{
+	wxMemoryInputStream byteStream(rImageData.data, rImageData.size);
+	wxImage img(byteStream, wxBITMAP_TYPE_PNG);
+	return rImageList.Add(img);
+}
+
+BackupTreeCtrl::BackupTreeCtrl(
+	ClientConfig* pConfig,
+	wxWindow* parent, 
+	wxWindowID id, 
+	const wxPoint& pos, 
+	const wxSize& size, 
+	long style, 
+	const wxValidator& validator, 
+	const wxString& name
+)
+: wxTreeCtrl(parent, id, pos, size, style, validator, name)
+{
+	wxTreeItemId lRootId;
+	BackupTreeNode *pRootNode;
+	
+	{
+		wxString lFullPath;
+		
+		#ifdef __CYGWIN__
+		lFullPath = "c:\\";
+		#else
+		lFullPath = "/";
+		#endif
+		
+		pRootNode = new BackupTreeNode(this, pConfig, lFullPath);
+
+		wxString lRootName;
+		lRootName.Printf("%s (local root)", lFullPath.c_str());
+	
+		lRootId = AddRoot(lRootName, -1, -1, pRootNode);
+		pRootNode->SetTreeId(lRootId);
+		SetItemHasChildren(lRootId, TRUE);
+	}
+	
+	mEmptyImageId        = AddImage(empty16_png,     mImages);
+	mCheckedImageId      = AddImage(tick16_png,      mImages);
+	mCheckedGreyImageId  = AddImage(tickgrey16_png,  mImages);
+	mCrossedImageId      = AddImage(cross16_png,     mImages);
+	mCrossedGreyImageId  = AddImage(crossgrey16_png, mImages);
+	mAlwaysImageId       = AddImage(plus16_png,      mImages);
+	mAlwaysGreyImageId   = AddImage(plusgrey16_png,  mImages);
+
+	SetImageList(&mImages);
+	UpdateExcludedStateIcon(pRootNode, false);
+}
+
+int BackupTreeCtrl::OnCompareItems(
+	const wxTreeItemId& item1, 
+	const wxTreeItemId& item2)
+{
+	BackupTreeNode *pNode1 = (BackupTreeNode*)GetItemData(item1);
+	BackupTreeNode *pNode2 = (BackupTreeNode*)GetItemData(item2);
+
+	{
+		bool dir1 = pNode1->IsDirectory();
+		bool dir2 = pNode2->IsDirectory();
+		
+		if ( dir1 && !dir2 )
+		{
+			return -1;
+		}
+		
+		if ( dir2 && !dir1 ) 
+		{
+			return 1;
+		}
+	}
+	
+	wxString name1 = pNode1->GetFileName().GetFullPath();
+	wxString name2 = pNode2->GetFileName().GetFullPath();
+	
+	return name1.CompareTo(name2);
+}
+	
 BEGIN_EVENT_TABLE(BackupLocationsPanel, wxPanel)
+	EVT_TREE_ITEM_EXPANDING(ID_Backup_Locations_Tree, 
+		BackupLocationsPanel::OnTreeNodeExpand)
+	EVT_TREE_ITEM_COLLAPSING(ID_Backup_Locations_Tree, 
+		BackupLocationsPanel::OnTreeNodeCollapse)
 	EVT_LIST_ITEM_SELECTED(ID_Backup_LocationsList, 
 		BackupLocationsPanel::OnBackupLocationClick)
 	EVT_LIST_ITEM_SELECTED(ID_BackupLoc_ExcludeList, 
@@ -57,16 +404,29 @@ BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
 	long style, const wxString& name)
 	: wxPanel(parent, id, pos, size, style, name)
 {
-	theConfig = config;
-	theConfig->AddListener(this);
-	
+	mpConfig = config;
+	mpConfig->AddListener(this);
+
 	wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
+
+	wxSplitterWindow *pSplitter = new wxSplitterWindow(this, -1);
+	topSizer->Add(pSplitter, 1, wxGROW | wxALL, 8);
+
+	mpTree = new BackupTreeCtrl(mpConfig, pSplitter, ID_Backup_Locations_Tree, 
+		wxDefaultPosition, wxDefaultSize, wxTR_HAS_BUTTONS);
+	
+	wxPanel*    pRightPanel = new wxPanel(pSplitter);
+	
+	pSplitter->SplitVertically(mpTree, pRightPanel, 300);
+	
+	wxBoxSizer* pRightSizer = new wxBoxSizer( wxVERTICAL );
+	pRightPanel->SetSizer(pRightSizer);
 	
 	theLocationList = new wxListCtrl(
-		this, ID_Backup_LocationsList,
+		pRightPanel, ID_Backup_LocationsList,
 		wxDefaultPosition, wxDefaultSize, 
 		wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_VRULES | wxLC_HRULES);
-	topSizer->Add(theLocationList, 1, 
+	pRightSizer->Add(theLocationList, 1, 
 		wxGROW | wxLEFT | wxTOP | wxRIGHT | wxBOTTOM, 8);
 
 	wxListItem itemCol;
@@ -80,37 +440,43 @@ BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
 	theLocationList->InsertColumn(2, itemCol);
 
 	wxSizer *theLocationCmdSizer = new wxGridSizer( 1, 0, 4, 4 );
-	topSizer->Add(theLocationCmdSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	pRightSizer->Add(theLocationCmdSizer, 0, 
+		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
-	theLocationAddBtn = new wxButton(this, ID_Backup_LocationsAddButton, "Add", 
-		wxDefaultPosition);
+	theLocationAddBtn = new wxButton(pRightPanel, 
+		ID_Backup_LocationsAddButton, "Add", wxDefaultPosition);
 	theLocationCmdSizer->Add(theLocationAddBtn, 1, wxGROW, 0);
 	theLocationAddBtn->Disable();
 	
-	theLocationEditBtn = new wxButton(this, ID_Backup_LocationsEditButton, "Edit", 
-		wxDefaultPosition);
+	theLocationEditBtn = new wxButton(pRightPanel, 
+		ID_Backup_LocationsEditButton, "Edit", wxDefaultPosition);
 	theLocationCmdSizer->Add(theLocationEditBtn, 1, wxGROW, 0);
 	theLocationEditBtn->Disable();
 	
-	theLocationRemoveBtn = new wxButton(this, ID_Backup_LocationsDelButton, "Remove", 
-		wxDefaultPosition);
+	theLocationRemoveBtn = new wxButton(pRightPanel, 
+		ID_Backup_LocationsDelButton, "Remove", wxDefaultPosition);
 	theLocationCmdSizer->Add(theLocationRemoveBtn, 1, wxGROW, 0);
 	theLocationRemoveBtn->Disable();
 
 	wxGridSizer *theLocParamSizer = new wxGridSizer(2, 4, 4);
-	topSizer->Add(theLocParamSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	pRightSizer->Add(theLocParamSizer, 0, 
+		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
-	theLocationNameCtrl = new wxTextCtrl(this, ID_Backup_LocationNameCtrl, "");
-	AddParam(this, "Location Name:", theLocationNameCtrl, true, theLocParamSizer);
+	theLocationNameCtrl = new wxTextCtrl(pRightPanel, 
+		ID_Backup_LocationNameCtrl, "");
+	AddParam(pRightPanel, "Location Name:", theLocationNameCtrl, 
+		true, theLocParamSizer);
 		
-	theLocationPathCtrl = new wxTextCtrl(this, ID_Backup_LocationPathCtrl, "");
-	AddParam(this, "Location Path:", theLocationPathCtrl, true, theLocParamSizer);
+	theLocationPathCtrl = new wxTextCtrl(pRightPanel, 
+		ID_Backup_LocationPathCtrl, "");
+	AddParam(pRightPanel, "Location Path:", theLocationPathCtrl, 
+		true, theLocParamSizer);
 		
 	theExclusionList = new wxListCtrl(
-		this, ID_BackupLoc_ExcludeList,
+		pRightPanel, ID_BackupLoc_ExcludeList,
 		wxDefaultPosition, wxDefaultSize, 
 		wxLC_REPORT | wxLC_VRULES | wxLC_HRULES);
-	topSizer->Add(theExclusionList, 1, 
+	pRightSizer->Add(theExclusionList, 1, 
 		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	itemCol.m_text = _T("Type");
@@ -122,36 +488,36 @@ BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
     	theExclusionList->SetColumnWidth( i, wxLIST_AUTOSIZE_USEHEADER );
 	
 	wxGridSizer *theExcludeParamSizer = new wxGridSizer(2, 4, 4);
-	topSizer->Add(theExcludeParamSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	pRightSizer->Add(theExcludeParamSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	wxString excludeTypes[sizeof(theExcludeTypes) / sizeof(theExcludeTypes[0])];
 	for (size_t i = 0; i < sizeof(theExcludeTypes) / sizeof(theExcludeTypes[0]); i++) {
 		excludeTypes[i] = wxString(theExcludeTypes[i].ToString().c_str());
 	}
 	
-	theExcludeTypeCtrl = new wxChoice(this, ID_BackupLoc_ExcludeTypeList, 
+	theExcludeTypeCtrl = new wxChoice(pRightPanel, ID_BackupLoc_ExcludeTypeList, 
 		wxDefaultPosition, wxDefaultSize, 8, excludeTypes);
-	AddParam(this, "Exclude Type:", theExcludeTypeCtrl, true, 
+	AddParam(pRightPanel, "Exclude Type:", theExcludeTypeCtrl, true, 
 		theExcludeParamSizer);
 		
-	theExcludePathCtrl = new wxTextCtrl(this, ID_BackupLoc_ExcludePathCtrl, "");
-	AddParam(this, "Exclude Path:", theExcludePathCtrl, true, 
+	theExcludePathCtrl = new wxTextCtrl(pRightPanel, ID_BackupLoc_ExcludePathCtrl, "");
+	AddParam(pRightPanel, "Exclude Path:", theExcludePathCtrl, true, 
 		theExcludeParamSizer);
 
 	wxSizer *theExcludeCmdSizer = new wxGridSizer( 1, 0, 4, 4 );
-	topSizer->Add(theExcludeCmdSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	pRightSizer->Add(theExcludeCmdSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	theExcludeAddBtn = new wxButton(this, ID_BackupLoc_ExcludeAddButton, 
+	theExcludeAddBtn = new wxButton(pRightPanel, ID_BackupLoc_ExcludeAddButton, 
 		"Add", wxDefaultPosition);
 	theExcludeAddBtn->Disable();
 	theExcludeCmdSizer->Add(theExcludeAddBtn, 1, wxGROW, 0);
 	
-	theExcludeEditBtn = new wxButton(this, ID_BackupLoc_ExcludeEditButton, 
+	theExcludeEditBtn = new wxButton(pRightPanel, ID_BackupLoc_ExcludeEditButton, 
 		"Edit", wxDefaultPosition);
 	theExcludeEditBtn->Disable();
 	theExcludeCmdSizer->Add(theExcludeEditBtn, 1, wxGROW, 0);
 
-	theExcludeRemoveBtn = new wxButton(this, ID_BackupLoc_ExcludeRemoveButton, 
+	theExcludeRemoveBtn = new wxButton(pRightPanel, ID_BackupLoc_ExcludeRemoveButton, 
 		"Remove", wxDefaultPosition);
 	theExcludeRemoveBtn->Disable();
 	theExcludeCmdSizer->Add(theExcludeRemoveBtn, 1, wxGROW, 0);
@@ -160,15 +526,15 @@ BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
 	topSizer->SetSizeHints( this );
 	
 	theSelectedLocation = 0;
-	NotifyChange();	
+	NotifyChange();
 }
 
 void BackupLocationsPanel::OnBackupLocationClick(wxListEvent &event) {
 	theSelectedLocation = event.GetIndex();
-	Location* pLoc = theConfig->GetLocations()[theSelectedLocation];
+	Location* pLoc = mpConfig->GetLocations()[theSelectedLocation];
 	theLocationNameCtrl->SetValue(pLoc->GetName());
 	theLocationPathCtrl->SetValue(pLoc->GetPath());
-	theConfig->NotifyListeners();
+	mpConfig->NotifyListeners();
 }
 
 void BackupLocationsPanel::PopulateLocationList() {
@@ -181,7 +547,7 @@ void BackupLocationsPanel::PopulateLocationList() {
 	}
 	
 	theLocationList->DeleteAllItems();
-	const std::vector<Location*>& rLocs = theConfig->GetLocations();
+	const std::vector<Location*>& rLocs = mpConfig->GetLocations();
 	
 	for (size_t i = 0; i < rLocs.size(); i++) {
 		Location* pLoc = rLocs[i];
@@ -205,10 +571,10 @@ void BackupLocationsPanel::PopulateLocationList() {
 		theLocationList->SetItemData(item, (long)pLoc);
 		
 		if (pLoc == pSelectedLoc) {
-			theConfig->RemoveListener(this);
+			mpConfig->RemoveListener(this);
 			theLocationList->SetItemState(item, wxLIST_STATE_SELECTED,
 				wxLIST_STATE_SELECTED);
-			theConfig->AddListener(this);
+			mpConfig->AddListener(this);
 		}
 	}
 
@@ -217,12 +583,12 @@ void BackupLocationsPanel::PopulateLocationList() {
 }
 
 void BackupLocationsPanel::PopulateExclusionList() {
-	if (theSelectedLocation >= theConfig->GetLocations().size())
+	if (theSelectedLocation >= mpConfig->GetLocations().size())
 		return;
 	
 	theExclusionList->DeleteAllItems();
 
-	Location* pLoc = theConfig->GetLocations()[theSelectedLocation];
+	Location* pLoc = mpConfig->GetLocations()[theSelectedLocation];
 	const std::vector<MyExcludeEntry*>& rEntries = 
 		pLoc->GetExcludeList().GetEntries();
 	
@@ -242,7 +608,7 @@ long BackupLocationsPanel::GetSelectedExcludeIndex() {
 }
 
 MyExcludeEntry* BackupLocationsPanel::GetExcludeEntry() {
-	Location* pLoc = theConfig->GetLocations()[theSelectedLocation];
+	Location* pLoc = mpConfig->GetLocations()[theSelectedLocation];
 	const std::vector<MyExcludeEntry*>& rEntries = 
 		pLoc->GetExcludeList().GetEntries();
 	return rEntries[GetSelectedExcludeIndex()];
@@ -275,7 +641,7 @@ void BackupLocationsPanel::OnExcludeTypeChoice(wxCommandEvent &event) {
 void BackupLocationsPanel::UpdateLocationCtrlEnabledState() {
 	wxTextCtrl* 	pNameCtrl 	= theLocationNameCtrl;
 	wxTextCtrl*		pPathCtrl 	= theLocationPathCtrl;
-	const std::vector<Location*>& rLocs = theConfig->GetLocations();
+	const std::vector<Location*>& rLocs = mpConfig->GetLocations();
 
 	// Enable the Add and Edit buttons if the current values don't match any
 	// existing entry, and the Remove button if they do match an existing entry
@@ -309,12 +675,12 @@ void BackupLocationsPanel::UpdateLocationCtrlEnabledState() {
 }
 
 void BackupLocationsPanel::UpdateExcludeCtrlEnabledState() {
-	if (theSelectedLocation >= theConfig->GetLocations().size())
+	if (theSelectedLocation >= mpConfig->GetLocations().size())
 		return;
 
 	wxChoice* 		pChoice 	= theExcludeTypeCtrl;
 	wxTextCtrl*		pTextCtrl 	= theExcludePathCtrl;
-	Location* 		pLoc 		= theConfig->GetLocations()[theSelectedLocation];
+	Location* 		pLoc 		= mpConfig->GetLocations()[theSelectedLocation];
 	MyExcludeList& 	rList		= pLoc->GetExcludeList();
 	std::vector<MyExcludeEntry*> rEntries = rList.GetEntries();
 	
@@ -364,7 +730,7 @@ const MyExcludeType* BackupLocationsPanel::GetExcludeTypeByName(
 }
 
 void BackupLocationsPanel::OnExcludeCmdClick(wxCommandEvent &event) {
-	Location* pLoc = theConfig->GetLocations()[theSelectedLocation];
+	Location* pLoc = mpConfig->GetLocations()[theSelectedLocation];
 	MyExcludeList& 	rList = pLoc->GetExcludeList();
 	
 	std::string theTypeName = theExcludeTypeCtrl->GetStringSelection().c_str();
@@ -391,13 +757,13 @@ void BackupLocationsPanel::OnExcludeCmdClick(wxCommandEvent &event) {
 		rList.RemoveEntry(selIndex);
 	}
 
-	theConfig->NotifyListeners();
+	mpConfig->NotifyListeners();
 }
 
 void BackupLocationsPanel::OnLocationCmdClick(wxCommandEvent &event)
 {
 	int sourceId = event.GetId();
-	Location* pCurrentLoc = theConfig->GetLocations()[theSelectedLocation];
+	Location* pCurrentLoc = mpConfig->GetLocations()[theSelectedLocation];
 	
 	if (sourceId == ID_Backup_LocationsAddButton) 
 	{
@@ -406,7 +772,7 @@ void BackupLocationsPanel::OnLocationCmdClick(wxCommandEvent &event)
 		MyExcludeList* pExcludeList = new MyExcludeList(
 			pCurrentLoc->GetExcludeList());
 		pNewLocation->SetExcludeList(pExcludeList);
-		theConfig->AddLocation(pNewLocation);
+		mpConfig->AddLocation(pNewLocation);
 	}
 	else if (sourceId == ID_Backup_LocationsEditButton)
 	{
@@ -415,10 +781,10 @@ void BackupLocationsPanel::OnLocationCmdClick(wxCommandEvent &event)
 	}
 	else if (sourceId == ID_Backup_LocationsDelButton)
 	{
-		theConfig->RemoveLocation(theSelectedLocation);
+		mpConfig->RemoveLocation(theSelectedLocation);
 	}
 	
-	theConfig->NotifyListeners();
+	mpConfig->NotifyListeners();
 }
 
 void BackupLocationsPanel::NotifyChange()
@@ -426,4 +792,18 @@ void BackupLocationsPanel::NotifyChange()
 	PopulateLocationList();
 	PopulateExclusionList();
 	UpdateExcludeCtrlEnabledState();
+}
+
+void BackupLocationsPanel::OnTreeNodeExpand(wxTreeEvent& event)
+{
+	wxTreeItemId item = event.GetItem();
+	BackupTreeNode *node = 
+		(BackupTreeNode *)(mpTree->GetItemData(item));
+	node->AddChildren();
+	mpTree->UpdateExcludedStateIcon(node, false);
+}
+
+void BackupLocationsPanel::OnTreeNodeCollapse(wxTreeEvent& event)
+{
+
 }
