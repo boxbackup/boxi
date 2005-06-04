@@ -48,16 +48,23 @@ enum ExcludeMatch {
 };
 
 class MyExcludeType {
+	private:
+
 	public:
 	MyExcludeType(ExcludeSense sense, ExcludeFileDir fileDir, 
 		ExcludeMatch match) 
 	{
-		this->mSense 		= sense;
-		this->mFileOrDir 	= fileDir;
-		this->mMatch 		= match;
+		mSense     = sense;
+		mFileOrDir = fileDir;
+		mMatch     = match;
 	}
 
-	public:
+	MyExcludeType(const MyExcludeType& rToCopy)
+	{
+		mSense     = rToCopy.mSense;
+		mFileOrDir = rToCopy.mFileOrDir;
+		mMatch     = rToCopy.mMatch;
+	}
 	
 	ExcludeSense GetSense() const { return mSense; }
 	const std::string GetSenseString() const {
@@ -127,8 +134,12 @@ class MyExcludeEntry {
 		this->mType  = type;
 		this->mValue = value;
 	}
-	
-	public:
+
+	MyExcludeEntry(const MyExcludeEntry& rToCopy)
+	{
+		this->mType  = rToCopy.mType;
+		this->mValue = rToCopy.mValue;
+	}
 	
 	ExcludeSense   GetSense()   const { return mType->GetSense(); }
 	ExcludeFileDir GetFileDir() const { return mType->GetFileDir(); }
@@ -167,6 +178,15 @@ class MyExcludeEntry {
 class MyExcludeList {
 	public:
 	MyExcludeList(const Configuration& conf);
+	MyExcludeList(const MyExcludeList& rToCopy)
+	{
+		for (size_t i = 0; i < rToCopy.mEntries.size(); i++) 
+		{
+			MyExcludeEntry* e = new MyExcludeEntry(*(rToCopy.mEntries[i]));
+			mEntries.push_back(e);
+		}
+	}
+	
 	const std::vector<MyExcludeEntry*>& GetEntries() const { return mEntries; }
 	void AddEntry(MyExcludeEntry* newEntry);
 	void ReplaceEntry(int index, MyExcludeEntry* newValues);
@@ -193,9 +213,15 @@ class MyExcludeList {
 class Location {
 	public:
 	Location(wxString Name, wxString Path) { 
-		this->mName = Name;
-		this->mPath = Path;
+		mName = Name;
+		mPath = Path;
 	}
+	Location(const Location& rToCopy) {
+		mName = rToCopy.mName;
+		mPath = rToCopy.mPath;
+		mpExcluded = new MyExcludeList(*(rToCopy.mpExcluded));
+	}
+	
 	const wxString& GetName() const { return mName; }
 	const wxString& GetPath() const { return mPath; }
 	MyExcludeList& GetExcludeList() { return *mpExcluded; }
