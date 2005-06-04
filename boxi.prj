@@ -3,17 +3,19 @@ Compatibility Level: 1
 
 <PROJECT_DESCRIPTION_START>
 Boxi is a graphical user interface (GUI) to the BoxBackup project by Ben Summers
-[http://www.fluffy.co.uk/boxbackup]<PROJECT_DESCRIPTION_END>
+[http://www.fluffy.co.uk/boxbackup].
+
+Boxi has its own website at [http://boxi.sourceforge.net].<PROJECT_DESCRIPTION_END>
 <CONFIG_PROGS_START>
 <CONFIG_PROGS_END>
 <CONFIG_LIBS_START>
-if cd boxbackup; then
-	./configure
-	mv Makefile Makefile.in
-	cd ..
-else
-	false
-fi<CONFIG_LIBS_END>
+# extract boxbackup in release build
+(
+	cd boxbackup || exit 1
+	# PATCH IN RELEASE
+	./configure || exit 1
+	mv Makefile Makefile.in || exit 1
+)<CONFIG_LIBS_END>
 <CONFIG_HEADERS_START>
 <CONFIG_HEADERS_END>
 <CONFIG_CHARACTERISTICS_START>
@@ -35,7 +37,7 @@ anjuta.compatibility.level=1
 project.name=boxi
 project.type=wxWINDOWS
 project.target.type=EXECUTABLE
-project.version=0.0.1
+project.version=0.1.0
 project.author=Chris Wilson <boxi-author@qwirx.com>
 project.source.target=boxi
 project.has.gettext=1
@@ -46,7 +48,7 @@ project.excluded.modules=intl
 project.config.extra.modules.before=boxbackup
 project.config.extra.modules.after=
 project.config.blocked=0
-project.config.disable.overwriting=1 0 1 0 0 0 0 0 0 
+project.config.disable.overwriting=0 0 0 0 0 0 0 0 0 
 
 project.menu.entry=boxi Version 0.1
 project.menu.group=Applications
@@ -87,7 +89,9 @@ module.include.files=\
 	StaticImage.h\
 	BackupDaemonPanel.h\
 	ClientConnection.h\
-	ComparePanel.h
+	ComparePanel.h\
+	ParamPanel.h\
+	Database.h
 
 module.source.name=src
 module.source.type=
@@ -117,7 +121,14 @@ module.source.files=\
 	ClientConnection.cc\
 	cross16a.png.c\
 	tick16a.png.c\
-	ComparePanel.cc
+	ComparePanel.cc\
+	ParamPanel.cc\
+	Database.cc\
+	crossgrey16.png.c\
+	empty16.png.c\
+	plus16.png.c\
+	plusgrey16.png.c\
+	tickgrey16.png.c
 
 module.pixmap.name=pixmaps
 module.pixmap.type=
@@ -142,22 +153,24 @@ compiler.options.include.paths=\
 	../boxbackup/lib/common\
 	../boxbackup/lib/backupclient\
 	../boxbackup/lib/server\
-	../include
+	../include\
+	/usr/include/libxml2
 compiler.options.library.paths=
 compiler.options.libraries=\
 	ssl\
-	pcre
-compiler.options.libraries.selected=1 1 
+	pcre\
+	xml2
+compiler.options.libraries.selected=0 0 1 
 compiler.options.defines=\
 	PLATFORM_LINUX\
 	PLATFORM_GCC3
-compiler.options.defines.selected=1 1 
+compiler.options.defines.selected=0 0 1 
 compiler.options.warning.buttons=0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 
 compiler.options.optimize.buttons=1 0 0 0 
 compiler.options.other.buttons=1 0 
-compiler.options.other.c.flags=
+compiler.options.other.c.flags=-D$(shell if [ `uname -o` = "Cygwin" ]; then echo PLATFORM_CYGWIN; else echo PLATFORM_LINUX; fi)
 compiler.options.other.l.flags=
-compiler.options.other.l.libs=../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/backupstore/backupstore.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a
+compiler.options.other.l.libs=../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/backupstore/backupstore.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a -lcrypto -lssl -lz
 
 project.src.paths=/home/chris/project/boxi/boxbackup-0.09-orig/release/lib/common/common.a \
 /home/chris/project/boxi/boxbackup-0.09-orig/release/lib/backupclient/backupclient.a
