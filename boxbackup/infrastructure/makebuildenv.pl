@@ -784,13 +784,13 @@ CXX = g++
 AR = ar
 RANLIB = ranlib
 .ifdef RELEASE
-CXXFLAGS = -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
+CXXFLAGS = -DNDEBUG -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
 OUTBASE = ../../release
 OUTDIR = ../../release/$mod
 DEPENDMAKEFLAGS = -D RELEASE
 VARIENT = RELEASE
 .else
-CXXFLAGS = -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
+CXXFLAGS = -DNDEBUG -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
 OUTBASE = ../../debug
 OUTDIR = ../../debug/$mod
 DEPENDMAKEFLAGS =
