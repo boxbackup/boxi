@@ -8,10 +8,11 @@ use Fcntl qw(SEEK_SET SEEK_END);
 
 my $linelength = 8;
 
-foreach my $filename ("tick16.png", "cross16.png", "sametime16.png",
-	"hourglass16.png", "equal16.png", "notequal16.png", "unknown16.png",
-	"oldfile16.png", "exclam16.png", "folder16.png", "partial16.png",
-	"alien16.png", "tick16a.png", "cross16a.png") 
+foreach my $filename ("empty16.png", "tick16.png", "tickgrey16.png", 
+	"cross16.png", "crossgrey16.png", "plus16.png", "plusgrey16.png",
+	"sametime16.png", "hourglass16.png", "equal16.png", "notequal16.png", 
+	"unknown16.png", "oldfile16.png", "exclam16.png", "folder16.png", 
+	"partial16.png", "alien16.png", "tick16a.png", "cross16a.png") 
 {
 	my $ifh = IO::File->new("< images/$filename") 
 		or die "src/$filename: $!";
