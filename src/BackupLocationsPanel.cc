@@ -32,6 +32,7 @@
 
 #include "BackupLocationsPanel.h"
 #include "StaticImage.h"
+#include "../images/tick16.xpm"
 
 void BackupTreeNode::AddChildren() {
 	mpTreeCtrl->SetCursor(*wxHOURGLASS_CURSOR);
@@ -345,9 +346,10 @@ BackupTreeCtrl::BackupTreeCtrl(
 		pRootNode->SetTreeId(lRootId);
 		SetItemHasChildren(lRootId, TRUE);
 	}
-	
+
 	mEmptyImageId        = AddImage(empty16_png,     mImages);
-	mCheckedImageId      = AddImage(tick16_png,      mImages);
+	// mCheckedImageId   = AddImage(tick16_png,      mImages);
+	mCheckedImageId      = mImages.Add(wxBitmap(tick16_xpm));	
 	mCheckedGreyImageId  = AddImage(tickgrey16_png,  mImages);
 	mCrossedImageId      = AddImage(cross16_png,     mImages);
 	mCrossedGreyImageId  = AddImage(crossgrey16_png, mImages);
