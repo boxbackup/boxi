@@ -120,7 +120,7 @@ libncurses-devel (for boxbackup)
 gcc, g++ and libstdc++-devel
 
 =item *
-wxWindows 2.4.2 (or possibly later)
+wxWindows 2.6.0 or 2.4.2 
 
 =back
 
@@ -304,8 +304,8 @@ under a license very similar to the BSD license, which can be seen at
 L<http://www.fluffy.co.uk/boxbackup/license.html>. This component is NOT
 covered by the GPL.
 
-The file boxbackup.patch contains all the changes to Box Backup which
-are made by Boxi. That file is under the same license as Box Backup,
+The file boxbackup.patch contains a number of changes to Box Backup which
+are useful for Boxi. That file is under the same license as Box Backup,
 i.e. a BSD-like license, and copyright assigned to Ben Summers.
 
 Portions of Boxi are copied, based on or inspired by Box Backup

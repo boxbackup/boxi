@@ -26,21 +26,10 @@ Show progress dialog while restoring files
 Show in a separate window, allow restore operations to be cancelled.
 
 =item *
-Provide dialog boxes for selecting paths
-
-Several config items specify paths of files or directories.
-It should be possible to enter these using a dialog box to select
-a file or directory, instead of requiring the user to memorise
-and enter the path.
-
-=item *
 Prompt to save changes
 
-When closing Boxi, if the configuration has changed, ask the user whether
-they want to save it. Also ask before restarting Box Backup daemon.
-
-=item *
-Provide a better GUI for adding and removing backup locations.
+If the configuration has changed, ask the user whether they want to
+save it and reload the Box Backup daemon, and reconnect to the server.
 
 =item *
 Stricter error checking of the configuration
@@ -69,4 +58,4 @@ Kill button in Backup Daemon Panel.
 
 =back
 
-Last updated: 2005-05-14 by Chris Wilson.
+Last updated: 2005-06-05 by Chris Wilson.
