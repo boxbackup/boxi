@@ -9,8 +9,8 @@ INCLUDES = \
 	 -I../boxbackup/lib/common -I../boxbackup/lib/backupclient -I../boxbackup/lib/server -I../include -I/usr/include/libxml2
 
 boxi_CXXFLAGS =\
-	 -DPLATFORM_LINUX -DPLATFORM_GCC3\
-	-D$(shell if [ `uname -o` = "Cygwin" ]; then echo PLATFORM_CYGWIN; else echo PLATFORM_LINUX; fi)\
+	 -DPLATFORM_GCC3 \
+	 -D$(shell if [ `uname -o` = "Cygwin" ]; then echo PLATFORM_CYGWIN; else echo PLATFORM_LINUX; fi)\
 	 -Wall\
 	 -g
 
