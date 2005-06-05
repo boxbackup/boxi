@@ -42,10 +42,6 @@ AM_PATH_WXCONFIG(2.3.2, wxWin=1)
                CXXFLAGS=$ac_save_CXXFLAGS
         fi
 
-AM_PATH_GTK(1.2.7, ,
-            AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path?),
-            gthread)
-
 dnl Checks for programs.
 dnl Checks for libraries.
 # extract boxbackup in release build
