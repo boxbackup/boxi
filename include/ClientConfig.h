@@ -67,6 +67,7 @@ class ClientConfig : public PropertyChangeListener {
 	void AddLocation    (Location* newEntry);
 	void ReplaceLocation(int index, Location* newValues);
 	void RemoveLocation (int index);
+	void RemoveLocation (Location* oldLocation);
 	
 	void AddListener   (ConfigChangeListener* newListener);
 	void RemoveListener(ConfigChangeListener* oldListener);

@@ -154,6 +154,16 @@ void ClientConfig::RemoveLocation(int target) {
 		mLocations.erase(current);
 }
 
+void ClientConfig::RemoveLocation(Location* pOldLocation) {
+	std::vector<Location*>::iterator current = mLocations.begin();
+	
+	for ( ; current != mLocations.end() && *current != pOldLocation; current++)
+		{ }
+	
+	if (*current == pOldLocation)
+		mLocations.erase(current);
+}
+
 void ClientConfig::AddListener(ConfigChangeListener* pNewListener)
 {
 	for (std::vector<ConfigChangeListener*>::iterator i = mListeners.begin();

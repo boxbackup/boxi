@@ -53,18 +53,16 @@ class MyExcludeType {
 	public:
 	MyExcludeType(ExcludeSense sense, ExcludeFileDir fileDir, 
 		ExcludeMatch match) 
-	{
-		mSense     = sense;
-		mFileOrDir = fileDir;
-		mMatch     = match;
-	}
+	: mSense(sense),
+	  mFileOrDir(fileDir),
+	  mMatch(match)
+	{ }
 
 	MyExcludeType(const MyExcludeType& rToCopy)
-	{
-		mSense     = rToCopy.mSense;
-		mFileOrDir = rToCopy.mFileOrDir;
-		mMatch     = rToCopy.mMatch;
-	}
+	: mSense(rToCopy.mSense),
+	  mFileOrDir(rToCopy.mFileOrDir),
+	  mMatch(rToCopy.mMatch)
+	{ }
 	
 	ExcludeSense GetSense() const { return mSense; }
 	const std::string GetSenseString() const {
@@ -127,6 +125,17 @@ const MyExcludeType theExcludeTypes[] = {
 	MyExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, 	EM_REGEX),
 };
 
+enum ExcludeTypeIndex {
+	ETI_EXCLUDE_DIR = 0,
+	ETI_EXCLUDE_DIRS_REGEX,
+	ETI_EXCLUDE_FILE,
+	ETI_EXCLUDE_FILES_REGEX,
+	ETI_ALWAYS_INCLUDE_DIR,
+	ETI_ALWAYS_INCLUDE_DIRS_REGEX,
+	ETI_ALWAYS_INCLUDE_FILE,
+	ETI_ALWAYS_INCLUDE_FILES_REGEX,
+};
+
 class MyExcludeEntry {
 	public:
 	MyExcludeEntry(const MyExcludeType* type, const std::string& value) 
@@ -177,6 +186,7 @@ class MyExcludeEntry {
 
 class MyExcludeList {
 	public:
+	MyExcludeList() { };
 	MyExcludeList(const Configuration& conf);
 	MyExcludeList(const MyExcludeList& rToCopy)
 	{
@@ -191,7 +201,7 @@ class MyExcludeList {
 	void AddEntry(MyExcludeEntry* newEntry);
 	void ReplaceEntry(int index, MyExcludeEntry* newValues);
 	void RemoveEntry(int index);
-
+	void RemoveEntry(MyExcludeEntry* oldEntry);
 	bool IsSameAs(MyExcludeList& other) {
 		const std::vector<MyExcludeEntry*>& otherEntries = other.GetEntries();
 		if (otherEntries.size() != mEntries.size()) return FALSE;
@@ -215,6 +225,7 @@ class Location {
 	Location(wxString Name, wxString Path) { 
 		mName = Name;
 		mPath = Path;
+		mpExcluded = new MyExcludeList();
 	}
 	Location(const Location& rToCopy) {
 		mName = rToCopy.mName;

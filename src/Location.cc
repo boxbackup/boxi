@@ -76,3 +76,12 @@ void MyExcludeList::RemoveEntry(int target) {
 	if (i == target)
 		mEntries.erase(current);
 }
+
+void MyExcludeList::RemoveEntry(MyExcludeEntry* oldEntry) {
+	std::vector<MyExcludeEntry*>::iterator current = mEntries.begin();
+	for ( ; current != mEntries.end() && *current != oldEntry; current++) 
+		{ }
+		
+	if (*current == oldEntry)
+		mEntries.erase(current);
+}
