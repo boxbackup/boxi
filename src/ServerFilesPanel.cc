@@ -64,7 +64,8 @@ ServerFilesPanel::ServerFilesPanel(
 	const wxSize& 	size,
 	long 			style, 
 	const wxString& name)
-	: wxPanel(parent, id, pos, size, style, name)
+: wxPanel(parent, id, pos, size, style, name),
+  mImageList(16, 16, true)
 {
 	mpConfig = config;
 	mpStatusBar = pStatusBar;
@@ -77,7 +78,8 @@ ServerFilesPanel::ServerFilesPanel(
 	topSizer->Add(theServerSplitter, 1, wxGROW | wxALL, 8);
 
 	theServerFileTree = new wxTreeCtrl(theServerSplitter, 
-		ID_Server_File_Tree, wxDefaultPosition, wxDefaultSize, wxTR_HAS_BUTTONS);
+		ID_Server_File_Tree, wxDefaultPosition, wxDefaultSize, 
+		wxTR_DEFAULT_STYLE | wxNO_BORDER);
 	
 	wxPanel* theRightPanel = new wxPanel(theServerSplitter);
 	wxBoxSizer *theRightPanelSizer = new wxBoxSizer( wxVERTICAL );

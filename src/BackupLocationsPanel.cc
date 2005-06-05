@@ -26,6 +26,7 @@
 
 #include <wx/dir.h>
 #include <wx/filename.h>
+#include <wx/image.h>
 #include <wx/mstream.h>
 #include <wx/splitter.h>
 #include <wx/treectrl.h>
@@ -323,7 +324,8 @@ BackupTreeCtrl::BackupTreeCtrl(
 	const wxValidator& validator, 
 	const wxString& name
 )
-: wxTreeCtrl(parent, id, pos, size, style, validator, name)
+: wxTreeCtrl(parent, id, pos, size, style, validator, name),
+  mImages(16, 16, true)
 {
 	wxTreeItemId lRootId;
 	BackupTreeNode *pRootNode;
@@ -436,7 +438,8 @@ BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
 	topSizer->Add(pSplitter, 1, wxGROW | wxALL, 8);
 
 	mpTree = new BackupTreeCtrl(mpConfig, pSplitter, ID_Backup_Locations_Tree, 
-		wxDefaultPosition, wxDefaultSize, wxTR_HAS_BUTTONS);
+		wxDefaultPosition, wxDefaultSize, 
+		wxTR_DEFAULT_STYLE | wxNO_BORDER);
 	
 	wxPanel*    pRightPanel = new wxPanel(pSplitter);
 	
