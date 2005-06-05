@@ -97,19 +97,51 @@ void ClientConfig::Load(const wxString& rConfigFileName)
 		throw exception;
 	}
 
+	#ifdef __CYGWIN__
+	#define DIR_PROP(name) \
+		name.Set(ConvertCygwinPathToWindows( \
+			mapConfig->GetKeyValue(#name)));
+	#define DIR_PROP_SUBCONF(name, subconf) \
+		name.Set(ConvertCygwinPathToWindows( \
+			mapConfig->GetSubConfiguration(#subconf)->GetKeyValue(#name)));
+	#else /* ! __CYGWIN__ */
+	#define DIR_PROP(name) \
+		name.SetFrom(mapConfig.get());
+	#define DIR_PROP_SUBCONF(name, subconf) \
+		name.SetFrom(&(mapConfig->GetSubConfiguration(#subconf)));
+	#endif /* __CYGWIN__ */
+	
 	#define STR_PROP(name) \
 		name.SetFrom(mapConfig.get());
-	#define STR_PROP_SUBCONF(name, subconf) \
-		name.SetFrom( &(mapConfig->GetSubConfiguration(#subconf)) );
 	#define INT_PROP(name) \
 		name.SetFrom(mapConfig.get());
 	#define BOOL_PROP(name) \
 		name.SetFrom(mapConfig.get());
-	ALL_PROPS
+
+	DIR_PROP(CertificateFile)
+	DIR_PROP(PrivateKeyFile)
+	DIR_PROP(DataDirectory)
+	DIR_PROP(NotifyScript)
+	DIR_PROP(TrustedCAsFile)
+	DIR_PROP(KeysFile)
+	DIR_PROP(SyncAllowScript)
+	DIR_PROP(CommandSocket)
+	DIR_PROP_SUBCONF(PidFile, Server)
+	STR_PROP(StoreHostname)
+	INT_PROP(AccountNumber)
+	INT_PROP(UpdateStoreInterval)
+	INT_PROP(MinimumFileAge)
+	INT_PROP(MaxUploadWait)
+	INT_PROP(FileTrackingSizeThreshold)
+	INT_PROP(DiffingUploadSizeThreshold)
+	INT_PROP(MaximumDiffingTime)
+	BOOL_PROP(ExtendedLogging)
+	
 	#undef BOOL_PROP
 	#undef INT_PROP
-	#undef STR_PROP_SUBCONF
 	#undef STR_PROP
+	#undef DIR_PROP_SUBCONF
+	#undef DIR_PROP
 
 	const Configuration& rLocations =
 		mapConfig->GetSubConfiguration("BackupLocations");
@@ -202,6 +234,48 @@ bool ClientConfig::Save()
 	return Save(mConfigFileName);
 }
 
+wxString ClientConfig::ConvertCygwinPathToWindows(const char *cygPath)
+{
+	wxFileName fn(cygPath, wxPATH_UNIX);
+	fn.MakeAbsolute();
+	wxString fs = fn.GetFullPath();
+	
+	if (fs.StartsWith("/cygdrive/"))
+	{
+		fn.RemoveDir(0);
+		fs = fn.GetFullPath();
+		wxString drive = fs.Mid(1, 1);
+		fn.RemoveDir(0);
+		fn.SetVolume(drive);
+	}
+	
+	return fn.GetFullPath();
+}
+
+wxString ClientConfig::ConvertWindowsPathToCygwin(const char *winPath)
+{
+	wxFileName fn(winPath);
+	fn.MakeAbsolute();
+	wxString cygfile;
+	
+	cygfile.Printf("/cygdrive/%s/%s/", fn.GetVolume().c_str(),
+		fn.GetPath(0, wxPATH_UNIX).c_str());
+	
+	if (fn.HasName())
+	{
+		cygfile.Append(fn.GetName());
+		cygfile.Append("/");
+	}
+	
+	if (fn.HasExt())
+	{
+		cygfile.Append(".");
+		cygfile.Append(fn.GetExt());
+	}
+	
+	return cygfile;
+}
+
 bool ClientConfig::Save(const wxString& rConfigFileName) 
 {
 	wxTempFile file(rConfigFileName);
@@ -223,6 +297,21 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 		file.Write(buffer); \
 	}
 
+	#ifdef __CYGWIN__
+	#define WRITE_DIR_PROP(name) \
+	if (const std::string * value = name.Get()) { \
+		wxString cygpath = ConvertWindowsPathToCygwin(value.c_str()); \
+		buffer.Printf(#name " = %s\n", cygpath.c_str()); \
+		file.Write(buffer); \
+	}
+	#else /* ! __CYGWIN__ */
+	#define WRITE_DIR_PROP(name) \
+	if (const std::string * value = name.Get()) { \
+		buffer.Printf(#name " = %s\n", value->c_str()); \
+		file.Write(buffer); \
+	}
+	#endif
+
 	#define WRITE_INT_PROP_FMT(name, fmt) \
 	if (const int * value = name.Get()) { \
 		buffer.Printf(#name " = " fmt "\n", *value); \
@@ -243,12 +332,12 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	
 	WRITE_STR_PROP(StoreHostname)
 	WRITE_INT_PROP_FMT(AccountNumber, "0x%x")
-	WRITE_STR_PROP(KeysFile)
-	WRITE_STR_PROP(CertificateFile)
-	WRITE_STR_PROP(PrivateKeyFile)
-	WRITE_STR_PROP(TrustedCAsFile)
-	WRITE_STR_PROP(DataDirectory)
-	WRITE_STR_PROP(NotifyScript)
+	WRITE_DIR_PROP(KeysFile)
+	WRITE_DIR_PROP(CertificateFile)
+	WRITE_DIR_PROP(PrivateKeyFile)
+	WRITE_DIR_PROP(TrustedCAsFile)
+	WRITE_DIR_PROP(DataDirectory)
+	WRITE_DIR_PROP(NotifyScript)
 	WRITE_INT_PROP(UpdateStoreInterval)
 	WRITE_INT_PROP(MinimumFileAge)
 	WRITE_INT_PROP(MaxUploadWait)
@@ -256,8 +345,8 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	WRITE_INT_PROP(DiffingUploadSizeThreshold)
 	WRITE_INT_PROP(MaximumDiffingTime)
 	WRITE_BOOL_PROP(ExtendedLogging)
-	WRITE_STR_PROP(SyncAllowScript)
-	WRITE_STR_PROP(CommandSocket)
+	WRITE_DIR_PROP(SyncAllowScript)
+	WRITE_DIR_PROP(CommandSocket)
 
 	#undef WRITE_STR_PROP
 	#undef WRITE_INT_PROP

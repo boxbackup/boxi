@@ -83,6 +83,9 @@ class ClientConfig : public PropertyChangeListener {
 	std::auto_ptr<Configuration> mapConfig;
 	std::vector<Location*> mLocations;
 	std::vector<ConfigChangeListener*> mListeners;
+	
+	wxString ConvertCygwinPathToWindows(const char *cygPath);
+	wxString ConvertWindowsPathToCygwin(const char *winPath);
 };
 
 #endif /* _CLIENTCONFIG_H */
