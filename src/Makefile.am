@@ -9,8 +9,8 @@ INCLUDES = \
 	 -I../boxbackup/lib/common -I../boxbackup/lib/backupclient -I../boxbackup/lib/server -I../include -I/usr/include/libxml2
 
 boxi_CXXFLAGS =\
-	 -DPLATFORM_GCC3 \
-	 -D$(shell if [ `uname -o` = "Cygwin" ]; then echo PLATFORM_CYGWIN; else echo PLATFORM_LINUX; fi)\
+	 -DPLATFORM_GCC3\
+	-D$(shell if [ `uname -o` = "Cygwin" ]; then echo PLATFORM_CYGWIN; else echo PLATFORM_LINUX; fi)\
 	 -Wall\
 	 -g
 
@@ -44,17 +44,17 @@ boxi_SOURCES = \
 	tick16a.png.c\
 	ComparePanel.cc\
 	ParamPanel.cc\
-	Database.cc\
 	crossgrey16.png.c\
 	empty16.png.c\
 	plus16.png.c\
 	plusgrey16.png.c\
-	tickgrey16.png.c
+	tickgrey16.png.c\
+	Database.cc
 
 boxi_LDFLAGS = 
 
 boxi_LDADD =  \
 	$(WX_LIBS)\
 	 -lxml2\
-	../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/backupstore/backupstore.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a -lcrypto -lssl -lz
+	../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a -lcrypto -lssl -lz
 
