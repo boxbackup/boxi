@@ -46,7 +46,8 @@ class BackupTreeCtrl : public wxTreeCtrl {
 		const wxValidator& validator = wxDefaultValidator, 
 		const wxString& name = "BackupTreeCtrl"
 	);
-	void UpdateExcludedStateIcon(BackupTreeNode* pNode, bool updateParents);
+	void UpdateExcludedStateIcon(BackupTreeNode* pNode, 
+		bool updateParents, bool updateChildren);
 
 	private:
 	int OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& item2);
@@ -122,6 +123,7 @@ class BackupTreeNode : public wxTreeItemData {
 	
 	wxTreeItemId      GetTreeId()   { return mTreeId; }
 	const wxFileName& GetFileName() { return mFileName; }
+	const wxString&   GetFullPath() { return mFullPath; }
 	bool IsDirectory() { return mIsDirectory; }
 	void SetTreeId   (wxTreeItemId id)   { mTreeId = id; }
 	void SetDirectory(bool value = true) { mIsDirectory = value; }
@@ -161,7 +163,6 @@ class BackupTreeNode : public wxTreeItemData {
 	
 	private:
 	BackupTreeCtrl* GetTreeCtrl() { return mpTreeCtrl; }
-	wxString GetFullPath() { return mFullPath; }
 	void _AddChildrenSlow(bool recurse);
 	// bool checked;
 };
@@ -201,6 +202,7 @@ class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
 	void OnExcludeCmdClick  (wxCommandEvent& event);
 	void OnTreeNodeExpand      (wxTreeEvent& event);
 	void OnTreeNodeCollapse    (wxTreeEvent& event);
+	void OnTreeNodeActivate    (wxTreeEvent& event);
 	void UpdateLocationCtrlEnabledState();
 	void UpdateExcludeCtrlEnabledState();
 	void PopulateLocationList();

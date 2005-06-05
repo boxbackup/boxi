@@ -83,7 +83,7 @@ void BackupTreeNode::_AddChildrenSlow(bool recursive)
 			mpTreeCtrl->AppendItem(this->mTreeId,
 				theCurrentFileName, -1, -1, newNode)
 			);
-		mpTreeCtrl->UpdateExcludedStateIcon(newNode, false);
+		mpTreeCtrl->UpdateExcludedStateIcon(newNode, false, false);
 		
 		/*
 		newNode->mpTreeCtrl = this->mpTreeCtrl;
@@ -110,9 +110,14 @@ void BackupTreeNode::_AddChildrenSlow(bool recursive)
 }
 
 void BackupTreeCtrl::UpdateExcludedStateIcon(
-	BackupTreeNode* pNode, bool updateParents) 
+	BackupTreeNode* pNode, bool updateParents, bool updateChildren) 
 {
 	int iconId = mEmptyImageId;
+	if (updateParents && pNode->GetParentNode() != NULL)
+	{
+		UpdateExcludedStateIcon(pNode->GetParentNode(), TRUE, FALSE);
+	}
+	
 	pNode->UpdateExcludedState(updateParents);
 	BackupTreeNode* pParent = pNode->GetParentNode();
 	
@@ -138,6 +143,20 @@ void BackupTreeCtrl::UpdateExcludedStateIcon(
 			iconId = mCheckedImageId;
 	}
 	SetItemImage(pNode->GetTreeId(), iconId, wxTreeItemIcon_Normal);
+	
+	if (updateChildren)
+	{
+		wxTreeItemId thisId = pNode->GetTreeId();
+		wxTreeItemIdValue cookie;
+		wxTreeItemId childId = GetFirstChild(thisId, cookie);
+		while (childId.IsOk())
+		{
+			BackupTreeNode* pChildNode = 
+				(BackupTreeNode*)( GetItemData(childId) );
+			UpdateExcludedStateIcon(pChildNode, FALSE, TRUE);
+			childId = GetNextChild(thisId, cookie);
+		}
+	}
 }
 
 void BackupTreeNode::UpdateExcludedState(bool updateParents) 
@@ -336,7 +355,7 @@ BackupTreeCtrl::BackupTreeCtrl(
 	mAlwaysGreyImageId   = AddImage(plusgrey16_png,  mImages);
 
 	SetImageList(&mImages);
-	UpdateExcludedStateIcon(pRootNode, false);
+	UpdateExcludedStateIcon(pRootNode, false, false);
 }
 
 int BackupTreeCtrl::OnCompareItems(
@@ -372,6 +391,8 @@ BEGIN_EVENT_TABLE(BackupLocationsPanel, wxPanel)
 		BackupLocationsPanel::OnTreeNodeExpand)
 	EVT_TREE_ITEM_COLLAPSING(ID_Backup_Locations_Tree, 
 		BackupLocationsPanel::OnTreeNodeCollapse)
+	EVT_TREE_ITEM_ACTIVATED(ID_Backup_Locations_Tree, 
+		BackupLocationsPanel::OnTreeNodeActivate)
 	EVT_LIST_ITEM_SELECTED(ID_Backup_LocationsList, 
 		BackupLocationsPanel::OnBackupLocationClick)
 	EVT_LIST_ITEM_SELECTED(ID_BackupLoc_ExcludeList, 
@@ -800,10 +821,191 @@ void BackupLocationsPanel::OnTreeNodeExpand(wxTreeEvent& event)
 	BackupTreeNode *node = 
 		(BackupTreeNode *)(mpTree->GetItemData(item));
 	node->AddChildren();
-	mpTree->UpdateExcludedStateIcon(node, false);
+	mpTree->UpdateExcludedStateIcon(node, false, false);
 }
 
 void BackupLocationsPanel::OnTreeNodeCollapse(wxTreeEvent& event)
 {
 
+}
+
+void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
+{
+	BackupTreeNode* pTreeNode = 
+		(BackupTreeNode*)( mpTree->GetItemData(event.GetItem()) );
+
+	Location*       pLocation   = pTreeNode->GetLocation();
+	MyExcludeEntry* pExcludedBy = pTreeNode->GetExcludedBy();
+	MyExcludeEntry* pIncludedBy = pTreeNode->GetIncludedBy();
+	MyExcludeList*  pList;
+	if (pLocation) 
+		pList = &(pLocation->GetExcludeList());
+	bool updateParents  = FALSE;
+	bool updateChildren = FALSE;
+	bool updateLocation = FALSE;
+	
+	if (pIncludedBy != NULL)
+	{
+		// Tricky case. User wants to remove the AlwaysInclude
+		// from this item. Unless the item is itself the subject
+		// of the AlwaysInclude directive, we can't easily
+		// remove it without affecting other items. The best we 
+		// can do is to warn the user, ask them whether to
+		// remove it.
+
+		bool doDelete = FALSE;
+		bool warnUser = TRUE;
+		
+		if (pIncludedBy->GetMatch() == EM_EXACT)
+		{
+			wxFileName fn(pIncludedBy->GetValue().c_str());
+			if (fn.SameAs(pTreeNode->GetFileName()))
+			{
+				doDelete = TRUE;
+				warnUser = FALSE;
+				updateChildren = TRUE;
+			}
+		}
+		
+		if (warnUser) 
+		{
+			wxString msg;
+			msg.Printf(
+				"To exclude this item, you will have to exclude "
+				"all of %s. Do you really want to do this?",
+				pIncludedBy->GetValue().c_str());
+			int result = wxMessageBox(msg, "Boxi Warning", 
+				wxYES_NO | wxICON_EXCLAMATION);
+			if (result == wxYES)
+				doDelete = TRUE;
+		}
+		
+		if (doDelete) {
+			if (pIncludedBy->GetMatch() != EM_EXACT)
+				updateLocation = TRUE;
+			else
+			{
+				updateParents  = TRUE;
+				updateChildren = TRUE;
+			}
+			pList->RemoveEntry(pIncludedBy);
+		}			
+	} 
+	else if	(pExcludedBy != NULL)
+	{
+		// Node is excluded, and user wants to include it.
+		// If the selected node is the value of an exact matching
+		// Exclude(File|Dir) entry, we can delete that entry.
+		// Otherwise, we will have to add an AlwaysInclude entry for it.
+		
+		bool handled = FALSE;
+		
+		if (pExcludedBy->GetMatch() == EM_EXACT)
+		{
+			wxFileName fn(pExcludedBy->GetValue().c_str());
+			if (fn.SameAs(pTreeNode->GetFileName()))
+			{
+				updateChildren = TRUE;
+				pList->RemoveEntry(pExcludedBy);
+				handled = TRUE;
+			}
+		}
+		
+		if (!handled)
+		{
+			MyExcludeEntry* pNewEntry = new MyExcludeEntry(
+				&theExcludeTypes[
+					pTreeNode->IsDirectory() ? ETI_ALWAYS_INCLUDE_DIR
+					: ETI_ALWAYS_INCLUDE_FILE],
+				pTreeNode->GetFullPath().c_str());
+			pList->AddEntry(pNewEntry);
+			updateChildren = TRUE;
+		}
+	}
+	else if (pLocation != NULL)
+	{
+		// user wants to exclude a location, or a file not already 
+		// excluded within that location. Which is it? For a location
+		// root, we prompt the user and delete the whole location.
+		// For a subdirectory or file, we add an Exclude directive.
+		bool handled = FALSE;
+
+		wxFileName fn(pLocation->GetPath());
+		if (fn.SameAs(pTreeNode->GetFileName()))
+		{
+			wxString msg;
+			msg.Printf("Are you sure you want to delete the location "
+				"%s from the server, and remove its configuration?",
+				fn.GetFullPath().c_str());
+			int result = wxMessageBox(msg, "Boxi Warning", 
+				wxYES_NO | wxICON_EXCLAMATION);
+			if (result == wxYES)
+			{
+				mpConfig->RemoveLocation(pLocation);
+				handled = TRUE;
+				updateChildren = TRUE;
+			}
+		}
+		
+		if (!handled) 
+		{
+			MyExcludeEntry* pNewEntry = new MyExcludeEntry(
+				&theExcludeTypes[
+					pTreeNode->IsDirectory() ? ETI_EXCLUDE_DIR
+					: ETI_EXCLUDE_FILE],
+				pTreeNode->GetFullPath().c_str());
+			pList->AddEntry(pNewEntry);
+			updateChildren = TRUE;
+		}
+	}
+	else
+	{
+		// outside of any existing location. create a new one.
+		wxFileName path(pTreeNode->GetFileName());
+		wxString newLocName = path.GetName();
+		const std::vector<Location*>& rLocs = mpConfig->GetLocations();
+		bool foundUnique = FALSE;
+		int counter = 1;
+		
+		while (!foundUnique)
+		{
+			foundUnique = TRUE;
+			
+			for (std::vector<Location*>::const_iterator i = rLocs.begin();
+				i != rLocs.end(); i++)
+			{
+				if (newLocName.IsSameAs((*i)->GetName().c_str()))
+				{
+					foundUnique = FALSE;
+					break;
+				}
+			}
+			
+			if (foundUnique) break;
+				
+			// generate a new filename, and try again
+			newLocName.Printf("%s_%d", path.GetName().c_str(), counter);
+		}
+		
+		Location* pNewLoc = new Location(newLocName, pTreeNode->GetFullPath());
+		mpConfig->AddLocation(pNewLoc);
+		updateChildren = TRUE;
+	}
+	
+	NotifyChange();
+	
+	if (updateLocation) 
+	{
+		BackupTreeNode* pRoot = pTreeNode;
+		while (
+			pRoot->GetParentNode() != NULL && 
+			pRoot->GetParentNode()->GetLocation() != NULL)
+		{
+			pRoot = pRoot->GetParentNode();
+		}
+		mpTree->UpdateExcludedStateIcon(pRoot, FALSE, TRUE);
+	}
+	else
+		mpTree->UpdateExcludedStateIcon(pTreeNode, updateParents, 
+			updateChildren);
 }
