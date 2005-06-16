@@ -39,22 +39,22 @@
 // Image index constants
 int	mImgDir, mImgFile, mImgExec, mImgDown, mImgUp;
 
-BEGIN_EVENT_TABLE(ServerFilesPanel, wxPanel)
+BEGIN_EVENT_TABLE(RestorePanel, wxPanel)
 	EVT_TREE_ITEM_EXPANDING(ID_Server_File_Tree, 
-		ServerFilesPanel::OnTreeNodeExpand)
+		RestorePanel::OnTreeNodeExpand)
 	EVT_TREE_SEL_CHANGING(ID_Server_File_Tree,
-		ServerFilesPanel::OnTreeNodeSelect)
+		RestorePanel::OnTreeNodeSelect)
 	EVT_LIST_COL_CLICK(ID_Server_File_List, 
-		ServerFilesPanel::OnListColumnClick)
+		RestorePanel::OnListColumnClick)
 	EVT_LIST_ITEM_ACTIVATED(ID_Server_File_List,
-		ServerFilesPanel::OnListItemActivate)
+		RestorePanel::OnListItemActivate)
 	EVT_BUTTON(ID_Server_File_RestoreButton, 
-		ServerFilesPanel::OnFileRestore)
+		RestorePanel::OnFileRestore)
 	EVT_BUTTON(ID_Server_File_DeleteButton, 
-		ServerFilesPanel::OnFileDelete)
+		RestorePanel::OnFileDelete)
 END_EVENT_TABLE()
 
-ServerFilesPanel::ServerFilesPanel(
+RestorePanel::RestorePanel(
 	ClientConfig*	config,
 	ServerConnection* pServerConnection,
 	wxWindow*		parent, 
@@ -172,7 +172,7 @@ ServerFilesPanel::ServerFilesPanel(
 	mServerSettings.mViewDeletedFiles = TRUE;
 }
 
-void ServerFilesPanel::OnTreeNodeExpand(wxTreeEvent& event)
+void RestorePanel::OnTreeNodeExpand(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 	RestoreTreeNode *node = 
@@ -181,7 +181,7 @@ void ServerFilesPanel::OnTreeNodeExpand(wxTreeEvent& event)
 		event.Veto();
 }
 
-void ServerFilesPanel::GetUsageInfo() {
+void RestorePanel::GetUsageInfo() {
 	if (mpUsage) delete mpUsage;
 	
 	theServerFileTree->SetCursor(*wxHOURGLASS_CURSOR);
@@ -195,7 +195,7 @@ void ServerFilesPanel::GetUsageInfo() {
 	}
 }
 
-void ServerFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
+void RestorePanel::OnTreeNodeSelect(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 	RestoreTreeNode *node = 
@@ -226,10 +226,10 @@ void ServerFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 void RestoreProgressCallback(RestoreState State, 
 	std::string& rFileName, void* userData)
 {
-	((ServerFilesPanel*)userData)->RestoreProgress(State, rFileName);
+	((RestorePanel*)userData)->RestoreProgress(State, rFileName);
 }
 
-void ServerFilesPanel::RestoreProgress(RestoreState State, 
+void RestorePanel::RestoreProgress(RestoreState State, 
 	std::string& rFileName)
 {
 	mRestoreCounter++;
@@ -240,7 +240,7 @@ void ServerFilesPanel::RestoreProgress(RestoreState State,
 	wxSafeYield();
 }
 
-void ServerFilesPanel::OnFileRestore(wxCommandEvent& event)
+void RestorePanel::OnFileRestore(wxCommandEvent& event)
 {
 	wxTreeItemId item = theServerFileTree->GetSelection();
 	RestoreTreeNode *node = 
@@ -361,7 +361,7 @@ void ServerFilesPanel::OnFileRestore(wxCommandEvent& event)
 	}
 }
 
-void ServerFilesPanel::OnFileDelete(wxCommandEvent& event)
+void RestorePanel::OnFileDelete(wxCommandEvent& event)
 {
 	wxTreeItemId item = theServerFileTree->GetSelection();
 	RestoreTreeNode *node = 
@@ -396,7 +396,7 @@ void ServerFilesPanel::OnFileDelete(wxCommandEvent& event)
 int wxCALLBACK myCompareFunction(long item1, long item2, long sortData) {
 	RestoreTreeNode* pItem1 = (RestoreTreeNode *)item1;
 	RestoreTreeNode* pItem2 = (RestoreTreeNode *)item2;
-	ServerFilesPanel* pPanel = (ServerFilesPanel *)sortData;
+	RestorePanel* pPanel = (RestorePanel *)sortData;
 	
 	int  Column  = pPanel->GetListSortColumn();
 	bool Reverse = pPanel->GetListSortReverse();
@@ -422,7 +422,7 @@ int wxCALLBACK myCompareFunction(long item1, long item2, long sortData) {
 	return Result;
 }
 
-void ServerFilesPanel::OnListColumnClick(wxListEvent& event)
+void RestorePanel::OnListColumnClick(wxListEvent& event)
 {
 	wxListItem column;
 	theServerFileList->GetColumn(mListSortColumn, column);
@@ -445,19 +445,19 @@ void ServerFilesPanel::OnListColumnClick(wxListEvent& event)
 	theServerFileList->SortItems(myCompareFunction, (long)this);
 }
 
-void ServerFilesPanel::OnListItemActivate(wxListEvent& event)
+void RestorePanel::OnListItemActivate(wxListEvent& event)
 {
 	RestoreTreeNode *pNode = (RestoreTreeNode *)event.GetData();
 	theServerFileTree->SelectItem(pNode->treeId);
 }
 
-void ServerFilesPanel::SetViewOldFlag(bool NewValue)
+void RestorePanel::SetViewOldFlag(bool NewValue)
 {
 	mServerSettings.mViewOldFiles = NewValue;
 	mpTreeRoot->ShowChildren(NULL);
 }
 
-void ServerFilesPanel::SetViewDeletedFlag(bool NewValue)
+void RestorePanel::SetViewDeletedFlag(bool NewValue)
 {
 	mServerSettings.mViewDeletedFiles = NewValue;
 	mpTreeRoot->ShowChildren(NULL);

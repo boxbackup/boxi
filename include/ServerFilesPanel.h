@@ -78,9 +78,9 @@ class RestoreTreeNode : public wxTreeItemData {
 // DirEntryPtrList class (which derives from wxListBase)
 WX_DECLARE_LIST(RestoreTreeNode, DirEntryPtrList);
 
-class ServerFilesPanel : public wxPanel {
+class RestorePanel : public wxPanel {
 	public:
-	ServerFilesPanel(
+	RestorePanel(
 		ClientConfig*   config,
 		ServerConnection* pServerConnection,
 		wxWindow* 		parent, 

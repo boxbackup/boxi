@@ -69,7 +69,7 @@ class MainFrame : public wxFrame, public ConfigChangeListener {
 	BackupFilesPanel*   theBackupFilesPanel;
 	ClientInfoPanel*    theClientPanel;
 	wxPanel*            theLocationsPanel;
-	ServerFilesPanel*   theServerFilesPanel;
+	RestorePanel*       mpRestorePanel;
 	wxMenu*             mpViewMenu;
 	
 	DECLARE_EVENT_TABLE()
@@ -147,13 +147,13 @@ MainFrame::MainFrame(
 	theTopNotebook->AddPage(theBackupFilesPanel, "Local Files");
 	*/
 	
-	theServerFilesPanel = new ServerFilesPanel(
+	mpRestorePanel = new RestorePanel(
 		mpConfig,
 		mpServerConnection, 
 		theTopNotebook, 
 		mpStatusBar, 
 		ID_Backup_Files_Panel);
-	theTopNotebook->AddPage(theServerFilesPanel, "Restore");
+	theTopNotebook->AddPage(mpRestorePanel, "Restore");
 	
 	wxMenu *menuFile = new wxMenu;
 	menuFile->Append(ID_File_New,  "&New...\tCtrl-N", 
@@ -346,12 +346,12 @@ void MainFrame::OnClose(wxCloseEvent& event) {
 }
 
 void MainFrame::OnViewOld(wxCommandEvent& event) {
-	theServerFilesPanel->SetViewOldFlag(
+	mpRestorePanel->SetViewOldFlag(
 		mpViewMenu->IsChecked(ID_View_Old));
 }
 
 void MainFrame::OnViewDeleted(wxCommandEvent& event) {
-	theServerFilesPanel->SetViewDeletedFlag(
+	mpRestorePanel->SetViewDeletedFlag(
 		mpViewMenu->IsChecked(ID_View_Deleted));
 }
 
