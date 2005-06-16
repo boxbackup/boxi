@@ -443,8 +443,6 @@ BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
 	
 	wxPanel*    pRightPanel = new wxPanel(pSplitter);
 	
-	pSplitter->SplitVertically(mpTree, pRightPanel, 300);
-	
 	wxBoxSizer* pRightSizer = new wxBoxSizer( wxVERTICAL );
 	pRightPanel->SetSizer(pRightSizer);
 	
@@ -548,6 +546,9 @@ BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
 	theExcludeRemoveBtn->Disable();
 	theExcludeCmdSizer->Add(theExcludeRemoveBtn, 1, wxGROW, 0);
 
+	pSplitter->SetMinimumPaneSize(100);
+	pSplitter->SplitVertically(mpTree, pRightPanel);
+	
 	SetSizer( topSizer );
 	topSizer->SetSizeHints( this );
 	
@@ -1013,4 +1014,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 	else
 		mpTree->UpdateExcludedStateIcon(pTreeNode, updateParents, 
 			updateChildren);
+	
+	// doesn't work? - FIXME
+	// event.Veto();
 }

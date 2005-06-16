@@ -75,24 +75,6 @@ class BackupTreeNode : public wxTreeItemData {
 	MyExcludeEntry* mpExcludedBy;
 	MyExcludeEntry* mpIncludedBy;
 	ClientConfig*   mpConfig;
-	/*
-	LocalServerSettings* mpServerSettings;
-	ServerConnection*   mpServerConnection;
-	wxTreeCtrl*			mpTreeCtrl;
-	LocalFileTreeNode*	mpRootNode;
-	wxString			mFileName;
-	wxString			mFullPath;
-	wxString			mLocationString;
-	wxString            mLocationPath;
-	wxString			mExcludedByString;
-	wxString			mIncludedByString;
-	bool				mExcluded;
-	int64_t				mBoxFileId;
-	wxDateTime          mBoxFileLastModified;
-	wxDateTime          mLocalFileLastModified;
-	bool				mServerStateKnown;
-	bool				mFoundOnServer;
-	*/
 	
 	public:
 	BackupTreeNode(BackupTreeCtrl* pTreeCtrl, ClientConfig* pConfig, 
@@ -119,7 +101,6 @@ class BackupTreeNode : public wxTreeItemData {
 		mpIncludedBy = pParent->GetIncludedBy();
 		mpConfig     = pParent->GetConfig();
 	}
-	// ~BackupTreeNode() { }
 	
 	wxTreeItemId      GetTreeId()   { return mTreeId; }
 	const wxFileName& GetFileName() { return mFileName; }
@@ -136,35 +117,9 @@ class BackupTreeNode : public wxTreeItemData {
 	MyExcludeEntry* GetIncludedBy() { return mpIncludedBy; }
 	ClientConfig*   GetConfig()     { return mpConfig; }
 
-	/*
-	void ShowChildren(wxListCtrl *targetList);
-	void SetChecked(bool checked) { this->checked = checked; }
-	bool IsChecked() { return this->checked; }
-	void UpdateExcludedState(bool updateParents);
-	bool GetBoxFileId();
-	
-	static const int64_t ID_UNKNOWN = -1;
-	
-	enum ServerState {
-		SS_UNKNOWN = 0,
-		SS_OUTSIDE,
-		SS_EXCLUDED,
-		SS_ALIEN,
-		SS_MISSING,
-		SS_OUTOFDATE,
-		SS_TOONEW,
-		SS_DIRECTORY,
-		SS_PARTIAL,
-		SS_UPTODATE,
-	};
-
-	ServerState mServerState;
-	*/
-	
 	private:
 	BackupTreeCtrl* GetTreeCtrl() { return mpTreeCtrl; }
 	void _AddChildrenSlow(bool recurse);
-	// bool checked;
 };
 
 class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
