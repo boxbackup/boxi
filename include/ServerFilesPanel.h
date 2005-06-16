@@ -47,14 +47,14 @@ class ServerSettings {
 	bool				mViewDeletedFiles;
 };	
 
-class BoxiTreeNodeInfo : public wxTreeItemData {
+class RestoreTreeNode : public wxTreeItemData {
 	public:
 	int64_t 				boxFileID;
 	wxTreeItemId 			treeId;
 	ClientConfig*			theConfig;
 	wxTreeCtrl*				theTree;
-	BoxiTreeNodeInfo*		theServerNode;
-	BoxiTreeNodeInfo*		theParentNode;
+	RestoreTreeNode*		theServerNode;
+	RestoreTreeNode*		theParentNode;
 	wxString				mFileName;
 	bool					isDirectory;
 	bool					isDeleted;
@@ -65,8 +65,8 @@ class BoxiTreeNodeInfo : public wxTreeItemData {
 	ServerSettings*			mpServerSettings;
 	ServerConnection*       mpServerConnection;
 	
-	BoxiTreeNodeInfo();
-	~BoxiTreeNodeInfo();
+	RestoreTreeNode();
+	~RestoreTreeNode();
 	bool ShowChildren(wxListCtrl *targetList);
 
 	private:
@@ -76,7 +76,7 @@ class BoxiTreeNodeInfo : public wxTreeItemData {
 
 // declare our list class: this macro declares and partly implements 
 // DirEntryPtrList class (which derives from wxListBase)
-WX_DECLARE_LIST(BoxiTreeNodeInfo, DirEntryPtrList);
+WX_DECLARE_LIST(RestoreTreeNode, DirEntryPtrList);
 
 class ServerFilesPanel : public wxPanel {
 	public:
@@ -98,7 +98,7 @@ class ServerFilesPanel : public wxPanel {
 	void SetViewDeletedFlag(bool NewValue);
 	bool GetViewOldFlag    () { return mServerSettings.mViewOldFiles; }
 	bool GetViewDeletedFlag() { return mServerSettings.mViewDeletedFiles; }
-	// void RefreshItem(BoxiTreeNodeInfo* pItem);
+	// void RefreshItem(RestoreTreeNode* pItem);
 	
 	private:
 	ClientConfig*		mpConfig;
@@ -110,8 +110,8 @@ class ServerFilesPanel : public wxPanel {
 	wxImageList			mImageList;
 	int					mListSortColumn;
 	bool		  		mListSortReverse;
-	BoxiTreeNodeInfo* 	mpTreeRoot;
-	BoxiTreeNodeInfo* 	mpGlobalSelection;
+	RestoreTreeNode* 	mpTreeRoot;
+	RestoreTreeNode* 	mpGlobalSelection;
 	ServerSettings		mServerSettings;
 	ServerConnection*   mpServerConnection;
 	BackupProtocolClientAccountUsage* mpUsage;

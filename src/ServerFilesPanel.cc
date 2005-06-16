@@ -83,6 +83,15 @@ ServerFilesPanel::ServerFilesPanel(
 	
 	wxPanel* theRightPanel = new wxPanel(theServerSplitter);
 	wxBoxSizer *theRightPanelSizer = new wxBoxSizer( wxVERTICAL );
+	
+	/*
+	wxGridSizer* theRightParamSizer = new wxGridSizer(2, 4, 4);
+	theRightPanelSizer->Add(theRightParamSizer, 0, wxGROW | wxALL, 4);
+	
+	AddParam(theRightPanel, "Date", 
+		new wxStaticText(theRightPanel, wxID_ANY, "Anytime"),
+		TRUE, theRightParamSizer);
+	*/
 
 	wxBoxSizer *theRightButtonSizer = new wxBoxSizer( wxHORIZONTAL );
 	theRightPanelSizer->Add(theRightButtonSizer, 0, wxGROW | wxALL, 4);
@@ -110,7 +119,7 @@ ServerFilesPanel::ServerFilesPanel(
 	theServerSplitter->SplitVertically(theServerFileTree,
 		theRightPanel);
 	
-	mpTreeRoot = new BoxiTreeNodeInfo();
+	mpTreeRoot = new RestoreTreeNode();
 	mpTreeRoot->mFileName		= "/";
 	mpTreeRoot->treeId			= theServerFileTree->AddRoot(
 		wxString("server"), -1, -1, mpTreeRoot);
@@ -166,8 +175,8 @@ ServerFilesPanel::ServerFilesPanel(
 void ServerFilesPanel::OnTreeNodeExpand(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
-	BoxiTreeNodeInfo *node = 
-		(BoxiTreeNodeInfo *)(theServerFileTree->GetItemData(item));
+	RestoreTreeNode *node = 
+		(RestoreTreeNode *)(theServerFileTree->GetItemData(item));
 	if (!node->ShowChildren(NULL))
 		event.Veto();
 }
@@ -189,8 +198,8 @@ void ServerFilesPanel::GetUsageInfo() {
 void ServerFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
-	BoxiTreeNodeInfo *node = 
-		(BoxiTreeNodeInfo *)(theServerFileTree->GetItemData(item));
+	RestoreTreeNode *node = 
+		(RestoreTreeNode *)(theServerFileTree->GetItemData(item));
 
 	if (!(node->isDirectory)) {
 		mpDeleteButton->Enable(FALSE);
@@ -234,8 +243,8 @@ void ServerFilesPanel::RestoreProgress(RestoreState State,
 void ServerFilesPanel::OnFileRestore(wxCommandEvent& event)
 {
 	wxTreeItemId item = theServerFileTree->GetSelection();
-	BoxiTreeNodeInfo *node = 
-		(BoxiTreeNodeInfo *)(theServerFileTree->GetItemData(item));
+	RestoreTreeNode *node = 
+		(RestoreTreeNode *)(theServerFileTree->GetItemData(item));
 	
 	int64_t boxId = node->boxFileID;
 	if (boxId == BackupProtocolClientListDirectory::RootDirectory) {
@@ -355,8 +364,8 @@ void ServerFilesPanel::OnFileRestore(wxCommandEvent& event)
 void ServerFilesPanel::OnFileDelete(wxCommandEvent& event)
 {
 	wxTreeItemId item = theServerFileTree->GetSelection();
-	BoxiTreeNodeInfo *node = 
-		(BoxiTreeNodeInfo *)(theServerFileTree->GetItemData(item));
+	RestoreTreeNode *node = 
+		(RestoreTreeNode *)(theServerFileTree->GetItemData(item));
 
 	bool success = FALSE;
 		
@@ -385,8 +394,8 @@ void ServerFilesPanel::OnFileDelete(wxCommandEvent& event)
 }
 
 int wxCALLBACK myCompareFunction(long item1, long item2, long sortData) {
-	BoxiTreeNodeInfo* pItem1 = (BoxiTreeNodeInfo *)item1;
-	BoxiTreeNodeInfo* pItem2 = (BoxiTreeNodeInfo *)item2;
+	RestoreTreeNode* pItem1 = (RestoreTreeNode *)item1;
+	RestoreTreeNode* pItem2 = (RestoreTreeNode *)item2;
 	ServerFilesPanel* pPanel = (ServerFilesPanel *)sortData;
 	
 	int  Column  = pPanel->GetListSortColumn();
@@ -438,7 +447,7 @@ void ServerFilesPanel::OnListColumnClick(wxListEvent& event)
 
 void ServerFilesPanel::OnListItemActivate(wxListEvent& event)
 {
-	BoxiTreeNodeInfo *pNode = (BoxiTreeNodeInfo *)event.GetData();
+	RestoreTreeNode *pNode = (RestoreTreeNode *)event.GetData();
 	theServerFileTree->SelectItem(pNode->treeId);
 }
 
@@ -454,7 +463,7 @@ void ServerFilesPanel::SetViewDeletedFlag(bool NewValue)
 	mpTreeRoot->ShowChildren(NULL);
 }
 
-BoxiTreeNodeInfo::BoxiTreeNodeInfo() 
+RestoreTreeNode::RestoreTreeNode() 
 {
 	// memset(this, 0, sizeof(*this));
 	
@@ -474,7 +483,7 @@ BoxiTreeNodeInfo::BoxiTreeNodeInfo()
 	mHasAttributes  = FALSE;
 }
 
-BoxiTreeNodeInfo::~BoxiTreeNodeInfo() 
+RestoreTreeNode::~RestoreTreeNode() 
 {
 	if (mpUsage != NULL) {
 		delete mpUsage;
@@ -482,7 +491,7 @@ BoxiTreeNodeInfo::~BoxiTreeNodeInfo()
 	}
 }
 
-bool BoxiTreeNodeInfo::ShowChildren(wxListCtrl *targetList) {
+bool RestoreTreeNode::ShowChildren(wxListCtrl *targetList) {
 	theServerNode->theTree->SetCursor(*wxHOURGLASS_CURSOR);
 	wxSafeYield();
 	bool result = FALSE;
@@ -498,7 +507,7 @@ bool BoxiTreeNodeInfo::ShowChildren(wxListCtrl *targetList) {
 
 WX_DEFINE_LIST(DirEntryPtrList);
 
-int TreeNodeCompare(const BoxiTreeNodeInfo **a, const BoxiTreeNodeInfo **b)
+int TreeNodeCompare(const RestoreTreeNode **a, const RestoreTreeNode **b)
 {
 	if ( (*a)->isDirectory && !(*b)->isDirectory) return -1;
 	if (!(*a)->isDirectory &&  (*b)->isDirectory) return  1;
@@ -507,7 +516,7 @@ int TreeNodeCompare(const BoxiTreeNodeInfo **a, const BoxiTreeNodeInfo **b)
 
 /* Based on BackupQueries.cpp from boxbackup 0.09 */
 
-bool BoxiTreeNodeInfo::ScanChildrenAndList(wxListCtrl *targetList,
+bool RestoreTreeNode::ScanChildrenAndList(wxListCtrl *targetList,
 	bool recursive) {
 	int64_t baseDir = boxFileID;
 	
@@ -544,7 +553,7 @@ bool BoxiTreeNodeInfo::ScanChildrenAndList(wxListCtrl *targetList,
 			BackupStoreFilenameClear clear(en->GetName());
 	
 			// create a new tree node to represent the directory entry
-			BoxiTreeNodeInfo *treeNode = new BoxiTreeNodeInfo();
+			RestoreTreeNode *treeNode = new RestoreTreeNode();
 			treeNode->theTree = theTree;
 			treeNode->theServerNode = theServerNode;
 			treeNode->theParentNode = this;
@@ -577,7 +586,7 @@ bool BoxiTreeNodeInfo::ScanChildrenAndList(wxListCtrl *targetList,
     for ( DirEntryPtrList::Node *iter = entries.GetFirst(); 
 		iter; iter = iter->GetNext() )
     {
-        BoxiTreeNodeInfo *treeNode = iter->GetData();
+        RestoreTreeNode *treeNode = iter->GetData();
 
 		treeNode->treeId = theTree->AppendItem(this->treeId,
 			treeNode->mFileName, -1, -1, treeNode);
