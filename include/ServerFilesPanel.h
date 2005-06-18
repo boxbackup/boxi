@@ -47,31 +47,106 @@ class ServerSettings {
 	bool				mViewDeletedFiles;
 };	
 
-class RestoreTreeNode : public wxTreeItemData {
+class RestoreTreeNode;
+
+class RestoreTreeCtrl : public wxTreeCtrl {
 	public:
-	int64_t 				boxFileID;
-	wxTreeItemId 			treeId;
-	ClientConfig*			theConfig;
-	wxTreeCtrl*				theTree;
-	RestoreTreeNode*		theServerNode;
-	RestoreTreeNode*		theParentNode;
-	wxString				mFileName;
-	bool					isDirectory;
-	bool					isDeleted;
-	int16_t 				mFlags;
-	int64_t					mSizeInBlocks;
-	bool					mHasAttributes;
-	wxDateTime				mDateTime;
-	ServerSettings*			mpServerSettings;
-	ServerConnection*       mpServerConnection;
+	RestoreTreeCtrl(
+		wxWindow* parent, 
+		wxWindowID id, 
+		const wxPoint& pos = wxDefaultPosition, 
+		const wxSize& size = wxDefaultSize, 
+		long style = wxTR_HAS_BUTTONS, 
+		const wxValidator& validator = wxDefaultValidator, 
+		const wxString& name = "RestoreTreeCtrl"
+	);
+	void UpdateExcludedStateIcon(RestoreTreeNode* pNode, 
+		bool updateParents, bool updateChildren);
+	void SetRoot(RestoreTreeNode* pRootNode);
 	
-	RestoreTreeNode();
-	~RestoreTreeNode();
-	bool ShowChildren(wxListCtrl *targetList);
+	private:
+	int OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& item2);
+
+	wxImageList mImages;
+	int mEmptyImageId;
+	int mCheckedImageId;
+	int mCheckedGreyImageId;
+	int mCrossedImageId;
+	int mCrossedGreyImageId;
+	int mAlwaysImageId;
+	int mAlwaysGreyImageId;
+};
+
+class RestoreTreeNode : public wxTreeItemData {
+	private:
+	int64_t           mBoxFileId;
+	wxTreeItemId      mTreeId;
+	wxString          mFileName;
+	wxString          mFullPath;
+	RestoreTreeNode*  mpParentNode;
+	RestoreTreeCtrl*  mpTreeCtrl;
+	bool              mIsDirectory;
+	bool              mIsDeleted;
+	ClientConfig*     mpConfig;
+	int16_t           mFlags;
+	int64_t           mSizeInBlocks;
+	bool              mHasAttributes;
+	wxDateTime        mDateTime;
+	ServerSettings*   mpServerSettings;
+	ServerConnection* mpServerConnection;
+	BackupProtocolClientAccountUsage* mpUsage;
+	
+	public:
+	RestoreTreeNode(RestoreTreeCtrl* pTreeCtrl, ClientConfig* pConfig,
+		ServerSettings* pServerSettings, ServerConnection* pServerConnection) 
+	{ 
+		mBoxFileId   = BackupProtocolClientListDirectory::RootDirectory;
+		mFileName    = "";
+		mFullPath    = "/";
+		mpParentNode = NULL;
+		mpTreeCtrl   = pTreeCtrl;
+		mIsDirectory = TRUE;
+		mpConfig     = pConfig;
+		mFileName    = "";
+		mpUsage      = NULL;
+		mpServerSettings   = pServerSettings;
+		mpServerConnection = pServerConnection;
+	}
+	RestoreTreeNode(RestoreTreeNode* pParent, int64_t lBoxFileId,
+		const wxString& lrFileName, bool lIsDirectory) 
+	{ 
+		mBoxFileId   = lBoxFileId;
+		mFileName    = lrFileName;
+		wxString lFullPath;
+		lFullPath.Printf("%s/%s", pParent->GetFileName().c_str(), 
+			lrFileName.c_str());
+		mFullPath    = lFullPath;
+		mpParentNode = pParent;
+		mpTreeCtrl   = pParent->mpTreeCtrl;
+		mIsDirectory = lIsDirectory;
+		mpConfig     = pParent->mpConfig;
+		mpUsage      = NULL;
+		mpServerSettings   = pParent->mpServerSettings;
+		mpServerConnection = pParent->mpServerConnection;
+	}
+
+	// bool ShowChildren(wxListCtrl *targetList);
+
+	wxTreeItemId      GetTreeId()     const { return mTreeId; }
+	const wxString&   GetFileName()   const { return mFileName; }
+	const wxString&   GetFullPath()   const { return mFullPath; }
+	RestoreTreeNode*  GetParentNode() const { return mpParentNode; }
+	int64_t           GetBoxFileId()  const { return mBoxFileId; }
+	bool IsDirectory()                const { return mIsDirectory; }
+	bool IsDeleted()                  const { return mIsDeleted; }
+	void SetTreeId   (wxTreeItemId id)   { mTreeId = id; }
+	void SetDirectory(bool value = true) { mIsDirectory = value; }
+	void SetDeleted  (bool value = true) { mIsDeleted   = value; }
+	
+	bool AddChildren(bool recurse);
 
 	private:
-	bool ScanChildrenAndList(wxListCtrl *targetList, bool recurse);
-	BackupProtocolClientAccountUsage* mpUsage;
+	bool _AddChildrenSlow(bool recurse);
 };
 
 // declare our list class: this macro declares and partly implements 
@@ -94,16 +169,16 @@ class RestorePanel : public wxPanel {
 	void RestoreProgress(RestoreState State, std::string& rFileName);
 	int  GetListSortColumn () { return mListSortColumn; }
 	bool GetListSortReverse() { return mListSortReverse; }
-	void SetViewOldFlag    (bool NewValue);
-	void SetViewDeletedFlag(bool NewValue);
 	bool GetViewOldFlag    () { return mServerSettings.mViewOldFiles; }
 	bool GetViewDeletedFlag() { return mServerSettings.mViewDeletedFiles; }
+	void SetViewOldFlag    (bool NewValue);
+	void SetViewDeletedFlag(bool NewValue);
 	// void RefreshItem(RestoreTreeNode* pItem);
 	
 	private:
 	ClientConfig*		mpConfig;
-	wxTreeCtrl*			theServerFileTree;
-	wxListView*			theServerFileList;
+	RestoreTreeCtrl*    mpTreeCtrl;
+	// wxListView*		theServerFileList;
 	wxButton*			mpDeleteButton;
 	wxStatusBar*		mpStatusBar;
 	int					mRestoreCounter;	

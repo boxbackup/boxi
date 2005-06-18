@@ -24,17 +24,140 @@
 
 #include <iostream>
 
+#include <wx/artprov.h>
 #include <wx/filename.h>
 #include <wx/gdicmn.h>
-#include <wx/splitter.h>
-#include <wx/artprov.h>
 #include <wx/imaglist.h>
+#include <wx/mstream.h>
+#include <wx/splitter.h>
 
 #include "BackupClientRestore.h"
 
 #include "main.h"
 #include "ClientConfig.h"
 #include "ServerFilesPanel.h"
+#include "StaticImage.h"
+
+void RestoreTreeCtrl::UpdateExcludedStateIcon(
+	RestoreTreeNode* pNode, bool updateParents, bool updateChildren) 
+{
+	int iconId = mEmptyImageId;
+	if (updateParents && pNode->GetParentNode() != NULL)
+	{
+		UpdateExcludedStateIcon(pNode->GetParentNode(), TRUE, FALSE);
+	}
+	
+	/*
+	pNode->UpdateExcludedState(updateParents);
+	RestoreTreeNode* pParent = pNode->GetParentNode();
+	
+	if (pNode->GetIncludedBy() != NULL)
+	{
+		if (pParent && pNode->GetIncludedBy() == pParent->GetIncludedBy())
+			iconId = mAlwaysGreyImageId;
+		else
+			iconId = mAlwaysImageId;
+	}
+	else if (pNode->GetExcludedBy() != NULL)
+	{
+		if (pParent && pNode->GetExcludedBy() == pParent->GetExcludedBy())
+			iconId = mCrossedGreyImageId;
+		else
+			iconId = mCrossedImageId;
+	}
+	else if (pNode->GetLocation() != NULL)
+	{
+		if (pParent && pNode->GetLocation() == pParent->GetLocation())
+			iconId = mCheckedGreyImageId;
+		else
+			iconId = mCheckedImageId;
+	}
+	*/
+	SetItemImage(pNode->GetTreeId(), iconId, wxTreeItemIcon_Normal);
+	
+	if (updateChildren)
+	{
+		wxTreeItemId thisId = pNode->GetTreeId();
+		wxTreeItemIdValue cookie;
+		wxTreeItemId childId = GetFirstChild(thisId, cookie);
+		while (childId.IsOk())
+		{
+			RestoreTreeNode* pChildNode = 
+				(RestoreTreeNode*)( GetItemData(childId) );
+			UpdateExcludedStateIcon(pChildNode, FALSE, TRUE);
+			childId = GetNextChild(thisId, cookie);
+		}
+	}
+}
+
+static int AddImage(
+	const struct StaticImage & rImageData, 
+	wxImageList & rImageList)
+{
+	wxMemoryInputStream byteStream(rImageData.data, rImageData.size);
+	wxImage img(byteStream, wxBITMAP_TYPE_PNG);
+	return rImageList.Add(img);
+}
+
+RestoreTreeCtrl::RestoreTreeCtrl(
+	wxWindow* parent, 
+	wxWindowID id, 
+	const wxPoint& pos, 
+	const wxSize& size, 
+	long style, 
+	const wxValidator& validator, 
+	const wxString& name
+)
+: wxTreeCtrl(parent, id, pos, size, style, validator, name),
+  mImages(16, 16, true)
+{
+	mEmptyImageId        = AddImage(empty16_png,     mImages);
+	mCheckedImageId      = AddImage(tick16_png,      mImages);
+	mCheckedGreyImageId  = AddImage(tickgrey16_png,  mImages);
+	mCrossedImageId      = AddImage(cross16_png,     mImages);
+	mCrossedGreyImageId  = AddImage(crossgrey16_png, mImages);
+	mAlwaysImageId       = AddImage(plus16_png,      mImages);
+	mAlwaysGreyImageId   = AddImage(plusgrey16_png,  mImages);
+
+	SetImageList(&mImages);
+}
+
+void RestoreTreeCtrl::SetRoot(RestoreTreeNode* pRootNode)
+{
+	wxString lRootName = "/ (server root)";
+	wxTreeItemId lRootId = AddRoot(lRootName, -1, -1, pRootNode);
+	pRootNode->SetTreeId(lRootId);
+	SetItemHasChildren(lRootId, TRUE);
+	UpdateExcludedStateIcon(pRootNode, false, false);
+}
+
+int RestoreTreeCtrl::OnCompareItems(
+	const wxTreeItemId& item1, 
+	const wxTreeItemId& item2)
+{
+	RestoreTreeNode *pNode1 = (RestoreTreeNode*)GetItemData(item1);
+	RestoreTreeNode *pNode2 = (RestoreTreeNode*)GetItemData(item2);
+
+	{
+		bool dir1 = pNode1->IsDirectory();
+		bool dir2 = pNode2->IsDirectory();
+		
+		if ( dir1 && !dir2 )
+		{
+			return -1;
+		}
+		
+		if ( dir2 && !dir1 ) 
+		{
+			return 1;
+		}
+	}
+	
+	wxString name1 = pNode1->GetFileName();
+	wxString name2 = pNode2->GetFileName();
+	
+	return name1.CompareTo(name2);
+}
 
 // Image index constants
 int	mImgDir, mImgFile, mImgExec, mImgDown, mImgUp;
@@ -44,10 +167,12 @@ BEGIN_EVENT_TABLE(RestorePanel, wxPanel)
 		RestorePanel::OnTreeNodeExpand)
 	EVT_TREE_SEL_CHANGING(ID_Server_File_Tree,
 		RestorePanel::OnTreeNodeSelect)
+	/*
 	EVT_LIST_COL_CLICK(ID_Server_File_List, 
 		RestorePanel::OnListColumnClick)
 	EVT_LIST_ITEM_ACTIVATED(ID_Server_File_List,
 		RestorePanel::OnListItemActivate)
+	*/
 	EVT_BUTTON(ID_Server_File_RestoreButton, 
 		RestorePanel::OnFileRestore)
 	EVT_BUTTON(ID_Server_File_DeleteButton, 
@@ -77,9 +202,13 @@ RestorePanel::RestorePanel(
 		ID_Server_Splitter);
 	topSizer->Add(theServerSplitter, 1, wxGROW | wxALL, 8);
 
-	theServerFileTree = new wxTreeCtrl(theServerSplitter, 
+	mpTreeCtrl = new RestoreTreeCtrl(theServerSplitter, 
 		ID_Server_File_Tree, wxDefaultPosition, wxDefaultSize, 
 		wxTR_DEFAULT_STYLE | wxNO_BORDER);
+
+	mpTreeRoot = new RestoreTreeNode(mpTreeCtrl, mpConfig, 
+		&mServerSettings, mpServerConnection);
+	mpTreeCtrl->SetRoot(mpTreeRoot);
 	
 	wxPanel* theRightPanel = new wxPanel(theServerSplitter);
 	wxBoxSizer *theRightPanelSizer = new wxBoxSizer( wxVERTICAL );
@@ -108,32 +237,23 @@ RestorePanel::RestorePanel(
 		ID_Server_File_DeleteButton, "Delete", wxDefaultPosition);
 	theRightButtonSizer->Add(mpDeleteButton, 1, wxALL, 4);
 	
+	/*
 	theServerFileList = new wxListView(theRightPanel, 
 		ID_Server_File_List, wxDefaultPosition, wxDefaultSize, 
 		wxLC_REPORT | wxLC_VRULES);
 	theRightPanelSizer->Add(theServerFileList, 1, wxGROW | wxALL, 8);
-
+	*/
+	
 	theRightPanel->SetSizer( theRightPanelSizer );
 
 	theServerSplitter->SetMinimumPaneSize(100);
-	theServerSplitter->SplitVertically(theServerFileTree,
+	theServerSplitter->SplitVertically(mpTreeCtrl,
 		theRightPanel);
 	
-	mpTreeRoot = new RestoreTreeNode();
-	mpTreeRoot->mFileName		= "/";
-	mpTreeRoot->treeId			= theServerFileTree->AddRoot(
+	/*
+	wxTreeItemId id = mpTreeCtrl->AddRoot(
 		wxString("server"), -1, -1, mpTreeRoot);
-	mpTreeRoot->boxFileID		= 
-		BackupProtocolClientListDirectory::RootDirectory;
-	mpTreeRoot->theTree			= theServerFileTree;
-	mpTreeRoot->theConfig		= mpConfig;
-	mpTreeRoot->theServerNode	= mpTreeRoot;
-	mpTreeRoot->theParentNode	= NULL;
-	mpTreeRoot->mpServerSettings = &mServerSettings;
-	mpTreeRoot->mpServerConnection = mpServerConnection;
-	mpTreeRoot->boxFileID = BackupProtocolClientListDirectory::RootDirectory;
-	
-	theServerFileTree->SetItemHasChildren(mpTreeRoot->treeId, TRUE);
+	mpTreeRoot->SetTreeId(id); 
 	
 	mImgDir = mImageList.Add(wxArtProvider::GetIcon(wxART_FOLDER, 
 		wxART_CMN_DIALOG, wxSize(16, 16)));
@@ -164,30 +284,31 @@ RestorePanel::RestorePanel(
 
 	for (int i = 0; i < theServerFileList->GetColumnCount(); i++) 
     	theServerFileList->SetColumnWidth( i, i == 0 ? 120 : 60 );
-
+	*/
+	
 	SetSizer( topSizer );
 	topSizer->SetSizeHints( this );
 	
-	mServerSettings.mViewOldFiles     = TRUE;
-	mServerSettings.mViewDeletedFiles = TRUE;
+	mServerSettings.mViewOldFiles     = FALSE;
+	mServerSettings.mViewDeletedFiles = FALSE;
 }
 
 void RestorePanel::OnTreeNodeExpand(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 	RestoreTreeNode *node = 
-		(RestoreTreeNode *)(theServerFileTree->GetItemData(item));
-	if (!node->ShowChildren(NULL))
+		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
+	if (!node->AddChildren(true))
 		event.Veto();
 }
 
 void RestorePanel::GetUsageInfo() {
 	if (mpUsage) delete mpUsage;
 	
-	theServerFileTree->SetCursor(*wxHOURGLASS_CURSOR);
+	mpTreeCtrl->SetCursor(*wxHOURGLASS_CURSOR);
 	wxSafeYield();
 	mpUsage = mpServerConnection->GetAccountUsage();
-	theServerFileTree->SetCursor(*wxSTANDARD_CURSOR);
+	mpTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
 	wxSafeYield();
 	
 	if (!mpUsage) {
@@ -199,28 +320,30 @@ void RestorePanel::OnTreeNodeSelect(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 	RestoreTreeNode *node = 
-		(RestoreTreeNode *)(theServerFileTree->GetItemData(item));
+		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
 
-	if (!(node->isDirectory)) {
+	if (!(node->IsDirectory())) {
 		mpDeleteButton->Enable(FALSE);
 	} else {
 		mpDeleteButton->Enable(TRUE);
-		if (node->isDeleted) {
+		if (node->IsDeleted()) {
 			mpDeleteButton->SetLabel("Undelete");
 		} else {
 			mpDeleteButton->SetLabel("Delete");
 		}
 	}
 	
+	/*
 	if (!mpUsage) GetUsageInfo();
 	
-	if (node->isDirectory) {
-		if (!node->ShowChildren(theServerFileList))
+	if (node->IsDirectory()) {
+		if (!node->AddChildren(false))
 			event.Veto();
 	} else {
 		// node->ShowInfo(theServerFileList);
 		// nothing yet
 	}
+	*/
 }
 
 void RestoreProgressCallback(RestoreState State, 
@@ -242,11 +365,11 @@ void RestorePanel::RestoreProgress(RestoreState State,
 
 void RestorePanel::OnFileRestore(wxCommandEvent& event)
 {
-	wxTreeItemId item = theServerFileTree->GetSelection();
+	wxTreeItemId item = mpTreeCtrl->GetSelection();
 	RestoreTreeNode *node = 
-		(RestoreTreeNode *)(theServerFileTree->GetItemData(item));
+		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
 	
-	int64_t boxId = node->boxFileID;
+	int64_t boxId = node->GetBoxFileId();
 	if (boxId == BackupProtocolClientListDirectory::RootDirectory) {
 		wxMessageBox("You cannot restore the whole server. "
 			"Try restoring individual locations", "Nice Try", 
@@ -295,7 +418,7 @@ void RestorePanel::OnFileRestore(wxCommandEvent& event)
 	
 	try {
 		// Go and restore...
-		if (node->isDirectory) {
+		if (node->IsDirectory()) {
 			mRestoreCounter = 0;
 			result = mpServerConnection->Restore(
 				boxId, destFileName, 
@@ -306,8 +429,8 @@ void RestorePanel::OnFileRestore(wxCommandEvent& event)
 				false /* resume? */);
 		} else {
 			mpServerConnection->GetFile(
-				node->theParentNode->boxFileID,
-				node->boxFileID,
+				node->GetParentNode()->GetBoxFileId(),
+				node->GetBoxFileId(),
 				destFileName);
 			
 			result = Restore_Complete;
@@ -324,8 +447,7 @@ void RestorePanel::OnFileRestore(wxCommandEvent& event)
 			
 			// connection to server is probably dead, so close it now.
 			mpServerConnection->Disconnect();
-			node->theServerNode->theTree->CollapseAndReset(
-				node->theServerNode->treeId);
+			mpTreeCtrl->CollapseAndReset(node->GetTreeId());
 		} else {
 			msg.Append(e.what());
 		}
@@ -363,31 +485,31 @@ void RestorePanel::OnFileRestore(wxCommandEvent& event)
 
 void RestorePanel::OnFileDelete(wxCommandEvent& event)
 {
-	wxTreeItemId item = theServerFileTree->GetSelection();
+	wxTreeItemId item = mpTreeCtrl->GetSelection();
 	RestoreTreeNode *node = 
-		(RestoreTreeNode *)(theServerFileTree->GetItemData(item));
+		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
 
 	bool success = FALSE;
 		
-	if (node->isDeleted) {
-		success = mpServerConnection->UndeleteDirectory(node->boxFileID);
+	if (node->IsDeleted()) {
+		success = mpServerConnection->UndeleteDirectory(node->GetBoxFileId());
 	} else {
-		success = mpServerConnection->DeleteDirectory(node->boxFileID);
+		success = mpServerConnection->DeleteDirectory(node->GetBoxFileId());
 	}
 	
 	if (!success) {
 		return;
 	}
 
-	if (node->isDeleted) {
-		node->isDeleted = FALSE;
-		theServerFileTree->SetItemTextColour(node->treeId, 
+	if (node->IsDeleted()) {
+		node->SetDeleted(FALSE);
+		mpTreeCtrl->SetItemTextColour(node->GetTreeId(), 
 			*wxTheColourDatabase->FindColour("BLACK"));
 		mpDeleteButton->SetLabel("Delete");
 	} else {
-		mpServerConnection->DeleteDirectory(node->boxFileID);
-		node->isDeleted = TRUE;
-		theServerFileTree->SetItemTextColour(node->treeId, 
+		mpServerConnection->DeleteDirectory(node->GetBoxFileId());
+		node->SetDeleted(TRUE);
+		mpTreeCtrl->SetItemTextColour(node->GetTreeId(), 
 			*wxTheColourDatabase->FindColour("GREY"));
 		mpDeleteButton->SetLabel("Undelete");
 	}
@@ -402,12 +524,13 @@ int wxCALLBACK myCompareFunction(long item1, long item2, long sortData) {
 	bool Reverse = pPanel->GetListSortReverse();
 	int  Result  = 0;
 	
-	if (pItem1->isDirectory && !(pItem2->isDirectory)) {
+	if (pItem1->IsDirectory() && !(pItem2->IsDirectory())) {
 		Result = -1;
-	} else if (!(pItem1->isDirectory) && pItem2->isDirectory) {
+	} else if (!(pItem1->IsDirectory()) && pItem2->IsDirectory()) {
 		Result = 1;
 	} else if (Column == 0) {
-		Result = pItem1->mFileName.CompareTo(pItem2->mFileName);
+		Result = pItem1->GetFileName().CompareTo(pItem2->GetFileName());
+	/*
 	} else if (Column == 1) {
 		Result = pItem1->mSizeInBlocks - pItem2->mSizeInBlocks;
 	} else if (Column == 2) {
@@ -416,12 +539,14 @@ int wxCALLBACK myCompareFunction(long item1, long item2, long sortData) {
 		if      (llResult < 0) Result = -1;
 		else if (llResult > 0) Result = 1;
 		else Result = 0;
+	*/
 	}
 
 	if (Reverse) Result = -Result;
 	return Result;
 }
 
+/*
 void RestorePanel::OnListColumnClick(wxListEvent& event)
 {
 	wxListItem column;
@@ -448,60 +573,36 @@ void RestorePanel::OnListColumnClick(wxListEvent& event)
 void RestorePanel::OnListItemActivate(wxListEvent& event)
 {
 	RestoreTreeNode *pNode = (RestoreTreeNode *)event.GetData();
-	theServerFileTree->SelectItem(pNode->treeId);
+	mpTreeCtrl->SelectItem(pNode->treeId);
 }
+*/
 
 void RestorePanel::SetViewOldFlag(bool NewValue)
 {
 	mServerSettings.mViewOldFiles = NewValue;
-	mpTreeRoot->ShowChildren(NULL);
+	// mpTreeRoot->ShowChildren(NULL);
 }
 
 void RestorePanel::SetViewDeletedFlag(bool NewValue)
 {
 	mServerSettings.mViewDeletedFiles = NewValue;
-	mpTreeRoot->ShowChildren(NULL);
+	// mpTreeRoot->ShowChildren(NULL);
 }
 
-RestoreTreeNode::RestoreTreeNode() 
-{
-	// memset(this, 0, sizeof(*this));
-	
-	theTree            = NULL;
-	theConfig          = NULL;
-	theServerNode      = NULL;
-	theParentNode      = NULL;
-	mpServerSettings   = NULL;
-	mpServerConnection = NULL;
-	mpUsage            = NULL;
-	
-	boxFileID       = 0;
-	isDirectory     = FALSE;
-	isDeleted       = FALSE;
-	mFlags          = 0;
-	mSizeInBlocks   = 0;
-	mHasAttributes  = FALSE;
-}
-
-RestoreTreeNode::~RestoreTreeNode() 
-{
-	if (mpUsage != NULL) {
-		delete mpUsage;
-		mpUsage = NULL;
-	}
-}
-
-bool RestoreTreeNode::ShowChildren(wxListCtrl *targetList) {
-	theServerNode->theTree->SetCursor(*wxHOURGLASS_CURSOR);
+bool RestoreTreeNode::AddChildren(bool recurse) {
+	mpTreeCtrl->SetCursor(*wxHOURGLASS_CURSOR);
 	wxSafeYield();
-	bool result = FALSE;
 	
-	result = ScanChildrenAndList(targetList, false);
-	if (!result) {
-		theServerNode->theTree->CollapseAndReset(theServerNode->treeId);
+	bool result;
+	
+	try {
+		result = _AddChildrenSlow(recurse);
+	} catch (std::exception& e) {
+		mpTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
+		throw(e);
 	}
 	
-	theServerNode->theTree->SetCursor(*wxSTANDARD_CURSOR);
+	mpTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
 	return result;
 }
 
@@ -509,16 +610,16 @@ WX_DEFINE_LIST(DirEntryPtrList);
 
 int TreeNodeCompare(const RestoreTreeNode **a, const RestoreTreeNode **b)
 {
-	if ( (*a)->isDirectory && !(*b)->isDirectory) return -1;
-	if (!(*a)->isDirectory &&  (*b)->isDirectory) return  1;
-    return((*a)->mFileName.CompareTo((*b)->mFileName));
+	if ( (*a)->IsDirectory() && !(*b)->IsDirectory()) return -1;
+	if (!(*a)->IsDirectory() &&  (*b)->IsDirectory()) return  1;
+    return((*a)->GetFileName().CompareTo((*b)->GetFileName()));
 }
 
 /* Based on BackupQueries.cpp from boxbackup 0.09 */
 
-bool RestoreTreeNode::ScanChildrenAndList(wxListCtrl *targetList,
-	bool recursive) {
-	int64_t baseDir = boxFileID;
+bool RestoreTreeNode::_AddChildrenSlow(bool recursive) 
+{
+	int64_t baseDir = mBoxFileId;
 	
 	// Generate exclude flags
 	int16_t excludeFlags = 
@@ -529,10 +630,12 @@ bool RestoreTreeNode::ScanChildrenAndList(wxListCtrl *targetList,
 		excludeFlags |= BackupProtocolClientListDirectory::Flags_Deleted;
 
 	// delete any existing children of the parent
-	theTree->DeleteChildren(treeId);
+	mpTreeCtrl->DeleteChildren(mTreeId);
 	
+	/*
 	if (targetList != NULL)
 		targetList->DeleteAllItems();
+	*/
 	
 	BackupStoreDirectory dir;
 	
@@ -543,119 +646,48 @@ bool RestoreTreeNode::ScanChildrenAndList(wxListCtrl *targetList,
 	DirEntryPtrList entries;
 	
 	// create new nodes for all real, current children of this node
+	BackupStoreDirectory::Iterator i(dir);
+	BackupStoreDirectory::Entry *en = 0;
+	
+	while ((en = i.Next()) != 0)
 	{
-		BackupStoreDirectory::Iterator i(dir);
-		BackupStoreDirectory::Entry *en = 0;
+		// decrypt file name
+		BackupStoreFilenameClear clear(en->GetName());
 		
-		while ((en = i.Next()) != 0)
-		{
-			// decrypt file name
-			BackupStoreFilenameClear clear(en->GetName());
-	
-			// create a new tree node to represent the directory entry
-			RestoreTreeNode *treeNode = new RestoreTreeNode();
-			treeNode->theTree = theTree;
-			treeNode->theServerNode = theServerNode;
-			treeNode->theParentNode = this;
-			treeNode->isDeleted = 
-				(en->GetFlags ()& BackupStoreDirectory::Entry::Flags_Deleted) != 0;
-			treeNode->isDirectory =
-				(en->GetFlags() & BackupStoreDirectory::Entry::Flags_Dir) != 0;
-			treeNode->boxFileID = en->GetObjectID();
-			treeNode->mFlags    = en->GetFlags();
-			treeNode->mFileName = clear.GetClearFilename().c_str();
-			treeNode->mSizeInBlocks  = en->GetSizeInBlocks();
-			treeNode->mHasAttributes = en->HasAttributes();
-			treeNode->mpServerSettings = theServerNode->mpServerSettings;
-			treeNode->mpServerConnection = mpServerConnection;
-	
-			time_t ModTime = BoxTimeToSeconds(en->GetModificationTime());
-			treeNode->mDateTime = wxDateTime(ModTime);
-			
-			// add to the list
-			entries.Append(treeNode);
-		}
-	}
-	
-	// sort the list
-	entries.Sort(TreeNodeCompare);	
-
-	int listIndex = 0;
-	
-	// iterate over the list
-    for ( DirEntryPtrList::Node *iter = entries.GetFirst(); 
-		iter; iter = iter->GetNext() )
-    {
-        RestoreTreeNode *treeNode = iter->GetData();
-
-		treeNode->treeId = theTree->AppendItem(this->treeId,
-			treeNode->mFileName, -1, -1, treeNode);
+		int64_t boxFileId = en->GetObjectID();
 		
-		if (treeNode->isDeleted)
-			theTree->SetItemTextColour(treeNode->treeId, 
+		wxString newFileName = clear.GetClearFilename().c_str();
+		
+		bool isDirectory =
+			(en->GetFlags() & BackupStoreDirectory::Entry::Flags_Dir) != 0;
+		
+		// add to the tree
+		RestoreTreeNode *pNewNode = new RestoreTreeNode(
+			this, boxFileId, newFileName, isDirectory);
+		
+		pNewNode->SetTreeId(
+			mpTreeCtrl->AppendItem(this->mTreeId,
+				newFileName, -1, -1, pNewNode)
+			);
+		
+		mpTreeCtrl->UpdateExcludedStateIcon(pNewNode, false, false);
+		
+		if (pNewNode->mIsDeleted)
+			mpTreeCtrl->SetItemTextColour(pNewNode->mTreeId, 
 				*wxTheColourDatabase->FindColour("GREY"));
 			
-		if (treeNode->isDirectory)
+		if (pNewNode->mIsDirectory)
 		{
 			if (recursive) {
-				treeNode->ScanChildrenAndList(NULL, false);
+				pNewNode->_AddChildrenSlow(false);
 			} else {
-				theTree->SetItemHasChildren(treeNode->treeId, TRUE);
+				mpTreeCtrl->SetItemHasChildren(pNewNode->mTreeId, TRUE);
 			}
 		}
-
-		if (targetList == NULL)
-			continue;
-		
-		// add to list
-		long newItemListId = targetList->InsertItem(listIndex++,
-			treeNode->mFileName, -1);
-		
-		// Size in blocks
-		if (mpUsage) {
-			wxString sizeString = "";
-			int64_t size = treeNode->mSizeInBlocks * 
-				theServerNode->mpUsage->GetBlockSize();
-			
-			while (size > 1000) {
-				int64_t rem = size % 1000;
-				size /= 1000;
-				wxString newSize;
-				newSize.Printf(",%03lld", rem);
-				newSize.Append(sizeString);
-				sizeString = newSize;
-			}
-
-			wxString newSize;
-			newSize.Printf("%lld", size);
-			newSize.Append(sizeString);
-			sizeString = newSize;
-
-			targetList->SetItem(newItemListId, 1, sizeString);
-		} else {
-			targetList->SetItem(newItemListId, 1, "Unknown");
-		}
-		
-		// convert date and time from Box Backup format to wxDateTime
-		{
-			wxString DateTimeString;
-			DateTimeString.Append(treeNode->mDateTime.FormatISODate());
-			DateTimeString.Append(" ");
-			DateTimeString.Append(treeNode->mDateTime.FormatISOTime());
-			targetList->SetItem(newItemListId, 2, DateTimeString);
-		}
-		
-		// choose correct icon: file or directory
-		{
-			if (treeNode->isDirectory)
-				targetList->SetItemImage(newItemListId, mImgDir, 0);
-			else
-				targetList->SetItemImage(newItemListId, mImgFile, 0);
-		}
-		
-		// associate with TreeNode
-		targetList->SetItemData(newItemListId, (long)treeNode);
 	}
+
+	// sort the list
+	mpTreeCtrl->SortChildren(this->mTreeId);
 	
 	return TRUE;
 }
