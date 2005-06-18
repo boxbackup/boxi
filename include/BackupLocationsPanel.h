@@ -66,11 +66,11 @@ class BackupTreeCtrl : public wxTreeCtrl {
 class BackupTreeNode : public wxTreeItemData {
 	private:
 	wxTreeItemId    mTreeId;
+	wxFileName      mFileName;
 	wxString        mFullPath;
 	BackupTreeNode* mpParentNode;
 	BackupTreeCtrl* mpTreeCtrl;
 	bool            mIsDirectory;
-	wxFileName      mFileName;
 	Location*       mpLocation;
 	MyExcludeEntry* mpExcludedBy;
 	MyExcludeEntry* mpIncludedBy;

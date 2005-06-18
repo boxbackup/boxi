@@ -33,7 +33,6 @@
 
 #include "BackupLocationsPanel.h"
 #include "StaticImage.h"
-#include "../images/tick16.xpm"
 
 void BackupTreeNode::AddChildren() {
 	mpTreeCtrl->SetCursor(*wxHOURGLASS_CURSOR);
@@ -64,12 +63,6 @@ void BackupTreeNode::_AddChildrenSlow(bool recursive)
 	// delete any existing children of the parent
 	mpTreeCtrl->DeleteChildren(mTreeId);
 	
-	/*
-	// update the exclude status of this node 
-	// and its parents, just once for efficiency (!)
-	this->UpdateExcludedState(TRUE);
-	*/
-	
 	wxString theCurrentFileName;
 	
 	bool cont = dir.GetFirst(&theCurrentFileName);
@@ -78,30 +71,21 @@ void BackupTreeNode::_AddChildrenSlow(bool recursive)
 		wxFileName fileNameObject = wxFileName(mFullPath, theCurrentFileName);
 
 		// add to the tree
-		BackupTreeNode *newNode = new BackupTreeNode(
+		BackupTreeNode *pNewNode = new BackupTreeNode(
 			this, fileNameObject.GetFullPath()
 		);
-		newNode->SetTreeId(
+		pNewNode->SetTreeId(
 			mpTreeCtrl->AppendItem(this->mTreeId,
-				theCurrentFileName, -1, -1, newNode)
+				theCurrentFileName, -1, -1, pNewNode)
 			);
-		mpTreeCtrl->UpdateExcludedStateIcon(newNode, false, false);
+		mpTreeCtrl->UpdateExcludedStateIcon(pNewNode, false, false);
 		
-		/*
-		newNode->mpTreeCtrl = this->mpTreeCtrl;
-		newNode->mpRootNode = this->mpRootNode;
-		newNode->mpParentNode = this;
-		newNode->mFileName = theCurrentFileName;
-		newNode->mpServerSettings  = mpServerSettings;
-		newNode->mpServerConnection = mpServerConnection;
-		*/
-		
-		if (newNode->IsDirectory())
+		if (pNewNode->IsDirectory())
 		{
 			if (recursive) {
-				newNode->_AddChildrenSlow(false);
+				pNewNode->_AddChildrenSlow(false);
 			} else {
-				mpTreeCtrl->SetItemHasChildren(newNode->GetTreeId(), TRUE);
+				mpTreeCtrl->SetItemHasChildren(pNewNode->GetTreeId(), TRUE);
 			}
 		}
 
@@ -350,8 +334,7 @@ BackupTreeCtrl::BackupTreeCtrl(
 	}
 
 	mEmptyImageId        = AddImage(empty16_png,     mImages);
-	// mCheckedImageId   = AddImage(tick16_png,      mImages);
-	mCheckedImageId      = mImages.Add(wxBitmap(tick16_xpm));	
+	mCheckedImageId      = AddImage(tick16_png,      mImages);
 	mCheckedGreyImageId  = AddImage(tickgrey16_png,  mImages);
 	mCrossedImageId      = AddImage(cross16_png,     mImages);
 	mCrossedGreyImageId  = AddImage(crossgrey16_png, mImages);
