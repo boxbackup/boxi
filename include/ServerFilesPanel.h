@@ -47,6 +47,100 @@ class ServerSettings {
 	bool				mViewDeletedFiles;
 };	
 
+class ServerCacheNode 
+{
+	public:
+	typedef std::vector<ServerCacheNode*> Vector;
+	typedef Vector::iterator Iterator;
+
+	private:
+	int64_t           mBoxFileId;
+	wxString          mFileName;
+	wxString          mFullPath;
+	ServerCacheNode*  mpParentNode;
+	bool              mIsDirectory;
+	bool              mIsDeleted;
+	ClientConfig*     mpConfig;
+	int16_t           mFlags;
+	int64_t           mSizeInBlocks;
+	bool              mHasAttributes;
+	wxDateTime        mDateTime;
+	ServerConnection* mpServerConnection;
+	Vector            mChildren;
+	bool              mCached;
+	
+	public:
+	ServerCacheNode(ClientConfig* pConfig,
+		ServerConnection* pServerConnection) 
+	{ 
+		mBoxFileId   = BackupProtocolClientListDirectory::RootDirectory;
+		mFileName    = "";
+		mFullPath    = "/";
+		mpParentNode = NULL;
+		mIsDirectory = TRUE;
+		mIsDeleted   = FALSE;
+		mpConfig     = pConfig;
+		mFlags       = 0;
+		mSizeInBlocks = 0;
+		mHasAttributes = FALSE;
+		mpServerConnection = pServerConnection;
+		mCached = FALSE;
+	}
+	ServerCacheNode(ServerCacheNode* pParent, 
+		BackupStoreDirectory::Entry* pDirEntry)
+	{ 
+		BackupStoreFilenameClear clear(pDirEntry->GetName());
+
+		mBoxFileId   = pDirEntry->GetObjectID();
+		mFileName    = clear.GetClearFilename().c_str();	
+		mFullPath.Printf("%s/%s", pParent->GetFileName().c_str(), 
+			mFileName.c_str());
+		mpParentNode = pParent;
+		mFlags       = pDirEntry->GetFlags();
+		mIsDirectory = mFlags & BackupStoreDirectory::Entry::Flags_Dir;
+		mIsDeleted   = mFlags & BackupStoreDirectory::Entry::Flags_Deleted;
+		mpConfig     = pParent->mpConfig;
+		mSizeInBlocks = 0;
+		mHasAttributes = FALSE;
+		mpServerConnection = pParent->mpServerConnection;
+		mCached = FALSE;
+	}
+	~ServerCacheNode() { FreeChildren(); }
+
+	const wxString&   GetFileName()   const { return mFileName; }
+	const wxString&   GetFullPath()   const { return mFullPath; }
+	ServerCacheNode*  GetParentNode() const { return mpParentNode; }
+	int64_t           GetBoxFileId()  const { return mBoxFileId; }
+	bool IsDirectory()                const { return mIsDirectory; }
+	bool IsDeleted()                  const { return mIsDeleted; }
+	void SetDeleted(bool value = true) { mIsDeleted   = value; }
+
+	const Vector& GetChildren();
+	
+	private:
+	void FreeChildren() 
+	{
+		for (Iterator i = mChildren.begin(); i != mChildren.end(); i++)
+		{
+			delete *i;
+		}
+		mChildren.clear();
+	}		
+};
+
+class ServerCache
+{
+	private:
+	ServerCacheNode mRoot;
+	
+	public:
+	ServerCache(ClientConfig* pConfig, ServerConnection* pServerConnection) 
+	: mRoot(pConfig, pServerConnection)
+	{ }
+	
+	ServerCacheNode* GetRoot() { return &mRoot; }
+};
+
 class RestoreTreeNode;
 
 class RestoreTreeCtrl : public wxTreeCtrl {
@@ -79,79 +173,46 @@ class RestoreTreeCtrl : public wxTreeCtrl {
 
 class RestoreTreeNode : public wxTreeItemData {
 	private:
-	int64_t           mBoxFileId;
 	wxTreeItemId      mTreeId;
-	wxString          mFileName;
-	wxString          mFullPath;
+	ServerCacheNode*  mpCacheNode;
 	RestoreTreeNode*  mpParentNode;
-	RestoreTreeCtrl*  mpTreeCtrl;
-	bool              mIsDirectory;
-	bool              mIsDeleted;
-	ClientConfig*     mpConfig;
-	int16_t           mFlags;
-	int64_t           mSizeInBlocks;
-	bool              mHasAttributes;
-	wxDateTime        mDateTime;
 	ServerSettings*   mpServerSettings;
-	ServerConnection* mpServerConnection;
-	BackupProtocolClientAccountUsage* mpUsage;
+	RestoreTreeCtrl*  mpTreeCtrl;
 	
 	public:
-	RestoreTreeNode(RestoreTreeCtrl* pTreeCtrl, ClientConfig* pConfig,
-		ServerSettings* pServerSettings, ServerConnection* pServerConnection) 
+	RestoreTreeNode(RestoreTreeCtrl* pTreeCtrl, ServerCacheNode* pCacheNode,
+		ServerSettings* pServerSettings) 
 	{ 
-		mBoxFileId   = BackupProtocolClientListDirectory::RootDirectory;
-		mFileName    = "";
-		mFullPath    = "/";
-		mpParentNode = NULL;
-		mpTreeCtrl   = pTreeCtrl;
-		mIsDirectory = TRUE;
-		mpConfig     = pConfig;
-		mFileName    = "";
-		mpUsage      = NULL;
-		mpServerSettings   = pServerSettings;
-		mpServerConnection = pServerConnection;
+		mpCacheNode      = pCacheNode;
+		mpParentNode     = NULL;
+		mpTreeCtrl       = pTreeCtrl;
+		mpServerSettings = pServerSettings;
 	}
-	RestoreTreeNode(RestoreTreeNode* pParent, int64_t lBoxFileId,
-		const wxString& lrFileName, bool lIsDirectory) 
+	RestoreTreeNode(RestoreTreeNode* pParent, ServerCacheNode* pCacheNode)
 	{ 
-		mBoxFileId   = lBoxFileId;
-		mFileName    = lrFileName;
-		wxString lFullPath;
-		lFullPath.Printf("%s/%s", pParent->GetFileName().c_str(), 
-			lrFileName.c_str());
-		mFullPath    = lFullPath;
-		mpParentNode = pParent;
-		mpTreeCtrl   = pParent->mpTreeCtrl;
-		mIsDirectory = lIsDirectory;
-		mpConfig     = pParent->mpConfig;
-		mpUsage      = NULL;
-		mpServerSettings   = pParent->mpServerSettings;
-		mpServerConnection = pParent->mpServerConnection;
+		mpCacheNode      = pCacheNode;
+		mpParentNode     = pParent;
+		mpTreeCtrl       = pParent->mpTreeCtrl;
+		mpServerSettings = pParent->mpServerSettings;
 	}
 
 	// bool ShowChildren(wxListCtrl *targetList);
 
 	wxTreeItemId      GetTreeId()     const { return mTreeId; }
-	const wxString&   GetFileName()   const { return mFileName; }
-	const wxString&   GetFullPath()   const { return mFullPath; }
 	RestoreTreeNode*  GetParentNode() const { return mpParentNode; }
-	int64_t           GetBoxFileId()  const { return mBoxFileId; }
-	bool IsDirectory()                const { return mIsDirectory; }
-	bool IsDeleted()                  const { return mIsDeleted; }
+	const wxString&   GetFileName()   const { return mpCacheNode->GetFileName(); }
+	const wxString&   GetFullPath()   const { return mpCacheNode->GetFullPath(); }
+	int64_t           GetBoxFileId()  const { return mpCacheNode->GetBoxFileId(); }
+	bool IsDirectory()                const { return mpCacheNode->IsDirectory(); }
+	bool IsDeleted()                  const { return mpCacheNode->IsDeleted(); }
 	void SetTreeId   (wxTreeItemId id)   { mTreeId = id; }
-	void SetDirectory(bool value = true) { mIsDirectory = value; }
-	void SetDeleted  (bool value = true) { mIsDeleted   = value; }
+	void SetDeleted  (bool value = true) { mpCacheNode->SetDeleted(value); }
 	
 	bool AddChildren(bool recurse);
 
 	private:
 	bool _AddChildrenSlow(bool recurse);
 };
-
-// declare our list class: this macro declares and partly implements 
-// DirEntryPtrList class (which derives from wxListBase)
-WX_DECLARE_LIST(RestoreTreeNode, DirEntryPtrList);
 
 class RestorePanel : public wxPanel {
 	public:
@@ -164,7 +225,8 @@ class RestorePanel : public wxPanel {
 		const wxPoint& 	pos 	= wxDefaultPosition, 
 		const wxSize& 	size 	= wxDefaultSize,
 		long 			style 	= wxTAB_TRAVERSAL, 
-		const wxString& name 	= "panel");
+		const wxString& name 	= "RestorePanel");
+	~RestorePanel() { delete mpCache; }
 	
 	void RestoreProgress(RestoreState State, std::string& rFileName);
 	int  GetListSortColumn () { return mListSortColumn; }
@@ -190,6 +252,7 @@ class RestorePanel : public wxPanel {
 	ServerSettings		mServerSettings;
 	ServerConnection*   mpServerConnection;
 	BackupProtocolClientAccountUsage* mpUsage;
+	ServerCache*        mpCache;
 	
 	void OnTreeNodeExpand	(wxTreeEvent& event);
 	void OnTreeNodeSelect	(wxTreeEvent& event);
