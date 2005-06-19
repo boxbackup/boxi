@@ -38,54 +38,25 @@
 #include "ServerFilesPanel.h"
 #include "StaticImage.h"
 
-void RestoreTreeCtrl::UpdateExcludedStateIcon(
-	RestoreTreeNode* pNode, bool updateParents, bool updateChildren) 
+void RestoreSpec::Add(const RestoreSpecEntry& rNewEntry)
 {
-	int iconId = mEmptyImageId;
-	if (updateParents && pNode->GetParentNode() != NULL)
+	for (RestoreSpec::Iterator i = mEntries.begin(); i != mEntries.end(); i++)
 	{
-		UpdateExcludedStateIcon(pNode->GetParentNode(), TRUE, FALSE);
+		if (i->IsSameAs(rNewEntry))
+			return;
 	}
 	
-	/*
-	pNode->UpdateExcludedState(updateParents);
-	RestoreTreeNode* pParent = pNode->GetParentNode();
-	
-	if (pNode->GetIncludedBy() != NULL)
+	mEntries.push_back(rNewEntry);
+}
+
+void RestoreSpec::Remove(const RestoreSpecEntry& rOldEntry)
+{
+	for (RestoreSpec::Iterator i = mEntries.begin(); i != mEntries.end(); i++)
 	{
-		if (pParent && pNode->GetIncludedBy() == pParent->GetIncludedBy())
-			iconId = mAlwaysGreyImageId;
-		else
-			iconId = mAlwaysImageId;
-	}
-	else if (pNode->GetExcludedBy() != NULL)
-	{
-		if (pParent && pNode->GetExcludedBy() == pParent->GetExcludedBy())
-			iconId = mCrossedGreyImageId;
-		else
-			iconId = mCrossedImageId;
-	}
-	else if (pNode->GetLocation() != NULL)
-	{
-		if (pParent && pNode->GetLocation() == pParent->GetLocation())
-			iconId = mCheckedGreyImageId;
-		else
-			iconId = mCheckedImageId;
-	}
-	*/
-	SetItemImage(pNode->GetTreeId(), iconId, wxTreeItemIcon_Normal);
-	
-	if (updateChildren)
-	{
-		wxTreeItemId thisId = pNode->GetTreeId();
-		wxTreeItemIdValue cookie;
-		wxTreeItemId childId = GetFirstChild(thisId, cookie);
-		while (childId.IsOk())
+		if (i->IsSameAs(rOldEntry))
 		{
-			RestoreTreeNode* pChildNode = 
-				(RestoreTreeNode*)( GetItemData(childId) );
-			UpdateExcludedStateIcon(pChildNode, FALSE, TRUE);
-			childId = GetNextChild(thisId, cookie);
+			mEntries.erase(i);
+			return;
 		}
 	}
 }
@@ -128,7 +99,7 @@ void RestoreTreeCtrl::SetRoot(RestoreTreeNode* pRootNode)
 	wxTreeItemId lRootId = AddRoot(lRootName, -1, -1, pRootNode);
 	pRootNode->SetTreeId(lRootId);
 	SetItemHasChildren(lRootId, TRUE);
-	UpdateExcludedStateIcon(pRootNode, false, false);
+	UpdateStateIcon(pRootNode, false, false);
 }
 
 int RestoreTreeCtrl::OnCompareItems(
@@ -159,20 +130,67 @@ int RestoreTreeCtrl::OnCompareItems(
 	return name1.CompareTo(name2);
 }
 
-// Image index constants
-int	mImgDir, mImgFile, mImgExec, mImgDown, mImgUp;
+void RestoreTreeCtrl::UpdateStateIcon(
+	RestoreTreeNode* pNode, bool updateParents, bool updateChildren) 
+{
+	if (updateParents && pNode->GetParentNode() != NULL)
+	{
+		UpdateStateIcon(pNode->GetParentNode(), TRUE, FALSE);
+	}
+	
+	pNode->UpdateState(updateParents);
+	RestoreTreeNode* pParent = pNode->GetParentNode();
+	
+	const RestoreSpecEntry* pMyEntry     = pNode->GetMatchingEntry();
+	const RestoreSpecEntry* pParentEntry = NULL;
+	if (pParent)
+		pParentEntry = pParent->GetMatchingEntry();
+
+	int iconId = mEmptyImageId;
+	
+	if (!pMyEntry)
+	{
+		// do nothing
+	}
+	else if (pMyEntry->IsInclude())
+	{
+		if (pParentEntry == pMyEntry)
+			iconId = mCheckedGreyImageId;
+		else
+			iconId = mCheckedImageId;
+	}
+	else 
+	{
+		if (pParentEntry == pMyEntry)
+			iconId = mCrossedGreyImageId;
+		else
+			iconId = mCrossedImageId;
+	}
+
+	SetItemImage(pNode->GetTreeId(), iconId, wxTreeItemIcon_Normal);
+	
+	if (updateChildren)
+	{
+		wxTreeItemId thisId = pNode->GetTreeId();
+		wxTreeItemIdValue cookie;
+		wxTreeItemId childId = GetFirstChild(thisId, cookie);
+		while (childId.IsOk())
+		{
+			RestoreTreeNode* pChildNode = 
+				(RestoreTreeNode*)( GetItemData(childId) );
+			UpdateStateIcon(pChildNode, FALSE, TRUE);
+			childId = GetNextChild(thisId, cookie);
+		}
+	}
+}
 
 BEGIN_EVENT_TABLE(RestorePanel, wxPanel)
 	EVT_TREE_ITEM_EXPANDING(ID_Server_File_Tree, 
 		RestorePanel::OnTreeNodeExpand)
 	EVT_TREE_SEL_CHANGING(ID_Server_File_Tree,
 		RestorePanel::OnTreeNodeSelect)
-	/*
-	EVT_LIST_COL_CLICK(ID_Server_File_List, 
-		RestorePanel::OnListColumnClick)
-	EVT_LIST_ITEM_ACTIVATED(ID_Server_File_List,
-		RestorePanel::OnListItemActivate)
-	*/
+	EVT_TREE_ITEM_ACTIVATED(ID_Server_File_Tree,
+		RestorePanel::OnTreeNodeActivate)
 	EVT_BUTTON(ID_Server_File_RestoreButton, 
 		RestorePanel::OnFileRestore)
 	EVT_BUTTON(ID_Server_File_DeleteButton, 
@@ -208,7 +226,7 @@ RestorePanel::RestorePanel(
 		wxTR_DEFAULT_STYLE | wxNO_BORDER);
 
 	mpTreeRoot = new RestoreTreeNode(mpTreeCtrl, mpCache->GetRoot(), 
-		&mServerSettings);
+		&mServerSettings, mRestoreSpec);
 	mpTreeCtrl->SetRoot(mpTreeRoot);
 	
 	wxPanel* theRightPanel = new wxPanel(theServerSplitter);
@@ -280,6 +298,26 @@ void RestorePanel::OnTreeNodeSelect(wxTreeEvent& event)
 	RestoreTreeNode *node = 
 		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
 
+	wxPoint lClickPosition = event.GetPoint();
+	wxString msg;
+	msg.Printf("Click at %d,%d", lClickPosition.x, lClickPosition.y);
+	wxLogDebug(msg);
+	
+	int flags;
+	wxTreeItemId lClickedItemId = mpTreeCtrl->HitTest(lClickPosition, flags);
+	if (flags & wxTREE_HITTEST_ONITEMICON)
+	{
+		wxLogDebug("Icon clicked");
+		event.Veto();
+		return;
+	}
+	else
+	{
+		wxString msg;
+		msg.Printf("Flags are: %d", flags);
+		wxLogDebug(msg);
+	}
+	
 	if (!(node->IsDirectory())) {
 		mpDeleteButton->Enable(FALSE);
 	} else {
@@ -302,6 +340,47 @@ void RestorePanel::OnTreeNodeSelect(wxTreeEvent& event)
 		// nothing yet
 	}
 	*/
+}
+
+void RestorePanel::OnTreeNodeActivate(wxTreeEvent& event)
+{
+	wxTreeItemId item = event.GetItem();
+	RestoreTreeNode *pNode = 
+		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
+	
+	const RestoreSpecEntry* pEntry = pNode->GetMatchingEntry();
+
+	// does the entry apply specifically to this item?
+	RestoreTreeNode* pParent = pNode->GetParentNode();
+	
+	if (!pParent && pEntry && pEntry->IsInclude())
+	{
+		// root node matches an include entry,
+		// it must be ours because we don't have any parents
+		mRestoreSpec.Remove(*pEntry);
+	}
+	else if (pParent && pParent->GetMatchingEntry() != pEntry)
+	{
+		// non-root node, and parent matches a 
+		// different entry, this one must be ours 
+		mRestoreSpec.Remove(*pEntry);
+	}
+	else
+	{
+		// non-root node, and parent matches the same one,
+		// it doesn't point to us. create a new entry for 
+		// this node, with the opposite sense.
+		
+		bool include = TRUE; // include by default
+		
+		if (pEntry)
+			include = !(pEntry->IsInclude());
+		
+		RestoreSpecEntry newEntry(pNode->GetCacheNode(), include);
+		mRestoreSpec.Add(newEntry);
+	}
+	
+	mpTreeCtrl->UpdateStateIcon(pNode, FALSE, TRUE);
 }
 
 void RestoreProgressCallback(RestoreState State, 
@@ -556,7 +635,7 @@ bool RestoreTreeNode::_AddChildrenSlow(bool recursive)
 				pNewNode->GetFileName(), -1, -1, pNewNode)
 			);
 		
-		mpTreeCtrl->UpdateExcludedStateIcon(pNewNode, false, false);
+		mpTreeCtrl->UpdateStateIcon(pNewNode, false, false);
 		
 		if (pNewNode->IsDeleted())
 			mpTreeCtrl->SetItemTextColour(pNewNode->mTreeId, 
@@ -576,4 +655,33 @@ bool RestoreTreeNode::_AddChildrenSlow(bool recursive)
 	mpTreeCtrl->SortChildren(this->mTreeId);
 	
 	return TRUE;
+}
+
+void RestoreTreeNode::UpdateState(bool updateParents) 
+{
+	if (updateParents && mpParentNode != NULL)
+		mpParentNode->UpdateState(TRUE);
+	
+	// by default, inherit our include/exclude state
+	// from our parent node, if we have one
+	
+	if (mpParentNode) {
+		mpMatchingEntry = mpParentNode->mpMatchingEntry;
+		mIncluded = mpParentNode->mIncluded;
+	} else {
+		mpMatchingEntry = NULL;
+		mIncluded = FALSE;
+	}
+
+	const RestoreSpec::Vector& entries = mrRestoreSpec.GetEntries();
+	for (RestoreSpec::Vector::const_iterator i = entries.begin(); 
+		i != entries.end(); i++)
+	{
+		if (i->GetNode() == mpCacheNode)
+		{
+			mpMatchingEntry = &(*i);
+			mIncluded = i->IsInclude();
+			break;
+		}
+	}
 }

@@ -60,7 +60,6 @@ class ServerCacheNode
 	ServerCacheNode*  mpParentNode;
 	bool              mIsDirectory;
 	bool              mIsDeleted;
-	ClientConfig*     mpConfig;
 	int16_t           mFlags;
 	int64_t           mSizeInBlocks;
 	bool              mHasAttributes;
@@ -79,7 +78,6 @@ class ServerCacheNode
 		mpParentNode = NULL;
 		mIsDirectory = TRUE;
 		mIsDeleted   = FALSE;
-		mpConfig     = pConfig;
 		mFlags       = 0;
 		mSizeInBlocks = 0;
 		mHasAttributes = FALSE;
@@ -99,7 +97,6 @@ class ServerCacheNode
 		mFlags       = pDirEntry->GetFlags();
 		mIsDirectory = mFlags & BackupStoreDirectory::Entry::Flags_Dir;
 		mIsDeleted   = mFlags & BackupStoreDirectory::Entry::Flags_Deleted;
-		mpConfig     = pParent->mpConfig;
 		mSizeInBlocks = 0;
 		mHasAttributes = FALSE;
 		mpServerConnection = pParent->mpServerConnection;
@@ -141,6 +138,44 @@ class ServerCache
 	ServerCacheNode* GetRoot() { return &mRoot; }
 };
 
+class RestoreSpecEntry
+{
+	private:
+	ServerCacheNode* mpNode;
+	bool mInclude;
+
+	public:
+	RestoreSpecEntry(ServerCacheNode* pNode, bool lInclude)
+	{
+		mpNode = pNode;
+		mInclude = lInclude;
+	}
+	
+	const ServerCacheNode* GetNode() const { return mpNode; }
+	bool IsInclude() const { return mInclude; }
+	bool IsSameAs(const RestoreSpecEntry& rOther) const
+	{
+		return mpNode == rOther.mpNode &&
+			mInclude == rOther.mInclude;
+	}
+};
+
+class RestoreSpec
+{
+	public:
+	typedef std::vector<RestoreSpecEntry> Vector;
+	typedef Vector::iterator Iterator;
+		
+	private:
+	Vector mEntries;
+	
+	public:
+	RestoreSpec() { }
+	const Vector& GetEntries() const { return mEntries; }
+	void Add   (const RestoreSpecEntry& rNewEntry);
+	void Remove(const RestoreSpecEntry& rOldEntry);
+};
+
 class RestoreTreeNode;
 
 class RestoreTreeCtrl : public wxTreeCtrl {
@@ -154,7 +189,7 @@ class RestoreTreeCtrl : public wxTreeCtrl {
 		const wxValidator& validator = wxDefaultValidator, 
 		const wxString& name = "RestoreTreeCtrl"
 	);
-	void UpdateExcludedStateIcon(RestoreTreeNode* pNode, 
+	void UpdateStateIcon(RestoreTreeNode* pNode, 
 		bool updateParents, bool updateChildren);
 	void SetRoot(RestoreTreeNode* pRootNode);
 	
@@ -173,43 +208,55 @@ class RestoreTreeCtrl : public wxTreeCtrl {
 
 class RestoreTreeNode : public wxTreeItemData {
 	private:
-	wxTreeItemId      mTreeId;
-	ServerCacheNode*  mpCacheNode;
-	RestoreTreeNode*  mpParentNode;
-	ServerSettings*   mpServerSettings;
-	RestoreTreeCtrl*  mpTreeCtrl;
+	wxTreeItemId       mTreeId;
+	ServerCacheNode*   mpCacheNode;
+	RestoreTreeNode*   mpParentNode;
+	ServerSettings*    mpServerSettings;
+	RestoreTreeCtrl*   mpTreeCtrl;
+	const RestoreSpec& mrRestoreSpec;
+	const RestoreSpecEntry* mpMatchingEntry;
+	bool               mIncluded;
 	
 	public:
 	RestoreTreeNode(RestoreTreeCtrl* pTreeCtrl, ServerCacheNode* pCacheNode,
-		ServerSettings* pServerSettings) 
+		ServerSettings* pServerSettings, const RestoreSpec& rRestoreSpec) 
+	: mrRestoreSpec(rRestoreSpec)
 	{ 
 		mpCacheNode      = pCacheNode;
 		mpParentNode     = NULL;
 		mpTreeCtrl       = pTreeCtrl;
 		mpServerSettings = pServerSettings;
+		mpMatchingEntry  = NULL;
+		mIncluded        = FALSE;
 	}
 	RestoreTreeNode(RestoreTreeNode* pParent, ServerCacheNode* pCacheNode)
+	: mrRestoreSpec(pParent->mrRestoreSpec)
 	{ 
 		mpCacheNode      = pCacheNode;
 		mpParentNode     = pParent;
 		mpTreeCtrl       = pParent->mpTreeCtrl;
 		mpServerSettings = pParent->mpServerSettings;
+		mpMatchingEntry  = NULL;
+		mIncluded        = FALSE;
 	}
 
 	// bool ShowChildren(wxListCtrl *targetList);
 
 	wxTreeItemId      GetTreeId()     const { return mTreeId; }
 	RestoreTreeNode*  GetParentNode() const { return mpParentNode; }
+	ServerCacheNode*  GetCacheNode()  const { return mpCacheNode; }
 	const wxString&   GetFileName()   const { return mpCacheNode->GetFileName(); }
 	const wxString&   GetFullPath()   const { return mpCacheNode->GetFullPath(); }
 	int64_t           GetBoxFileId()  const { return mpCacheNode->GetBoxFileId(); }
 	bool IsDirectory()                const { return mpCacheNode->IsDirectory(); }
 	bool IsDeleted()                  const { return mpCacheNode->IsDeleted(); }
+	const RestoreSpecEntry* GetMatchingEntry() const { return mpMatchingEntry; }
 	void SetTreeId   (wxTreeItemId id)   { mTreeId = id; }
 	void SetDeleted  (bool value = true) { mpCacheNode->SetDeleted(value); }
 	
 	bool AddChildren(bool recurse);
-
+	void UpdateState(bool updateParents);
+	
 	private:
 	bool _AddChildrenSlow(bool recurse);
 };
@@ -253,13 +300,13 @@ class RestorePanel : public wxPanel {
 	ServerConnection*   mpServerConnection;
 	BackupProtocolClientAccountUsage* mpUsage;
 	ServerCache*        mpCache;
+	RestoreSpec         mRestoreSpec;
 	
-	void OnTreeNodeExpand	(wxTreeEvent& event);
-	void OnTreeNodeSelect	(wxTreeEvent& event);
-	void OnListColumnClick  (wxListEvent& event);
-	void OnListItemActivate (wxListEvent& event);
-	void OnFileRestore		(wxCommandEvent& event);
-	void OnFileDelete		(wxCommandEvent& event);
+	void OnTreeNodeExpand  (wxTreeEvent& event);
+	void OnTreeNodeSelect  (wxTreeEvent& event);
+	void OnTreeNodeActivate(wxTreeEvent& event);
+	void OnFileRestore     (wxCommandEvent& event);
+	void OnFileDelete      (wxCommandEvent& event);
 	void GetUsageInfo();
 	
 	DECLARE_EVENT_TABLE()
