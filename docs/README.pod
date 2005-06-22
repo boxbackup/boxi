@@ -124,8 +124,14 @@ wxWindows 2.6.0 or 2.4.2
 
 =back
 
-It should be enough to extract the contents of the archive,
-and run the following commands:
+If you downloaded the latest CVS, you will need to run this first:
+
+	./autogen.sh
+
+Otherwise, just extract the contents of the archive, and change into
+the directory it creates (e.g. boxi-0.1.0).
+
+For all users, it should be enough to then run the following commands:
 
 	./configure
 	make
