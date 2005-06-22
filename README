@@ -1,2 +1,10 @@
 Please see docs/README.html (or docs/README.txt) for a lot of information
 about Boxi. Thanks!
+
+CVS users, please see docs/README.pod, the source from which the above files
+are generated. It's quite readable, I promise! :-) You can generate HTML
+and text versions, if you have Perl installed, with the following commands:
+
+	pod2html docs/README.pod -t "Boxi README" --noindex > README.html
+
+	pod2text docs/README.pod                            > README.txt
