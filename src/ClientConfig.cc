@@ -25,6 +25,8 @@
 #include <wx/file.h>
 #include <wx/filename.h>
 
+#include <stdint.h>
+
 #include "Box.h"
 #include "BackupDaemonConfigVerify.h"
 

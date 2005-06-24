@@ -50,6 +50,8 @@
 
 #include <wx/wx.h>
 
+#include <stdint.h>
+
 #include "Box.h"
 
 #include <sys/types.h>
