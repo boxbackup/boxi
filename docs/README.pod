@@ -1,6 +1,9 @@
 =head1 Boxi
 
-A graphical user interface for Box Backup
+A graphical user interface for Box Backup, the online encrypted backup
+system by Ben Summers.
+
+
 
 =head2 Summary
 
@@ -105,31 +108,50 @@ The following programs and libraries are required to compile Boxi:
 =over
 
 =item *
-perl
+perl (version 5.8 or higher)
 
 =item *
 patchutils (or at least patch)
 
 =item *
-openssl-devel
+openssl (version 0.9.7a or higher, with development libraries)
 
 =item *
-libncurses-devel (for boxbackup)
+libncurses-devel (version 5, for boxbackup)
 
 =item *
 gcc, g++ and libstdc++-devel
 
 =item *
-wxWindows 2.6.0 or 2.4.2 
+wxWindows (version 2.6.0 or 2.4.2, with development libraries)
 
 =back
 
-If you downloaded the latest CVS, you will need to run this first:
+If you are working from a CVS checkout, you will also need:
+
+=over 4
+
+=item *
+m4 (version 1.4.1 or higher)
+
+=item *
+autoconf (version 2.59 or higher)
+
+=item *
+automake (version 1.8.3 or higher)
+
+=item *
+libtool (version 1.5.6 or higher)
+
+=back
+
+CVS users need to run these commands first:
 
 	./autogen.sh
+	./make-image-headers.pl
 
-Otherwise, just extract the contents of the archive, and change into
-the directory it creates (e.g. boxi-0.1.0).
+If you downloaded a release version, just extract the contents of the
+archive, and change into the directory it creates (e.g. boxi-0.1.0).
 
 For all users, it should be enough to then run the following commands:
 
@@ -141,6 +163,13 @@ Run "src/boxi [-c] [<config-file>]" to start the GUI.
 
 The "-c" option is ignored if present, and provided to comfort those
 more familiar with the Box Backup command-line tools.
+
+
+
+=head2 Screenshots
+
+No project would be complete without a gratuitous display of the author's
+skill at creating awful user interfaces:
 
 =for illustration daemonctrl.png
 

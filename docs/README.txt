@@ -1,5 +1,6 @@
 Boxi
-    A graphical user interface for Box Backup
+    A graphical user interface for Box Backup, the online encrypted backup
+    system by Ben Summers.
 
   Summary
     Boxi is a graphical user interface to configure, manage, and administer
@@ -49,21 +50,22 @@ Boxi
   Download
     The latest stable version of Boxi is 0.1.0.
 
-    Source code
-        <http://www.qwirx.com/boxi/boxi-0.1.0.tar.gz>
+    Source code for all platforms (version 0.1.0)
+        <http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz?download>
 
-    Compiled executable for Windows (Cygwin) (version 0.0.7)
-        <http://www.qwirx.com/boxi/boxi-0_0_7.zip>
+    Compiled executable for Windows/Cygwin (version 0.0.7)
+        <http://prdownloads.sourceforge.net/boxi/boxi-0_0_7.zip?download>
 
-    You can get the latest CVS source code (experimental, not guaranteed to
-    compile or run on any system, YYMV) from Sourceforge:
+    Latest source code from CVS
+        The latest source code is experimental, a work in progress, and not
+        guaranteed to compile or run on any system. Your mileage may vary.
+        You can get it from Sourceforge's CVS server:
 
-            cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/boxi login 
+         cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/boxi login 
  
-            cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/boxi \
-                    co -P boxi
+         cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/boxi co -P boxi
 
-            [http://sourceforge.net/cvs/?group_id=135105]
+        <http://sourceforge.net/cvs/?group_id=135105>
 
   Compiling
     Boxi is distributed as source code, and binaries for Windows/Cygwin.
@@ -71,15 +73,29 @@ Boxi
 
     The following programs and libraries are required to compile Boxi:
 
-    * perl
+    * perl (version 5.8 or higher)
     * patchutils (or at least patch)
-    * openssl-devel
-    * libncurses-devel (for boxbackup)
+    * openssl (version 0.9.7a or higher, with development libraries)
+    * libncurses-devel (version 5, for boxbackup)
     * gcc, g++ and libstdc++-devel
-    * wxWindows 2.4.2 (or possibly later)
+    * wxWindows (version 2.6.0 or 2.4.2, with development libraries)
 
-    It should be enough to extract the contents of the archive, and run the
-    following commands:
+    If you are working from a CVS checkout, you will also need:
+
+    * m4 (version 1.4.1 or higher)
+    * autoconf (version 2.59 or higher)
+    * automake (version 1.8.3 or higher)
+    * libtool (version 1.5.6 or higher)
+
+    CVS users need to run these commands first:
+
+            ./autogen.sh
+            ./make-image-headers.pl
+
+    If you downloaded a release version, just extract the contents of the
+    archive, and change into the directory it creates (e.g. boxi-0.1.0).
+
+    For all users, it should be enough to then run the following commands:
 
             ./configure
             make
@@ -89,6 +105,10 @@ Boxi
 
     The "-c" option is ignored if present, and provided to comfort those
     more familiar with the Box Backup command-line tools.
+
+  Screenshots
+    No project would be complete without a gratuitous display of the
+    author's skill at creating awful user interfaces:
 
   Changes
     This software is currently experimental. I hope that you will try it and
@@ -100,8 +120,8 @@ Boxi
     and even numbers (x.2.y, x.4.y) slightly less experimental (maybe stable
     one day).
 
-    Version 0.1.0 (released 2005-05-25)
-        <http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz>
+    Version 0.1.0 (released 2005-05-26)
+        <http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz?download>
 
         Commemorates the release of public CVS, and interest of other
         developers in joining in the project, with a minor version number
@@ -235,6 +255,10 @@ Boxi
     licensed under a license very similar to the BSD license, which can be
     seen at <http://www.fluffy.co.uk/boxbackup/license.html>. This component
     is NOT covered by the GPL.
+
+    The file boxbackup.patch contains a number of changes to Box Backup
+    which are useful for Boxi. That file is under the same license as Box
+    Backup, i.e. a BSD-like license, and copyright assigned to Ben Summers.
 
     Portions of Boxi are copied, based on or inspired by Box Backup itself,
     and it is not possible to compile Boxi without linking to the Box Backup
