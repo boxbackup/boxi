@@ -65,8 +65,26 @@ administration of the Box Backup client, and access to files on the server.
 Boxi is developed in C++ using the wxWidgets GUI toolkit, available from
 L<http://www.wxwidgets.org/>. This means that it should be possible in
 theory to compile Boxi on Windows, Macintosh and most UNIX systems,
-although so far only Linux and Cygwin have been tested. Feedback and patches
-for compatibility with other systems are most welcome.
+although so far only the following systems have been tested:
+
+=over 4
+
+=item *
+Fedora Core 2 (Linux)
+
+=item *
+SuSE Professional 9.1 (Linux)
+
+=item *
+Ubuntu 5.04 (Linux, thanks to Scott Langley)
+
+=item *
+Cygwin on Windows XP
+
+=back
+
+Feedback about and patches for compatibility with other systems are 
+most welcome.
 
 
 
