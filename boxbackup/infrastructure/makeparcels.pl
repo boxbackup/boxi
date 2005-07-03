@@ -139,7 +139,7 @@ for my $parcel (@parcels)
 			# my $depname = "release/bin/$name/$name$exeext";
 			push @parcel_deps, $name;
 			print MAKE "$name:\n" .
-				"\tmake -C bin/$name $release_flag\n\n";
+				"\t(cd bin/$name; $make_command $release_flag)\n\n";
 		}
 		elsif ($type eq 'script')
 		{
@@ -173,9 +173,10 @@ for my $parcel (@parcels)
 			$name = $1;
 		}
 
-		print SCRIPT "install $name $install_into_dir\n";
+		print SCRIPT "install $name ".
+			"\$DESTDIR\${PREFIX:-$install_into_dir}\n";
 	}
-	
+
 	close SCRIPT;
 	
 	chmod 0755,"parcels/scripts/install-$parcel";
@@ -187,7 +188,7 @@ for my $parcel (@parcels)
 	print MAKE "\n";
 	
 	print MAKE "install-$parcel:\n";
-	print MAKE "\t(cd $dir; ./install-$parcel)\n\n";
+	print MAKE "\t(cd $dir; ./install-$parcel $(DESTDIR))\n\n";
 }
 
 print MAKE <<__E;
