@@ -21,17 +21,19 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
+#include <sys/types.h>
+
 #include <wx/wx.h>
 
-#include <stdint.h>
-
+#define NDEBUG
 #include "Box.h"
 #include "BackupClientCryptoKeys.h"
 #include "BackupStoreConstants.h"
 #include "BackupStoreFile.h"
 #include "BoxException.h"
 #include "BoxPortsAndFiles.h"
+#undef NDEBUG
 
 #include "ServerConnection.h"
 

@@ -25,7 +25,7 @@
 #ifndef _SERVERFILESPANEL_H
 #define _SERVERFILESPANEL_H
 
-#include <stdint.h>
+#include <sys/types.h>
 
 #include <wx/wx.h>
 #include <wx/treectrl.h>
@@ -33,10 +33,12 @@
 #include <wx/listimpl.cpp>
 #include <wx/datetime.h>
 
+#define NDEBUG
 #include "Box.h"
 #include "BackupStoreConstants.h"
 #include "BackupStoreDirectory.h"
 #include "BackupStoreException.h"
+#undef NDEBUG
 
 #include "ClientConfig.h"
 #include "ServerConnection.h"
@@ -45,7 +47,45 @@ class ServerSettings {
 	public:
 	bool				mViewOldFiles;
 	bool				mViewDeletedFiles;
-};	
+};
+
+class ServerFileVersion 
+{
+	public:
+	typedef std::vector<ServerFileVersion*> Vector;
+	typedef Vector::iterator Iterator;
+	
+	private:
+	int64_t            mBoxFileId;
+	bool               mIsDirectory;
+	bool               mIsDeleted;
+	ClientConfig*      mpConfig;
+	int16_t            mFlags;
+	int64_t            mSizeInBlocks;
+	bool               mHasAttributes;
+	wxDateTime         mDateTime;
+	bool               mCached;
+	
+	public:
+	ServerFileVersion() 
+	{
+		mBoxFileId   = BackupProtocolClientListDirectory::RootDirectory;
+		mIsDirectory = TRUE;
+		mIsDeleted   = FALSE;
+		mFlags       = 0;
+		mSizeInBlocks = 0;
+		mHasAttributes = FALSE;
+	}
+	ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry);
+
+	const wxDateTime& GetDateTime()   const { return mDateTime; }
+	int64_t           GetBoxFileId()  const { return mBoxFileId; }
+	bool IsDirectory()                const { return mIsDirectory; }
+	bool IsDeleted()                  const { return mIsDeleted; }
+	void SetDeleted(bool value = true) { mIsDeleted   = value; }
+
+	private:
+};
 
 class ServerCacheNode 
 {
@@ -54,70 +94,87 @@ class ServerCacheNode
 	typedef Vector::iterator Iterator;
 
 	private:
-	int64_t           mBoxFileId;
-	wxString          mFileName;
-	wxString          mFullPath;
-	ServerCacheNode*  mpParentNode;
-	bool              mIsDirectory;
-	bool              mIsDeleted;
-	int16_t           mFlags;
-	int64_t           mSizeInBlocks;
-	bool              mHasAttributes;
-	wxDateTime        mDateTime;
-	ServerConnection* mpServerConnection;
-	Vector            mChildren;
-	bool              mCached;
+	wxString                  mFileName;
+	wxString                  mFullPath;
+	ServerFileVersion::Vector mVersions;
+	ServerFileVersion*	      mpMostRecent;
+	ServerCacheNode::Vector   mChildren;
+	ServerCacheNode*          mpParentNode;
+	bool                      mCached;
+	ServerConnection*         mpServerConnection;
 	
 	public:
-	ServerCacheNode(ClientConfig* pConfig,
-		ServerConnection* pServerConnection) 
-	{ 
-		mBoxFileId   = BackupProtocolClientListDirectory::RootDirectory;
+	ServerCacheNode(ServerConnection* pServerConnection) 
+	{
+		ServerFileVersion* pDummyRootVersion = 
+			new ServerFileVersion();
+		mVersions.push_back(pDummyRootVersion);
 		mFileName    = "";
 		mFullPath    = "/";
 		mpParentNode = NULL;
-		mIsDirectory = TRUE;
-		mIsDeleted   = FALSE;
-		mFlags       = 0;
-		mSizeInBlocks = 0;
-		mHasAttributes = FALSE;
+		mpMostRecent = NULL;
+		mCached      = FALSE;
 		mpServerConnection = pServerConnection;
-		mCached = FALSE;
 	}
 	ServerCacheNode(ServerCacheNode* pParent, 
 		BackupStoreDirectory::Entry* pDirEntry)
 	{ 
-		BackupStoreFilenameClear clear(pDirEntry->GetName());
-
-		mBoxFileId   = pDirEntry->GetObjectID();
-		mFileName    = clear.GetClearFilename().c_str();	
+		mFileName    = GetDecryptedName(pDirEntry);
 		mFullPath.Printf("%s/%s", pParent->GetFileName().c_str(), 
 			mFileName.c_str());
 		mpParentNode = pParent;
-		mFlags       = pDirEntry->GetFlags();
-		mIsDirectory = mFlags & BackupStoreDirectory::Entry::Flags_Dir;
-		mIsDeleted   = mFlags & BackupStoreDirectory::Entry::Flags_Deleted;
-		mSizeInBlocks = 0;
-		mHasAttributes = FALSE;
+		mpMostRecent = NULL;
+		mCached      = FALSE;
 		mpServerConnection = pParent->mpServerConnection;
-		mCached = FALSE;
 	}
-	~ServerCacheNode() { FreeChildren(); }
+	~ServerCacheNode() { FreeVersions(); FreeChildren(); }
 
-	const wxString&   GetFileName()   const { return mFileName; }
-	const wxString&   GetFullPath()   const { return mFullPath; }
-	ServerCacheNode*  GetParentNode() const { return mpParentNode; }
-	int64_t           GetBoxFileId()  const { return mBoxFileId; }
-	bool IsDirectory()                const { return mIsDirectory; }
-	bool IsDeleted()                  const { return mIsDeleted; }
-	void SetDeleted(bool value = true) { mIsDeleted   = value; }
-
-	const Vector& GetChildren();
+	wxString GetDecryptedName(BackupStoreDirectory::Entry* pDirEntry)
+	{
+		BackupStoreFilenameClear clear(pDirEntry->GetName());
+		wxString name = clear.GetClearFilename().c_str();
+		return name;
+	}
+		
+	bool               IsRoot()           const { return mFileName.CompareTo(""); }
+	const wxString&    GetFileName()      const { return mFileName; }
+	const wxString&    GetFullPath()      const { return mFullPath; }
+	ServerCacheNode*   GetParent()        const { return mpParentNode; }
+	const ServerFileVersion::Vector& GetVersions();
+	const ServerCacheNode::Vector&   GetChildren();
+	
+	ServerFileVersion* GetMostRecent()
+	{
+		if (mpMostRecent) 
+			return mpMostRecent;
+		
+		for (ServerFileVersion::Vector::const_iterator i = mVersions.begin(); 
+			i != mVersions.end(); i++)
+		{
+			if (mpMostRecent == NULL ||
+				mpMostRecent->GetDateTime().IsEarlierThan((*i)->GetDateTime()))
+			{
+				mpMostRecent = *i;
+			}
+		}
+		
+		return mpMostRecent;
+	}
 	
 	private:
+	void FreeVersions() 
+	{
+		for (ServerFileVersion::Iterator i = mVersions.begin(); 
+			i != mVersions.end(); i++)
+		{
+			delete *i;
+		}
+		mVersions.clear();
+	}		
 	void FreeChildren() 
 	{
-		for (Iterator i = mChildren.begin(); i != mChildren.end(); i++)
+		for (ServerCacheNode::Iterator i = mChildren.begin(); 
+			i != mChildren.end(); i++)
 		{
 			delete *i;
 		}
@@ -131,8 +188,8 @@ class ServerCache
 	ServerCacheNode mRoot;
 	
 	public:
-	ServerCache(ClientConfig* pConfig, ServerConnection* pServerConnection) 
-	: mRoot(pConfig, pServerConnection)
+	ServerCache(ServerConnection* pServerConnection) 
+	: mRoot(pServerConnection)
 	{ }
 	
 	ServerCacheNode* GetRoot() { return &mRoot; }
@@ -247,12 +304,16 @@ class RestoreTreeNode : public wxTreeItemData {
 	ServerCacheNode*  GetCacheNode()  const { return mpCacheNode; }
 	const wxString&   GetFileName()   const { return mpCacheNode->GetFileName(); }
 	const wxString&   GetFullPath()   const { return mpCacheNode->GetFullPath(); }
-	int64_t           GetBoxFileId()  const { return mpCacheNode->GetBoxFileId(); }
-	bool IsDirectory()                const { return mpCacheNode->IsDirectory(); }
-	bool IsDeleted()                  const { return mpCacheNode->IsDeleted(); }
+	const bool IsDirectory() const 
+	{ 
+		return mpCacheNode->GetMostRecent()->IsDirectory();
+	}
+	const bool IsDeleted() const 
+	{ 
+		return mpCacheNode->GetMostRecent()->IsDirectory();
+	}
 	const RestoreSpecEntry* GetMatchingEntry() const { return mpMatchingEntry; }
 	void SetTreeId   (wxTreeItemId id)   { mTreeId = id; }
-	void SetDeleted  (bool value = true) { mpCacheNode->SetDeleted(value); }
 	
 	bool AddChildren(bool recurse);
 	void UpdateState(bool updateParents);

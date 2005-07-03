@@ -50,10 +50,6 @@
 
 #include <wx/wx.h>
 
-#include <stdint.h>
-
-#include "Box.h"
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string>
@@ -62,6 +58,8 @@
 #include <limits.h>
 #include <stdio.h>
 
+#define NDEBUG
+#include "Box.h"
 #include "BackupClientRestore.h"
 #include "autogen_BackupProtocolClient.h"
 #include "CommonException.h"
@@ -72,6 +70,7 @@
 #include "CollectInBufferStream.h"
 #include "FileStream.h"
 #include "Utils.h"
+#undef NDEBUG
 
 #include "ServerConnection.h"
 
