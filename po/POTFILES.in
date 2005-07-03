@@ -37,6 +37,5 @@ src/empty16.png.c
 src/plus16.png.c
 src/plusgrey16.png.c
 src/tickgrey16.png.c
-src/Database.cc
 
 
