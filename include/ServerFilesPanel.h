@@ -102,6 +102,7 @@ class ServerCacheNode
 	ServerCacheNode*          mpParentNode;
 	bool                      mCached;
 	ServerConnection*         mpServerConnection;
+	wxMutex                   mMutex;
 	
 	public:
 	ServerCacheNode(ServerConnection* pServerConnection) 
@@ -127,7 +128,11 @@ class ServerCacheNode
 		mCached      = FALSE;
 		mpServerConnection = pParent->mpServerConnection;
 	}
-	~ServerCacheNode() { FreeVersions(); FreeChildren(); }
+	~ServerCacheNode() { 
+		wxMutexLocker lock(mMutex);
+		FreeVersions(); 
+		FreeChildren(); 
+	}
 
 	wxString GetDecryptedName(BackupStoreDirectory::Entry* pDirEntry)
 	{
@@ -142,9 +147,12 @@ class ServerCacheNode
 	ServerCacheNode*   GetParent()        const { return mpParentNode; }
 	const ServerFileVersion::Vector& GetVersions();
 	const ServerCacheNode::Vector&   GetChildren();
+	wxMutex&           GetLock() { return mMutex; }
 	
 	ServerFileVersion* GetMostRecent()
 	{
+		wxMutexLocker lock(mMutex);
+		
 		if (mpMostRecent) 
 			return mpMostRecent;
 		
@@ -162,6 +170,7 @@ class ServerCacheNode
 	}
 	
 	private:
+	// Only call these with a lock held!
 	void FreeVersions() 
 	{
 		for (ServerFileVersion::Iterator i = mVersions.begin(); 

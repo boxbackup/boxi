@@ -38,6 +38,19 @@
 #include "ServerFilesPanel.h"
 #include "StaticImage.h"
 
+ServerFileVersion::ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry)
+{ 
+	BackupStoreFilenameClear clear(pDirEntry->GetName());
+
+	mBoxFileId   = pDirEntry->GetObjectID();
+	mFlags       = pDirEntry->GetFlags();
+	mIsDirectory = mFlags & BackupStoreDirectory::Entry::Flags_Dir;
+	mIsDeleted   = mFlags & BackupStoreDirectory::Entry::Flags_Deleted;
+	mSizeInBlocks = 0;
+	mHasAttributes = FALSE;
+	mCached = FALSE;
+}
+
 void RestoreSpec::Add(const RestoreSpecEntry& rNewEntry)
 {
 	for (RestoreSpec::Iterator i = mEntries.begin(); i != mEntries.end(); i++)
@@ -213,7 +226,7 @@ RestorePanel::RestorePanel(
 	mpConfig = config;
 	mpStatusBar = pStatusBar;
 	mpServerConnection = pServerConnection;
-	mpCache = new ServerCache(mpConfig, mpServerConnection);
+	mpCache = new ServerCache(pServerConnection);
 	
 	wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
 	
@@ -232,14 +245,23 @@ RestorePanel::RestorePanel(
 	wxPanel* theRightPanel = new wxPanel(theServerSplitter);
 	wxBoxSizer *theRightPanelSizer = new wxBoxSizer( wxVERTICAL );
 	
-	/*
+	wxStaticBox* pRestoreSelBox = new wxStaticBox(theRightPanel, wxID_ANY, 
+		"Selected to Restore");
+
+	wxStaticBoxSizer* pStaticBoxSizer = new wxStaticBoxSizer(
+		pRestoreSelBox, wxVERTICAL);
+	theRightPanelSizer->Add(pStaticBoxSizer, 0, wxGROW | wxALL, 8);
+		
 	wxGridSizer* theRightParamSizer = new wxGridSizer(2, 4, 4);
-	theRightPanelSizer->Add(theRightParamSizer, 0, wxGROW | wxALL, 4);
+	pStaticBoxSizer->Add(theRightParamSizer, 0, wxGROW | wxALL, 4);
 	
-	AddParam(theRightPanel, "Date", 
-		new wxStaticText(theRightPanel, wxID_ANY, "Anytime"),
+	AddParam(theRightPanel, "Files", 
+		new wxTextCtrl(theRightPanel, wxID_ANY, "0"),
 		TRUE, theRightParamSizer);
-	*/
+
+	AddParam(theRightPanel, "Bytes", 
+		new wxTextCtrl(theRightPanel, wxID_ANY, "0"),
+		TRUE, theRightParamSizer);
 
 	wxBoxSizer *theRightButtonSizer = new wxBoxSizer( wxHORIZONTAL );
 	theRightPanelSizer->Add(theRightButtonSizer, 0, wxGROW | wxALL, 4);
@@ -406,13 +428,16 @@ void RestorePanel::OnFileRestore(wxCommandEvent& event)
 	RestoreTreeNode *node = 
 		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
 	
-	int64_t boxId = node->GetBoxFileId();
-	if (boxId == BackupProtocolClientListDirectory::RootDirectory) {
+	if (node->GetCacheNode()->IsRoot()) {
 		wxMessageBox("You cannot restore the whole server. "
 			"Try restoring individual locations", "Nice Try", 
 			wxOK | wxICON_ERROR, this);
 		return;
 	}
+
+	ServerCacheNode*   pFileName = node->GetCacheNode();
+	ServerFileVersion* pVersion  = pFileName->GetMostRecent();
+	// int64_t boxId = pVersion->GetBoxFileId();
 	
 	wxFileDialog *restoreToDialog = new wxFileDialog(
 		this, "Restore To", "", "", "", wxSAVE, wxDefaultPosition);
@@ -455,10 +480,10 @@ void RestorePanel::OnFileRestore(wxCommandEvent& event)
 	
 	try {
 		// Go and restore...
-		if (node->IsDirectory()) {
+		if (pVersion->IsDirectory()) {
 			mRestoreCounter = 0;
 			result = mpServerConnection->Restore(
-				boxId, destFileName, 
+				pVersion->GetBoxFileId(), destFileName, 
 				&RestoreProgressCallback,
 				this, /* user data for callback function */
 				false /* restore deleted */, 
@@ -466,8 +491,8 @@ void RestorePanel::OnFileRestore(wxCommandEvent& event)
 				false /* resume? */);
 		} else {
 			mpServerConnection->GetFile(
-				node->GetParentNode()->GetBoxFileId(),
-				node->GetBoxFileId(),
+				pFileName->GetParent()->GetMostRecent()->GetBoxFileId(),
+				pVersion->GetBoxFileId(),
 				destFileName);
 			
 			result = Restore_Complete;
@@ -522,6 +547,8 @@ void RestorePanel::OnFileRestore(wxCommandEvent& event)
 
 void RestorePanel::OnFileDelete(wxCommandEvent& event)
 {
+	wxMessageBox("Not supported yet", "Boxi Error", wxOK | wxICON_ERROR, this);
+	/*
 	wxTreeItemId item = mpTreeCtrl->GetSelection();
 	RestoreTreeNode *node = 
 		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
@@ -550,6 +577,7 @@ void RestorePanel::OnFileDelete(wxCommandEvent& event)
 			*wxTheColourDatabase->FindColour("GREY"));
 		mpDeleteButton->SetLabel("Undelete");
 	}
+	*/
 }
 
 void RestorePanel::SetViewOldFlag(bool NewValue)
@@ -598,19 +626,39 @@ const ServerCacheNode::Vector& ServerCacheNode::GetChildren()
 	int16_t lExcludeFlags = 
 		BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING;
 
+	ServerFileVersion* pMostRecent = GetMostRecent();
+	if (!pMostRecent)
+	{
+		// no versions! cannot return anything
+		return mChildren;
+	}
+	
 	BackupStoreDirectory dir;
 	
-	if (!(mpServerConnection->ListDirectory(mBoxFileId, lExcludeFlags, dir))) 
+	if (!(mpServerConnection->ListDirectory(
+		pMostRecent->GetBoxFileId(), lExcludeFlags, dir))) 
+	{
+		// on error, return empty list
 		return mChildren;
-
+	}
+	
+	WX_DECLARE_STRING_HASH_MAP( ServerCacheNode*, FileTable );
+	FileTable lFileTable;
+	
 	// create new nodes for all real, current children of this node
 	BackupStoreDirectory::Iterator i(dir);
 	BackupStoreDirectory::Entry *en = 0;
 	
 	while ((en = i.Next()) != 0)
 	{
-		ServerCacheNode* pNewNode = new ServerCacheNode(this, en);
-		mChildren.push_back(pNewNode);
+		wxString name = GetDecryptedName(en);
+		ServerCacheNode* pChildNode = lFileTable[name];
+		if (pChildNode == NULL)
+		{
+			pChildNode = new ServerCacheNode(this, en);
+		}
+		pChildNode->mVersions.push_back(new ServerFileVersion(en));
+		mChildren.push_back(pChildNode);
 	}
 	
 	mCached = TRUE;
