@@ -56,6 +56,17 @@ Missing tree icons in Local Files and Server Files.
 Location matching in Local Files. 
 Kill button in Backup Daemon Panel.
 
+=item *
+Restore old versions
+
+Fix all references to GetMostRecent() in ServerFilesPanel
+
+=item *
+Restore selection bug
+
+Select a node (it becomes ticked), then select its parent, then try
+toggling the first node (it doesn't toggle properly).
+
 =back
 
 Last updated: 2005-06-05 by Chris Wilson.
