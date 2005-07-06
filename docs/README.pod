@@ -344,6 +344,13 @@ See the TODO file for a list of bugs to fix and features which are planned
 for future releases. Feel free to contribute patches or suggestions for new
 features :-)
 
+If you find a problem that's not documented in the TODO file, please
+submit a bug report on the Sourceforge bug tracker, at
+L<http://sourceforge.net/tracker/?group_id=135105&atid=731482>.
+
+To request a new feature, please use the Sourceforge RFE tracker at
+L<http://sourceforge.net/tracker/?group_id=135105&atid=731485>.
+
 
 
 =head2 License
