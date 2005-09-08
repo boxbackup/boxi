@@ -26,7 +26,7 @@ Show progress dialog while restoring files
 Show in a separate window, allow restore operations to be cancelled.
 
 =item *
-Prompt to save changes
+Prompt to save changes in configuration
 
 If the configuration has changed, ask the user whether they want to
 save it and reload the Box Backup daemon, and reconnect to the server.
@@ -61,7 +61,7 @@ Location matching in Local Files.
 Kill button in Backup Daemon Panel.
 
 =item *
-Restore old versions
+Allow restoring old versions of files
 
 Fix all references to GetMostRecent() in ServerFilesPanel
 
@@ -70,6 +70,13 @@ Restore selection bug
 
 Select a node (it becomes ticked), then select its parent, then try
 toggling the first node (it doesn't toggle properly).
+
+=item *
+Fix the read/write issue
+
+When a read-write connection is needed, we should disconnect and
+downgrade to a read-only connection as soon as it's finished, to make
+way for bbackupd.
 
 =back
 
