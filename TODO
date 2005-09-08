@@ -37,6 +37,10 @@ Stricter error checking of the configuration
 Warn users of configuration errors, before connecting to the server. 
 Especially those errors which could cause Box Backup to fail to start!
 
+Better error messages if we can't connect to the server (connection
+refused or connection timed out). Preferably display a dialog with
+progress information and allow the user to cancel the operation.
+
 =item *
 Default location for configuration file 
 
