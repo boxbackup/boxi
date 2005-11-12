@@ -70,7 +70,7 @@ although so far only the following systems have been tested:
 =over 4
 
 =item *
-Fedora Core 2 (Linux)
+Fedora Core 2 (Linux, development platform)
 
 =item *
 SuSE Professional 9.1 (Linux)
@@ -79,7 +79,10 @@ SuSE Professional 9.1 (Linux)
 Ubuntu 5.04 (Linux, thanks to Scott Langley)
 
 =item *
-Cygwin on Windows XP
+Ubuntu 5.10 (Linux, development platform)
+
+=item *
+Cygwin on Windows XP (development platform)
 
 =back
 
@@ -156,7 +159,7 @@ m4 (version 1.4.1 or higher)
 autoconf (version 2.59 or higher)
 
 =item *
-automake (version 1.8.3 or higher)
+automake (version 1.6 or higher)
 
 =item *
 libtool (version 1.5.6 or higher)
@@ -187,7 +190,7 @@ more familiar with the Box Backup command-line tools.
 =head2 Screenshots
 
 No project would be complete without a gratuitous display of the author's
-skill at creating awful user interfaces:
+skill at creating B<truly, incredibly awful> user interfaces:
 
 =for illustration daemonctrl.png
 
