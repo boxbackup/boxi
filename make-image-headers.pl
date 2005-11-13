@@ -31,7 +31,7 @@ foreach my $filename ("empty16.png", "tick16.png", "tickgrey16.png",
 
 	$ofh->write("#include <StaticImage.h>\n\n");
 
-	$ofh->write("static const char data[] = {\n");
+	$ofh->write("static const unsigned char data[] = {\n");
 	my @values = unpack("C*", $data);
 
 	while (@values) {
