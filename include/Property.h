@@ -61,6 +61,7 @@ class Property;
 class PropertyChangeListener {
 	public:
 	virtual void OnPropertyChange(Property* pProp) = 0;
+	virtual ~PropertyChangeListener() {}
 };
 
 class Property {
@@ -191,8 +192,8 @@ class IntProperty : public Property
 	bool GetInto(std::string& dest) { 
 		if (!mConfigured) return FALSE;
 		wxString formatted;
-		formatted.Printf("%d", mValue);
-		dest = formatted.c_str();
+		formatted.Printf(wxT("%d"), mValue);
+		dest = formatted.mb_str(wxConvLibc).data();
 		return TRUE;
 	}
 	bool GetInto(int& dest) { 

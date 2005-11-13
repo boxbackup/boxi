@@ -36,7 +36,7 @@ class BoundCtrl
 
 	public:
 	BoundCtrl(Property& rProp) 
-	: mName(rProp.GetKeyName().c_str()) { }
+	: mName(rProp.GetKeyName().c_str(), wxConvLibc) { }
 	virtual ~BoundCtrl() { }
 
 	virtual void Reload()   = 0;
@@ -53,7 +53,7 @@ class BoundStringCtrl : public wxTextCtrl, public BoundCtrl {
 		wxWindow* parent, 
 		wxWindowID id,
 		StringProperty& rStringProp)
-	: wxTextCtrl(parent, id, ""),
+	: wxTextCtrl(parent, id, wxT("")),
 	  BoundCtrl(rStringProp),
 	  mrStringProp(rStringProp)
 	{
@@ -72,10 +72,10 @@ class BoundIntCtrl : public wxTextCtrl, public BoundCtrl {
 	BoundIntCtrl(wxWindow* parent, 
 		wxWindowID id,
 		IntProperty& rIntProp, const char * pFormat)
-	: wxTextCtrl(parent, id, ""),
+	: wxTextCtrl(parent, id, wxT("")),
 	  BoundCtrl(rIntProp),
 	  mrIntProp(rIntProp),
-	  mFormat(pFormat)
+	  mFormat(pFormat, wxConvLibc)
 	{
 		Reload();
 	}
@@ -98,7 +98,7 @@ class BoundBoolCtrl : public wxCheckBox, public BoundCtrl {
 		wxWindow* parent, 
 		wxWindowID id,
 		BoolProperty& rBoolProp)
-	: wxCheckBox(parent, id, "Enabled"),
+	: wxCheckBox(parent, id, wxT("Enabled")),
 	  BoundCtrl(rBoolProp),
 	  mrBoolProp(rBoolProp)
 	{ 
@@ -113,12 +113,17 @@ class FileSelButton : public wxBitmapButton
 	private:
 	StringProperty& mrProperty;
 	BoundStringCtrl* mpStringCtrl;
+	wxString mFileSpec;
 	
 	public:
-	FileSelButton(wxWindow* pParent, wxWindowID id, const wxBitmap& rBitmap, 
-		StringProperty& rProp, BoundStringCtrl* pStringCtrl)
+	FileSelButton(wxWindow* pParent, wxWindowID id, 
+		const wxBitmap& rBitmap, 
+		StringProperty& rProp, 
+		BoundStringCtrl* pStringCtrl,
+		wxString& rFileSpec)
 	: wxBitmapButton(pParent, id, rBitmap),
-	  mrProperty(rProp)
+	  mrProperty(rProp),
+	  mFileSpec(rFileSpec)
 	{
 		mpStringCtrl = pStringCtrl;
 	}
@@ -155,13 +160,13 @@ class ParamPanel : public wxPanel {
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
 		long style = wxTAB_TRAVERSAL, 
-		const wxString& name = "panel");
+		const wxString& name = wxT("ParamPanel"));
 	
-	BoundStringCtrl* AddParam(const char * pLabel, StringProperty& rProp, 
-		int ID,	bool FileSel, bool DirSel);
-	BoundIntCtrl*    AddParam(const char * pLabel, IntProperty&    rProp, 
+	BoundStringCtrl* AddParam(const wxChar * pLabel, StringProperty& rProp, 
+		int ID,	bool FileSel, bool DirSel, const wxChar* rFileSpec);
+	BoundIntCtrl*    AddParam(const wxChar * pLabel, IntProperty&    rProp, 
 		const char *format, int ID);
-	BoundBoolCtrl*   AddParam(const char * pLabel, BoolProperty&   rProp, 
+	BoundBoolCtrl*   AddParam(const wxChar * pLabel, BoolProperty&   rProp, 
 		int ID);
 	
 	private:
@@ -174,7 +179,7 @@ class DirCtrl : public wxTextCtrl {
 	DirCtrl(
 		wxWindow* parent, 
 		wxWindowID id)
-	: wxTextCtrl(parent, id, "")
+	: wxTextCtrl(parent, id, wxT(""))
 	{
 		Reload();
 	}

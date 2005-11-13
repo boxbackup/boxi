@@ -44,7 +44,7 @@ class BackupTreeCtrl : public wxTreeCtrl {
 		const wxSize& size = wxDefaultSize, 
 		long style = wxTR_HAS_BUTTONS, 
 		const wxValidator& validator = wxDefaultValidator, 
-		const wxString& name = "BackupTreeCtrl"
+		const wxString& name = wxT("BackupTreeCtrl")
 	);
 	void UpdateExcludedStateIcon(BackupTreeNode* pNode, 
 		bool updateParents, bool updateChildren);
@@ -129,7 +129,7 @@ class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
 		long style = wxTAB_TRAVERSAL, 
-		const wxString& name = "panel");
+		const wxString& name = wxT("BackupLocationsPanel"));
 	
 	private:
 	ClientConfig*   mpConfig;

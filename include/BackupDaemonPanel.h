@@ -48,7 +48,7 @@ class BackupDaemonPanel
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
 		long style = wxTAB_TRAVERSAL, 
-		const wxString& name = "Backup Daemon Panel");
+		const wxString& name = wxT("Backup Daemon Panel"));
 	// ~BackupDaemonPanel();
 
 	virtual void NotifyStateChange();

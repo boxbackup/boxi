@@ -25,9 +25,12 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
+// #include <stdlib.h>
+// #include "dmalloc.h"
+
 #include <wx/wx.h>
 
-#define BOXI_VERSION "0.1.0"
+#define BOXI_VERSION "0.1.1"
 
 // Define these four macros (STR_PROP, STR_PROP_SUBCONF, INT_PROP and BOOL_PROP)
 // and then use the ALL_PROPS macro, to insert code for every configuration 
@@ -46,6 +49,7 @@ enum {
 	ID_Top_Notebook,
 	ID_Backup_Files_Panel,
 	ID_Backup_Files_Tree,
+	ID_Restore_Files_Panel,
 	ID_Client_Panel,
 
 	// IDs for the controls that manipulate properties	
@@ -93,7 +97,7 @@ enum {
 	ID_Compare_Button,
 };
 
-void AddParam(wxPanel* panel, const char* label, wxWindow* editor, 
+void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor, 
 	bool growToFit, wxSizer *sizer);
 
 #endif /* _MAIN_H */

@@ -53,8 +53,8 @@ ServerConnection::~ServerConnection()
 
 void ServerConnection::HandleException(const char * when, BoxException& e)
 {
-	wxString msg = when;
-	msg.append(": ");
+	wxString msg(when, wxConvLibc);
+	msg.append(wxT(": "));
 	
 	int type = 0, subtype = 0;
 	
@@ -62,12 +62,12 @@ void ServerConnection::HandleException(const char * when, BoxException& e)
 		mpConnection->GetLastError(type, subtype);
 	
 	if (type == 1000) {
-		msg.append(ErrorString(type, subtype)); 
+		msg.append(wxString(ErrorString(type, subtype), wxConvLibc)); 
 	} else {
-		msg.Append(e.what());
+		msg.Append(wxString(e.what(), wxConvLibc));
 	}
 	
-	wxMessageBox(msg, "Boxi Error", wxOK | wxICON_ERROR, NULL);
+	wxMessageBox(msg, wxT("Boxi Error"), wxOK | wxICON_ERROR, NULL);
 
 	if (e.GetType()    == ConnectionException::ExceptionType &&
 		e.GetSubType() == ConnectionException::TLSReadFailed) 
@@ -97,7 +97,7 @@ bool ServerConnection::Connect(bool Writable)
 	} else {
 		mIsConnected = FALSE;
 		mIsWritable  = FALSE;
-		wxString msg = "Error connecting to server: ";
+		wxString msg = wxT("Error connecting to server: ");
 		msg.Append(GetErrorMessage());
 		wxLogDebug(msg);
 	}
@@ -110,7 +110,8 @@ bool ServerConnection::Connect2(bool Writable) {
 	mpConfig->CertificateFile.GetInto(certFile);
 
 	if (certFile.length() == 0) {
-		mErrorMessage = "You have not configured the Certificate File!";
+		mErrorMessage = 
+			wxT("You have not configured the Certificate File!");
 		return FALSE;
 	}
 
@@ -118,7 +119,7 @@ bool ServerConnection::Connect2(bool Writable) {
 	mpConfig->KeysFile.GetInto(keysFile);
 
 	if (keysFile.length() == 0) {
-		mErrorMessage = "You have not configured the Keys File!";
+		mErrorMessage = wxT("You have not configured the Keys File!");
 		return FALSE;
 	}
 
@@ -126,7 +127,8 @@ bool ServerConnection::Connect2(bool Writable) {
 	mpConfig->PrivateKeyFile.GetInto(privKeyFile);
 
 	if (privKeyFile.length() == 0) {
-		mErrorMessage = "You have not configured the Private Key File!";
+		mErrorMessage = 
+			wxT("You have not configured the Private Key File!");
 		return FALSE;
 	}
 
@@ -134,7 +136,8 @@ bool ServerConnection::Connect2(bool Writable) {
 	mpConfig->TrustedCAsFile.GetInto(caFile);
 
 	if (caFile.length() == 0) {
-		mErrorMessage = "You have not configured the Trusted CAs File!";
+		mErrorMessage = 
+			wxT("You have not configured the Trusted CAs File!");
 		return FALSE;
 	}
 
@@ -142,7 +145,8 @@ bool ServerConnection::Connect2(bool Writable) {
 	mpConfig->StoreHostname.GetInto(storeHost);
 
 	if (storeHost.length() == 0) {
-		mErrorMessage = "You have not configured the Store Hostname!";
+		mErrorMessage = 
+			wxT("You have not configured the Store Hostname!");
 		return FALSE;
 	}
 
@@ -152,10 +156,11 @@ bool ServerConnection::Connect2(bool Writable) {
 		tlsContext.Initialise(false /* as client */, certFile.c_str(),
 			privKeyFile.c_str(), caFile.c_str());
 	} catch (BoxException &e) {
-		mErrorMessage = "There is something wrong with your Certificate "
-			"File, Private Key File, or Trusted CAs File. (";
-		mErrorMessage.Append(e.what());
-		mErrorMessage.Append(")");
+		mErrorMessage = wxT(
+			"There is something wrong with your Certificate "
+			"File, Private Key File, or Trusted CAs File. (");
+		mErrorMessage.Append(wxString(e.what(), wxConvLibc));
+		mErrorMessage.Append(wxT(")"));
 		return FALSE;
 	}
 	
@@ -178,8 +183,10 @@ bool ServerConnection::Connect2(bool Writable) {
 		
 		if (serverVersion->GetVersion() != BACKUP_STORE_SERVER_VERSION)
 		{
-			mErrorMessage.Printf("Wrong server version: "
-				"expected %d but found %d", BACKUP_STORE_SERVER_VERSION, 
+			mErrorMessage.Printf(wxT(
+				"Wrong server version: "
+				"expected %d but found %d"), 
+				BACKUP_STORE_SERVER_VERSION, 
 				serverVersion->GetVersion());
 			return FALSE;
 		}
@@ -312,6 +319,8 @@ bool ServerConnection::DeleteDirectory(int64_t theDirectoryId) {
 	}
 }
 
+static wxCharBuffer buf;
+
 const char * ServerConnection::ErrorString(int type, int subtype) {
 	if (type == 1000) {
 		switch (subtype) {
@@ -344,12 +353,16 @@ const char * ServerConnection::ErrorString(int type, int subtype) {
 		case BackupProtocolClientError::Err_PatchConsistencyError:		
 			return "Patch consistency error";
 		default:
-			mErrorMessage.Printf("Unknown protocol error: %d/%d", 
+			mErrorMessage.Printf(
+				wxT("Unknown protocol error: %d/%d"), 
 				type, subtype);
-			return mErrorMessage.c_str();
+			buf = mErrorMessage.mb_str(wxConvLibc);
+			return buf.data();
 		}
 	} else {
-		mErrorMessage.Printf("Unknown error: %d/%d", type, subtype);
-		return mErrorMessage.c_str();
+		mErrorMessage.Printf(wxT("Unknown error: %d/%d"), 
+			type, subtype);
+		buf = mErrorMessage.mb_str(wxConvLibc);
+		return buf.data();
 	}
 }

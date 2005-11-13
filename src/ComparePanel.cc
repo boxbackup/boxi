@@ -50,15 +50,16 @@ ComparePanel::ComparePanel(
 	wxSizer* pParamSizer = new wxGridSizer(2, 4, 4);
 	pMainSizer->Add(pParamSizer, 0, wxGROW | wxALL, 8);
 	
-	mpCompareThreadStateCtrl = new wxTextCtrl(this, -1, "");
-	::AddParam(this, "Current state:", mpCompareThreadStateCtrl,
+	mpCompareThreadStateCtrl = new wxTextCtrl(this, -1, wxT(""));
+	::AddParam(this, wxT("Current state:"), mpCompareThreadStateCtrl,
 		false, pParamSizer);
 
 	wxSizer* pButtonSizer = new wxBoxSizer(wxHORIZONTAL);
-	pMainSizer->Add(pButtonSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	pMainSizer->Add(pButtonSizer, 0, 
+		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	wxButton* pCompareButton = new wxButton(this, ID_Compare_Button,
-		"Compare");
+		wxT("Compare"));
 	pButtonSizer->Add(pCompareButton);
 
 	mpCompareList = new wxListCtrl(this, ID_Compare_List, wxDefaultPosition,

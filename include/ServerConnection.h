@@ -25,12 +25,14 @@
 #ifndef _SERVERCONNECTION_H
 #define _SERVERCONNECTION_H
 
+#define NDEBUG
 #include "SSLLib.h"
 #include "Socket.h"
 #include "SocketStreamTLS.h"
 #include "TLSContext.h"
 #include "autogen_BackupProtocolClient.h"
 #include "BackupStoreDirectory.h"
+#undef NDEBUG
 
 #include "ClientConfig.h"
 

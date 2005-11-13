@@ -30,65 +30,67 @@
 #include <wx/thread.h>
 #include <wx/process.h>
 
+#define NDEBUG
 #include "Socket.h"
 #include "IOStreamGetLine.h"
 #include "SocketStream.h"
+#undef NDEBUG
 
 #include "ClientConfig.h"
 
-static const char* mStateStrings[] = {
-	"Unknown",
-	"Connecting",
-	"Connected",
-	"Start client requested",
-	"Starting client",
-	"Waiting for client to start",
-	"Stop client requested",
-	"Stopping client",
-	"Restart client requested",
-	"Stopping client for restart",
-	"Client sync requested",
-	"Asking client to sync now",
-	"Client reload requested",
-	"Asking client to reload",
-	"Shutting down worker",
+static const wxChar* mStateStrings[] = {
+	wxT("Unknown"),
+	wxT("Connecting"),
+	wxT("Connected"),
+	wxT("Start client requested"),
+	wxT("Starting client"),
+	wxT("Waiting for client to start"),
+	wxT("Stop client requested"),
+	wxT("Stopping client"),
+	wxT("Restart client requested"),
+	wxT("Stopping client for restart"),
+	wxT("Client sync requested"),
+	wxT("Asking client to sync now"),
+	wxT("Client reload requested"),
+	wxT("Asking client to reload"),
+	wxT("Shutting down worker"),
 };
 
-static const char* mErrorStrings[] = {
-	"None",
-	"Unknown error",
-	"In progress",
-	"Client started successfully",
-	"Connected to Client",
-	"Invalid State for Request",
-	"No socket configured",
-	"Socket not found",
-	"Socket connection refused",
-	"No response from client",
-	"Bad response from client",
-	"Read from client timed out",
-	"Disconnected by client",
-	"Daemon executable not found",
-	"File not found",
-	"Executing program failed",
-	"Client failed to start successfully",
-	"PID File not configured",
-	"PID File corrupted",
-	"Insufficient system resources"
-	"Failed to identify process",
-	"Internal error",
-    "Kill not allowed",
-	"Last client command failed",
-	"Command interrupted",
+static const wxChar* mErrorStrings[] = {
+	wxT("None"),
+	wxT("Unknown error"),
+	wxT("In progress"),
+	wxT("Client started successfully"),
+	wxT("Connected to Client"),
+	wxT("Invalid State for Request"),
+	wxT("No socket configured"),
+	wxT("Socket not found"),
+	wxT("Socket connection refused"),
+	wxT("No response from client"),
+	wxT("Bad response from client"),
+	wxT("Read from client timed out"),
+	wxT("Disconnected by client"),
+	wxT("Daemon executable not found"),
+	wxT("File not found"),
+	wxT("Executing program failed"),
+	wxT("Client failed to start successfully"),
+	wxT("PID File not configured"),
+	wxT("PID File corrupted"),
+	wxT("Insufficient system resources"),
+	wxT("Failed to identify process"),
+	wxT("Internal error"),
+	wxT("Kill not allowed"),
+	wxT("Last client command failed"),
+	wxT("Command interrupted"),
 };
 
-static const char* mClientStateStrings[] = {
-	"Unknown",
-	"Initialising",
-	"Idle",
-	"Connected to Store",
-	"Sync failed, sleeping",
-	"Store limit exceeded, sleeping",
+static const wxChar* mClientStateStrings[] = {
+	wxT("Unknown"),
+	wxT("Initialising"),
+	wxT("Idle"),
+	wxT("Connected to Store"),
+	wxT("Sync failed, sleeping"),
+	wxT("Store limit exceeded, sleeping"),
 };
 
 class ClientConnection : public wxThread
@@ -99,6 +101,7 @@ class ClientConnection : public wxThread
 		virtual void NotifyStateChange() = 0;
 		virtual void NotifyError() = 0;
 		virtual void NotifyClientStateChange() = 0;
+		virtual ~Listener() {}
 	};
 
 	enum WorkerState {
@@ -181,11 +184,11 @@ class ClientConnection : public wxThread
 		return mCurrentState;
 	}
 
-	const char* GetStateStr() {
+	const wxChar* GetStateStr() {
 		return mStateStrings[GetState()];
 	}
 
-	const char* GetStateStr(WorkerState state) {
+	const wxChar* GetStateStr(WorkerState state) {
 		return mStateStrings[state];
 	}
 	
@@ -194,7 +197,7 @@ class ClientConnection : public wxThread
 		return mLastError;
 	}
 	
-	const char* GetLastErrorMsg() {
+	const wxChar* GetLastErrorMsg() {
 		return mErrorStrings[GetLastErrorCode()];
 	}
 
@@ -203,7 +206,7 @@ class ClientConnection : public wxThread
 		return mClientState;
 	}
 	
-	const char* GetClientStateString() {
+	const wxChar* GetClientStateString() {
 		return mClientStateStrings[GetClientState() + 2];
 	}
 	
@@ -235,12 +238,14 @@ class ClientConnection : public wxThread
 	void OnSyncClient();
 	void OnReloadClient();
 
-	bool _sendCommand(const char * cmd) {
-		wxString str;
-		str.Printf("%s\n", cmd);
-		mapSocket->Write(str.c_str(), str.Length());
+	bool _sendCommand(const char * cmd) 
+	{
+		mpSocket->Write(cmd, strlen(cmd));
+		char *newline = "\n";
+		mpSocket->Write(newline, strlen(newline));
 		
-		wxLogDebug("wrote to daemon: '%s'", cmd);
+		wxString cmd2(cmd, wxConvLibc);
+		wxLogDebug(wxT("wrote to daemon: '%s'"), cmd2.c_str());
 		return TRUE;
 	}
 
@@ -262,7 +267,7 @@ class ClientConnection : public wxThread
 	};
 
 	// only for use in worker thread
-	std::auto_ptr<SocketStream>    mapSocket;
+	SocketStream* mpSocket;
 	std::auto_ptr<IOStreamGetLine> mapReader;
 	std::auto_ptr<ClientProcess> mapBackupClientProcess;
 	friend class ClientDaemonProcess;

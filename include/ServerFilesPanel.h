@@ -80,10 +80,10 @@ class ServerFileVersion
 
 	const wxDateTime& GetDateTime()   const { return mDateTime; }
 	int64_t           GetBoxFileId()  const { return mBoxFileId; }
+	int64_t           GetSizeBlocks() const { return mSizeInBlocks; }
 	bool IsDirectory()                const { return mIsDirectory; }
 	bool IsDeleted()                  const { return mIsDeleted; }
 	void SetDeleted(bool value = true) { mIsDeleted   = value; }
-
 	private:
 };
 
@@ -97,7 +97,7 @@ class ServerCacheNode
 	wxString                  mFileName;
 	wxString                  mFullPath;
 	ServerFileVersion::Vector mVersions;
-	ServerFileVersion*	      mpMostRecent;
+	ServerFileVersion*        mpMostRecent;
 	ServerCacheNode::Vector   mChildren;
 	ServerCacheNode*          mpParentNode;
 	bool                      mCached;
@@ -110,8 +110,8 @@ class ServerCacheNode
 		ServerFileVersion* pDummyRootVersion = 
 			new ServerFileVersion();
 		mVersions.push_back(pDummyRootVersion);
-		mFileName    = "";
-		mFullPath    = "/";
+		mFileName    = wxT("");
+		mFullPath    = wxT("/");
 		mpParentNode = NULL;
 		mpMostRecent = NULL;
 		mCached      = FALSE;
@@ -121,7 +121,8 @@ class ServerCacheNode
 		BackupStoreDirectory::Entry* pDirEntry)
 	{ 
 		mFileName    = GetDecryptedName(pDirEntry);
-		mFullPath.Printf("%s/%s", pParent->GetFileName().c_str(), 
+		mFullPath.Printf(wxT("%s/%s"), 
+			pParent->GetFileName().c_str(), 
 			mFileName.c_str());
 		mpParentNode = pParent;
 		mpMostRecent = NULL;
@@ -137,11 +138,13 @@ class ServerCacheNode
 	wxString GetDecryptedName(BackupStoreDirectory::Entry* pDirEntry)
 	{
 		BackupStoreFilenameClear clear(pDirEntry->GetName());
-		wxString name = clear.GetClearFilename().c_str();
+		wxString name(clear.GetClearFilename().c_str(), wxConvLibc);
 		return name;
 	}
 		
-	bool               IsRoot()           const { return mFileName.CompareTo(""); }
+	bool               IsRoot()           const { 
+		return mFileName.CompareTo(wxT("")); 
+	}
 	const wxString&    GetFileName()      const { return mFileName; }
 	const wxString&    GetFullPath()      const { return mFullPath; }
 	ServerCacheNode*   GetParent()        const { return mpParentNode; }
@@ -217,7 +220,7 @@ class RestoreSpecEntry
 		mInclude = lInclude;
 	}
 	
-	const ServerCacheNode* GetNode() const { return mpNode; }
+	ServerCacheNode* GetNode() const { return mpNode; }
 	bool IsInclude() const { return mInclude; }
 	bool IsSameAs(const RestoreSpecEntry& rOther) const
 	{
@@ -253,14 +256,15 @@ class RestoreTreeCtrl : public wxTreeCtrl {
 		const wxSize& size = wxDefaultSize, 
 		long style = wxTR_HAS_BUTTONS, 
 		const wxValidator& validator = wxDefaultValidator, 
-		const wxString& name = "RestoreTreeCtrl"
+		const wxString& name = wxT("RestoreTreeCtrl")
 	);
 	void UpdateStateIcon(RestoreTreeNode* pNode, 
 		bool updateParents, bool updateChildren);
 	void SetRoot(RestoreTreeNode* pRootNode);
 	
 	private:
-	int OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& item2);
+	int OnCompareItems(const wxTreeItemId& item1, 
+			const wxTreeItemId& item2);
 
 	wxImageList mImages;
 	int mEmptyImageId;
@@ -342,7 +346,7 @@ class RestorePanel : public wxPanel {
 		const wxPoint& 	pos 	= wxDefaultPosition, 
 		const wxSize& 	size 	= wxDefaultSize,
 		long 			style 	= wxTAB_TRAVERSAL, 
-		const wxString& name 	= "RestorePanel");
+		const wxString& name 	= wxT("RestorePanel"));
 	~RestorePanel() { delete mpCache; }
 	
 	void RestoreProgress(RestoreState State, std::string& rFileName);
@@ -360,8 +364,10 @@ class RestorePanel : public wxPanel {
 	// wxListView*		theServerFileList;
 	wxButton*			mpDeleteButton;
 	wxStatusBar*		mpStatusBar;
-	int					mRestoreCounter;	
+	int					mRestoreCounter;
 	wxImageList			mImageList;
+	wxTextCtrl*			mpCountFilesBox;
+	wxTextCtrl*			mpCountBytesBox;
 	int					mListSortColumn;
 	bool		  		mListSortReverse;
 	RestoreTreeNode* 	mpTreeRoot;
@@ -371,14 +377,19 @@ class RestorePanel : public wxPanel {
 	BackupProtocolClientAccountUsage* mpUsage;
 	ServerCache*        mpCache;
 	RestoreSpec         mRestoreSpec;
+	std::vector<ServerCacheNode*> mCountFilesStack;
+	uint64_t            mCountedFiles, mCountedBytes;
 	
 	void OnTreeNodeExpand  (wxTreeEvent& event);
 	void OnTreeNodeSelect  (wxTreeEvent& event);
 	void OnTreeNodeActivate(wxTreeEvent& event);
 	void OnFileRestore     (wxCommandEvent& event);
 	void OnFileDelete      (wxCommandEvent& event);
+	void OnIdle            (wxIdleEvent& event);
 	void GetUsageInfo();
-	
+	void StartCountingFiles();
+	void UpdateFileCount();
+
 	DECLARE_EVENT_TABLE()
 };
 

@@ -34,14 +34,14 @@ void BoundStringCtrl::Reload()
 	const std::string * pValue = mrStringProp.Get();
 	if (pValue) 
 	{
-		wxString valueString = pValue->c_str();
-		SetValue(valueString.c_str());
+		wxString valueString(pValue->c_str(), wxConvLibc);
+		SetValue(valueString);
 		// work around Windows bug
-		mrStringProp.Set(valueString);
+		mrStringProp.Set(pValue->c_str());
 	}
 	else
 	{
-		SetValue("");
+		SetValue(wxT(""));
 		mrStringProp.Clear();
 	}
 }
@@ -49,10 +49,11 @@ void BoundStringCtrl::Reload()
 void BoundStringCtrl::OnChange()
 {
 	wxString tempString = GetValue();
+	wxCharBuffer buf = tempString.mb_str(wxConvLibc);
 	if (tempString.Length() == 0) {
 		mrStringProp.Clear();
 	} else {
-		mrStringProp.Set(tempString.c_str());
+		mrStringProp.Set(buf.data());
 	}
 }
 
@@ -66,7 +67,9 @@ void BoundIntCtrl::Reload()
 	if (ValuePtr)
 	{
 		wxString ValueString;
-		ValueString.Printf(mFormat.c_str(), *ValuePtr);
+		ValueString.Printf(
+			wxString(mFormat.c_str(), wxConvLibc), 
+			*ValuePtr);
 		int ValueInt = *ValuePtr;
 		SetValue(ValueString);
 		// work around Windows bug
@@ -74,7 +77,7 @@ void BoundIntCtrl::Reload()
 	}
 	else
 	{
-		SetValue("");
+		SetValue(wxT(""));
 		mrIntProp.Clear();
 	}
 }
@@ -89,11 +92,13 @@ void BoundIntCtrl::OnChange()
 	
 	unsigned int tempValue;
 	char *endptr;
+
+	wxCharBuffer buf = tempString.mb_str(wxConvLibc);
 	
-	if (tempString.compare(0, 2, "0x") == 0) {
-		tempValue = strtol(tempString.c_str() + 2, &endptr, 16);
+	if (tempString.StartsWith(wxT("0x"))) {
+		tempValue = strtol(buf.data() + 2, &endptr, 16);
 	} else {
-		tempValue = strtol(tempString.c_str(), &endptr, 10);
+		tempValue = strtol(buf.data(), &endptr, 10);
 	}
 	
 	if (*endptr != '\0') {
@@ -133,17 +138,20 @@ void FileSelButton::OnClick(wxCommandEvent& event)
 	std::string oldValue;
 	mrProperty.GetInto(oldValue);
 	
-	wxFileName file(oldValue.c_str());
+	wxFileName file(wxString(oldValue.c_str(), wxConvLibc));
 	wxFileName dir(file);
-	dir.SetName("");
-	dir.SetExt("");
+	dir.SetName(wxT(""));
+	dir.SetExt(wxT(""));
+	dir.MakeAbsolute();
 	
-	wxString path = wxFileSelector("Set Property", 
-		dir.GetFullPath(), file.GetFullName(), "",
-		"*.*", 0, this);
+	wxString path = wxFileSelector(wxT("Set Property"), 
+		dir.GetFullPath(), file.GetFullName(), wxT(""),
+		mFileSpec, wxOPEN | wxFILE_MUST_EXIST, this);
 
 	if (path.empty()) return;
-	mrProperty.Set(path.c_str());
+
+	wxCharBuffer buf = path.mb_str(wxConvLibc);
+	mrProperty.Set(buf.data());
 	mpStringCtrl->Reload();
 }
 
@@ -156,13 +164,16 @@ void DirSelButton::OnClick(wxCommandEvent& event)
 	std::string oldValue;
 	mrProperty.GetInto(oldValue);
 	
-	wxFileName dir(oldValue.c_str());
+	wxFileName dir(wxString(oldValue.c_str(), wxConvLibc));
+	dir.MakeAbsolute();
 	
 	wxString newDir = wxDirSelector(
-		"Set Property", dir.GetFullPath(), 0, wxDefaultPosition, this);
+		wxT("Set Property"), dir.GetFullPath(), 0, 
+		wxDefaultPosition, this);
 	
 	if (newDir.empty()) return;
-	mrProperty.Set(newDir.c_str());
+	wxCharBuffer buf = newDir.mb_str(wxConvLibc);
+	mrProperty.Set(buf.data());
 	mpStringCtrl->Reload();
 }
 
@@ -181,11 +192,13 @@ ParamPanel::ParamPanel(
 	row = 0;
 }
 
-BoundStringCtrl* ParamPanel::AddParam(const char * pLabel, 
-	StringProperty& rProp, int ID, bool FileSel, bool DirSel)
+BoundStringCtrl* ParamPanel::AddParam(const wxChar * pLabel, 
+	StringProperty& rProp, int ID, bool FileSel, bool DirSel, 
+	const wxChar* pFileSpec)
 {
 	mpSizer->Add(
-		new wxStaticText(this, -1, wxString(pLabel), wxDefaultPosition),
+		new wxStaticText(this, -1, wxString(pLabel, wxConvLibc), 
+			wxDefaultPosition),
 		1, wxALIGN_CENTER_VERTICAL);
 
 	wxBoxSizer *pMiniSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -199,19 +212,22 @@ BoundStringCtrl* ParamPanel::AddParam(const char * pLabel,
 
 	if (FileSel) 
 	{
-		FileSelButton* pButton = new FileSelButton(this, -1, Bitmap, rProp, pCtrl);
+		wxString spec(pFileSpec);
+		FileSelButton* pButton = new FileSelButton(this, 
+				-1, Bitmap, rProp, pCtrl, spec);
 		pMiniSizer->Add(pButton, 0, wxGROW);
 	}
 	else if (DirSel)
 	{
-		DirSelButton* pButton = new DirSelButton(this, -1, Bitmap, rProp, pCtrl);
+		DirSelButton* pButton = new DirSelButton(this, 
+				-1, Bitmap, rProp, pCtrl);
 		pMiniSizer->Add(pButton, 0, wxGROW);
 	}
 	
 	return pCtrl;
 }
 
-BoundIntCtrl* ParamPanel::AddParam(const char * pLabel, IntProperty& rProp, 
+BoundIntCtrl* ParamPanel::AddParam(const wxChar * pLabel, IntProperty& rProp, 
 	const char * pFormat, int ID)
 {
 	BoundIntCtrl* pCtrl = new BoundIntCtrl(this, ID, rProp, pFormat);
@@ -219,7 +235,7 @@ BoundIntCtrl* ParamPanel::AddParam(const char * pLabel, IntProperty& rProp,
 	return pCtrl;
 }
 
-BoundBoolCtrl* ParamPanel::AddParam(const char * pLabel, BoolProperty& rProp, 
+BoundBoolCtrl* ParamPanel::AddParam(const wxChar * pLabel, BoolProperty& rProp, 
 	int ID)
 {
 	BoundBoolCtrl* pCtrl = new BoundBoolCtrl(this, ID, rProp);

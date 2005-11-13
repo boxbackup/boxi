@@ -282,7 +282,10 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 				{
 					THROW_EXCEPTION(CommonException, OSFileError);
 				}
-				wxLogDebug("In restore, directory name collision with file %s", rLocalDirectoryName.c_str());
+				wxLogDebug(wxT(
+					"In restore, directory name "
+					"collision with file %s"), 
+					rLocalDirectoryName.c_str());
 			}
 			// follow through to... (no break)
 		case ObjectExists_NoObject:

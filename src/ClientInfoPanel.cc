@@ -104,7 +104,7 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 		wxDefaultPosition, BitmapSize);
 	pStateSizer->Add(mpConfigStateBitmap, 0, wxGROW | wxALL, 4);
 
-	mpConfigStateLabel = new wxStaticText(this, -1, "Unknown state");
+	mpConfigStateLabel = new wxStaticText(this, -1, wxT("Unknown state"));
 	pStateSizer->Add(mpConfigStateLabel, 1, wxGROW | wxALL, 4);
 	
 	wxNotebook *pClientPropsNotebook = new wxNotebook(this, -1);
@@ -112,68 +112,94 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	ParamPanel *pBasicPanel = new ParamPanel(pClientPropsNotebook);
-	pClientPropsNotebook->AddPage(pBasicPanel, "Basic");
+	pClientPropsNotebook->AddPage(pBasicPanel, wxT("Basic"));
 	
 	ParamPanel *pAdvancedPanel = new ParamPanel(pClientPropsNotebook);
-	pClientPropsNotebook->AddPage(pAdvancedPanel, "Advanced");
+	pClientPropsNotebook->AddPage(pAdvancedPanel, wxT("Advanced"));
 
-	mpStoreHostnameCtrl = pBasicPanel->AddParam("Store Host:", 
-		pConfig->StoreHostname, ID_ClientProp_StoreHostname, FALSE, FALSE);
+	mpStoreHostnameCtrl = pBasicPanel->AddParam(
+		wxT("Store Host:"), pConfig->StoreHostname, 
+		ID_ClientProp_StoreHostname, 
+		FALSE, FALSE, NULL);
 
-	mpAccountNumberCtrl = pBasicPanel->AddParam("Account Number:", 
-		pConfig->AccountNumber, "0x%x", ID_ClientProp_AccountNumber);
+	mpAccountNumberCtrl = pBasicPanel->AddParam(
+		wxT("Account Number:"), pConfig->AccountNumber, 
+		"0x%x", ID_ClientProp_AccountNumber);
 		
-	mpKeysFileCtrl = pBasicPanel->AddParam("Keys File:", 
-		pConfig->KeysFile, ID_ClientProp_KeysFile, TRUE, FALSE);
+	mpKeysFileCtrl = pBasicPanel->AddParam(
+		wxT("Keys File:"), pConfig->KeysFile, 
+		ID_ClientProp_KeysFile, TRUE, FALSE, 
+		wxT("Encryption key files (*-FileEncKeys.raw)|"
+			"*-FileEncKeys.raw"));
 		
-	mpCertificateFileCtrl = pBasicPanel->AddParam("Certificate File:", 
-		pConfig->CertificateFile, ID_ClientProp_CertificateFile, TRUE, FALSE);
+	mpCertificateFileCtrl = pBasicPanel->AddParam(
+		wxT("Certificate File:"), pConfig->CertificateFile, 
+		ID_ClientProp_CertificateFile, TRUE, FALSE,
+		wxT("Certificate files (*-cert.pem)|*-cert.pem"));
 
-	mpPrivateKeyFileCtrl = pBasicPanel->AddParam("Private Key File:", 
-		pConfig->PrivateKeyFile, ID_ClientProp_PrivateKeyFile, TRUE, FALSE);
+	mpPrivateKeyFileCtrl = pBasicPanel->AddParam(
+		wxT("Private Key File:"), pConfig->PrivateKeyFile, 
+		ID_ClientProp_PrivateKeyFile, TRUE, FALSE,
+		wxT("Private key files (*-key.pem)|*-key.pem"));
 
-	mpTrustedCAsFileCtrl = pBasicPanel->AddParam("Trusted CAs File:", 
-		pConfig->TrustedCAsFile, ID_ClientProp_TrustedCAsFile, TRUE, FALSE);
+	mpTrustedCAsFileCtrl = pBasicPanel->AddParam(
+		wxT("Trusted CAs File:"), pConfig->TrustedCAsFile, 
+		ID_ClientProp_TrustedCAsFile, TRUE, FALSE,
+		wxT("Server CA certificate (serverCA.pem)|serverCA.pem"));
 
-	mpDataDirectoryCtrl = pBasicPanel->AddParam("Data Directory:", 
-		pConfig->DataDirectory, ID_ClientProp_DataDirectory, FALSE, TRUE);
+	mpDataDirectoryCtrl = pBasicPanel->AddParam(
+		wxT("Data Directory:"), pConfig->DataDirectory, 
+		ID_ClientProp_DataDirectory, FALSE, TRUE, NULL);
 
-	mpCommandSocketCtrl = pBasicPanel->AddParam("Command Socket:", 
-		pConfig->CommandSocket, ID_ClientProp_CommandSocket, TRUE, FALSE);
+	mpCommandSocketCtrl = pBasicPanel->AddParam(
+		wxT("Command Socket:"), pConfig->CommandSocket, 
+		ID_ClientProp_CommandSocket, TRUE, FALSE, 
+		wxT("Command socket (bbackupd.sock)|bbackupd.sock"));
 
-	mpExtendedLoggingCtrl = pBasicPanel->AddParam("Extended Logging:",
-		pConfig->ExtendedLogging, ID_ClientProp_ExtendedLogging);
+	mpExtendedLoggingCtrl = pBasicPanel->AddParam(
+		wxT("Extended Logging:"), pConfig->ExtendedLogging, 
+		ID_ClientProp_ExtendedLogging);
 
 	mpUpdateStoreIntervalCtrl = pAdvancedPanel->AddParam(
-		"Update Store Interval:", pConfig->UpdateStoreInterval, 
+		wxT("Update Store Interval:"), pConfig->UpdateStoreInterval, 
 		"%d", ID_ClientProp_UpdateStoreInterval);
 		
-	mpMinimumFileAgeCtrl = pAdvancedPanel->AddParam("Minimum File Age:", 
-		pConfig->MinimumFileAge, "%d", ID_ClientProp_MinimumFileAge);
+	mpMinimumFileAgeCtrl = pAdvancedPanel->AddParam(
+		wxT("Minimum File Age:"), pConfig->MinimumFileAge, 
+		"%d", ID_ClientProp_MinimumFileAge);
 
-	mpMaxUploadWaitCtrl = pAdvancedPanel->AddParam("Maximum Upload Wait:", 
+	mpMaxUploadWaitCtrl = pAdvancedPanel->AddParam(
+		wxT("Maximum Upload Wait:"), 
 		pConfig->MaxUploadWait, "%d", ID_ClientProp_MaxUploadWait);
 
 	mpFileTrackingSizeThresholdCtrl = pAdvancedPanel->AddParam(
-		"File Tracking Size Threshold:", pConfig->FileTrackingSizeThreshold, 
+		wxT("File Tracking Size Threshold:"), 
+		pConfig->FileTrackingSizeThreshold, 
 		"%d", ID_ClientProp_FileTrackingSizeThreshold);
 		
 	mpDiffingUploadSizeThresholdCtrl = pAdvancedPanel->AddParam(
-		"Diffing Upload Size Threshold:", pConfig->DiffingUploadSizeThreshold, 
+		wxT("Diffing Upload Size Threshold:"), 
+		pConfig->DiffingUploadSizeThreshold, 
 		"%d", ID_ClientProp_DiffingUploadSizeThreshold);
 
 	mpMaximumDiffingTimeCtrl = pAdvancedPanel->AddParam(
-		"Maximum Diffing Time:", pConfig->MaximumDiffingTime, 
+		wxT("Maximum Diffing Time:"), pConfig->MaximumDiffingTime, 
 		"%d", ID_ClientProp_MaximumDiffingTime);
 
-	mpNotifyScriptCtrl = pAdvancedPanel->AddParam("Notify Script:", 
-		pConfig->NotifyScript, ID_ClientProp_NotifyScript, TRUE, FALSE);
+	mpNotifyScriptCtrl = pAdvancedPanel->AddParam(
+		wxT("Notify Script:"), pConfig->NotifyScript, 
+		ID_ClientProp_NotifyScript, TRUE, FALSE,
+		wxT("Default script (NotifySysadmin.sh)|NotifySysadmin.sh|"
+			"All files (*)|*"));
 	
-	mpSyncAllowScriptCtrl = pAdvancedPanel->AddParam("Sync Allow Script:", 
-		pConfig->SyncAllowScript, ID_ClientProp_SyncAllowScript, TRUE, FALSE);
+	mpSyncAllowScriptCtrl = pAdvancedPanel->AddParam(
+		wxT("Sync Allow Script:"), pConfig->SyncAllowScript, 
+		ID_ClientProp_SyncAllowScript, TRUE, FALSE,
+		wxT("All files (*)|*"));
 
-	mpPidFileCtrl = pAdvancedPanel->AddParam("Process ID File:", 
-		pConfig->PidFile, ID_ClientProp_PidFile, TRUE, FALSE);
+	mpPidFileCtrl = pAdvancedPanel->AddParam(wxT("Process ID File:"), 
+		pConfig->PidFile, ID_ClientProp_PidFile, TRUE, FALSE,
+		wxString(wxT("Client PID files (bbackupd.pid)|bbackupd.pid")));
 		
 	SetSizer( topSizer );
 	topSizer->SetSizeHints( this );
@@ -218,7 +244,9 @@ void ClientInfoPanel::OnControlChange(wxCommandEvent &event)
 		break;
 
 	default:
-		wxMessageBox("Update to unknown control", "Internal error", 
+		wxMessageBox(
+			wxT("Update to unknown control"), 
+			wxT("Internal error"), 
 			wxOK | wxICON_ERROR, this);
 		
 	}
@@ -257,7 +285,7 @@ void ClientInfoPanel::UpdateConfigState()
 	if (mpConfig->Check(msg))
 	{
 		mpConfigStateBitmap->SetBitmap(mTickBitmap);
-		msg = "Configuration looks OK";
+		msg = wxT("Configuration looks OK");
 	}
 	else 
 	{

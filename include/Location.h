@@ -27,7 +27,9 @@
 
 #include <wx/wx.h>
 
+#define NDEBUG
 #include "Configuration.h"
+#undef NDEBUG
 
 enum ExcludeSense {
 	ES_UNKNOWN = 0,
@@ -237,8 +239,12 @@ class Location {
 	const wxString& GetPath() const { return mPath; }
 	MyExcludeList& GetExcludeList() { return *mpExcluded; }
 	void SetExcludeList(MyExcludeList *list) { mpExcluded = list; }
-	void SetName(const std::string& name) { this->mName = name.c_str(); }
-	void SetPath(const std::string& path) { this->mPath = path.c_str(); }
+	void SetName(const std::string& name) { 
+		this->mName = wxString(name.c_str(), wxConvLibc);
+	}
+	void SetPath(const std::string& path) { 
+		this->mPath = wxString(path.c_str(), wxConvLibc);
+	}
 
 	bool IsSameAs(Location& rOther)
 	{

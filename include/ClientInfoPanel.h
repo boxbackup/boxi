@@ -39,7 +39,7 @@ class ClientInfoPanel : public wxPanel, public ConfigChangeListener {
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
 		long style = wxTAB_TRAVERSAL, 
-		const wxString& name = "panel");
+		const wxString& name = wxT("ClientInfoPanel"));
 	~ClientInfoPanel() { }
 	void Reload();
 	
