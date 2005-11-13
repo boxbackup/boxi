@@ -65,7 +65,7 @@ BEGIN
 	open COMPILER,"gcc -v 2>&1 |" or die "Can't open gcc -v";
 	while(<COMPILER>)
 	{
-		$gcc_v3 = 1 if (m/version gcc 3/ || m/gcc version 3/ || m/gcc \(GCC\) 3/i || m/gcc.Version\s+3/i);
+		$gcc_v3 = 1 if (m/version gcc [34]/ || m/gcc version [34]/ || m/gcc \(GCC\) [34]/i || m/gcc.Version\s+[34]/i);
 	}
 	close COMPILER;
 
