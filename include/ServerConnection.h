@@ -78,7 +78,7 @@ class ServerConnection {
 
 	private:
 	wxString mErrorMessage;
-	void HandleException(const char * when, BoxException& e);
+	void HandleException(const wxString& when, BoxException& e);
 
 	public:
 	const char * ErrorString() 

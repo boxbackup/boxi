@@ -149,7 +149,7 @@ class ServerCacheNode
 	const wxString&    GetFullPath()      const { return mFullPath; }
 	ServerCacheNode*   GetParent()        const { return mpParentNode; }
 	const ServerFileVersion::Vector& GetVersions();
-	const ServerCacheNode::Vector&   GetChildren();
+	const ServerCacheNode::Vector*   GetChildren();
 	wxMutex&           GetLock() { return mMutex; }
 	
 	ServerFileVersion* GetMostRecent()

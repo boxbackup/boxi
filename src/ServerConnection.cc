@@ -51,9 +51,9 @@ ServerConnection::~ServerConnection()
 	if (mIsConnected) Disconnect();
 }
 
-void ServerConnection::HandleException(const char * when, BoxException& e)
+void ServerConnection::HandleException(const wxString& when, BoxException& e)
 {
-	wxString msg(when, wxConvLibc);
+	wxString msg(when);
 	msg.append(wxT(": "));
 	
 	int type = 0, subtype = 0;
@@ -87,7 +87,8 @@ bool ServerConnection::Connect(bool Writable)
 	try {
 		result = Connect2(Writable);
 	} catch (BoxException &e) {
-		HandleException("Error connecting to server", e);
+		wxString msg(wxT("Error connecting to server"));
+		HandleException(msg, e);
 		return FALSE;
 	}
 
@@ -247,7 +248,9 @@ bool ServerConnection::GetFile(
 	}
 	catch (BoxException& e) 
 	{
-		HandleException("Error retrieving file from server", e);
+		wxString msg(wxT("Error retrieving file from server: "));
+		msg.Append(wxString(destFileName, wxConvLibc));
+		HandleException(msg, e);
 		return FALSE;
 	}	
 }
@@ -352,6 +355,8 @@ const char * ServerConnection::ErrorString(int type, int subtype) {
 			return "Does not exist in directory";
 		case BackupProtocolClientError::Err_PatchConsistencyError:		
 			return "Patch consistency error";
+		case BackupProtocolClientError::Err_RaidFileDoesntExist:
+			return "Data corrupt on server (RAID file not found)";
 		default:
 			mErrorMessage.Printf(
 				wxT("Unknown protocol error: %d/%d"), 

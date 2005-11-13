@@ -641,10 +641,10 @@ int TreeNodeCompare(const RestoreTreeNode **a, const RestoreTreeNode **b)
     return((*a)->GetFileName().CompareTo((*b)->GetFileName()));
 }
 
-const ServerCacheNode::Vector& ServerCacheNode::GetChildren()
+const ServerCacheNode::Vector* ServerCacheNode::GetChildren()
 {
 	if (mCached)
-		return mChildren;
+		return &mChildren;
 	
 	FreeChildren();
 	
@@ -655,7 +655,7 @@ const ServerCacheNode::Vector& ServerCacheNode::GetChildren()
 	if (!pMostRecent)
 	{
 		// no versions! cannot return anything
-		return mChildren;
+		return NULL;
 	}
 	
 	BackupStoreDirectory dir;
@@ -663,8 +663,8 @@ const ServerCacheNode::Vector& ServerCacheNode::GetChildren()
 	if (!(mpServerConnection->ListDirectory(
 		pMostRecent->GetBoxFileId(), lExcludeFlags, dir))) 
 	{
-		// on error, return empty list
-		return mChildren;
+		// on error, return NULL
+		return NULL;
 	}
 	
 	WX_DECLARE_STRING_HASH_MAP( ServerCacheNode*, FileTable );
@@ -687,7 +687,7 @@ const ServerCacheNode::Vector& ServerCacheNode::GetChildren()
 	}
 	
 	mCached = TRUE;
-	return mChildren;
+	return &mChildren;
 }
 
 bool RestoreTreeNode::_AddChildrenSlow(bool recursive) 
@@ -695,10 +695,13 @@ bool RestoreTreeNode::_AddChildrenSlow(bool recursive)
 	// delete any existing children of the parent
 	mpTreeCtrl->DeleteChildren(mTreeId);
 	
-	ServerCacheNode::Vector lChildren = mpCacheNode->GetChildren();
-	typedef ServerCacheNode::Iterator iterator;
+	const ServerCacheNode::Vector* pChildren = mpCacheNode->GetChildren();
+	if (!pChildren)
+		return FALSE;
+
+	typedef ServerCacheNode::Vector::const_iterator iterator;
 	
-	for (iterator i = lChildren.begin(); i != lChildren.end(); i++)
+	for (iterator i = pChildren->begin(); i != pChildren->end(); i++)
 	{
 		RestoreTreeNode *pNewNode = new RestoreTreeNode(
 			this, *i);
@@ -717,9 +720,12 @@ bool RestoreTreeNode::_AddChildrenSlow(bool recursive)
 		if (pNewNode->IsDirectory())
 		{
 			if (recursive) {
-				pNewNode->_AddChildrenSlow(false);
+				bool result = pNewNode->_AddChildrenSlow(false);
+				if (!result)
+					return FALSE;
 			} else {
-				mpTreeCtrl->SetItemHasChildren(pNewNode->mTreeId, TRUE);
+				mpTreeCtrl->SetItemHasChildren(
+					pNewNode->mTreeId, TRUE);
 			}
 		}
 	}
@@ -791,9 +797,22 @@ void RestorePanel::OnIdle(wxIdleEvent& event)
 		}
 		else
 		{
-			const ServerCacheNode::Vector& children = pNode->GetChildren();
-			for (ServerCacheNode::Vector::const_iterator i = children.begin(); 
-				i != children.end(); i++)
+			const ServerCacheNode::Vector* pChildren = 
+				pNode->GetChildren();
+
+			if (!pChildren)
+			{
+				// if we fail to read a directory,
+				// stop counting to avoid annoying the user
+				mCountFilesStack.clear();
+				return;
+			}
+
+			typedef ServerCacheNode::Vector::const_iterator 
+				iterator;
+
+			for (iterator i = pChildren->begin(); 
+				i != pChildren->end(); i++)
 			{
 				ServerCacheNode* pChild = *i;
 				mCountFilesStack.push_back(pChild);
