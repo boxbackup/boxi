@@ -519,8 +519,8 @@ ClientConnection::Error ClientConnection::DoStartClient() {
 		return ERR_FILEUNKNOWN;
 	}
 
-	wxChar * path = wxStrdupW(ClientPath);
-	wxChar * config = wxStrdupW(mpConfig->GetConfigFileName());
+	wxChar * path = wxStrdup(ClientPath);
+	wxChar * config = wxStrdup(mpConfig->GetConfigFileName());
 	wxChar * argv[] = { path, config, NULL };
 
 	{

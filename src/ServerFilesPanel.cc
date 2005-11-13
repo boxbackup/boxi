@@ -202,7 +202,7 @@ BEGIN_EVENT_TABLE(RestorePanel, wxPanel)
 		RestorePanel::OnTreeNodeExpand)
 	EVT_TREE_SEL_CHANGING(ID_Server_File_Tree,
 		RestorePanel::OnTreeNodeSelect)
-	EVT_TREE_ITEM_ACTIVATED(ID_Server_File_Tree,
+	EVT_TREE_STATE_IMAGE_CLICK(ID_Server_File_Tree,
 		RestorePanel::OnTreeNodeActivate)
 	EVT_BUTTON(ID_Server_File_RestoreButton, 
 		RestorePanel::OnFileRestore)
@@ -377,6 +377,7 @@ void RestorePanel::OnTreeNodeSelect(wxTreeEvent& event)
 void RestorePanel::OnTreeNodeActivate(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
+
 	RestoreTreeNode *pNode = 
 		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
 	
@@ -494,24 +495,26 @@ void RestorePanel::OnFileRestore(wxCommandEvent& event)
 	
 	int result;
 	wxString destFileName(destFile.GetFullPath().c_str(), wxConvLibc);
-	
+	wxCharBuffer destFileBuf = destFileName.mb_str(wxConvLibc);	
+
 	try {
 		// Go and restore...
 		if (pVersion->IsDirectory()) {
 			mRestoreCounter = 0;
 			result = mpServerConnection->Restore(
 				pVersion->GetBoxFileId(), 
-				destFileName.mb_str(wxConvLibc).data(), 
+				destFileBuf.data(), 
 				&RestoreProgressCallback,
 				this, /* user data for callback function */
 				false /* restore deleted */, 
 				false /* don't undelete after restore! */, 
 				false /* resume? */);
 		} else {
+			
 			mpServerConnection->GetFile(
 				pFileName->GetParent()->GetMostRecent()->GetBoxFileId(),
 				pVersion->GetBoxFileId(),
-				destFileName.mb_str(wxConvLibc).data());
+				destFileBuf.data());
 			
 			result = Restore_Complete;
 		}

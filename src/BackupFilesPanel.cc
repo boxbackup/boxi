@@ -234,6 +234,7 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 			MyExcludeEntry* pExclude = rExcludeList[i];
 			ExcludeMatch match = pExclude->GetMatch();
 			std::string  value = pExclude->GetValue();
+			wxString value2(value.c_str(), wxConvLibc);
 			bool matched = false;
 			
 			// std::cout << "Checking against " << pExclude->ToString() << ": ";
@@ -259,9 +260,7 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 			}
 			
 			if (match == EM_EXACT) {
-				if (mFullPath.CompareTo(
-					wxString(value.c_str(), wxConvLibc)) 
-					== 0) 
+				if (mFullPath.IsSameAs(value2))
 				{
 					// std::cout << "Exact match!\n";
 					matched = true;
@@ -278,14 +277,14 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 				{
 					wxLogError(wxT("Regular expression "
 						"compile failed (%s)"),
-						value.c_str());
+						value2.c_str());
 				}
 				else
 				{
+					wxCharBuffer buf = 
+						mFullPath.mb_str(wxConvLibc);
 					int result = regexec(apr.get(), 
-						mFullPath.mb_str(wxConvLibc)
-						.data(),
-						0, 0, 0);
+						buf.data(), 0, 0, 0);
 					matched = (result == 0);
 				}
 			}
@@ -369,7 +368,8 @@ bool LocalFileTreeNode::GetBoxFileId()
 	}
 
 	BackupStoreDirectory::Iterator i(dir);
-	BackupStoreFilenameClear fn(LookupName.mb_str(wxConvLibc).data());
+	wxCharBuffer buf = LookupName.mb_str(wxConvLibc);
+	BackupStoreFilenameClear fn(buf.data());
 	BackupStoreDirectory::Entry *en = i.FindMatchingClearName(fn);
 	
 	if(en == 0) 
@@ -660,7 +660,8 @@ void BackupFilesPanel::UpdateExcludedStatePrivate(wxTreeItemId &rNodeId)
 
 	{
 		struct stat st;
-		if (::stat(pNode->mFullPath.mb_str(wxConvLibc).data(), &st) 
+		wxCharBuffer buf = pNode->mFullPath.mb_str(wxConvLibc);
+		if (::stat(buf.data(), &st) 
 			== 0) 
 		{
 			pNode->mLocalFileLastModified = wxDateTime(st.st_mtime);

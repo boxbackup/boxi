@@ -273,11 +273,10 @@ void BackupTreeNode::UpdateExcludedState(bool updateParents)
 				}
 				else
 				{
-					int result = regexec(
-						apr.get(), 
-						mFullPath.mb_str(wxConvLibc)
-						.data(),
-						0, 0, 0);
+					wxCharBuffer buf =
+						mFullPath.mb_str(wxConvLibc);
+					int result = regexec(apr.get(), 
+						buf.data(), 0, 0, 0);
 					matched = (result == 0 );
 				}
 			}
@@ -782,9 +781,9 @@ void BackupLocationsPanel::OnExcludeCmdClick(wxCommandEvent &event) {
 	if (sourceId == ID_BackupLoc_ExcludeAddButton ||
 		sourceId == ID_BackupLoc_ExcludeEditButton) 
 	{
-		std::string theNewPath = 
-			theExcludePathCtrl->GetValue()
-			.mb_str(wxConvLibc).data();
+		wxCharBuffer buf = 
+			theExcludePathCtrl->GetValue().mb_str(wxConvLibc);
+		std::string theNewPath = buf.data();
 		MyExcludeEntry *newEntry = 
 			new MyExcludeEntry(pType, theNewPath);
 		

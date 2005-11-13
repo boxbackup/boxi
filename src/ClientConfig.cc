@@ -86,9 +86,9 @@ ClientConfig::ClientConfig(const wxString& rConfigFileName)
 void ClientConfig::Load(const wxString& rConfigFileName)
 {
 	std::string errs;
-	
-	mapConfig = Configuration::LoadAndVerify(
-		rConfigFileName.mb_str(wxConvLibc).data(), 
+
+	wxCharBuffer buf = rConfigFileName.mb_str(wxConvLibc);	
+	mapConfig = Configuration::LoadAndVerify(buf.data(),
 		&BackupDaemonConfigVerify, errs);
 		
 	this->mConfigFileName = rConfigFileName;

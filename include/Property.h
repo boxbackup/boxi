@@ -193,7 +193,8 @@ class IntProperty : public Property
 		if (!mConfigured) return FALSE;
 		wxString formatted;
 		formatted.Printf(wxT("%d"), mValue);
-		dest = formatted.mb_str(wxConvLibc).data();
+		wxCharBuffer buf = formatted.mb_str(wxConvLibc);
+		dest = buf.data();
 		return TRUE;
 	}
 	bool GetInto(int& dest) { 
