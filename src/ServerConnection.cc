@@ -106,13 +106,54 @@ bool ServerConnection::Connect(bool Writable)
 	return result;
 }
 
-bool ServerConnection::Connect2(bool Writable) {
+bool ServerConnection::InitTlsContext(TLSContext& target, wxString& rErrorMsg)
+{
 	std::string certFile;
 	mpConfig->CertificateFile.GetInto(certFile);
 
 	if (certFile.length() == 0) {
-		mErrorMessage = 
-			wxT("You have not configured the Certificate File!");
+		rErrorMsg = wxT("You have not configured the Certificate File!");
+		return FALSE;
+	}
+
+	std::string privKeyFile;
+	mpConfig->PrivateKeyFile.GetInto(privKeyFile);
+
+	if (privKeyFile.length() == 0) {
+		rErrorMsg = wxT("You have not configured the Private Key File!");
+		return FALSE;
+	}
+
+	std::string caFile;
+	mpConfig->TrustedCAsFile.GetInto(caFile);
+
+	if (caFile.length() == 0) {
+		rErrorMsg = wxT("You have not configured the Trusted CAs File!");
+		return FALSE;
+	}
+
+	try {	
+		target.Initialise(false /* as client */, certFile.c_str(),
+			privKeyFile.c_str(), caFile.c_str());
+	} catch (BoxException &e) {
+		rErrorMsg = wxT(
+			"There is something wrong with your Certificate "
+			"File, Private Key File, or Trusted CAs File. (");
+		rErrorMsg.Append(wxString(e.what(), wxConvLibc));
+		rErrorMsg.Append(wxT(")"));
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
+bool ServerConnection::Connect2(bool Writable) 
+{
+	std::string storeHost;
+	mpConfig->StoreHostname.GetInto(storeHost);
+
+	if (storeHost.length() == 0) {
+		mErrorMessage = wxT("You have not configured the Store Hostname!");
 		return FALSE;
 	}
 
@@ -124,46 +165,9 @@ bool ServerConnection::Connect2(bool Writable) {
 		return FALSE;
 	}
 
-	std::string privKeyFile;
-	mpConfig->PrivateKeyFile.GetInto(privKeyFile);
-
-	if (privKeyFile.length() == 0) {
-		mErrorMessage = 
-			wxT("You have not configured the Private Key File!");
-		return FALSE;
-	}
-
-	std::string caFile;
-	mpConfig->TrustedCAsFile.GetInto(caFile);
-
-	if (caFile.length() == 0) {
-		mErrorMessage = 
-			wxT("You have not configured the Trusted CAs File!");
-		return FALSE;
-	}
-
-	std::string storeHost;
-	mpConfig->StoreHostname.GetInto(storeHost);
-
-	if (storeHost.length() == 0) {
-		mErrorMessage = 
-			wxT("You have not configured the Store Hostname!");
-		return FALSE;
-	}
-
 	TLSContext tlsContext;
-
-	try {	
-		tlsContext.Initialise(false /* as client */, certFile.c_str(),
-			privKeyFile.c_str(), caFile.c_str());
-	} catch (BoxException &e) {
-		mErrorMessage = wxT(
-			"There is something wrong with your Certificate "
-			"File, Private Key File, or Trusted CAs File. (");
-		mErrorMessage.Append(wxString(e.what(), wxConvLibc));
-		mErrorMessage.Append(wxT(")"));
+	if (!InitTlsContext(tlsContext, mErrorMessage))
 		return FALSE;
-	}
 	
 	// Initialise keys
 	BackupClientCryptoKeys_Setup(keysFile.c_str());
@@ -195,7 +199,9 @@ bool ServerConnection::Connect2(bool Writable) {
 
 	// Login -- if this fails, the Protocol will exception
 	int acctNo;
-	mpConfig->AccountNumber.GetInto(acctNo);
+	if (!mpConfig->AccountNumber.GetInto(acctNo))
+		return FALSE;
+	
 	mpConnection->QueryLogin(acctNo, 
 		Writable ? 0 : BackupProtocolClientLogin::Flags_ReadOnly);
 
@@ -280,7 +286,7 @@ bool ServerConnection::ListDirectory(
 	} 
 	catch (BoxException& e) 
 	{
-		HandleException("Error listing directory on server", e);
+		HandleException(wxT("Error listing directory on server"), e);
 		return FALSE;
 	}
 }
@@ -293,7 +299,9 @@ BackupProtocolClientAccountUsage* ServerConnection::GetAccountUsage() {
 			mpConnection->QueryGetAccountUsage();
 		return new BackupProtocolClientAccountUsage(*Usage);
 	} catch (BoxException &e) {
-		HandleException("Error getting account information from server", e);
+		HandleException(
+			wxT("Error getting account information from server"), 
+			e);
 		return NULL;
 	}
 }
@@ -305,7 +313,7 @@ bool ServerConnection::UndeleteDirectory(int64_t theDirectoryId) {
 		mpConnection->QueryUndeleteDirectory(theDirectoryId);
 		return TRUE;
 	} catch (BoxException &e) {
-		HandleException("Error undeleting directory on server", e);
+		HandleException(wxT("Error undeleting directory on server"), e);
 		return FALSE;
 	}
 }
@@ -317,7 +325,7 @@ bool ServerConnection::DeleteDirectory(int64_t theDirectoryId) {
 		mpConnection->QueryDeleteDirectory(theDirectoryId);
 		return TRUE;
 	} catch (BoxException &e) {
-		HandleException("Error deleting directory on server", e);
+		HandleException(wxT("Error deleting directory on server"), e);
 		return FALSE;
 	}
 }

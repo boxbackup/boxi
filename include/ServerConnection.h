@@ -51,6 +51,8 @@ class ServerConnection {
 	ServerConnection(ClientConfig* pConfig);
 	~ServerConnection();
 	
+	bool InitTlsContext(TLSContext& target, wxString& errorMsg);
+	
 	bool Connect(bool Writable);
 	void Disconnect();
 	bool IsConnected() { return mIsConnected; }
