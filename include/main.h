@@ -51,6 +51,8 @@ enum {
 	ID_Backup_Files_Tree,
 	ID_Restore_Files_Panel,
 	ID_Client_Panel,
+	ID_Backup_Panel,
+	ID_Backup_Progress_Panel,
 
 	// IDs for the controls that manipulate properties	
 	#define STR_PROP(name)	ID_ClientProp_ ## name,

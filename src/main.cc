@@ -26,6 +26,8 @@
 #include "BackupLocationsPanel.h"
 #include "ClientInfoPanel.h"
 #include "ServerFilesPanel.h"
+#include "BackupPanel.h"
+#include "BackupProgressPanel.h"
 
 bool ViewDeleted = true;
 
@@ -118,6 +120,16 @@ MainFrame::MainFrame(
 	mpStatusBar = CreateStatusBar(1);
 	
 	theTopNotebook = new wxNotebook(this, ID_Top_Notebook);
+
+	BackupProgressPanel *pBackupProgressPanel = new BackupProgressPanel(
+		mpConfig, mpServerConnection, 
+		theTopNotebook, ID_Backup_Progress_Panel);
+	theTopNotebook->AddPage(pBackupProgressPanel, wxT("Backup Progress"));
+	
+	BackupPanel *pBackupPanel = new BackupPanel(
+		mpConfig, theTopNotebook, ID_Backup_Panel);
+	theTopNotebook->AddPage(pBackupPanel, wxT("Backup"));
+	mpConfig->AddListener(pBackupPanel);
 
 	theClientPanel = new ClientInfoPanel(
 		mpConfig,

@@ -20,6 +20,8 @@ boxi_include_DATA = \
 	BackupDaemonPanel.h\
 	ClientConnection.h\
 	ComparePanel.h\
-	ParamPanel.h
+	ParamPanel.h\
+	BackupPanel.h\
+	BackupProgressPanel.h
 
 EXTRA_DIST = $(boxi_include_DATA)
