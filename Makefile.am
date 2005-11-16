@@ -3,7 +3,7 @@
 ## If you don't want it to overwrite it,
 ## 	Please disable it in the Anjuta project configuration
 
-SUBDIRS = intl po boxbackup include src
+SUBDIRS = po boxbackup include src
 
 boxidocdir = ${prefix}/doc/boxi
 boxidoc_DATA = \
@@ -13,8 +13,7 @@ boxidoc_DATA = \
 	ChangeLog\
 	INSTALL\
 	NEWS\
-	TODO\
-	ABOUT-NLS
+	TODO
 
 EXTRA_DIST = $(boxidoc_DATA)
 

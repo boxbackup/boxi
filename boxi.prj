@@ -1,4 +1,4 @@
-# Anjuta Version 1.2.1 
+# Anjuta Version 1.2.4 
 Compatibility Level: 1 
 
 <PROJECT_DESCRIPTION_START>
@@ -31,7 +31,7 @@ Boxi has its own website at [http://boxi.sourceforge.net].<PROJECT_DESCRIPTION_E
 
 props.file.type=project
 
-anjuta.version=1.2.1
+anjuta.version=1.2.4
 anjuta.compatibility.level=1
 
 project.name=boxi
@@ -48,7 +48,7 @@ project.excluded.modules=intl
 project.config.extra.modules.before=boxbackup
 project.config.extra.modules.after=
 project.config.blocked=0
-project.config.disable.overwriting=0 0 0 0 0 0 0 0 0 
+project.config.disable.overwriting=1 0 0 0 0 0 0 0 0 
 
 project.menu.entry=boxi Version 0.1
 project.menu.group=Applications
@@ -90,7 +90,9 @@ module.include.files=\
 	BackupDaemonPanel.h\
 	ClientConnection.h\
 	ComparePanel.h\
-	ParamPanel.h
+	ParamPanel.h\
+	BackupPanel.h\
+	BackupProgressPanel.h
 
 module.source.name=src
 module.source.type=
@@ -126,7 +128,9 @@ module.source.files=\
 	empty16.png.c\
 	plus16.png.c\
 	plusgrey16.png.c\
-	tickgrey16.png.c
+	tickgrey16.png.c\
+	BackupPanel.cc\
+	BackupProgressPanel.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=
@@ -152,7 +156,9 @@ compiler.options.include.paths=\
 	../boxbackup/lib/backupclient\
 	../boxbackup/lib/server\
 	../include\
-	/usr/include/libxml2
+	/usr/include/libxml2\
+	../boxbackup/bin/bbackupd\
+	../boxbackup/lib/crypto
 compiler.options.library.paths=
 compiler.options.libraries=\
 	ssl\
@@ -167,7 +173,7 @@ compiler.options.optimize.buttons=1 0 0 0
 compiler.options.other.buttons=1 0 
 compiler.options.other.c.flags=-DPLATFORM_$(shell uname -s | tr a-z A-Z) 
 compiler.options.other.l.flags=
-compiler.options.other.l.libs=../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a -lcrypto -lssl -lz
+compiler.options.other.l.libs=../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o -lcrypto -lssl -lz
 
 project.src.paths=/home/chris/project/boxi/boxbackup-0.09-orig/release/lib/common/common.a \
 /home/chris/project/boxi/boxbackup-0.09-orig/release/lib/backupclient/backupclient.a

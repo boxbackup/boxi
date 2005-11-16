@@ -6,9 +6,9 @@
 
 INCLUDES = \
 	$(WX_CXXFLAGS)\
-	 -I../boxbackup/lib/common -I../boxbackup/lib/backupclient -I../boxbackup/lib/server -I../include -I/usr/include/libxml2
+	 -I../boxbackup/lib/common -I../boxbackup/lib/backupclient -I../boxbackup/lib/server -I../include -I/usr/include/libxml2 -I../boxbackup/bin/bbackupd -I../boxbackup/lib/crypto
 
-boxi_CXXFLAGS =\
+AM_CXXFLAGS =\
 	 -DPLATFORM_GCC3\
 	-DPLATFORM_$(shell uname -s | tr a-z A-Z) \
 	 -Wall\
@@ -48,11 +48,13 @@ boxi_SOURCES = \
 	empty16.png.c\
 	plus16.png.c\
 	plusgrey16.png.c\
-	tickgrey16.png.c
+	tickgrey16.png.c\
+	BackupPanel.cc\
+	BackupProgressPanel.cc
 
 boxi_LDFLAGS = 
 
 boxi_LDADD =  \
 	$(WX_LIBS)\
-	../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a -lcrypto -lssl -lz
+	../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o -lcrypto -lssl -lz
 
