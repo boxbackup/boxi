@@ -459,7 +459,8 @@ void BackupDaemon::Run2()
 					conf.GetKeyValueInt("AccountNumber"), conf.GetKeyValueBool("ExtendedLogging"));
 					
 				// Set up the sync parameters
-				BackupClientDirectoryRecord::SyncParams params(*this, clientContext);
+				BackupClientDirectoryRecord::SyncParams params(*this, *this,
+					clientContext);
 				params.mSyncPeriodStart = syncPeriodStart;
 				params.mSyncPeriodEnd = syncPeriodEndExtended; // use potentially extended end time
 				params.mMaxUploadWait = maxUploadWait;

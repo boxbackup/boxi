@@ -148,7 +148,7 @@ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::Syn
 	rParams.mpCommandSocket->Wait(0);
 	
 	// Signal received by daemon?
-	if(rParams.mrDaemon.StopRun())
+	if(rParams.StopRun())
 	{
 		// Yes. Stop now.
 		THROW_EXCEPTION(BackupStoreException, SignalReceived)
@@ -1164,7 +1164,7 @@ int64_t BackupClientDirectoryRecord::UploadFile(BackupClientDirectoryRecord::Syn
 				&& subtype == BackupProtocolClientError::Err_StorageLimitExceeded)
 			{
 				// The hard limit was exceeded on the server, notify!
-				rParams.mrDaemon.NotifySysadmin(BackupDaemon::NotifyEvent_StoreFull);
+				rParams.NotifySysadmin(BackupDaemon::NotifyEvent_StoreFull);
 			}
 		}
 	
@@ -1208,14 +1208,17 @@ void BackupClientDirectoryRecord::SetErrorWhenReadingFilesystemObject(BackupClie
 //		Created: 8/3/04
 //
 // --------------------------------------------------------------------------
-BackupClientDirectoryRecord::SyncParams::SyncParams(BackupDaemon &rDaemon, BackupClientContext &rContext)
+BackupClientDirectoryRecord::SyncParams::SyncParams(
+	RunStatusProvider &rRunStatusProvider, SysadminNotifier &rSysadminNotifier,
+	BackupClientContext &rContext)
 	: mSyncPeriodStart(0),
 	  mSyncPeriodEnd(0),
 	  mMaxUploadWait(0),
 	  mMaxFileTimeInFuture(99999999999999999LL),
 	  mFileTrackingSizeThreshold(16*1024),
 	  mDiffingUploadSizeThreshold(16*1024),
-	  mrDaemon(rDaemon),
+	  mrRunStatusProvider(rRunStatusProvider),
+	  mrSysadminNotifier(rSysadminNotifier),
 	  mrContext(rContext),
 	  mReadErrorsOnFilesystemObjects(false),
 	  mUploadAfterThisTimeInTheFuture(99999999999999999LL),

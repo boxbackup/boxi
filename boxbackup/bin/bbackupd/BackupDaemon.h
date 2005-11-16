@@ -59,9 +59,9 @@
 // #include "SocketListen.h"
 // #include "SocketStream.h"
 #include "CommandSocketManager.h"
+#include "BackupClientContext.h"
+#include "BackupClientDirectoryRecord.h"
 
-class BackupClientDirectoryRecord;
-class BackupClientContext;
 class Configuration;
 class BackupClientInodeToIDMap;
 class ExcludeList;
@@ -74,7 +74,8 @@ class ExcludeList;
 //		Created: 2003/10/08
 //
 // --------------------------------------------------------------------------
-class BackupDaemon : public Daemon, CommandListener
+class BackupDaemon : public Daemon, CommandListener, LocationResolver,
+	RunStatusProvider, SysadminNotifier
 {
 public:
 	BackupDaemon();
@@ -88,7 +89,8 @@ public:
 	virtual const char *DaemonBanner() const;
 	const ConfigurationVerify *GetConfigVerify() const;
 
-	bool FindLocationPathName(const std::string &rLocationName, std::string &rPathOut) const;
+	bool FindLocationPathName(const std::string &rLocationName, 
+		std::string &rPathOut) const;
 
 	state_t GetState() {return mState;}
 
@@ -178,6 +180,8 @@ private:
 	void SetTerminateWanted()    { this->Daemon::SetTerminateWanted(); }
 	void SetSyncRequested()      { mSyncRequested = true; }
 	void SetSyncForced()         { mSyncForced    = true; }
+	
+	bool StopRun() { return this->Daemon::StopRun(); }
 };
 
 #endif // BACKUPDAEMON__H

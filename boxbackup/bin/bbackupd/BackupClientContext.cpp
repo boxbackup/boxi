@@ -70,9 +70,10 @@
 //		Created: 2003/10/08
 //
 // --------------------------------------------------------------------------
-BackupClientContext::BackupClientContext(BackupDaemon &rDaemon, TLSContext &rTLSContext, const std::string &rHostname,
-			int32_t AccountNumber, bool ExtendedLogging)
-	: mrDaemon(rDaemon),
+BackupClientContext::BackupClientContext(LocationResolver &rResolver, 
+	TLSContext &rTLSContext, const std::string &rHostname,
+	int32_t AccountNumber, bool ExtendedLogging)
+	: mrResolver(rResolver),
 	  mrTLSContext(rTLSContext),
 	  mHostname(rHostname),
 	  mAccountNumber(AccountNumber),
@@ -461,7 +462,8 @@ bool BackupClientContext::FindFilename(int64_t ObjectID, int64_t ContainingDirec
 		{
 			// Location name -- look up in daemon's records
 			std::string locPath;
-			if(!mrDaemon.FindLocationPathName(elementName.GetClearFilename(), locPath))
+			if(!mrResolver.FindLocationPathName(elementName.GetClearFilename(), 
+				locPath))
 			{
 				// Didn't find the location... so can't give the local filename
 				return false;
@@ -488,5 +490,3 @@ bool BackupClientContext::FindFilename(int64_t ObjectID, int64_t ContainingDirec
 	// Found
 	return true;
 }
-
-

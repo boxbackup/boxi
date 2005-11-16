@@ -61,6 +61,38 @@ class BackupClientContext;
 class BackupDaemon;
 class CommandSocketManager;
 
+
+// --------------------------------------------------------------------------
+//
+// Class
+//		Name:    RunStatusProvider
+//		Purpose: Provides a StopRun() method which returns true if the current
+//		         backup should be halted.
+//		Created: 2005/11/15
+//
+// --------------------------------------------------------------------------
+class RunStatusProvider
+{
+	public:
+	virtual ~RunStatusProvider() { }
+	virtual bool StopRun() = 0;
+};
+
+// --------------------------------------------------------------------------
+//
+// Class
+//		Name:    SysadminNotifier
+//		Purpose: Provides a NotifySysadmin() method to send mail to the sysadmin
+//		Created: 2005/11/15
+//
+// --------------------------------------------------------------------------
+class SysadminNotifier
+{
+	public:
+	virtual ~SysadminNotifier() { }
+	virtual void NotifySysadmin(int Event) = 0;
+};
+
 // --------------------------------------------------------------------------
 //
 // Class
@@ -95,14 +127,18 @@ public:
 	class SyncParams
 	{
 	public:
-		SyncParams(BackupDaemon &rDaemon, BackupClientContext &rContext);
+		SyncParams(RunStatusProvider &rRunStatusProvider, 
+			SysadminNotifier &rSysadminNotifier,
+			BackupClientContext &rContext);
 		~SyncParams();
 	private:
 		// No copying
 		SyncParams(const SyncParams&);
 		SyncParams &operator=(const SyncParams&);
+		RunStatusProvider &mrRunStatusProvider;
+		SysadminNotifier &mrSysadminNotifier;
+		
 	public:
-
 		// Data members are public, as accessors are not justified here
 		box_time_t mSyncPeriodStart;
 		box_time_t mSyncPeriodEnd;
@@ -110,7 +146,6 @@ public:
 		box_time_t mMaxFileTimeInFuture;
 		int32_t mFileTrackingSizeThreshold;
 		int32_t mDiffingUploadSizeThreshold;
-		BackupDaemon &mrDaemon;
 		BackupClientContext &mrContext;
 		bool mReadErrorsOnFilesystemObjects;
 		CommandSocketManager* mpCommandSocket;	
@@ -118,6 +153,12 @@ public:
 		// Member variables modified by syncing process
 		box_time_t mUploadAfterThisTimeInTheFuture;
 		bool mHaveLoggedWarningAboutFutureFileTimes;
+	
+		bool StopRun() { return mrRunStatusProvider.StopRun(); }
+		void NotifySysadmin(int Event) 
+		{ 
+			mrSysadminNotifier.NotifySysadmin(Event); 
+		}
 	};
 
 	void SyncDirectory(SyncParams &rParams, int64_t ContainingDirectoryID, const std::string &rLocalPath,
