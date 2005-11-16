@@ -477,7 +477,8 @@ bool PropSet(StringProperty& rProp, wxString& msg, const char* desc)
 {
 	if (rProp.Get())
 		return TRUE;
-	msg.Printf(wxT("The %s is not set"), desc);
+	wxString desc2(desc, wxConvLibc);
+	msg.Printf(wxT("The %s is not set"), desc2.c_str());
 	return FALSE;
 }
 
@@ -485,7 +486,8 @@ bool PropSet(IntProperty& rProp, wxString& msg, const char* desc)
 {
 	if (rProp.Get())
 		return TRUE;
-	msg.Printf(wxT("The %s is not set"), desc);
+	wxString desc2(desc, wxConvLibc);
+	msg.Printf(wxT("The %s is not set"), desc2.c_str());
 	return FALSE;
 }
 
@@ -493,7 +495,8 @@ bool PropSet(BoolProperty& rProp, wxString& msg, const char* desc)
 {
 	if (rProp.Get())
 		return TRUE;
-	msg.Printf(wxT("The %s is not set"), desc);
+	wxString desc2(desc, wxConvLibc);
+	msg.Printf(wxT("The %s is not set"), desc2.c_str());
 	return FALSE;
 }
 
@@ -502,7 +505,7 @@ bool PropPath(StringProperty& rProp, wxString& msg, bool dir, const char *desc)
 	std::string path1;
 	rProp.GetInto(path1);
 	wxString path2(path1.c_str(), wxConvLibc);
-	wxString desc2(rProp.GetKeyName().c_str(), wxConvLibc);
+	wxString desc2(desc, wxConvLibc);
 
 	if (dir) 
 	{
