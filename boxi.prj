@@ -10,12 +10,16 @@ Boxi has its own website at [http://boxi.sourceforge.net].<PROJECT_DESCRIPTION_E
 <CONFIG_PROGS_END>
 <CONFIG_LIBS_START>
 # extract boxbackup in release build
-(
+if ! (
 	cd boxbackup || exit 1
 	# PATCH IN RELEASE
 	./configure || exit 1
 	mv Makefile Makefile.in || exit 1
-)<CONFIG_LIBS_END>
+); then
+	echo "Failed to configure Box Backup, aborting!"
+	exit 1
+fi
+<CONFIG_LIBS_END>
 <CONFIG_HEADERS_START>
 <CONFIG_HEADERS_END>
 <CONFIG_CHARACTERISTICS_START>
@@ -48,7 +52,7 @@ project.excluded.modules=intl
 project.config.extra.modules.before=boxbackup
 project.config.extra.modules.after=
 project.config.blocked=0
-project.config.disable.overwriting=1 0 0 0 0 0 0 0 0 
+project.config.disable.overwriting=0 0 0 0 0 0 0 0 0 
 
 project.menu.entry=boxi Version 0.1
 project.menu.group=Applications

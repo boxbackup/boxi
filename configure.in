@@ -6,13 +6,26 @@ dnl 	Please disable it in the Anjuta project configuration
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(boxi, 0.1.0)
 AM_CONFIG_HEADER(config.h)
+AM_MAINTAINER_MODE
 
 AC_ISC_POSIX
-AC_SUBST(CXXFLAGS,$CXXFLAGS)
-AC_PROG_CXX
+AC_PROG_CC
 AM_PROG_CC_STDC
 AC_HEADER_STDC
+
+AC_PROG_CPP
+AC_PROG_CXX
+
+GETTEXT_PACKAGE=boxi
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Package name for gettext])
+
+dnl Languages which your application supports
+ALL_LINGUAS=""
+AM_GLIB_GNU_GETTEXT
+
 AM_PROG_LIBTOOL
+
 
 AM_OPTIONS_WXCONFIG
 AM_PATH_WXCONFIG(2.3.2, wxWin=1)
@@ -36,13 +49,15 @@ AM_PATH_WXCONFIG(2.3.2, wxWin=1)
                AC_LANG_CPLUSPLUS
                AC_TRY_LINK([#include <wx/wx.h>],
                [wxString test=""],
-               ,[])
+               ,[WX_LIBS=$WX_LIBS_STATIC])
                AC_LANG_RESTORE
                LIBS=$ac_save_LIBS
                CXXFLAGS=$ac_save_CXXFLAGS
         fi
 
-dnl Checks for programs.
+
+
+
 dnl Checks for libraries.
 # extract boxbackup in release build
 if ! (
@@ -55,27 +70,14 @@ if ! (
 	exit 1
 fi
 
-dnl Checks for header files.
-dnl Checks for typedefs, structures, and compiler characteristics.
-dnl Checks for library functions.
-dnl Checks for Additional stuffs.
-GETTEXT_PACKAGE=boxi
-AC_SUBST(GETTEXT_PACKAGE)
-AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Package name for gettext])
 
-
-dnl Languages which your application supports
-ALL_LINGUAS=""
-AM_GNU_GETTEXT
-AM_GNU_GETTEXT_VERSION(0.10.40)
 
 dnl Set PACKAGE_LOCALE_DIR in config.h.
 if test "x${prefix}" = "xNONE"; then
-  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR, "${ac_default_prefix}/${DATADIRNAME}/locale")
+  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR, "${ac_default_prefix}/${DATADIRNAME}/locale", [Package local directory])
 else
-  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR, "${prefix}/${DATADIRNAME}/locale")
+  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR, "${prefix}/${DATADIRNAME}/locale", [Package local directory])
 fi
-
 
 dnl Set PACKAGE SOURCE DIR in config.h.
 packagesrcdir=`cd $srcdir && pwd`
@@ -88,7 +90,7 @@ else
 fi
 
 dnl Set PACKAGE DATA & DOC DIR
-packagedatadir=share/${PACKAGE}
+packagedatadir=share
 packagedocdir=doc/${PACKAGE}
 
 dnl Set PACKAGE DIRS in config.h.
@@ -135,7 +137,6 @@ AC_DEFINE_UNQUOTED(PACKAGE_SOURCE_DIR, "${packagesrcdir}")
 
 AC_OUTPUT([
 Makefile
-intl/Makefile
 po/Makefile.in
 boxbackup/Makefile
 include/Makefile
