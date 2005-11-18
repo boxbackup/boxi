@@ -36,7 +36,7 @@
 //DEFINE_EVENT_TYPE(myEVT_CLIENT_NOTIFY)
 
 BEGIN_EVENT_TABLE(BackupPanel, wxPanel)
-//EVT_BUTTON(ID_Daemon_Start,   BackupPanel::OnClientStartClick)
+EVT_BUTTON(ID_Backup_Panel_Start_Button, BackupPanel::OnClickStartButton)
 //EVT_BUTTON(ID_Daemon_Stop,    BackupPanel::OnClientStopClick)
 //EVT_BUTTON(ID_Daemon_Restart, BackupPanel::OnClientRestartClick)
 //EVT_BUTTON(ID_Daemon_Kill,    BackupPanel::OnClientKillClick)
@@ -47,6 +47,7 @@ END_EVENT_TABLE()
 
 BackupPanel::BackupPanel(
 	ClientConfig *pConfig,
+	BackupProgressPanel& rProgressPanel,
 	wxWindow* parent, 
 	wxWindowID id,
 	const wxPoint& pos, 
@@ -54,7 +55,8 @@ BackupPanel::BackupPanel(
 	long style, 
 	const wxString& name)
 	: wxPanel(parent, id, pos, size, style, name),
-	  mpConfig(pConfig)
+	  mpConfig(pConfig),
+	  mrProgressPanel(rProgressPanel)
 {
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -92,8 +94,8 @@ BackupPanel::BackupPanel(
 	pMainSizer->Add(pActionCtrlSizer, 0, 
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	wxButton* pBackupStartButton = new wxButton(this, wxID_ANY, 
-		wxT("Start Backup"));
+	wxButton* pBackupStartButton = new wxButton(this, 
+		ID_Backup_Panel_Start_Button, wxT("Start Backup"));
 	pActionCtrlSizer->Add(pBackupStartButton, 0, wxGROW, 0);
 
 	SetSizer( pMainSizer );
@@ -138,4 +140,9 @@ void BackupPanel::Update()
 void BackupPanel::NotifyChange()
 {
 	Update();
+}
+
+void BackupPanel::OnClickStartButton(wxCommandEvent& rEvent)
+{
+	mrProgressPanel.StartBackup();
 }

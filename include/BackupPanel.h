@@ -30,6 +30,7 @@
 
 #include "ClientConfig.h"
 #include "ClientConnection.h"
+#include "BackupProgressPanel.h"
 
 /** 
  * BackupPanel
@@ -42,6 +43,7 @@ class BackupPanel
 	public:
 	BackupPanel(
 		ClientConfig *pConfig,
+		BackupProgressPanel& rProgressPanel,
 		wxWindow* parent, wxWindowID id = -1,
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
@@ -50,11 +52,13 @@ class BackupPanel
 
 	private:
 	ClientConfig* mpConfig;
+	BackupProgressPanel& mrProgressPanel;
 	wxListBox*    mpSourceList;
 	wxStaticText* mpDestLabel;
 	
 	void NotifyChange();
 	void Update();
+	void OnClickStartButton(wxCommandEvent& rEvent);
 	
 	DECLARE_EVENT_TABLE()
 };
