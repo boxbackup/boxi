@@ -49,7 +49,7 @@ AM_PATH_WXCONFIG(2.3.2, wxWin=1)
                AC_LANG_CPLUSPLUS
                AC_TRY_LINK([#include <wx/wx.h>],
                [wxString test=""],
-               ,[WX_LIBS=$WX_LIBS_STATIC])
+               ,[])
                AC_LANG_RESTORE
                LIBS=$ac_save_LIBS
                CXXFLAGS=$ac_save_CXXFLAGS

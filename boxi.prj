@@ -52,7 +52,7 @@ project.excluded.modules=intl
 project.config.extra.modules.before=boxbackup
 project.config.extra.modules.after=
 project.config.blocked=0
-project.config.disable.overwriting=0 0 0 0 0 0 0 0 0 
+project.config.disable.overwriting=1 0 0 0 0 0 0 0 0 
 
 project.menu.entry=boxi Version 0.1
 project.menu.group=Applications
