@@ -302,7 +302,8 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 
 	#define WRITE_STR_PROP(name) \
 	if (const std::string * value = name.Get()) { \
-		buffer.Printf(wxT(#name " = %s\n"), value->c_str()); \
+		buffer.Printf(wxT(#name " = %s\n"), \
+			wxString(value->c_str(), wxConvLibc).c_str()); \
 		file.Write(buffer); \
 	}
 
@@ -310,13 +311,15 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	#define WRITE_DIR_PROP(name) \
 	if (const std::string * value = name.Get()) { \
 		wxString cygpath = ConvertWindowsPathToCygwin(value.c_str()); \
-		buffer.Printf(wxT(#name " = %s\n"), cygpath.c_str()); \
+		buffer.Printf(wxT(#name " = %s\n"), \
+			wxString(cygpath.c_str(), wxConvLibc).c_str()); \
 		file.Write(buffer); \
 	}
 	#else /* ! __CYGWIN__ */
 	#define WRITE_DIR_PROP(name) \
 	if (const std::string * value = name.Get()) { \
-		buffer.Printf(wxT(#name " = %s\n"), value->c_str()); \
+		buffer.Printf(wxT(#name " = %s\n"), \
+			wxString(value->c_str(), wxConvLibc).c_str()); \
 		file.Write(buffer); \
 	}
 	#endif
@@ -335,7 +338,8 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 
 	#define WRITE_BOOL_PROP(name) \
 	if (const bool * value = name.Get()) { \
-		buffer.Printf(wxT(#name " = %s\n"), *value ? "yes" : "no"); \
+		buffer.Printf(wxT(#name " = %s\n"), \
+			*value ? wxT("yes") : wxT("no")); \
 		file.Write(buffer); \
 	}
 	
@@ -366,7 +370,7 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 		std::string pidbuf;
 		PidFile.GetInto(pidbuf);
 		buffer.Printf(wxT("Server\n{\n\tPidFile = %s\n}\n"), 
-			pidbuf.c_str());
+			wxString(pidbuf.c_str(), wxConvLibc).c_str());
 		file.Write(buffer);
 	}
 	
@@ -376,8 +380,8 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	for (size_t i = 0; i < rLocations.size(); i++) {
 		Location* pLoc = rLocations[i];
 		buffer.Printf(wxT("\t%s\n\t{\n\t\tPath = %s\n"),
-			pLoc->GetName().c_str(), 
-			pLoc->GetPath().c_str());
+			wxString(pLoc->GetName().c_str(), wxConvLibc).c_str(), 
+			wxString(pLoc->GetPath().c_str(), wxConvLibc).c_str());
 		file.Write(buffer);
 		
 		const std::vector<MyExcludeEntry*>& rEntries = 
@@ -386,7 +390,7 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 		for (size_t l = 0; l < rEntries.size(); l++) {
 			MyExcludeEntry* pEntry = rEntries[l];
 			buffer.Printf(wxT("\t\t%s\n"), 
-				pEntry->ToString().c_str());
+				wxString(pEntry->ToString().c_str(), wxConvLibc).c_str());
 			file.Write(buffer);
 		}
 		
