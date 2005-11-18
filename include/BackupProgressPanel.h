@@ -29,9 +29,11 @@
 #include <wx/thread.h>
 
 #define NDEBUG
+#include "Box.h"
 #include "TLSContext.h"
 #include "BackupClientContext.h"
 #include "BackupClientDirectoryRecord.h"
+#include "BackupDaemon.h"
 #undef NDEBUG
 
 #include "ClientConfig.h"
@@ -60,16 +62,48 @@ class BackupProgressPanel
 	void StartBackup();
 
 	private:
+	class LocationRecord
+	{
+		public:
+		LocationRecord();
+		~LocationRecord();
+
+		private:
+		LocationRecord(const LocationRecord &);	// copy not allowed
+		LocationRecord &operator=(const LocationRecord &);
+
+		public:
+		std::string mName;
+		std::string mPath;
+		std::auto_ptr<BackupClientDirectoryRecord> mpDirectoryRecord;
+		int mIDMapIndex;
+		ExcludeList *mpExcludeFiles;
+		ExcludeList *mpExcludeDirs;
+	};
+
 	ClientConfig*     mpConfig;
 	ServerConnection* mpConnection;
 	TLSContext        mTlsContext;
+	wxListBox*        mpErrorList;
+	bool              mStorageLimitExceeded;
+	bool              mBackupRunning;
+	std::vector<LocationRecord *> mLocations;
+
+	// Unused entries in the root directory wait a while before being deleted
+	box_time_t mDeleteUnusedRootDirEntriesAfter;	// time to delete them
+	std::vector<std::pair<int64_t,std::string> > mUnusedRootDirEntries;
+
+	std::vector<std::string> mIDMapMounts;
+	std::vector<BackupClientInodeToIDMap *> mCurrentIDMaps;
+	std::vector<BackupClientInodeToIDMap *> mNewIDMaps;
 	
-	bool mBackupRunning;
 	virtual bool FindLocationPathName(const std::string &rLocationName, 
 		std::string &rPathOut) const { return FALSE; }
 	virtual bool StopRun() { return FALSE; }
 	virtual void NotifySysadmin(int Event) { }
-
+	void SetupLocations(BackupClientContext &rClientContext);
+	void DeleteAllLocations();
+	
 	DECLARE_EVENT_TABLE()
 };
 
