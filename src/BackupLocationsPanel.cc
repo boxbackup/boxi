@@ -22,8 +22,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <regex.h>
-
 #include <wx/dir.h>
 #include <wx/filename.h>
 #include <wx/image.h>
@@ -200,101 +198,8 @@ void BackupTreeNode::UpdateExcludedState(bool updateParents)
 	wxLogDebug(wxT("Checking %s against exclude list for %s"),
 		mFullPath.c_str(), mpLocation->GetPath().c_str());
 
-	const std::vector<MyExcludeEntry*>& rExcludeList =
-		mpLocation->GetExcludeList().GetEntries();
-	
-	// on pass 1, remove Excluded files
-	// on pass 2, re-add AlwaysInclude files
-	
-	for (int pass = 1; pass <= 2; pass++) {
-		wxLogDebug(wxT(" pass %d"), pass);
-
-		if (pass == 1 && !mpLocation) {
-			// not included, so don't bother checking the Exclude entries
-			continue;
-		} else if (pass == 2 && !mpExcludedBy) {
-			// not excluded, so don't bother checking the AlwaysInclude entries
-			continue;
-		}
-		
-		for (size_t i = 0; i < rExcludeList.size(); i++) {
-			MyExcludeEntry* pExclude = rExcludeList[i];
-			ExcludeMatch match = pExclude->GetMatch();
-			std::string  value = pExclude->GetValue();
-			wxString value2(value.c_str(), wxConvLibc);
-			bool matched = false;
-
-			{
-				std::string name = pExclude->ToString();
-				wxString name2(name.c_str(), wxConvLibc);
-				wxLogDebug(wxT("  checking against %s"),
-					name2.c_str());
-			}
-
-			ExcludeSense sense = pExclude->GetSense();
-			if (pass == 1 && sense != ES_EXCLUDE) {
-				wxLogDebug(
-					wxT("   not an Exclude entry"));
-				continue;
-			}
-			if (pass == 2 && sense != ES_ALWAYSINCLUDE) {
-				wxLogDebug(
-					wxT("   not an AlwaysInclude entry"));
-				continue;
-			}
-			
-			ExcludeFileDir fileOrDir = pExclude->GetFileDir();
-			if (fileOrDir == EFD_FILE && mIsDirectory) {
-				wxLogDebug(
-					wxT("   doesn't match directories"));
-				continue;
-			}
-			if (fileOrDir == EFD_DIR && !mIsDirectory) {
-				wxLogDebug(
-					wxT("   doesn't match files"));
-				continue;
-			}
-			
-			if (match == EM_EXACT) {
-				if (mFullPath.IsSameAs(value2)) 
-				{
-					matched = true;
-				}
-			} else if (match == EM_REGEX) {
-				std::auto_ptr<regex_t> apr = 
-					std::auto_ptr<regex_t>(new regex_t);
-				if (::regcomp(apr.get(), value.c_str(),
-					REG_EXTENDED | REG_NOSUB) != 0) 
-				{
-					wxLogError(
-						wxT("Regular expression "
-						"compile failed (%s)"),
-						value2.c_str());
-				}
-				else
-				{
-					wxCharBuffer buf =
-						mFullPath.mb_str(wxConvLibc);
-					int result = regexec(apr.get(), 
-						buf.data(), 0, 0, 0);
-					matched = (result == 0 );
-				}
-			}
-			
-			if (!matched) {
-				wxLogDebug(wxT("   no match."));
-				continue;
-			}
-
-			wxLogDebug(wxT("   matched!"));
-			
-			if (sense == ES_EXCLUDE) {
-				mpExcludedBy = pExclude;
-			} else if (sense == ES_ALWAYSINCLUDE) {
-				mpIncludedBy = pExclude;
-			}
-		}
-	}
+	mpLocation->IsExcluded(mpLocation->GetPath(), mIsDirectory,
+		&mpExcludedBy, &mpIncludedBy);
 }
 
 static int AddImage(
