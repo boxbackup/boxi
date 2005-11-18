@@ -54,6 +54,7 @@ ClientConfig::ClientConfig()
 	INIT_PROP(FileTrackingSizeThreshold, 65535),
 	INIT_PROP(DiffingUploadSizeThreshold, 8192),
 	INIT_PROP(MaximumDiffingTime, 20),
+	INIT_PROP(MaxFileTimeInFuture, 0),
 	INIT_PROP(ExtendedLogging, true)
 {
 	SetClean();	
@@ -77,6 +78,7 @@ ClientConfig::ClientConfig(const wxString& rConfigFileName)
 	INIT_PROP(FileTrackingSizeThreshold, 65535),
 	INIT_PROP(DiffingUploadSizeThreshold, 8192),
 	INIT_PROP(MaximumDiffingTime, 20),
+	INIT_PROP(MaxFileTimeInFuture, 0),
 	INIT_PROP(ExtendedLogging, true)
 {
 	Load(rConfigFileName);

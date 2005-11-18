@@ -49,7 +49,8 @@ INT_PROP(MinimumFileAge) \
 INT_PROP(MaxUploadWait) \
 INT_PROP(FileTrackingSizeThreshold) \
 INT_PROP(DiffingUploadSizeThreshold) \
-INT_PROP(MaximumDiffingTime)
+INT_PROP(MaximumDiffingTime) \
+INT_PROP(MaxFileTimeInFuture)
 	
 #define BOOL_PROPS \
 BOOL_PROP(ExtendedLogging)
