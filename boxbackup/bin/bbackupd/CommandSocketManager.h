@@ -72,6 +72,7 @@ class IOStreamGetLine;
 class CommandListener
 {
 	public:
+	virtual ~CommandListener() { }
 	virtual void SetReloadConfigWanted() = 0;
 	virtual void SetTerminateWanted() = 0;
 	virtual void SetSyncRequested() = 0;
