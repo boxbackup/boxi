@@ -24,8 +24,11 @@
 
 #include <set>
 #include <string>
+#include <regex.h>
 
+#define NDEBUG
 #include "Utils.h"
+#undef NDEBUG
 
 #include "Location.h"
 
@@ -67,21 +70,199 @@ void MyExcludeList::ReplaceEntry(int index, MyExcludeEntry* newEntry) {
 	mEntries[index] = newEntry;
 }
 
-void MyExcludeList::RemoveEntry(int target) {
+void MyExcludeList::RemoveEntry(int target) 
+{
 	std::vector<MyExcludeEntry*>::iterator current = mEntries.begin();
 	int i;
-	for (i = 0; i < target; i++) {
+	for (i = 0; i < target; i++) 
+	{
 		current++;
 	}
 	if (i == target)
 		mEntries.erase(current);
 }
 
-void MyExcludeList::RemoveEntry(MyExcludeEntry* oldEntry) {
+void MyExcludeList::RemoveEntry(MyExcludeEntry* oldEntry) 
+{
 	std::vector<MyExcludeEntry*>::iterator current = mEntries.begin();
 	for ( ; current != mEntries.end() && *current != oldEntry; current++) 
 		{ }
 		
 	if (*current == oldEntry)
 		mEntries.erase(current);
+}
+
+bool Location::IsExcluded(const wxString& rLocalFileName, bool mIsDirectory, 
+	MyExcludeEntry** ppExcludedBy, MyExcludeEntry** ppIncludedBy)
+{
+	const std::vector<MyExcludeEntry*>& rExcludeList =
+		mpExcluded->GetEntries();
+	
+	// on pass 1, remove Excluded files
+	// on pass 2, re-add AlwaysInclude files
+	
+	bool isExcluded = FALSE;
+	
+	for (int pass = 1; pass <= 2; pass++) {
+		wxLogDebug(wxT(" pass %d"), pass);
+
+		if (pass == 2 && !isExcluded) {
+			// not excluded, so don't bother checking the AlwaysInclude entries
+			continue;
+		}
+		
+		for (size_t i = 0; i < rExcludeList.size(); i++) 
+		{
+			MyExcludeEntry* pExclude = rExcludeList[i];
+			ExcludeMatch match = pExclude->GetMatch();
+			std::string  value = pExclude->GetValue();
+			wxString value2(value.c_str(), wxConvLibc);
+			bool matched = false;
+
+			{
+				std::string name = pExclude->ToString();
+				wxString name2(name.c_str(), wxConvLibc);
+				wxLogDebug(wxT("  checking against %s"),
+					name2.c_str());
+			}
+
+			ExcludeSense sense = pExclude->GetSense();
+			
+			if (pass == 1 && sense != ES_EXCLUDE) 
+			{
+				wxLogDebug(wxT("   not an Exclude entry"));
+				continue;
+			}
+			
+			if (pass == 2 && sense != ES_ALWAYSINCLUDE) 
+			{
+				wxLogDebug(wxT("   not an AlwaysInclude entry"));
+				continue;
+			}
+			
+			ExcludeFileDir fileOrDir = pExclude->GetFileDir();
+			
+			if (fileOrDir == EFD_FILE && mIsDirectory) 
+			{
+				wxLogDebug(wxT("   doesn't match directories"));
+				continue;
+			}
+			
+			if (fileOrDir == EFD_DIR && !mIsDirectory) 
+			{
+				wxLogDebug(wxT("   doesn't match files"));
+				continue;
+			}
+			
+			if (match == EM_EXACT) 
+			{
+				if (rLocalFileName.IsSameAs(value2)) 
+				{
+					matched = true;
+				}
+			} 
+			else if (match == EM_REGEX) 
+			{
+				std::auto_ptr<regex_t> apr = 
+					std::auto_ptr<regex_t>(new regex_t);
+				if (::regcomp(apr.get(), value.c_str(),
+					REG_EXTENDED | REG_NOSUB) != 0) 
+				{
+					wxLogError(wxT("Regular expression compile failed (%s)"),
+						value2.c_str());
+				}
+				else
+				{
+					wxCharBuffer buf = rLocalFileName.mb_str(wxConvLibc);
+					int result = regexec(apr.get(), buf.data(), 0, 0, 0);
+					matched = (result == 0);
+				}
+			}
+			
+			if (!matched) 
+			{
+				wxLogDebug(wxT("   no match."));
+				continue;
+			}
+
+			wxLogDebug(wxT("   matched!"));
+			
+			if (sense == ES_EXCLUDE)
+			{
+				isExcluded = TRUE;
+				if (ppExcludedBy)
+					*ppExcludedBy = pExclude;
+			} 
+			else if (sense == ES_ALWAYSINCLUDE)
+			{
+				isExcluded = FALSE;
+				if (ppIncludedBy)
+					*ppIncludedBy = pExclude;
+			}
+		}
+	}
+	
+	return isExcluded;
+}
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    GetBoxExcludeList()
+//		Purpose: Return a Box Backup-compatible ExcludeList.
+//		Created: 28/1/04
+//
+// --------------------------------------------------------------------------
+ExcludeList* Location::GetBoxExcludeList(bool listDirs)
+{
+	// Create the exclude list
+	ExcludeList *pExclude = new ExcludeList;
+	ExcludeList *pInclude = new ExcludeList;
+	pExclude->SetAlwaysIncludeList(pInclude);
+	
+	typedef const std::vector<MyExcludeEntry*> tMyExcludeEntries;
+	tMyExcludeEntries& rEntries = mpExcluded->GetEntries();
+	
+	try
+	{
+		for (tMyExcludeEntries::const_iterator i = rEntries.begin();
+			i != rEntries.end(); i++)
+		{
+			const MyExcludeEntry* pEntry = *i;
+			
+			if (listDirs && (pEntry->GetFileDir() == EFD_FILE))
+				continue;
+			
+			if (!listDirs && (pEntry->GetFileDir() == EFD_DIR))
+				continue;
+			
+			ExcludeList* pList = NULL;
+			if (pEntry->GetSense() == ES_EXCLUDE)
+			{
+				pList = pExclude;
+			}
+			else if (pEntry->GetSense() == ES_ALWAYSINCLUDE)
+			{
+				pList = pInclude;
+			}
+			
+			if (pEntry->GetMatch() == EM_EXACT)
+			{
+				pList->AddDefiniteEntries(pEntry->GetValue());
+			}
+			else if (pEntry->GetMatch() == EM_REGEX)
+			{
+				pList->AddRegexEntries(pEntry->GetValue());
+			}
+		}
+	}
+	catch(...)
+	{
+		// Clean up
+		delete pExclude;
+		delete pInclude;
+		throw;
+	}
+
+	return pExclude;
 }

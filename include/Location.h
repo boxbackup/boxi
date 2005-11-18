@@ -25,10 +25,15 @@
 #ifndef _LOCATION_H
 #define _LOCATION_H
 
+#include <regex.h>
+
 #include <wx/wx.h>
 
 #define NDEBUG
+#define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #include "Configuration.h"
+#include "ExcludeList.h"
+#undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #undef NDEBUG
 
 enum ExcludeSense {
@@ -253,6 +258,11 @@ class Location {
 		return mpExcluded->IsSameAs(*(rOther.mpExcluded));
 	}
 	
+	bool IsExcluded(const wxString& rLocalFileName, bool mIsDirectory, 
+		MyExcludeEntry** ppExcludedBy, MyExcludeEntry** ppIncludedBy);
+
+	ExcludeList* GetBoxExcludeList(bool listDirs);
+
 	private:
 	wxString mName;
 	wxString mPath;
