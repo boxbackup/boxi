@@ -49,6 +49,8 @@
 #ifndef BACKUPDAEMON__H
 #define BACKUPDAEMON__H
 
+#include <syslog.h>
+
 #include <vector>
 #include <string>
 #include <memory>
@@ -182,23 +184,62 @@ private:
 	
 	bool StopRun() { return this->Daemon::StopRun(); }
 
+	/* ProgressNotifier implementation */
 	virtual void NotifyScanDirectory(
 		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath) const { }
+		const std::string& rLocalPath) { }
 	virtual void NotifyDirStatFailed(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath, 
-		const std::string& rErrorMsg) const
+		const std::string& rErrorMsg)
 	{
 		TRACE2("Stat failed for '%s' (directory): %s\n", 
 			rLocalPath.c_str(), rErrorMsg.c_str());
 	}
-	
-	/*
-	virtual void NotifySendDirAttribs(BackupClientDirectoryRecord& rDirRecord) = 0;
-	virtual void NotifySendFile(BackupClientDirectoryRecord& rDirRecord, 
-		std::string& rFilename) = 0;
-	*/
+	virtual void NotifyFileStatFailed(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const std::string& rErrorMsg)
+	{
+		TRACE1("Stat failed for '%s' (contents)\n", rLocalPath.c_str());
+	}
+	virtual void NotifyFileReadFailed(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const std::string& rErrorMsg)
+	{
+		::syslog(LOG_ERR, "Backup object failed, error when reading %s", 
+			rLocalPath.c_str());
+	}
+	virtual void NotifyFileModifiedInFuture(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath)
+	{
+		::syslog(LOG_ERR, "Some files have modification times "
+			"excessively in the future. Check clock syncronisation.\n");
+		::syslog(LOG_ERR, "Example file (only one shown) : %s\n", 
+			rLocalPath.c_str());
+	}
+	virtual void NotifyFileSkippedServerFull(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) { }
+	virtual void NotifyFileUploadException(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const BoxException& rException)
+	{
+		::syslog(LOG_ERR, "Error code when uploading was (%d/%d), %s", 
+			rException.GetType(), rException.GetSubType(), rException.what());
+	}
+	virtual void NotifyFileUploading(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) { }
+	virtual void NotifyFileUploadingPatch(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) { }
+	virtual void NotifyMoreFilesCounted(
+		const BackupClientDirectoryRecord* pDirRecord,
+		size_t numAdditionalFiles, int64_t numAdditionalBytes) { }
 };
 
 #endif // BACKUPDAEMON__H

@@ -207,6 +207,7 @@ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::Syn
 	std::vector<std::string> dirs;
 	std::vector<std::string> files;
 	bool downloadDirectoryRecordBecauseOfFutureFiles = false;
+	
 	// BLOCK
 	{		
 		// read the contents...
@@ -251,7 +252,8 @@ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::Syn
 				filename = rLocalPath + DIRECTORY_SEPARATOR + en->d_name;
 				if(::lstat(filename.c_str(), &st) != 0)
 				{
-					TRACE1("Stat failed for '%s' (contents)\n", filename.c_str());
+					rParams.GetProgressNotifier().NotifyFileStatFailed(this, 
+						filename, strerror(errno));
 					THROW_EXCEPTION(CommonException, OSFileError)
 				}
 
@@ -306,8 +308,8 @@ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::Syn
 					// Log that this has happened
 					if(!rParams.mHaveLoggedWarningAboutFutureFileTimes)
 					{
-						::syslog(LOG_ERR, "Some files have modification times excessively in the future. Check clock syncronisation.\n");
-						::syslog(LOG_ERR, "Example file (only one shown) : %s\n", filename.c_str());
+						rParams.GetProgressNotifier().NotifyFileModifiedInFuture(
+							this, filename);
 						rParams.mHaveLoggedWarningAboutFutureFileTimes = true;
 					}
 				}
@@ -560,6 +562,8 @@ bool BackupClientDirectoryRecord::UpdateItems(BackupClientDirectoryRecord::SyncP
 			struct stat st;
 			if(::lstat(filename.c_str(), &st) != 0)
 			{
+				rParams.GetProgressNotifier().NotifyFileStatFailed(this, 
+					filename, strerror(errno));
 				THROW_EXCEPTION(CommonException, OSFileError)
 			}
 			
@@ -731,6 +735,8 @@ bool BackupClientDirectoryRecord::UpdateItems(BackupClientDirectoryRecord::SyncP
 				{
 					// Connection errors should just be passed on to the main handler, retries
 					// would probably just cause more problems.
+					rParams.GetProgressNotifier().NotifyFileUploadException(this,
+						filename, e);
 					throw;
 				}
 				catch(BoxException &e)
@@ -740,7 +746,8 @@ bool BackupClientDirectoryRecord::UpdateItems(BackupClientDirectoryRecord::SyncP
 					// Log it.
 					SetErrorWhenReadingFilesystemObject(rParams, filename.c_str());
 					// Log error.
-					::syslog(LOG_ERR, "Error code when uploading was (%d/%d), %s", e.GetType(), e.GetSubType(), e.what());
+					rParams.GetProgressNotifier().NotifyFileUploadException(this,
+						filename, e);
 				}
 
 				// Update structures if the file was uploaded successfully.
@@ -752,6 +759,11 @@ bool BackupClientDirectoryRecord::UpdateItems(BackupClientDirectoryRecord::SyncP
 						mpPendingEntries->erase(*f);
 					}
 				}
+			}
+			else
+			{
+				rParams.GetProgressNotifier().NotifyFileSkippedServerFull(this,
+					filename);
 			}
 		}
 		else if(en != 0 && en->GetAttributesHash() != attributesHash)
@@ -1103,6 +1115,8 @@ void BackupClientDirectoryRecord::RemoveDirectoryInPlaceOfFile(SyncParams &rPara
 int64_t BackupClientDirectoryRecord::UploadFile(BackupClientDirectoryRecord::SyncParams &rParams, const std::string &rFilename, const BackupStoreFilename &rStoreFilename,
 			int64_t FileSize, box_time_t ModificationTime, box_time_t AttributesHash, bool NoPreviousVersionOnServer)
 {
+	rParams.GetProgressNotifier().NotifyFileUploading(this, rFilename);
+	
 	// Get the connection
 	BackupProtocolClient &connection(rParams.mrContext.GetConnection());
 
@@ -1123,7 +1137,11 @@ int64_t BackupClientDirectoryRecord::UploadFile(BackupClientDirectoryRecord::Syn
 			
 			if(diffFromID != 0)
 			{
-				// Found an old version -- get the index
+				// Found an old version
+				rParams.GetProgressNotifier().NotifyFileUploadingPatch(this, 
+					rFilename);
+
+				// Get the index
 				std::auto_ptr<IOStream> blockIndexStream(connection.ReceiveStream());
 			
 				// Diff the file
@@ -1196,7 +1214,8 @@ void BackupClientDirectoryRecord::SetErrorWhenReadingFilesystemObject(BackupClie
 	::memset(mStateChecksum, 0, sizeof(mStateChecksum));
 
 	// Log the error
-	::syslog(LOG_ERR, "Backup object failed, error when reading %s", Filename);
+	rParams.GetProgressNotifier().NotifyFileReadFailed(this, 
+		Filename, strerror(errno));
 
 	// Mark that an error occured in the parameters object
 	rParams.mReadErrorsOnFilesystemObjects = true;

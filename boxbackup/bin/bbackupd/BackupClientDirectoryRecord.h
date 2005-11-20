@@ -110,16 +110,35 @@ class ProgressNotifier
 	virtual ~ProgressNotifier() { }
 	virtual void NotifyScanDirectory(
 		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath) const = 0;
+		const std::string& rLocalPath) = 0;
 	virtual void NotifyDirStatFailed(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
-		const std::string& rErrorMsg) const = 0;
-	/*
-	virtual void NotifySendDirAttribs(BackupClientDirectoryRecord& rDirRecord) = 0;
-	virtual void NotifySendFile(BackupClientDirectoryRecord& rDirRecord, 
-		std::string& rFilename) = 0;
-	*/
+		const std::string& rErrorMsg) = 0;
+	virtual void NotifyFileStatFailed(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const std::string& rErrorMsg) = 0;
+	virtual void NotifyFileReadFailed(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const std::string& rErrorMsg) = 0;
+	virtual void NotifyFileModifiedInFuture(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) = 0;
+	virtual void NotifyFileSkippedServerFull(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) = 0;
+	virtual void NotifyFileUploadException(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const BoxException& rException) = 0;
+	virtual void NotifyFileUploading(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) = 0;
+	virtual void NotifyFileUploadingPatch(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) = 0;
 };
 
 // --------------------------------------------------------------------------
@@ -191,7 +210,7 @@ public:
 		{ 
 			mrSysadminNotifier.NotifySysadmin(Event); 
 		}
-		const ProgressNotifier& GetProgressNotifier() const 
+		ProgressNotifier& GetProgressNotifier() const 
 		{ 
 			return mrProgressNotifier;
 		}
