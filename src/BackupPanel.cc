@@ -48,6 +48,7 @@ END_EVENT_TABLE()
 BackupPanel::BackupPanel(
 	ClientConfig *pConfig,
 	BackupProgressPanel& rProgressPanel,
+	wxNotebook* pTopNotebook,
 	wxWindow* parent, 
 	wxWindowID id,
 	const wxPoint& pos, 
@@ -56,7 +57,8 @@ BackupPanel::BackupPanel(
 	const wxString& name)
 	: wxPanel(parent, id, pos, size, style, name),
 	  mpConfig(pConfig),
-	  mrProgressPanel(rProgressPanel)
+	  mrProgressPanel(rProgressPanel),
+	  mpTopNotebook(pTopNotebook)
 {
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -144,5 +146,15 @@ void BackupPanel::NotifyChange()
 
 void BackupPanel::OnClickStartButton(wxCommandEvent& rEvent)
 {
+	for (size_t index = 0; index < mpTopNotebook->GetPageCount(); index++)
+	{
+		wxWindow* pPage = mpTopNotebook->GetPage(index);
+		if (pPage == &mrProgressPanel)
+		{
+			mpTopNotebook->SetSelection(index);
+			break;
+		}
+	}
+	wxYield();
 	mrProgressPanel.StartBackup();
 }

@@ -44,6 +44,7 @@ class BackupPanel
 	BackupPanel(
 		ClientConfig *pConfig,
 		BackupProgressPanel& rProgressPanel,
+		wxNotebook* pTopNotebook,
 		wxWindow* parent, wxWindowID id = -1,
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
@@ -55,6 +56,7 @@ class BackupPanel
 	BackupProgressPanel& mrProgressPanel;
 	wxListBox*    mpSourceList;
 	wxStaticText* mpDestLabel;
+	wxNotebook*   mpTopNotebook;
 	
 	void NotifyChange();
 	void Update();
