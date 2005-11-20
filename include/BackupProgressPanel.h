@@ -95,8 +95,11 @@ class BackupProgressPanel
 	wxTextCtrl*       mpNumBytesDone;
 	wxTextCtrl*       mpNumBytesRemaining;
 	wxTextCtrl*       mpNumBytesTotal;
+	wxButton*         mpStopCloseButton;
+	wxGauge*          mpProgressGauge;
 	bool              mStorageLimitExceeded;
 	bool              mBackupRunning;
+	bool              mBackupStopRequested;
 	std::vector<LocationRecord *> mLocations;
 
 	// Unused entries in the root directory wait a while before being deleted
@@ -110,12 +113,30 @@ class BackupProgressPanel
 	size_t  mNumFilesCounted;
 	int64_t mNumBytesCounted;
 
+	size_t  mNumFilesUploaded;
+	int64_t mNumBytesUploaded;
+
+	size_t  mNumFilesSynchronised;
+	int64_t mNumBytesSynchronised;
+
 	/* LocationResolver interface */
 	virtual bool FindLocationPathName(const std::string &rLocationName, 
 		std::string &rPathOut) const;
 		
 	/* RunStatusProvider interface */
-	virtual bool StopRun() { return FALSE; }
+	virtual bool StopRun() { return mBackupStopRequested; }
+	
+	virtual void OnStopCloseClicked(wxCommandEvent& event) 
+	{ 
+		if (mBackupRunning)
+		{
+			mBackupStopRequested = TRUE;
+		}
+		else
+		{
+			Hide();
+		}
+	}
 	
 	/* SysadminNotifier interface */
 	virtual void NotifySysadmin(int Event) { }
@@ -228,6 +249,34 @@ class BackupProgressPanel
 		mpCurrentText->SetLabel(msg);
 		wxYield();
 	}
+	virtual void NotifyFileUploaded(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		int64_t FileSize) 
+	{
+		mNumFilesUploaded++;
+		mNumBytesUploaded += FileSize;
+	}
+	virtual void NotifyFileSynchronised(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		int64_t FileSize) 
+	{
+		mNumFilesSynchronised++;
+		mNumBytesSynchronised += FileSize;
+
+		wxString str;
+		str.Printf(wxT("%d"), mNumFilesSynchronised);
+		mpNumFilesDone->SetValue(str);
+		mpNumBytesDone->SetValue(FormatNumBytes(mNumBytesSynchronised));
+
+		str.Printf(wxT("%d"), mNumFilesCounted - mNumFilesSynchronised);
+		mpNumFilesRemaining->SetValue(str);
+		mpNumBytesRemaining->SetValue(
+			FormatNumBytes(mNumBytesCounted - mNumBytesSynchronised));
+		
+		mpProgressGauge->SetValue(mNumFilesSynchronised);
+	}
 	
 	void BackupProgressPanel::CountDirectory(BackupClientContext& rContext,
 		const std::string &rLocalPath);
@@ -239,16 +288,9 @@ class BackupProgressPanel
 		mpCurrentText->SetLabel(msg);
 		wxYield();
 	}
-	void NotifyMoreFilesCounted(size_t numAdditionalFiles, 
-		int64_t numAdditionalBytes)
+	
+	wxString FormatNumBytes(int64_t bytes)
 	{
-		mNumFilesCounted += numAdditionalFiles;
-		mNumBytesCounted += numAdditionalBytes;
-		wxString str;
-		str.Printf(wxT("%d"), mNumFilesCounted);
-		mpNumFilesTotal->SetValue(str);
-		
-		int64_t bytes = mNumBytesCounted;
 		wxString units = wxT("B");
 		
 		if (bytes > 1024)
@@ -268,9 +310,22 @@ class BackupProgressPanel
 			bytes >>= 10;
 			units = wxT("GB");
 		}
-		
+
+		wxString str;		
 		str.Printf(wxT("%lld %s"), bytes, units.c_str());
-		mpNumBytesTotal->SetValue(str);
+		return str;
+	}
+	
+	void NotifyMoreFilesCounted(size_t numAdditionalFiles, 
+		int64_t numAdditionalBytes)
+	{
+		mNumFilesCounted += numAdditionalFiles;
+		mNumBytesCounted += numAdditionalBytes;
+
+		wxString str;
+		str.Printf(wxT("%d"), mNumFilesCounted);
+		mpNumFilesTotal->SetValue(str);
+		mpNumBytesTotal->SetValue(FormatNumBytes(mNumBytesCounted));
 	}
 
 	void ReportBackupFatalError(wxString msg)

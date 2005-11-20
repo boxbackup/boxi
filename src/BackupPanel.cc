@@ -146,6 +146,7 @@ void BackupPanel::NotifyChange()
 
 void BackupPanel::OnClickStartButton(wxCommandEvent& rEvent)
 {
+	mrProgressPanel.Show();
 	for (size_t index = 0; index < mpTopNotebook->GetPageCount(); index++)
 	{
 		wxWindow* pPage = mpTopNotebook->GetPage(index);

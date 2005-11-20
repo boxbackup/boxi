@@ -46,6 +46,7 @@
 #include "FileModificationTime.h"
 #include "MemBlockStream.h"
 #include "BackupStoreConstants.h"
+#include "BackupStoreException.h"
 #include "Utils.h"
 #undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #undef NDEBUG
@@ -58,13 +59,7 @@
 //DEFINE_EVENT_TYPE(myEVT_CLIENT_NOTIFY)
 
 BEGIN_EVENT_TABLE(BackupProgressPanel, wxPanel)
-//EVT_BUTTON(ID_Daemon_Start,   BackupProgressPanel::OnClientStartClick)
-//EVT_BUTTON(ID_Daemon_Stop,    BackupProgressPanel::OnClientStopClick)
-//EVT_BUTTON(ID_Daemon_Restart, BackupProgressPanel::OnClientRestartClick)
-//EVT_BUTTON(ID_Daemon_Kill,    BackupProgressPanel::OnClientKillClick)
-//EVT_BUTTON(ID_Daemon_Sync,    BackupProgressPanel::OnClientSyncClick)
-//EVT_BUTTON(ID_Daemon_Reload,  BackupProgressPanel::OnClientReloadClick)
-//EVT_COMMAND(wxID_ANY, myEVT_CLIENT_NOTIFY, BackupProgressPanel::OnClientNotify)
+EVT_BUTTON(wxID_CANCEL, BackupProgressPanel::OnStopCloseClicked)
 END_EVENT_TABLE()
 
 BackupProgressPanel::BackupProgressPanel(
@@ -85,36 +80,37 @@ BackupProgressPanel::BackupProgressPanel(
 
 	wxStaticBoxSizer* pSummaryBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Summary"));
-	pMainSizer->Add(pSummaryBox, 0, wxGROW | wxALL, 8);
+	pMainSizer->Add(pSummaryBox, 0, wxGROW | wxALL, 4);
 	
-	wxSizer* pSummarySizer = new wxGridSizer(1, 2, 0, 8);
-	pSummaryBox->Add(pSummarySizer, 0, wxGROW | wxALL, 8);
+	wxSizer* pSummarySizer = new wxGridSizer(1, 2, 0, 4);
+	pSummaryBox->Add(pSummarySizer, 0, wxGROW | wxALL, 4);
 	
 	mpSummaryText = new wxStaticText(this, wxID_ANY, 
 		wxT("Backup not started yet"));
 	pSummarySizer->Add(mpSummaryText, 0, wxALIGN_CENTER_VERTICAL, 0);
 	
-	wxGauge* pProgressGauge = new wxGauge(this, wxID_ANY, 100);
-	pSummarySizer->Add(pProgressGauge, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
+	mpProgressGauge = new wxGauge(this, wxID_ANY, 100);
+	pSummarySizer->Add(mpProgressGauge, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
+	mpProgressGauge->Hide();
 	
 	wxStaticBoxSizer* pCurrentBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Current Action"));
-	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 4);
 
 	mpCurrentText = new wxStaticText(this, wxID_ANY, 
 		wxT("Idle (nothing to do)"));
-	pCurrentBox->Add(mpCurrentText, 0, wxGROW | wxALL, 8);
+	pCurrentBox->Add(mpCurrentText, 0, wxGROW | wxALL, 4);
 	
 	wxStaticBoxSizer* pErrorsBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Errors"));
-	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 4);
 	
 	mpErrorList = new wxListBox(this, wxID_ANY);
-	pErrorsBox->Add(mpErrorList, 1, wxGROW | wxALL, 8);
+	pErrorsBox->Add(mpErrorList, 1, wxGROW | wxALL, 4);
 
 	wxStaticBoxSizer* pStatsBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Statistics"));
-	pMainSizer->Add(pStatsBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	pMainSizer->Add(pStatsBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 4);
 	
 	wxFlexGridSizer* pStatsGrid = new wxFlexGridSizer(4, 4, 4);
 	pStatsBox->Add(pStatsGrid, 1, wxGROW | wxALL, 4);
@@ -157,7 +153,19 @@ BackupProgressPanel::BackupProgressPanel(
 		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 	pStatsGrid->Add(mpNumBytesTotal, 1, wxGROW, 0);
 
-	SetSizer( pMainSizer );
+	wxSizer* pButtonSizer = new wxBoxSizer(wxHORIZONTAL);
+	pMainSizer->Add(pButtonSizer, 0, 
+		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 4);
+
+	mpStopCloseButton = new wxButton(this, wxID_CANCEL, wxT("Close"));
+	pButtonSizer->Add(mpStopCloseButton, 0, wxGROW, 0);
+
+	mBackupRunning = FALSE;
+	mBackupStopRequested = FALSE;
+	mNumFilesCounted = 0;
+	mNumBytesCounted = 0;
+
+	SetSizer(pMainSizer);
 }
 
 void BackupProgressPanel::StartBackup()
@@ -300,83 +308,122 @@ void BackupProgressPanel::StartBackup()
 	
 	mNumFilesCounted = 0;
 	mNumBytesCounted = 0;
+	mNumFilesSynchronised = 0;
+	mNumBytesSynchronised = 0;
 	
 	mpSummaryText->SetLabel(wxT("Starting Backup"));
+	mBackupRunning = TRUE;
+	mBackupStopRequested = FALSE;
+	mpStopCloseButton->SetLabel(wxT("Stop Backup"));
+	mpNumFilesTotal->SetValue(wxT(""));
+	mpNumBytesTotal->SetValue(wxT(""));
+	mpNumFilesDone->SetValue(wxT(""));
+	mpNumBytesDone->SetValue(wxT(""));
+	mpNumFilesRemaining->SetValue(wxT(""));
+	mpNumBytesRemaining->SetValue(wxT(""));
+	Layout();
 	wxYield();
 	
-	try {
+	try 
+	{
 		SetupLocations(clientContext);
-	} catch (ConnectionException& e) {
+	
+		// Get some ID maps going
+		SetupIDMapsForSync();
+	
+		mpSummaryText->SetLabel(wxT("Deleting unused root entries on server"));
+		wxYield();
+		
+		DeleteUnusedRootDirEntries(clientContext);
+								
+		mpSummaryText->SetLabel(wxT("Counting files to back up"));
+		wxYield();
+		
+		typedef const std::vector<LocationRecord *> tLocationRecords;
+	
+		// Go through the records, counting files and bytes
+		for (tLocationRecords::const_iterator i = mLocations.begin();
+			i != mLocations.end(); i++)
+		{
+			LocationRecord* pLocRecord = *i;
+	
+			// Set exclude lists (context doesn't take ownership)
+			clientContext.SetExcludeLists(
+				pLocRecord->mpExcludeFiles, 
+				pLocRecord->mpExcludeDirs);
+	
+			CountDirectory(clientContext, pLocRecord->mPath);
+		}
+		
+		mpProgressGauge->SetRange(mNumFilesCounted);
+		mpProgressGauge->Show();
+		
+		// Go through the records, syncing them
+		for (tLocationRecords::const_iterator i = mLocations.begin();
+			i != mLocations.end(); i++)
+		{
+			LocationRecord* pLocRecord = *i;
+			int IDMapIndex = pLocRecord->mIDMapIndex;
+	
+			wxString msg;
+			msg.Printf(wxT("Backing up %s"), 
+				wxString(pLocRecord->mPath.c_str(), wxConvLibc).c_str());
+			mpSummaryText->SetLabel(msg);
+			wxYield();
+			
+			// Set current and new ID map pointers in the context
+			clientContext.SetIDMaps(
+				mCurrentIDMaps[IDMapIndex], 
+				mNewIDMaps    [IDMapIndex]);
+		
+			// Set exclude lists (context doesn't take ownership)
+			clientContext.SetExcludeLists(
+				pLocRecord->mpExcludeFiles, 
+				pLocRecord->mpExcludeDirs);
+	
+			// Sync the directory
+			pLocRecord->mpDirectoryRecord->SyncDirectory(params, 
+				BackupProtocolClientListDirectory::RootDirectory, 
+				pLocRecord->mPath);
+	
+			// Unset exclude lists (just in case)
+			clientContext.SetExcludeLists(0, 0);
+		}
+	
+		mpSummaryText->SetLabel(wxT("Backup Finished"));
+		mpErrorList  ->Append  (wxT("Backup Finished"));
+		mpProgressGauge->Hide();
+	}
+	catch (ConnectionException& e) 
+	{
 		mpSummaryText->SetLabel(wxT("Backup Failed"));
 		wxString msg;
 		msg.Printf(wxT("Failed to connect to server: %s"),
 			wxString(e.what(), wxConvLibc).c_str());
 		ReportBackupFatalError(msg);
-		return;
 	}
-	
-	// Get some ID maps going
-	SetupIDMapsForSync();
-
-	mpSummaryText->SetLabel(wxT("Deleting unused root entries on server"));
-	wxYield();
-	
-	DeleteUnusedRootDirEntries(clientContext);
-							
-	mpSummaryText->SetLabel(wxT("Counting files to back up"));
-	wxYield();
-	
-	typedef const std::vector<LocationRecord *> tLocationRecords;
-
-	// Go through the records, counting files and bytes
-	for (tLocationRecords::const_iterator i = mLocations.begin();
-		i != mLocations.end(); i++)
+	catch (BackupStoreException& be)
 	{
-		LocationRecord* pLocRecord = *i;
-
-		// Set exclude lists (context doesn't take ownership)
-		clientContext.SetExcludeLists(
-			pLocRecord->mpExcludeFiles, 
-			pLocRecord->mpExcludeDirs);
-
-		CountDirectory(clientContext, pLocRecord->mPath);
+		if (be.GetSubType() == BackupStoreException::SignalReceived)
+		{
+			mpSummaryText->SetLabel(wxT("Backup Interrupted"));
+			ReportBackupFatalError(wxT("Backup interrupted by user"));
+		}
+		else		
+		{
+			throw;
+		}
 	}
-	
-	// Go through the records, syncing them
-	for (tLocationRecords::const_iterator i = mLocations.begin();
-		i != mLocations.end(); i++)
+	catch (...)
 	{
-		LocationRecord* pLocRecord = *i;
-		int IDMapIndex = pLocRecord->mIDMapIndex;
+		mpSummaryText->SetLabel(wxT("Backup Failed"));
+		ReportBackupFatalError(wxT("Unknown error"));
+	}	
 
-		wxString msg;
-		msg.Printf(wxT("Backing up %s"), 
-			wxString(pLocRecord->mPath.c_str(), wxConvLibc).c_str());
-		mpSummaryText->SetLabel(msg);
-		wxYield();
-		
-		// Set current and new ID map pointers in the context
-		clientContext.SetIDMaps(
-			mCurrentIDMaps[IDMapIndex], 
-			mNewIDMaps    [IDMapIndex]);
-	
-		// Set exclude lists (context doesn't take ownership)
-		clientContext.SetExcludeLists(
-			pLocRecord->mpExcludeFiles, 
-			pLocRecord->mpExcludeDirs);
-
-		// Sync the directory
-		pLocRecord->mpDirectoryRecord->SyncDirectory(params, 
-			BackupProtocolClientListDirectory::RootDirectory, 
-			pLocRecord->mPath);
-
-		// Unset exclude lists (just in case)
-		clientContext.SetExcludeLists(0, 0);
-	}
-
-	mpSummaryText->SetLabel(wxT("Backup Finished"));
-	mpErrorList->Append(wxT("Backup Finished"));
 	mpCurrentText->SetLabel(wxT("Idle (nothing to do)"));
+	mBackupRunning = FALSE;
+	mBackupStopRequested = FALSE;
+	mpStopCloseButton->SetLabel(wxT("Close"));
 }
 
 // --------------------------------------------------------------------------

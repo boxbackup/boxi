@@ -125,11 +125,12 @@ MainFrame::MainFrame(
 		mpConfig, mpServerConnection, 
 		theTopNotebook, ID_Backup_Progress_Panel);
 	theTopNotebook->AddPage(pBackupProgressPanel, wxT("Backup Progress"));
+	pBackupProgressPanel->Hide();
 	
 	BackupPanel *pBackupPanel = new BackupPanel(
 		mpConfig, *pBackupProgressPanel, theTopNotebook, 
 		theTopNotebook, ID_Backup_Panel);
-	theTopNotebook->AddPage(pBackupPanel, wxT("Backup"));
+	theTopNotebook->InsertPage(0, pBackupPanel, wxT("Backup"));
 	mpConfig->AddListener(pBackupPanel);
 
 	theClientPanel = new ClientInfoPanel(
