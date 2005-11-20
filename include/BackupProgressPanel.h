@@ -85,6 +85,8 @@ class BackupProgressPanel
 	ServerConnection* mpConnection;
 	TLSContext        mTlsContext;
 	wxListBox*        mpErrorList;
+	wxStaticText*     mpSummaryText;
+	wxStaticText*     mpCurrentText;
 	bool              mStorageLimitExceeded;
 	bool              mBackupRunning;
 	std::vector<LocationRecord *> mLocations;
@@ -103,7 +105,17 @@ class BackupProgressPanel
 	virtual void NotifySysadmin(int Event) { }
 	void SetupLocations(BackupClientContext &rClientContext);
 	void DeleteAllLocations();
-	
+	void SetupIDMapsForSync();
+	void DeleteIDMapVector(std::vector<BackupClientInodeToIDMap *> &rVector);
+	void DeleteAllIDMaps()
+	{
+		DeleteIDMapVector(mCurrentIDMaps);
+		DeleteIDMapVector(mNewIDMaps);
+	}
+	void FillIDMapVector(std::vector<BackupClientInodeToIDMap *> &rVector, bool NewMaps);
+	void MakeMapBaseName(unsigned int MountNumber, std::string &rNameOut) const;
+	void DeleteUnusedRootDirEntries(BackupClientContext &rContext);
+
 	DECLARE_EVENT_TABLE()
 };
 

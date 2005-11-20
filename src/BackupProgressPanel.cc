@@ -42,9 +42,11 @@
 #include "BackupClientContext.h"
 #include "BackupClientDirectoryRecord.h"
 #include "BackupClientCryptoKeys.h"
+#include "BackupClientInodeToIDMap.h"
 #include "FileModificationTime.h"
 #include "MemBlockStream.h"
 #include "BackupStoreConstants.h"
+#include "Utils.h"
 #undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #undef NDEBUG
 
@@ -88,31 +90,31 @@ BackupProgressPanel::BackupProgressPanel(
 	wxSizer* pSummarySizer = new wxGridSizer(1, 2, 0, 8);
 	pSummaryBox->Add(pSummarySizer, 0, wxGROW | wxALL, 8);
 	
-	wxStaticText* pSummaryText = new wxStaticText(this, wxID_ANY, 
+	mpSummaryText = new wxStaticText(this, wxID_ANY, 
 		wxT("Backup not started yet"));
-	pSummarySizer->Add(pSummaryText, 0, wxALIGN_CENTER_VERTICAL, 0);
+	pSummarySizer->Add(mpSummaryText, 0, wxALIGN_CENTER_VERTICAL, 0);
 	
 	wxGauge* pProgressGauge = new wxGauge(this, wxID_ANY, 100);
 	pSummarySizer->Add(pProgressGauge, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
 	
 	wxStaticBoxSizer* pCurrentBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Current Action"));
-	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxALL, 8);
+	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	wxStaticText* pCurrentText = new wxStaticText(this, wxID_ANY, 
+	mpCurrentText = new wxStaticText(this, wxID_ANY, 
 		wxT("Backing up file /foo/bar"));
-	pCurrentBox->Add(pCurrentText, 0, wxGROW | wxALL, 8);
+	pCurrentBox->Add(mpCurrentText, 0, wxGROW | wxALL, 8);
 	
 	wxStaticBoxSizer* pErrorsBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Errors"));
-	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxALL, 8);
+	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	mpErrorList = new wxListBox(this, wxID_ANY);
 	pErrorsBox->Add(mpErrorList, 1, wxGROW | wxALL, 8);
 
 	wxStaticBoxSizer* pStatsBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Statistics"));
-	pMainSizer->Add(pStatsBox, 0, wxGROW | wxALL, 8);
+	pMainSizer->Add(pStatsBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	SetSizer( pMainSizer );
 }
@@ -223,6 +225,64 @@ void BackupProgressPanel::StartBackup()
 	// Set store marker - haven't contacted the store yet
 	int64_t clientStoreMarker = BackupClientContext::ClientStoreMarker_NotKnown;
 	clientContext.SetClientStoreMarker(clientStoreMarker);
+	
+	mpSummaryText->SetLabel(wxT("Starting Backup"));
+	wxYield();
+	
+	try {
+		SetupLocations(clientContext);
+	} catch (ConnectionException& e) {
+		mpSummaryText->SetLabel(wxT("Backup Failed"));
+		wxString msg;
+		msg.Printf(wxT("Failed to connect to server: %s"),
+			wxString(e.what(), wxConvLibc).c_str());
+		wxMessageBox(msg, wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+	
+	// Get some ID maps going
+	SetupIDMapsForSync();
+
+	mpSummaryText->SetLabel(wxT("Deleting unused root entries on server"));
+	wxYield();
+	DeleteUnusedRootDirEntries(clientContext);
+							
+	typedef const std::vector<LocationRecord *> tLocationRecords;
+	
+	// Go through the records, syncing them
+	for (tLocationRecords::const_iterator i = mLocations.begin();
+		i != mLocations.end(); i++)
+	{
+		LocationRecord* pLocRecord = *i;
+		int IDMapIndex = pLocRecord->mIDMapIndex;
+
+		wxString msg;
+		msg.Printf(wxT("Backing up %s"), 
+			wxString(pLocRecord->mPath.c_str(), wxConvLibc).c_str());
+		mpSummaryText->SetLabel(msg);
+		wxYield();
+		
+		// Set current and new ID map pointers in the context
+		clientContext.SetIDMaps(
+			mCurrentIDMaps[IDMapIndex], 
+			mNewIDMaps    [IDMapIndex]);
+	
+		// Set exclude lists (context doesn't take ownership)
+		clientContext.SetExcludeLists(
+			pLocRecord->mpExcludeFiles, 
+			pLocRecord->mpExcludeDirs);
+
+		// Sync the directory
+		pLocRecord->mpDirectoryRecord->SyncDirectory(params, 
+			BackupProtocolClientListDirectory::RootDirectory, 
+			pLocRecord->mPath);
+
+		// Unset exclude lists (just in case)
+		clientContext.SetExcludeLists(0, 0);
+	}
+
+	mpSummaryText->SetLabel(wxT("Backup Finished"));
+	mpErrorList->Append(wxT("Backup Finished"));
 }
 
 #ifdef PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
@@ -257,11 +317,13 @@ typedef struct
 // --------------------------------------------------------------------------
 void BackupProgressPanel::SetupLocations(BackupClientContext &rClientContext)
 {
+	/*
 	if(!mLocations.empty())
 	{
 		// Looks correctly set up
 		return;
 	}
+	*/
 
 	// Make sure that if a directory is reinstated, then it doesn't get deleted	
 	mDeleteUnusedRootDirEntriesAfter = 0;
@@ -277,7 +339,8 @@ void BackupProgressPanel::SetupLocations(BackupClientContext &rClientContext)
 	std::auto_ptr<BackupProtocolClientSuccess> dirreply(connection.QueryListDirectory(
 			BackupProtocolClientListDirectory::RootDirectory,
 			BackupProtocolClientListDirectory::Flags_Dir,	// only directories
-			BackupProtocolClientListDirectory::Flags_Deleted | BackupProtocolClientListDirectory::Flags_OldVersion, // exclude old/deleted stuff
+			BackupProtocolClientListDirectory::Flags_Deleted 
+			| BackupProtocolClientListDirectory::Flags_OldVersion, // exclude old/deleted stuff
 			false /* no attributes */));
 
 	// Retrieve the directory from the stream following
@@ -366,8 +429,10 @@ TRACE0("new location\n");
 				// Warn in logs if the directory isn't absolute
 				if(pLocRecord->mPath[0] != '/')
 				{
-					::syslog(LOG_ERR, "Location path '%s' isn't absolute", 
-						pLocRecord->mPath.c_str());
+					wxString msg;
+					msg.Printf(wxT("Location path '%s' isn't absolute"), 
+						wxString(pLocRecord->mPath.c_str(), wxConvLibc).c_str());
+					mpErrorList->Append(msg);
 				}
 				// Go through the mount points found, and find a suitable one
 				std::string mountName("/");
@@ -475,13 +540,15 @@ TRACE0("new location\n");
 	}
 	
 	// Any entries in the root directory which need deleting?
-	if(dir.GetNumberOfEntries() > 0)
+	if (dir.GetNumberOfEntries() > 0)
 	{
-		::syslog(LOG_INFO, "%d redundant locations in root directory found, "
-			"will delete from store after %d seconds.",
+		wxString msg;
+		msg.Printf(wxT("%d redundant locations in root directory found, "
+			"will delete from store after %d seconds."),
 			dir.GetNumberOfEntries(), 
 			BACKUP_DELETE_UNUSED_ROOT_ENTRIES_AFTER);
-
+		mpErrorList->Append(msg);
+		
 		// Store directories in list of things to delete
 		mUnusedRootDirEntries.clear();
 		BackupStoreDirectory::Iterator iter(dir);
@@ -491,14 +558,17 @@ TRACE0("new location\n");
 			// Add name to list
 			BackupStoreFilenameClear clear(en->GetName());
 			const std::string &name(clear.GetClearFilename());
-			mUnusedRootDirEntries.push_back(std::pair<int64_t,std::string>(en->GetObjectID(), name));
+			mUnusedRootDirEntries.push_back(
+				std::pair<int64_t,std::string>(en->GetObjectID(), name));
 			// Log this
-			::syslog(LOG_INFO, "Unused location in root: %s", name.c_str());
+			msg.Printf(wxT("Unused location in root: %s"), 
+				wxString(name.c_str(), wxConvLibc).c_str());
 		}
 		ASSERT(mUnusedRootDirEntries.size() > 0);
 		// Time to delete them
 		mDeleteUnusedRootDirEntriesAfter =
-			GetCurrentBoxTime() + SecondsToBoxTime((uint32_t)BACKUP_DELETE_UNUSED_ROOT_ENTRIES_AFTER);
+			GetCurrentBoxTime() + 
+			SecondsToBoxTime((uint32_t)BACKUP_DELETE_UNUSED_ROOT_ENTRIES_AFTER);
 	}
 }
 
@@ -524,6 +594,189 @@ void BackupProgressPanel::DeleteAllLocations()
 	
 	// And delete everything from the assoicated mount vector
 	mIDMapMounts.clear();
+}
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    BackupDaemon::SetupIDMapsForSync()
+//		Purpose: Sets up ID maps for the sync process -- make sure they're all there
+//		Created: 11/11/03
+//
+// --------------------------------------------------------------------------
+void BackupProgressPanel::SetupIDMapsForSync()
+{
+	// Need to do different things depending on whether it's an in memory implementation,
+	// or whether it's all stored on disc.
+	
+#ifdef BACKIPCLIENTINODETOIDMAP_IN_MEMORY_IMPLEMENTATION
+
+	// Make sure we have some blank, empty ID maps
+	DeleteIDMapVector(mNewIDMaps);
+	FillIDMapVector(mNewIDMaps, true /* new maps */);
+
+	// Then make sure that the current maps have objects, even if they are empty
+	// (for the very first run)
+	if(mCurrentIDMaps.empty())
+	{
+		FillIDMapVector(mCurrentIDMaps, false /* current maps */);
+	}
+
+#else
+
+	// Make sure we have some blank, empty ID maps
+	DeleteIDMapVector(mNewIDMaps);
+	FillIDMapVector(mNewIDMaps, true /* new maps */);
+	DeleteIDMapVector(mCurrentIDMaps);
+	FillIDMapVector(mCurrentIDMaps, false /* new maps */);
+
+#endif
+}
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    BackupDaemon::FillIDMapVector(std::vector<BackupClientInodeToIDMap *> &)
+//		Purpose: Fills the vector with the right number of empty ID maps
+//		Created: 11/11/03
+//
+// --------------------------------------------------------------------------
+void BackupProgressPanel::FillIDMapVector(std::vector<BackupClientInodeToIDMap *> &rVector, bool NewMaps)
+{
+	ASSERT(rVector.size() == 0);
+	rVector.reserve(mIDMapMounts.size());
+	
+	for(unsigned int l = 0; l < mIDMapMounts.size(); ++l)
+	{
+		// Create the object
+		BackupClientInodeToIDMap *pmap = new BackupClientInodeToIDMap();
+		try
+		{
+			// Get the base filename of this map
+			std::string filename;
+			MakeMapBaseName(l, filename);
+			
+			// If it's a new one, add a suffix
+			if(NewMaps)
+			{
+				filename += ".n";
+			}
+
+			// If it's not a new map, it may not exist in which case an empty map should be created
+			if(!NewMaps && !FileExists(filename.c_str()))
+			{
+				pmap->OpenEmpty();
+			}
+			else
+			{
+				// Open the map
+				pmap->Open(filename.c_str(), !NewMaps /* read only */, NewMaps /* create new */);
+			}
+			
+			// Store on vector
+			rVector.push_back(pmap);
+		}
+		catch(...)
+		{
+			delete pmap;
+			throw;
+		}
+	}
+}
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    BackupDaemon::DeleteIDMapVector(std::vector<BackupClientInodeToIDMap *> &)
+//		Purpose: Deletes the contents of a vector of ID maps
+//		Created: 11/11/03
+//
+// --------------------------------------------------------------------------
+void BackupProgressPanel::DeleteIDMapVector(std::vector<BackupClientInodeToIDMap *> &rVector)
+{
+	while(!rVector.empty())
+	{
+		// Pop off list
+		BackupClientInodeToIDMap *toDel = rVector.back();
+		rVector.pop_back();
+		
+		// Close and delete
+		toDel->Close();
+		delete toDel;
+	}
+	ASSERT(rVector.size() == 0);
+}
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    MakeMapBaseName(unsigned int, std::string &)
+//		Purpose: Makes the base name for a inode map
+//		Created: 20/11/03
+//
+// --------------------------------------------------------------------------
+void BackupProgressPanel::MakeMapBaseName(unsigned int MountNumber, 
+	std::string &rNameOut) const
+{
+	std::string dir;
+	assert(mpConfig->DataDirectory.GetInto(dir));
+
+	// Make a leafname
+	std::string leaf(mIDMapMounts[MountNumber]);
+	for(unsigned int z = 0; z < leaf.size(); ++z)
+	{
+		if(leaf[z] == DIRECTORY_SEPARATOR_ASCHAR)
+		{
+			leaf[z] = '_';
+		}
+	}
+
+	// Build the final filename
+	rNameOut = dir + DIRECTORY_SEPARATOR "mnt" + leaf;
+}
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    BackupDaemon::DeleteUnusedRootDirEntries(BackupClientContext &)
+//		Purpose: Deletes any unused entries in the root directory, if they're scheduled to be deleted.
+//		Created: 13/5/04
+//
+// --------------------------------------------------------------------------
+void BackupProgressPanel::DeleteUnusedRootDirEntries(BackupClientContext &rContext)
+{
+	if (mUnusedRootDirEntries.empty() || mDeleteUnusedRootDirEntriesAfter == 0)
+	{
+		// Nothing to do.
+		return;
+	}
+	
+	// Check time
+	if (GetCurrentBoxTime() < mDeleteUnusedRootDirEntriesAfter)
+	{
+		// Too early to delete files
+		return;
+	}
+
+	// Entries to delete, and it's the right time to do so...
+	::syslog(LOG_INFO, "Deleting unused locations from store root...");
+	BackupProtocolClient &connection(rContext.GetConnection());
+	
+	typedef std::vector<std::pair<int64_t,std::string> > tUnusedRootDirEntries;
+	
+	for (tUnusedRootDirEntries::iterator i = mUnusedRootDirEntries.begin(); 
+		i != mUnusedRootDirEntries.end(); i++)
+	{
+		connection.QueryDeleteDirectory(i->first);
+		
+		// Log this
+		::syslog(LOG_INFO, "Deleted %s (ID %08llx) from store root", 
+			i->second.c_str(), i->first);
+	}
+
+	// Reset state
+	mDeleteUnusedRootDirEntriesAfter = 0;
+	mUnusedRootDirEntries.clear();
 }
 
 // --------------------------------------------------------------------------
