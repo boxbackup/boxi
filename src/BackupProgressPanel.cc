@@ -121,12 +121,14 @@ BackupProgressPanel::BackupProgressPanel(
 
 void BackupProgressPanel::StartBackup()
 {
+	mpErrorList->Clear();
+
 	wxString errorMsg;
 	if (!mpConnection->InitTlsContext(mTlsContext, errorMsg))
 	{
-		wxString msg2;
-		msg2.Printf(wxT("Error: cannot start backup: %s"), errorMsg.c_str());
-		wxMessageBox(msg2, wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		wxString msg;
+		msg.Printf(wxT("Error: cannot start backup: %s"), errorMsg.c_str());
+		ReportBackupFatalError(msg);
 		return;
 	}
 	
@@ -135,8 +137,8 @@ void BackupProgressPanel::StartBackup()
 
 	if (storeHost.length() == 0) 
 	{
-		wxMessageBox(wxT("You have not configured the Store Hostname!"), 
-			wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		ReportBackupFatalError(
+			wxT("You have not configured the Store Hostname!"));
 		return;
 	}
 
@@ -145,18 +147,18 @@ void BackupProgressPanel::StartBackup()
 
 	if (keysFile.length() == 0) 
 	{
-		wxString msg = wxT("Error: cannot start backup: "
-			"you have not configured the Keys File");
-		wxMessageBox(msg, wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		ReportBackupFatalError(
+			wxT("Error: cannot start backup: "
+				"you have not configured the Keys File"));
 		return;
 	}
 
 	int acctNo;
 	if (!mpConfig->AccountNumber.GetInto(acctNo))
 	{
-		wxString msg = wxT("Error: cannot start backup: "
-			"you have not configured the Account Number");
-		wxMessageBox(msg, wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		ReportBackupFatalError(
+			wxT("Error: cannot start backup: "
+				"you have not configured the Account Number"));
 		return;
 	}
 	
@@ -170,8 +172,8 @@ void BackupProgressPanel::StartBackup()
 	int minimumFileAgeSecs;
 	if (!mpConfig->MinimumFileAge.GetInto(minimumFileAgeSecs))
 	{
-		wxMessageBox(wxT("You have not configured the minimum file age"), 
-			wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		ReportBackupFatalError(
+			wxT("You have not configured the minimum file age"));
 		return;
 	}
 	box_time_t minimumFileAge = SecondsToBoxTime((uint32_t)minimumFileAgeSecs);
@@ -181,8 +183,8 @@ void BackupProgressPanel::StartBackup()
 	int maxUploadWaitSecs;
 	if (!mpConfig->MaxUploadWait.GetInto(maxUploadWaitSecs))
 	{
-		wxMessageBox(wxT("You have not configured the maximum upload wait"), 
-			wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		ReportBackupFatalError(
+			wxT("You have not configured the maximum upload wait"));
 		return;
 	}
 	box_time_t maxUploadWait = SecondsToBoxTime((uint32_t)maxUploadWaitSecs);
@@ -193,25 +195,23 @@ void BackupProgressPanel::StartBackup()
 		? (maxUploadWait - minimumFileAge) : (0);
 
 	// Set up the sync parameters
-	BackupClientDirectoryRecord::SyncParams params(*this, *this,
+	BackupClientDirectoryRecord::SyncParams params(*this, *this, *this,
 		clientContext);
 	params.mMaxUploadWait = maxUploadWait;
 	
 	if (!mpConfig->FileTrackingSizeThreshold.GetInto(
 		params.mFileTrackingSizeThreshold))
 	{
-		wxMessageBox(wxT("You have not configured the "
-			"file tracking size threshold"), 
-			wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		ReportBackupFatalError(
+			wxT("You have not configured the file tracking size threshold"));
 		return;
 	}
 
 	if (!mpConfig->DiffingUploadSizeThreshold.GetInto(
 		params.mDiffingUploadSizeThreshold))
 	{
-		wxMessageBox(wxT("You have not configured the "
-			"diffing upload size threshold"), 
-			wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		ReportBackupFatalError(
+			wxT("You have not configured the diffing upload size threshold"));
 		return;
 	}
 
@@ -236,7 +236,7 @@ void BackupProgressPanel::StartBackup()
 		wxString msg;
 		msg.Printf(wxT("Failed to connect to server: %s"),
 			wxString(e.what(), wxConvLibc).c_str());
-		wxMessageBox(msg, wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		ReportBackupFatalError(msg);
 		return;
 	}
 	
@@ -283,6 +283,7 @@ void BackupProgressPanel::StartBackup()
 
 	mpSummaryText->SetLabel(wxT("Backup Finished"));
 	mpErrorList->Append(wxT("Backup Finished"));
+	mpCurrentText->SetLabel(wxT("Idle (nothing to do)"));
 }
 
 #ifdef PLATFORM_USES_MTAB_FILE_FOR_MOUNTS

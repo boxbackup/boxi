@@ -47,7 +47,8 @@
 class ServerConnection;
 
 class BackupProgressPanel 
-: public wxPanel, LocationResolver, RunStatusProvider, SysadminNotifier
+: public wxPanel, LocationResolver, RunStatusProvider, SysadminNotifier,
+	ProgressNotifier
 {
 	public:
 	BackupProgressPanel(
@@ -98,11 +99,17 @@ class BackupProgressPanel
 	std::vector<std::string> mIDMapMounts;
 	std::vector<BackupClientInodeToIDMap *> mCurrentIDMaps;
 	std::vector<BackupClientInodeToIDMap *> mNewIDMaps;
-	
+
+	/* LocationResolver interface */
 	virtual bool FindLocationPathName(const std::string &rLocationName, 
 		std::string &rPathOut) const { return FALSE; }
+		
+	/* RunStatusProvider interface */
 	virtual bool StopRun() { return FALSE; }
+	
+	/* SysadminNotifier interface */
 	virtual void NotifySysadmin(int Event) { }
+	
 	void SetupLocations(BackupClientContext &rClientContext);
 	void DeleteAllLocations();
 	void SetupIDMapsForSync();
@@ -115,6 +122,34 @@ class BackupProgressPanel
 	void FillIDMapVector(std::vector<BackupClientInodeToIDMap *> &rVector, bool NewMaps);
 	void MakeMapBaseName(unsigned int MountNumber, std::string &rNameOut) const;
 	void DeleteUnusedRootDirEntries(BackupClientContext &rContext);
+
+	/* ProgressNotifier interface */
+	virtual void NotifyScanDirectory(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) const 
+	{
+		wxString msg;
+		msg.Printf(wxT("Scanning directory '%s'"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+		mpCurrentText->SetLabel(msg);
+		wxYield();
+	}
+	virtual void NotifyDirStatFailed(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const std::string& rErrorMsg) const
+	{
+		wxString msg;
+		msg.Printf(wxT("Failed to read directory '%s': %s"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+			wxString(rErrorMsg.c_str(),  wxConvLibc).c_str());
+	}
+	
+	void ReportBackupFatalError(wxString msg)
+	{
+		wxMessageBox(msg, wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		mpErrorList->Append(msg);
+	}
 
 	DECLARE_EVENT_TABLE()
 };
