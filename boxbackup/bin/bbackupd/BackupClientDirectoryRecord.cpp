@@ -145,7 +145,8 @@ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::Syn
 	const std::string &rLocalPath, bool ThisDirHasJustBeenCreated)
 {
 	// Check for connections and commands on the command socket
-	rParams.mpCommandSocket->Wait(0);
+	if (rParams.mpCommandSocket)
+		rParams.mpCommandSocket->Wait(0);
 	
 	// Signal received by daemon?
 	if(rParams.StopRun())
