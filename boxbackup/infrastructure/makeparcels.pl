@@ -188,7 +188,7 @@ for my $parcel (@parcels)
 	print MAKE "\n";
 	
 	print MAKE "install-$parcel:\n";
-	print MAKE "\t(cd $dir; ./install-$parcel $(DESTDIR))\n\n";
+	print MAKE "\t(cd $dir; ./install-$parcel \$(DESTDIR))\n\n";
 }
 
 print MAKE <<__E;
