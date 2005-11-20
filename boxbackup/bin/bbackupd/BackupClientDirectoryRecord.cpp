@@ -841,6 +841,9 @@ bool BackupClientDirectoryRecord::UpdateItems(BackupClientDirectoryRecord::SyncP
 				}
 			}
 		}
+		
+		rParams.GetProgressNotifier().NotifyFileSynchronised(this, filename, 
+			fileSize);
 	}
 
 	// Erase contents of files to save space when recursing
@@ -1193,6 +1196,8 @@ int64_t BackupClientDirectoryRecord::UploadFile(BackupClientDirectoryRecord::Syn
 		// Send the error on it's way
 		throw;
 	}
+
+	rParams.GetProgressNotifier().NotifyFileUploaded(this, rFilename, FileSize);
 
 	// Return the new object ID of this file
 	return objID;

@@ -237,9 +237,14 @@ private:
 	virtual void NotifyFileUploadingPatch(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath) { }
-	virtual void NotifyMoreFilesCounted(
+	virtual void NotifyFileUploaded(
 		const BackupClientDirectoryRecord* pDirRecord,
-		size_t numAdditionalFiles, int64_t numAdditionalBytes) { }
+		const std::string& rLocalPath,
+		int64_t FileSize) { }
+	virtual void NotifyFileSynchronised(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		int64_t FileSize) { }
 };
 
 #endif // BACKUPDAEMON__H
