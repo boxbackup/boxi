@@ -102,7 +102,7 @@ BackupProgressPanel::BackupProgressPanel(
 	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	mpCurrentText = new wxStaticText(this, wxID_ANY, 
-		wxT("Backing up file /foo/bar"));
+		wxT("Idle (nothing to do)"));
 	pCurrentBox->Add(mpCurrentText, 0, wxGROW | wxALL, 8);
 	
 	wxStaticBoxSizer* pErrorsBox = new wxStaticBoxSizer(wxVERTICAL,
@@ -116,6 +116,47 @@ BackupProgressPanel::BackupProgressPanel(
 		this, wxT("Statistics"));
 	pMainSizer->Add(pStatsBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
+	wxFlexGridSizer* pStatsGrid = new wxFlexGridSizer(4, 4, 4);
+	pStatsBox->Add(pStatsGrid, 1, wxGROW | wxALL, 4);
+
+	pStatsGrid->AddGrowableCol(0);
+	pStatsGrid->AddGrowableCol(1);
+	pStatsGrid->AddGrowableCol(2);
+	pStatsGrid->AddGrowableCol(3);
+
+	pStatsGrid->AddSpacer(1);
+	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Elapsed")));
+	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Remaining")));
+	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Total")));
+
+	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Files")));
+
+	mpNumFilesDone = new wxTextCtrl(this, wxID_ANY, wxT(""), 
+		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	pStatsGrid->Add(mpNumFilesDone, 1, wxGROW, 0);
+	
+	mpNumFilesRemaining = new wxTextCtrl(this, wxID_ANY, wxT(""), 
+		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	pStatsGrid->Add(mpNumFilesRemaining, 1, wxGROW, 0);
+	
+	mpNumFilesTotal = new wxTextCtrl(this, wxID_ANY, wxT(""), 
+		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	pStatsGrid->Add(mpNumFilesTotal, 1, wxGROW, 0);
+
+	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Bytes")));
+
+	mpNumBytesDone = new wxTextCtrl(this, wxID_ANY, wxT(""), 
+		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	pStatsGrid->Add(mpNumBytesDone, 1, wxGROW, 0);
+	
+	mpNumBytesRemaining = new wxTextCtrl(this, wxID_ANY, wxT(""), 
+		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	pStatsGrid->Add(mpNumBytesRemaining, 1, wxGROW, 0);
+	
+	mpNumBytesTotal = new wxTextCtrl(this, wxID_ANY, wxT(""), 
+		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	pStatsGrid->Add(mpNumBytesTotal, 1, wxGROW, 0);
+
 	SetSizer( pMainSizer );
 }
 
@@ -197,6 +238,7 @@ void BackupProgressPanel::StartBackup()
 	// Set up the sync parameters
 	BackupClientDirectoryRecord::SyncParams params(*this, *this, *this,
 		clientContext);
+	
 	params.mMaxUploadWait = maxUploadWait;
 	
 	if (!mpConfig->FileTrackingSizeThreshold.GetInto(
@@ -222,9 +264,42 @@ void BackupProgressPanel::StartBackup()
 	
 	params.mpCommandSocket = NULL;
 	
+	// Calculate the sync period of files to examine
+	box_time_t syncPeriodStart = 0;
+	box_time_t syncPeriodEnd = 	GetCurrentBoxTime() - minimumFileAge;
+	// Check logic
+	ASSERT(syncPeriodEnd > syncPeriodStart);
+	// Paranoid check on sync times
+	if (syncPeriodStart >= syncPeriodEnd)
+	{
+		wxString msg;
+		msg.Printf(wxT("Sync time window calculation failed: %lld >= %lld"),
+			syncPeriodStart, syncPeriodEnd);
+		ReportBackupFatalError(msg);
+		return;
+	}
+
+	// Adjust syncPeriodEnd to emulate snapshot behaviour properly
+	box_time_t syncPeriodEndExtended = syncPeriodEnd;
+	// Using zero min file age?
+	if(minimumFileAge == 0)
+	{
+		// Add a year on to the end of the end time, to make sure we sync
+		// files which are modified after the scan run started.
+		// Of course, they may be eligable to be synced again the next time round,
+		// but this should be OK, because the changes only upload should upload no data.
+		syncPeriodEndExtended += SecondsToBoxTime((uint32_t)(356*24*3600));
+	}
+
+	params.mSyncPeriodStart = syncPeriodStart;
+	params.mSyncPeriodEnd = syncPeriodEndExtended; // use potentially extended end time
+	
 	// Set store marker - haven't contacted the store yet
 	int64_t clientStoreMarker = BackupClientContext::ClientStoreMarker_NotKnown;
 	clientContext.SetClientStoreMarker(clientStoreMarker);
+	
+	mNumFilesCounted = 0;
+	mNumBytesCounted = 0;
 	
 	mpSummaryText->SetLabel(wxT("Starting Backup"));
 	wxYield();
@@ -245,9 +320,27 @@ void BackupProgressPanel::StartBackup()
 
 	mpSummaryText->SetLabel(wxT("Deleting unused root entries on server"));
 	wxYield();
+	
 	DeleteUnusedRootDirEntries(clientContext);
 							
+	mpSummaryText->SetLabel(wxT("Counting files to back up"));
+	wxYield();
+	
 	typedef const std::vector<LocationRecord *> tLocationRecords;
+
+	// Go through the records, counting files and bytes
+	for (tLocationRecords::const_iterator i = mLocations.begin();
+		i != mLocations.end(); i++)
+	{
+		LocationRecord* pLocRecord = *i;
+
+		// Set exclude lists (context doesn't take ownership)
+		clientContext.SetExcludeLists(
+			pLocRecord->mpExcludeFiles, 
+			pLocRecord->mpExcludeDirs);
+
+		CountDirectory(clientContext, pLocRecord->mPath);
+	}
 	
 	// Go through the records, syncing them
 	for (tLocationRecords::const_iterator i = mLocations.begin();
@@ -284,6 +377,130 @@ void BackupProgressPanel::StartBackup()
 	mpSummaryText->SetLabel(wxT("Backup Finished"));
 	mpErrorList->Append(wxT("Backup Finished"));
 	mpCurrentText->SetLabel(wxT("Idle (nothing to do)"));
+}
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::SyncParams &, int64_t, const std::string &, bool)
+//		Purpose: Syncronise, recusively, a local directory with the server.
+//		Created: 2003/10/08
+//
+// --------------------------------------------------------------------------
+void BackupProgressPanel::CountDirectory(BackupClientContext& rContext,
+	const std::string &rLocalPath)
+{
+	NotifyCountDirectory(rLocalPath);
+	
+	// Signal received by daemon?
+	if(StopRun())
+	{
+		// Yes. Stop now.
+		THROW_EXCEPTION(BackupStoreException, SignalReceived)
+	}
+	
+	// Read directory entries, counting number and size of files,
+	// and recursing into directories.
+	size_t  filesCounted = 0;
+	int64_t bytesCounted = 0;
+	
+	// BLOCK
+	{		
+		// read the contents...
+		DIR *dirHandle = 0;
+		try
+		{
+			dirHandle = ::opendir(rLocalPath.c_str());
+			if(dirHandle == 0)
+			{
+				// Ignore this directory for now.
+				return;
+			}
+			
+			struct dirent *en = 0;
+			struct stat st;
+			std::string filename;
+			while((en = ::readdir(dirHandle)) != 0)
+			{
+				// Don't need to use LinuxWorkaround_FinishDirentStruct(en, rLocalPath.c_str());
+				// on Linux, as a stat is performed to get all this info
+
+				if(en->d_name[0] == '.' && 
+					(en->d_name[1] == '\0' || (en->d_name[1] == '.' && en->d_name[2] == '\0')))
+				{
+					// ignore, it's . or ..
+					continue;
+				}
+
+				// Stat file to get info
+				filename = rLocalPath + DIRECTORY_SEPARATOR + en->d_name;
+				if(::lstat(filename.c_str(), &st) != 0)
+				{
+					/*
+					rParams.GetProgressNotifier().NotifyFileStatFailed(
+						(BackupClientDirectoryRecord*)NULL, 
+						filename, strerror(errno));
+					THROW_EXCEPTION(CommonException, OSFileError)
+					*/
+					wxString msg;
+					msg.Printf(wxT("Error counting files in '%s': %s"),
+						wxString(filename.c_str(), wxConvLibc).c_str(),
+						wxString(strerror(errno),  wxConvLibc).c_str());
+					mpErrorList->Append(msg);
+				}
+
+				int type = st.st_mode & S_IFMT;
+				if(type == S_IFREG || type == S_IFLNK)
+				{
+					// File or symbolic link
+
+					// Exclude it?
+					if(rContext.ExcludeFile(filename))
+					{
+						// Next item!
+						continue;
+					}
+
+					filesCounted++;
+					bytesCounted += st.st_size;
+				}
+				else if(type == S_IFDIR)
+				{
+					// Directory
+
+					// Exclude it?
+					if(rContext.ExcludeDir(filename))
+					{
+						// Next item!
+						continue;
+					}
+
+					CountDirectory(rContext, filename);
+				}
+				else
+				{
+					continue;
+				}
+			}
+	
+			if(::closedir(dirHandle) != 0)
+			{
+				THROW_EXCEPTION(CommonException, OSFileError)
+			}
+			dirHandle = 0;
+			
+		}
+		catch(...)
+		{
+			if(dirHandle != 0)
+			{
+				::closedir(dirHandle);
+			}
+			throw;
+		}
+	}
+
+	NotifyMoreFilesCounted(filesCounted, bytesCounted);
 }
 
 #ifdef PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
@@ -778,6 +995,34 @@ void BackupProgressPanel::DeleteUnusedRootDirEntries(BackupClientContext &rConte
 	// Reset state
 	mDeleteUnusedRootDirEntriesAfter = 0;
 	mUnusedRootDirEntries.clear();
+}
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    BackupDaemon::FindLocationPathName(const std::string &, std::string &) const
+//		Purpose: Tries to find the path of the root of a backup location. Returns true (and path in rPathOut)
+//				 if it can be found, false otherwise.
+//		Created: 12/11/03
+//
+// --------------------------------------------------------------------------
+bool BackupProgressPanel::FindLocationPathName(
+	const std::string &rLocationName, std::string &rPathOut) const
+{
+	// Search for the location
+	typedef std::vector<LocationRecord *> tLocationRecords;
+	for (tLocationRecords::const_iterator i = mLocations.begin(); 
+		i != mLocations.end(); i++)
+	{
+		if((*i)->mName == rLocationName)
+		{
+			rPathOut = (*i)->mPath;
+			return true;
+		}
+	}
+	
+	// Didn't find it
+	return false;
 }
 
 // --------------------------------------------------------------------------

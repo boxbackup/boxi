@@ -34,6 +34,7 @@
 #include "BackupClientContext.h"
 #include "BackupClientDirectoryRecord.h"
 #include "BackupDaemon.h"
+#include "BackupStoreException.h"
 #undef NDEBUG
 
 #include "ClientConfig.h"
@@ -88,6 +89,12 @@ class BackupProgressPanel
 	wxListBox*        mpErrorList;
 	wxStaticText*     mpSummaryText;
 	wxStaticText*     mpCurrentText;
+	wxTextCtrl*       mpNumFilesDone;
+	wxTextCtrl*       mpNumFilesRemaining;
+	wxTextCtrl*       mpNumFilesTotal;
+	wxTextCtrl*       mpNumBytesDone;
+	wxTextCtrl*       mpNumBytesRemaining;
+	wxTextCtrl*       mpNumBytesTotal;
 	bool              mStorageLimitExceeded;
 	bool              mBackupRunning;
 	std::vector<LocationRecord *> mLocations;
@@ -100,9 +107,12 @@ class BackupProgressPanel
 	std::vector<BackupClientInodeToIDMap *> mCurrentIDMaps;
 	std::vector<BackupClientInodeToIDMap *> mNewIDMaps;
 
+	size_t  mNumFilesCounted;
+	int64_t mNumBytesCounted;
+
 	/* LocationResolver interface */
 	virtual bool FindLocationPathName(const std::string &rLocationName, 
-		std::string &rPathOut) const { return FALSE; }
+		std::string &rPathOut) const;
 		
 	/* RunStatusProvider interface */
 	virtual bool StopRun() { return FALSE; }
@@ -126,7 +136,7 @@ class BackupProgressPanel
 	/* ProgressNotifier interface */
 	virtual void NotifyScanDirectory(
 		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath) const 
+		const std::string& rLocalPath)
 	{
 		wxString msg;
 		msg.Printf(wxT("Scanning directory '%s'"), 
@@ -137,14 +147,132 @@ class BackupProgressPanel
 	virtual void NotifyDirStatFailed(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
-		const std::string& rErrorMsg) const
+		const std::string& rErrorMsg)
 	{
 		wxString msg;
 		msg.Printf(wxT("Failed to read directory '%s': %s"), 
 			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
 			wxString(rErrorMsg.c_str(),  wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		wxYield();
+	}
+	virtual void NotifyFileStatFailed(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const std::string& rErrorMsg)
+	{
+		NotifyFileReadFailed(pDirRecord, rLocalPath, rErrorMsg);
+	}
+	virtual void NotifyFileReadFailed(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const std::string& rErrorMsg)
+	{
+		wxString msg;
+		msg.Printf(wxT("Failed to read file '%s': %s"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+			wxString(rErrorMsg.c_str(),  wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		wxYield();
+	}
+	virtual void NotifyFileModifiedInFuture(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath)
+	{
+		wxString msg;
+		msg.Printf(wxT("Warning: file modified in the future "
+				"(check your system clock): '%s'"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		wxYield();
+	}
+	virtual void NotifyFileSkippedServerFull(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath)
+	{ 
+		wxString msg;
+		msg.Printf(wxT("Failed to send file '%s': no more space available"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		wxYield();
+	}
+	virtual void NotifyFileUploadException(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const BoxException& rException)
+	{
+		wxString msg;
+		msg.Printf(wxT("Failed to send file '%s': %s"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+			wxString(rException.what(),  wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		wxYield();
+	}
+	virtual void NotifyFileUploading(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath)
+	{
+		wxString msg;
+		msg.Printf(wxT("Backing up file '%s'"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+		mpCurrentText->SetLabel(msg);
+		wxYield();
+	}
+	virtual void NotifyFileUploadingPatch(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath)
+	{
+		wxString msg;
+		msg.Printf(wxT("Backing up file '%s' (sending patch)"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+		mpCurrentText->SetLabel(msg);
+		wxYield();
 	}
 	
+	void BackupProgressPanel::CountDirectory(BackupClientContext& rContext,
+		const std::string &rLocalPath);
+	void NotifyCountDirectory(const std::string& rLocalPath)
+	{
+		wxString msg;
+		msg.Printf(wxT("Counting files in directory '%s'"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+		mpCurrentText->SetLabel(msg);
+		wxYield();
+	}
+	void NotifyMoreFilesCounted(size_t numAdditionalFiles, 
+		int64_t numAdditionalBytes)
+	{
+		mNumFilesCounted += numAdditionalFiles;
+		mNumBytesCounted += numAdditionalBytes;
+		wxString str;
+		str.Printf(wxT("%d"), mNumFilesCounted);
+		mpNumFilesTotal->SetValue(str);
+		
+		int64_t bytes = mNumBytesCounted;
+		wxString units = wxT("B");
+		
+		if (bytes > 1024)
+		{
+			bytes >>= 10;
+			units = wxT("kB");
+		}
+		
+		if (bytes > 1024)
+		{
+			bytes >>= 10;
+			units = wxT("MB");
+		}
+
+		if (bytes > 1024)
+		{
+			bytes >>= 10;
+			units = wxT("GB");
+		}
+		
+		str.Printf(wxT("%lld %s"), bytes, units.c_str());
+		mpNumBytesTotal->SetValue(str);
+	}
+
 	void ReportBackupFatalError(wxString msg)
 	{
 		wxMessageBox(msg, wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
