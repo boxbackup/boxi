@@ -96,6 +96,35 @@ class SysadminNotifier
 // --------------------------------------------------------------------------
 //
 // Class
+//		Name:    ProgressNotifier
+//		Purpose: Provides methods for the backup library to inform the user
+//		         interface about its progress with the backup
+//		Created: 2005/11/20
+//
+// --------------------------------------------------------------------------
+class BackupClientDirectoryRecord;
+	
+class ProgressNotifier
+{
+	public:
+	virtual ~ProgressNotifier() { }
+	virtual void NotifyScanDirectory(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) const = 0;
+	virtual void NotifyDirStatFailed(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const std::string& rErrorMsg) const = 0;
+	/*
+	virtual void NotifySendDirAttribs(BackupClientDirectoryRecord& rDirRecord) = 0;
+	virtual void NotifySendFile(BackupClientDirectoryRecord& rDirRecord, 
+		std::string& rFilename) = 0;
+	*/
+};
+
+// --------------------------------------------------------------------------
+//
+// Class
 //		Name:    BackupClientDirectoryRecord
 //		Purpose: Implementation of record about directory for backup client
 //		Created: 2003/10/08
@@ -127,8 +156,10 @@ public:
 	class SyncParams
 	{
 	public:
-		SyncParams(RunStatusProvider &rRunStatusProvider, 
+		SyncParams(
+			RunStatusProvider &rRunStatusProvider, 
 			SysadminNotifier &rSysadminNotifier,
+			ProgressNotifier &rProgressNotifier,
 			BackupClientContext &rContext);
 		~SyncParams();
 	private:
@@ -137,6 +168,7 @@ public:
 		SyncParams &operator=(const SyncParams&);
 		RunStatusProvider &mrRunStatusProvider;
 		SysadminNotifier &mrSysadminNotifier;
+		ProgressNotifier &mrProgressNotifier;
 		
 	public:
 		// Data members are public, as accessors are not justified here
@@ -148,7 +180,7 @@ public:
 		int32_t mDiffingUploadSizeThreshold;
 		BackupClientContext &mrContext;
 		bool mReadErrorsOnFilesystemObjects;
-		CommandSocketManager* mpCommandSocket;	
+		CommandSocketManager* mpCommandSocket;
 	
 		// Member variables modified by syncing process
 		box_time_t mUploadAfterThisTimeInTheFuture;
@@ -158,6 +190,10 @@ public:
 		void NotifySysadmin(int Event) 
 		{ 
 			mrSysadminNotifier.NotifySysadmin(Event); 
+		}
+		const ProgressNotifier& GetProgressNotifier() const 
+		{ 
+			return mrProgressNotifier;
 		}
 	};
 

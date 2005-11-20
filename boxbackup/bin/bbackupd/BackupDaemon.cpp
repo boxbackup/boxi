@@ -460,7 +460,7 @@ void BackupDaemon::Run2()
 					
 				// Set up the sync parameters
 				BackupClientDirectoryRecord::SyncParams params(*this, *this,
-					clientContext);
+					*this, clientContext);
 				params.mSyncPeriodStart = syncPeriodStart;
 				params.mSyncPeriodEnd = syncPeriodEndExtended; // use potentially extended end time
 				params.mMaxUploadWait = maxUploadWait;

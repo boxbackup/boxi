@@ -144,6 +144,8 @@ void BackupClientDirectoryRecord::DeleteSubDirectories()
 void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::SyncParams &rParams, int64_t ContainingDirectoryID,
 	const std::string &rLocalPath, bool ThisDirHasJustBeenCreated)
 {
+	rParams.GetProgressNotifier().NotifyScanDirectory(this, rLocalPath);
+	
 	// Check for connections and commands on the command socket
 	if (rParams.mpCommandSocket)
 		rParams.mpCommandSocket->Wait(0);
@@ -180,7 +182,8 @@ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::Syn
 		{
 			// The directory has probably been deleted, so just ignore this error.
 			// In a future scan, this deletion will be noticed, deleted from server, and this object deleted.
-			TRACE1("Stat failed for '%s' (directory)\n", rLocalPath.c_str());
+			rParams.GetProgressNotifier().NotifyDirStatFailed(
+				this, rLocalPath, strerror(errno));
 			return;
 		}
 		// Store inode number in map so directories are tracked in case they're renamed
@@ -1210,16 +1213,19 @@ void BackupClientDirectoryRecord::SetErrorWhenReadingFilesystemObject(BackupClie
 //
 // --------------------------------------------------------------------------
 BackupClientDirectoryRecord::SyncParams::SyncParams(
-	RunStatusProvider &rRunStatusProvider, SysadminNotifier &rSysadminNotifier,
+	RunStatusProvider &rRunStatusProvider, 
+	SysadminNotifier &rSysadminNotifier,
+	ProgressNotifier &rProgressNotifier,
 	BackupClientContext &rContext)
-	: mSyncPeriodStart(0),
+	: mrRunStatusProvider(rRunStatusProvider),
+	  mrSysadminNotifier(rSysadminNotifier),
+	  mrProgressNotifier(rProgressNotifier),
+	  mSyncPeriodStart(0),
 	  mSyncPeriodEnd(0),
 	  mMaxUploadWait(0),
 	  mMaxFileTimeInFuture(99999999999999999LL),
 	  mFileTrackingSizeThreshold(16*1024),
 	  mDiffingUploadSizeThreshold(16*1024),
-	  mrRunStatusProvider(rRunStatusProvider),
-	  mrSysadminNotifier(rSysadminNotifier),
 	  mrContext(rContext),
 	  mReadErrorsOnFilesystemObjects(false),
 	  mUploadAfterThisTimeInTheFuture(99999999999999999LL),

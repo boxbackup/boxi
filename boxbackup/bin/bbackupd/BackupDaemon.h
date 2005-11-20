@@ -75,7 +75,7 @@ class ExcludeList;
 //
 // --------------------------------------------------------------------------
 class BackupDaemon : public Daemon, CommandListener, LocationResolver,
-	RunStatusProvider, SysadminNotifier
+	RunStatusProvider, SysadminNotifier, ProgressNotifier
 {
 public:
 	BackupDaemon();
@@ -137,7 +137,6 @@ private:
 
 	int UseScriptToSeeIfSyncAllowed();
 
-private:
 	class Location
 	{
 	public:
@@ -182,6 +181,24 @@ private:
 	void SetSyncForced()         { mSyncForced    = true; }
 	
 	bool StopRun() { return this->Daemon::StopRun(); }
+
+	virtual void NotifyScanDirectory(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) const { }
+	virtual void NotifyDirStatFailed(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath, 
+		const std::string& rErrorMsg) const
+	{
+		TRACE2("Stat failed for '%s' (directory): %s\n", 
+			rLocalPath.c_str(), rErrorMsg.c_str());
+	}
+	
+	/*
+	virtual void NotifySendDirAttribs(BackupClientDirectoryRecord& rDirRecord) = 0;
+	virtual void NotifySendFile(BackupClientDirectoryRecord& rDirRecord, 
+		std::string& rFilename) = 0;
+	*/
 };
 
 #endif // BACKUPDAEMON__H
