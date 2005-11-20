@@ -127,7 +127,8 @@ MainFrame::MainFrame(
 	theTopNotebook->AddPage(pBackupProgressPanel, wxT("Backup Progress"));
 	
 	BackupPanel *pBackupPanel = new BackupPanel(
-		mpConfig, *pBackupProgressPanel, theTopNotebook, ID_Backup_Panel);
+		mpConfig, *pBackupProgressPanel, theTopNotebook, 
+		theTopNotebook, ID_Backup_Panel);
 	theTopNotebook->AddPage(pBackupPanel, wxT("Backup"));
 	mpConfig->AddListener(pBackupPanel);
 
