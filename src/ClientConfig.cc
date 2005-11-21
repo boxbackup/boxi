@@ -178,10 +178,12 @@ void ClientConfig::Load(const wxString& rConfigFileName)
 
 void ClientConfig::AddLocation(Location* newLoc) {
 	mLocations.push_back(newLoc);
+	NotifyListeners();
 }
 
 void ClientConfig::ReplaceLocation(int index, Location* newLoc) {
 	mLocations[index] = newLoc;
+	NotifyListeners();
 }
 
 void ClientConfig::RemoveLocation(int target) {
@@ -191,7 +193,10 @@ void ClientConfig::RemoveLocation(int target) {
 		current++;
 	}
 	if (i == target)
+	{
 		mLocations.erase(current);
+		NotifyListeners();
+	}
 }
 
 void ClientConfig::RemoveLocation(Location* pOldLocation) {
@@ -201,7 +206,10 @@ void ClientConfig::RemoveLocation(Location* pOldLocation) {
 		{ }
 	
 	if (*current == pOldLocation)
+	{
 		mLocations.erase(current);
+		NotifyListeners();
+	}
 }
 
 void ClientConfig::AddListener(ConfigChangeListener* pNewListener)
