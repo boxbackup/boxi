@@ -80,7 +80,7 @@ BackupProgressPanel::BackupProgressPanel(
 
 	wxStaticBoxSizer* pSummaryBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Summary"));
-	pMainSizer->Add(pSummaryBox, 0, wxGROW | wxALL, 4);
+	pMainSizer->Add(pSummaryBox, 0, wxGROW | wxALL, 8);
 	
 	wxSizer* pSummarySizer = new wxGridSizer(1, 2, 0, 4);
 	pSummaryBox->Add(pSummarySizer, 0, wxGROW | wxALL, 4);
@@ -95,7 +95,7 @@ BackupProgressPanel::BackupProgressPanel(
 	
 	wxStaticBoxSizer* pCurrentBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Current Action"));
-	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 4);
+	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	mpCurrentText = new wxStaticText(this, wxID_ANY, 
 		wxT("Idle (nothing to do)"));
@@ -103,14 +103,14 @@ BackupProgressPanel::BackupProgressPanel(
 	
 	wxStaticBoxSizer* pErrorsBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Errors"));
-	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 4);
+	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	mpErrorList = new wxListBox(this, wxID_ANY);
 	pErrorsBox->Add(mpErrorList, 1, wxGROW | wxALL, 4);
 
 	wxStaticBoxSizer* pStatsBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Statistics"));
-	pMainSizer->Add(pStatsBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 4);
+	pMainSizer->Add(pStatsBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	wxFlexGridSizer* pStatsGrid = new wxFlexGridSizer(4, 4, 4);
 	pStatsBox->Add(pStatsGrid, 1, wxGROW | wxALL, 4);
@@ -155,7 +155,7 @@ BackupProgressPanel::BackupProgressPanel(
 
 	wxSizer* pButtonSizer = new wxBoxSizer(wxHORIZONTAL);
 	pMainSizer->Add(pButtonSizer, 0, 
-		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 4);
+		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	mpStopCloseButton = new wxButton(this, wxID_CANCEL, wxT("Close"));
 	pButtonSizer->Add(mpStopCloseButton, 0, wxGROW, 0);
