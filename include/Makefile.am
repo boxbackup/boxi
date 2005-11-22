@@ -22,6 +22,7 @@ boxi_include_DATA = \
 	ComparePanel.h\
 	ParamPanel.h\
 	BackupPanel.h\
-	BackupProgressPanel.h
+	BackupProgressPanel.h\
+	GeneralPanel.h
 
 EXTRA_DIST = $(boxi_include_DATA)

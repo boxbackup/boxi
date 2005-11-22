@@ -96,7 +96,8 @@ module.include.files=\
 	ComparePanel.h\
 	ParamPanel.h\
 	BackupPanel.h\
-	BackupProgressPanel.h
+	BackupProgressPanel.h\
+	GeneralPanel.h
 
 module.source.name=src
 module.source.type=
@@ -134,7 +135,8 @@ module.source.files=\
 	plusgrey16.png.c\
 	tickgrey16.png.c\
 	BackupPanel.cc\
-	BackupProgressPanel.cc
+	BackupProgressPanel.cc\
+	GeneralPanel.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=

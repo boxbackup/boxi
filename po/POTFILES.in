@@ -39,5 +39,6 @@ src/plusgrey16.png.c
 src/tickgrey16.png.c
 src/BackupPanel.cc
 src/BackupProgressPanel.cc
+src/GeneralPanel.cc
 
 

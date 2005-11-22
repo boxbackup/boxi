@@ -50,7 +50,8 @@ boxi_SOURCES = \
 	plusgrey16.png.c\
 	tickgrey16.png.c\
 	BackupPanel.cc\
-	BackupProgressPanel.cc
+	BackupProgressPanel.cc\
+	GeneralPanel.cc
 
 boxi_LDFLAGS = 
 
