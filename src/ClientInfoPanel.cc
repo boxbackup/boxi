@@ -88,10 +88,19 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 	mpConfig = pConfig;
 	mpConfig->AddListener(this);
 	
-	wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer *pTabSizer = new wxBoxSizer( wxVERTICAL );
+	SetSizer(pTabSizer);
+	
+	wxScrolledWindow *pVisibleArea = new wxScrolledWindow(this, wxID_ANY,
+		wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+	pTabSizer->Add(pVisibleArea, 1, wxGROW | wxALL, 4);
+	
+	wxBoxSizer *pScrollablePanelSizer = new wxBoxSizer( wxVERTICAL );
+	pVisibleArea->SetSizer(pScrollablePanelSizer);
+	pVisibleArea->SetScrollRate(0, 1);
 	
 	wxBoxSizer* pStateSizer = new wxBoxSizer( wxHORIZONTAL );
-	topSizer->Add(pStateSizer, 0, wxGROW | wxALL, 4);
+	pScrollablePanelSizer->Add(pStateSizer, 0, wxGROW | wxALL, 4);
 
 	// duplicate in BackupFilesPanel
 	wxInitAllImageHandlers();
@@ -100,15 +109,15 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 	LoadBitmap(cross16a_png, mCrossBitmap);
 	
 	wxSize BitmapSize(16, 16);
-	mpConfigStateBitmap = new wxStaticBitmap(this, -1, mCrossBitmap, 
+	mpConfigStateBitmap = new wxStaticBitmap(pVisibleArea, -1, mCrossBitmap, 
 		wxDefaultPosition, BitmapSize);
 	pStateSizer->Add(mpConfigStateBitmap, 0, wxGROW | wxALL, 4);
 
-	mpConfigStateLabel = new wxStaticText(this, -1, wxT("Unknown state"));
+	mpConfigStateLabel = new wxStaticText(pVisibleArea, -1, wxT("Unknown state"));
 	pStateSizer->Add(mpConfigStateLabel, 1, wxGROW | wxALL, 4);
 	
-	wxNotebook *pClientPropsNotebook = new wxNotebook(this, -1);
-	topSizer->Add(pClientPropsNotebook, 1, 
+	wxNotebook *pClientPropsNotebook = new wxNotebook(pVisibleArea, -1);
+	pScrollablePanelSizer->Add(pClientPropsNotebook, 1, 
 		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	ParamPanel *pBasicPanel = new ParamPanel(pClientPropsNotebook);
@@ -201,8 +210,7 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 		pConfig->PidFile, ID_ClientProp_PidFile, TRUE, FALSE,
 		wxString(wxT("Client PID files (bbackupd.pid)|bbackupd.pid")));
 		
-	SetSizer( topSizer );
-	topSizer->SetSizeHints( this );
+	// pScrollablePanelSizer->SetSizeHints(this);
 	
 	UpdateConfigState();
 }
