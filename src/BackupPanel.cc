@@ -32,17 +32,8 @@
 #include "main.h"
 #include "BackupPanel.h"
 
-//DECLARE_EVENT_TYPE(myEVT_CLIENT_NOTIFY, -1)
-//DEFINE_EVENT_TYPE(myEVT_CLIENT_NOTIFY)
-
 BEGIN_EVENT_TABLE(BackupPanel, wxPanel)
 EVT_BUTTON(ID_Backup_Panel_Start_Button, BackupPanel::OnClickStartButton)
-//EVT_BUTTON(ID_Daemon_Stop,    BackupPanel::OnClientStopClick)
-//EVT_BUTTON(ID_Daemon_Restart, BackupPanel::OnClientRestartClick)
-//EVT_BUTTON(ID_Daemon_Kill,    BackupPanel::OnClientKillClick)
-//EVT_BUTTON(ID_Daemon_Sync,    BackupPanel::OnClientSyncClick)
-//EVT_BUTTON(ID_Daemon_Reload,  BackupPanel::OnClientReloadClick)
-//EVT_COMMAND(wxID_ANY, myEVT_CLIENT_NOTIFY, BackupPanel::OnClientNotify)
 END_EVENT_TABLE()
 
 BackupPanel::BackupPanel(
