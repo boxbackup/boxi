@@ -163,6 +163,7 @@ class BackupProgressPanel
 		msg.Printf(wxT("Scanning directory '%s'"), 
 			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
 		mpCurrentText->SetLabel(msg);
+		Layout();
 		wxYield();
 	}
 	virtual void NotifyDirStatFailed(
@@ -237,6 +238,7 @@ class BackupProgressPanel
 		msg.Printf(wxT("Backing up file '%s'"), 
 			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
 		mpCurrentText->SetLabel(msg);
+		Layout();
 		wxYield();
 	}
 	virtual void NotifyFileUploadingPatch(
@@ -247,6 +249,7 @@ class BackupProgressPanel
 		msg.Printf(wxT("Backing up file '%s' (sending patch)"), 
 			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
 		mpCurrentText->SetLabel(msg);
+		Layout();
 		wxYield();
 	}
 	virtual void NotifyFileUploaded(
@@ -286,6 +289,7 @@ class BackupProgressPanel
 		msg.Printf(wxT("Counting files in directory '%s'"), 
 			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
 		mpCurrentText->SetLabel(msg);
+		Layout();
 		wxYield();
 	}
 	
