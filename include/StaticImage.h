@@ -39,7 +39,7 @@ extern const struct StaticImage tick16_png, tickgrey16_png,
 	cross16_png, crossgrey16_png, plus16_png, plusgrey16_png, equal16_png, 
 	notequal16_png, hourglass16_png, sametime16_png, unknown16_png,
 	oldfile16_png, exclam16_png, folder16_png, partial16_png, alien16_png,
-	tick16a_png, cross16a_png, empty16_png;
+	tick16a_png, cross16a_png, empty16_png, partialtick16_png;
 
 #ifdef __cplusplus
 }
