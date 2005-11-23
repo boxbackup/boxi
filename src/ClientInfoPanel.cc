@@ -70,6 +70,7 @@ BEGIN_EVENT_TABLE(ClientInfoPanel, wxPanel)
 		ClientInfoPanel::OnControlChange)
 	EVT_TEXT(ID_ClientProp_PidFile,
 		ClientInfoPanel::OnControlChange)
+	EVT_BUTTON(wxID_CANCEL, ClientInfoPanel::OnClickCloseButton)
 END_EVENT_TABLE()
 
 static void LoadBitmap(const struct StaticImage& rImageData, wxBitmap& rDest)
@@ -209,21 +210,30 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 	mpPidFileCtrl = pAdvancedPanel->AddParam(wxT("Process ID File:"), 
 		pConfig->PidFile, ID_ClientProp_PidFile, TRUE, FALSE,
 		wxString(wxT("Client PID files (bbackupd.pid)|bbackupd.pid")));
-		
+	
+	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
+	pTabSizer->Add(pActionCtrlSizer, 0, 
+		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+
+	wxButton* pCloseButton = new wxButton(this, 
+		wxID_CANCEL, wxT("Close"));
+	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
+
 	// pScrollablePanelSizer->SetSizeHints(this);
 	
 	UpdateConfigState();
 }
 
-void ClientInfoPanel::OnControlChange(wxCommandEvent &event)
+void ClientInfoPanel::OnControlChange(wxCommandEvent& rEvent)
 {
 	// only one of these is validly typed, depending on the actual source 
 	// of the event, determined by ID below.
-	BoundStringCtrl* pString = (BoundStringCtrl*)( event.GetEventObject() );
-	BoundIntCtrl*    pInt    = (BoundIntCtrl*   )( event.GetEventObject() );
-	BoundBoolCtrl*   pBool   = (BoundBoolCtrl*  )( event.GetEventObject() );
+	BoundStringCtrl* pString = (BoundStringCtrl*)( rEvent.GetEventObject() );
+	BoundIntCtrl*    pInt    = (BoundIntCtrl*   )( rEvent.GetEventObject() );
+	BoundBoolCtrl*   pBool   = (BoundBoolCtrl*  )( rEvent.GetEventObject() );
 	
-	switch(event.GetId()) {
+	switch (rEvent.GetId()) 
+	{
 	case ID_ClientProp_StoreHostname:
 	case ID_ClientProp_KeysFile:
 	case ID_ClientProp_CertificateFile:
@@ -255,9 +265,13 @@ void ClientInfoPanel::OnControlChange(wxCommandEvent &event)
 		wxMessageBox(
 			wxT("Update to unknown control"), 
 			wxT("Internal error"), 
-			wxOK | wxICON_ERROR, this);
-		
+			wxOK | wxICON_ERROR, this);	
 	}
+}
+
+void ClientInfoPanel::OnClickCloseButton(wxCommandEvent& rEvent)
+{
+	Hide();
 }
 
 void ClientInfoPanel::Reload() 
