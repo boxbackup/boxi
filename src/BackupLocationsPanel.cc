@@ -96,7 +96,7 @@ void BackupTreeNode::_AddChildrenSlow(bool recursive)
 void BackupTreeCtrl::UpdateExcludedStateIcon(
 	BackupTreeNode* pNode, bool updateParents, bool updateChildren) 
 {
-	wxLogDebug(wxT("Updating icon for: %s"), pNode->GetFullPath().c_str());
+	// wxLogDebug(wxT("Updating icon for: %s"), pNode->GetFullPath().c_str());
 	
 	int iconId = mEmptyImageId;
 	
@@ -154,16 +154,20 @@ void BackupTreeCtrl::UpdateExcludedStateIcon(
 	int oldIconId = pNode->mIconId;
 	if (iconId != oldIconId)
 	{
+		/*
 		wxLogDebug(wxT("%s: icon changed from %d to %d"), 
 			pNode->GetFullPath().c_str(), oldIconId, iconId);
+		*/
 		SetItemImage(pNode->GetTreeId(), iconId, wxTreeItemIcon_Normal);
 		pNode->mIconId = iconId;
 	}
+	/*
 	else
 	{
 		wxLogDebug(wxT("%s: icon stayed as %d"), 
 			pNode->GetFullPath().c_str(), iconId);
 	}
+	*/
 	
 	if (updateChildren)
 	{
@@ -359,6 +363,7 @@ BEGIN_EVENT_TABLE(BackupLocationsPanel, wxPanel)
 		BackupLocationsPanel::OnLocationChange)
 	EVT_TEXT(ID_Backup_LocationPathCtrl, 
 		BackupLocationsPanel::OnLocationChange)
+	EVT_BUTTON(wxID_CANCEL, BackupLocationsPanel::OnClickCloseButton)
 END_EVENT_TABLE()
 
 BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
@@ -506,6 +511,14 @@ BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
 	theExcludeRemoveBtn->Disable();
 	theExcludeCmdSizer->Add(theExcludeRemoveBtn, 1, wxGROW, 0);
 	
+	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
+	pTopSizer->Add(pActionCtrlSizer, 0, 
+		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+
+	wxButton* pCloseButton = new wxButton(this, 
+		wxID_CANCEL, wxT("Close"));
+	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
+
 	theSelectedLocation = 0;
 	NotifyChange();
 }
@@ -1014,4 +1027,9 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 	
 	// doesn't work? - FIXME
 	// event.Veto();
+}
+
+void BackupLocationsPanel::OnClickCloseButton(wxCommandEvent& rEvent)
+{
+	Hide();
 }

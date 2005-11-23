@@ -156,16 +156,17 @@ class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
 	wxButton 		*theExcludeRemoveBtn;
 	unsigned int theSelectedLocation;
 	
-	void OnBackupLocationClick (wxListEvent& event);
-	void OnLocationExcludeClick(wxListEvent& event);
-	void OnLocationCmdClick (wxCommandEvent& event);
-	void OnLocationChange   (wxCommandEvent& event);
-	void OnExcludeTypeChoice(wxCommandEvent& event);
-	void OnExcludePathChange(wxCommandEvent& event);
-	void OnExcludeCmdClick  (wxCommandEvent& event);
-	void OnTreeNodeExpand      (wxTreeEvent& event);
-	void OnTreeNodeCollapse    (wxTreeEvent& event);
-	void OnTreeNodeActivate    (wxTreeEvent& event);
+	void OnBackupLocationClick (wxListEvent&    rEvent);
+	void OnLocationExcludeClick(wxListEvent&    rEvent);
+	void OnLocationCmdClick    (wxCommandEvent& rEvent);
+	void OnLocationChange      (wxCommandEvent& rEvent);
+	void OnExcludeTypeChoice   (wxCommandEvent& rEvent);
+	void OnExcludePathChange   (wxCommandEvent& rEvent);
+	void OnExcludeCmdClick     (wxCommandEvent& rEvent);
+	void OnClickCloseButton    (wxCommandEvent& rEvent);
+	void OnTreeNodeExpand      (wxTreeEvent&    rEvent);
+	void OnTreeNodeCollapse    (wxTreeEvent&    rEvent);
+	void OnTreeNodeActivate    (wxTreeEvent&    rEvent);
 	void UpdateLocationCtrlEnabledState();
 	void UpdateExcludeCtrlEnabledState();
 	void PopulateLocationList();
