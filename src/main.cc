@@ -82,6 +82,7 @@ MainFrame::MainFrame(
 		mpConfig,
 		mpTopNotebook, 
 		ID_Client_Panel);
+	mpLocationsPanel->Hide();
 
 	mpClientConfigPanel = new ClientInfoPanel(
 		mpConfig,
@@ -103,19 +104,20 @@ MainFrame::MainFrame(
 	GeneralPanel* pGeneralPanel = new GeneralPanel(this, 
 		pBackupPanel, mpTopNotebook);
 		
-	mpTopNotebook->AddPage(pGeneralPanel, wxT("General"));
-	mpTopNotebook->AddPage(pBackupPanel, wxT("Backup"));
+	mpTopNotebook->AddPage(pGeneralPanel,        wxT("General"));
+	mpTopNotebook->AddPage(pBackupPanel,         wxT("Backup"));
 	mpTopNotebook->AddPage(pBackupProgressPanel, wxT("Backup Progress"));
-	mpTopNotebook->AddPage(mpClientConfigPanel, wxT("Server Details"));
+	mpTopNotebook->AddPage(mpLocationsPanel,     wxT("Backup Locations"));
+	mpTopNotebook->AddPage(mpClientConfigPanel,  wxT("Server Details"));
 
+	/*
 	wxPanel* pBackupDaemonPanel = new BackupDaemonPanel(
 		mpConfig,
 		rBoxiExecutablePath,
 		mpTopNotebook,
 		-1);
 	mpTopNotebook->AddPage(pBackupDaemonPanel, wxT("Backup Process"));
-	
-	mpTopNotebook->AddPage(mpLocationsPanel, wxT("Backup"));
+	*/
 
 	/*
 	theBackupFilesPanel = new BackupFilesPanel(
