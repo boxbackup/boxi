@@ -32,52 +32,6 @@
 
 bool ViewDeleted = true;
 
-class MainFrame : public wxFrame, public ConfigChangeListener {
-	public:
-	MainFrame(
-		const wxString* pConfigFileName,
-		const wxString& rBoxiExecutablePath,
-		const wxPoint& pos, const wxSize& size, 
-		long style = wxDEFAULT_FRAME_STYLE);
-
-	private:
-	void OnFileNew	  (wxCommandEvent& event);
-	void OnFileOpen	  (wxCommandEvent& event);
-	void OnFileSave	  (wxCommandEvent& event);
-	void OnFileSaveAs (wxCommandEvent& event);
-	void OnFileQuit	  (wxCommandEvent& event);
-	void OnFileDir	  (wxCommandEvent& event);
-	void OnViewOld    (wxCommandEvent& event);
-	void OnViewDeleted(wxCommandEvent& event);
-	void OnHelpAbout  (wxCommandEvent& event);
-	void OnSize		  (wxSizeEvent&	   event);
-	void OnClose      (wxCloseEvent&   event);
-
-	void DoFileOpen   (const wxString& path);
-	void DoFileNew    ();
-	void DoFileSave   ();
-	void DoFileSaveAs ();
-	void DoFileSaveAs2();
-	
-	// implement ConfigChangeListener
-	void NotifyChange();
-	void UpdateTitle();
-	
-	wxStatusBar*        mpStatusBar;
-	wxString            mConfigFileName;
-	ClientConfig*       mpConfig;
-	ServerConnection*   mpServerConnection;
-	
-	wxNotebook*         theTopNotebook;
-	BackupFilesPanel*   theBackupFilesPanel;
-	ClientInfoPanel*    theClientPanel;
-	wxPanel*            theLocationsPanel;
-	RestorePanel*       mpRestorePanel;
-	wxMenu*             mpViewMenu;
-	
-	DECLARE_EVENT_TABLE()
-};	
-
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_MENU(ID_File_New,     MainFrame::OnFileNew)
 	EVT_MENU(ID_File_Open,    MainFrame::OnFileOpen)
@@ -120,42 +74,45 @@ MainFrame::MainFrame(
 	mpServerConnection = new ServerConnection(mpConfig);
 	mpStatusBar = CreateStatusBar(1);
 	
-	theTopNotebook = new wxNotebook(this, ID_Top_Notebook);
+	mpTopNotebook = new wxNotebook(this, ID_Top_Notebook);
 
-	GeneralPanel* pGeneralPanel = new GeneralPanel(theTopNotebook);
-	theTopNotebook->AddPage(pGeneralPanel, wxT("General"));
-
+	mpClientConfigPanel = new ClientInfoPanel(
+		mpConfig,
+		mpTopNotebook, 
+		ID_Client_Panel);
+	mpClientConfigPanel->Hide();
+	
 	BackupProgressPanel *pBackupProgressPanel = new BackupProgressPanel(
 		mpConfig, mpServerConnection, 
-		theTopNotebook, ID_Backup_Progress_Panel);
+		mpTopNotebook, ID_Backup_Progress_Panel);
 	pBackupProgressPanel->Hide();
 	
 	BackupPanel *pBackupPanel = new BackupPanel(
-		mpConfig, *pBackupProgressPanel, theTopNotebook, 
-		theTopNotebook, ID_Backup_Panel);
-
-	theTopNotebook->AddPage(pBackupPanel, wxT("Backup"));
-	theTopNotebook->AddPage(pBackupProgressPanel, wxT("Backup Progress"));
+		mpConfig, pBackupProgressPanel, this, mpClientConfigPanel,
+		mpTopNotebook, ID_Backup_Panel);
 	mpConfig->AddListener(pBackupPanel);
+	pBackupPanel->Hide();
 
-	theClientPanel = new ClientInfoPanel(
-		mpConfig,
-		theTopNotebook, 
-		ID_Client_Panel);
-	theTopNotebook->AddPage(theClientPanel, wxT("Settings"));
+	GeneralPanel* pGeneralPanel = new GeneralPanel(this, 
+		pBackupPanel, mpTopNotebook);
+		
+	mpTopNotebook->AddPage(pGeneralPanel, wxT("General"));
+	mpTopNotebook->AddPage(pBackupPanel, wxT("Backup"));
+	mpTopNotebook->AddPage(pBackupProgressPanel, wxT("Backup Progress"));
+	mpTopNotebook->AddPage(mpClientConfigPanel, wxT("Server Details"));
 
 	wxPanel* pBackupDaemonPanel = new BackupDaemonPanel(
 		mpConfig,
 		rBoxiExecutablePath,
-		theTopNotebook,
+		mpTopNotebook,
 		-1);
-	theTopNotebook->AddPage(pBackupDaemonPanel, wxT("Backup Process"));
+	mpTopNotebook->AddPage(pBackupDaemonPanel, wxT("Backup Process"));
 	
-	theLocationsPanel = new BackupLocationsPanel(
+	mpLocationsPanel = new BackupLocationsPanel(
 		mpConfig,
-		theTopNotebook, 
+		mpTopNotebook, 
 		ID_Client_Panel);
-	theTopNotebook->AddPage(theLocationsPanel, wxT("Backup"));
+	mpTopNotebook->AddPage(mpLocationsPanel, wxT("Backup"));
 
 	/*
 	theBackupFilesPanel = new BackupFilesPanel(
@@ -169,10 +126,10 @@ MainFrame::MainFrame(
 	mpRestorePanel = new RestorePanel(
 		mpConfig,
 		mpServerConnection, 
-		theTopNotebook, 
+		mpTopNotebook, 
 		mpStatusBar, 
 		ID_Restore_Files_Panel);
-	theTopNotebook->AddPage(mpRestorePanel, wxT("Restore"));
+	mpTopNotebook->AddPage(mpRestorePanel, wxT("Restore"));
 	
 	wxMenu *menuFile = new wxMenu;
 	menuFile->Append(ID_File_New,  wxT("&New...\tCtrl-N"), 
@@ -266,7 +223,7 @@ void MainFrame::DoFileOpen(const wxString& path)
 		return;
 	}		
 	
-	theClientPanel->Reload();
+	mpClientConfigPanel->Reload();
 
 	mConfigFileName = path;
 	UpdateTitle();
@@ -478,4 +435,18 @@ void MainFrame::UpdateTitle() {
 			mConfigFileName.c_str(), clean ? wxT("") : wxT("*"));
 	}
 	SetTitle(title);
+}
+
+void MainFrame::ShowPanel(wxPanel* pTargetPanel)
+{
+	pTargetPanel->Show();
+	for (size_t index = 0; index < mpTopNotebook->GetPageCount(); index++)
+	{
+		wxWindow* pPage = mpTopNotebook->GetPage(index);
+		if (pPage == pTargetPanel)
+		{
+			mpTopNotebook->SetSelection(index);
+			break;
+		}
+	}
 }

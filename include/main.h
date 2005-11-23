@@ -65,6 +65,14 @@ enum {
 	#undef STR_PROP
 	#undef STR_PROP_SUBCONF
 
+	ID_General_Backup_Button,
+	ID_General_Restore_Button,
+	ID_General_Compare_Button,
+
+	ID_Backup_Start_Button,
+	ID_Backup_Locations_Button,
+	ID_Backup_Config_Button,
+
 	ID_Backup_Locations_Tree,
 	ID_Backup_LocationsAddButton,
 	ID_Backup_LocationsEditButton,
@@ -97,11 +105,69 @@ enum {
 	
 	ID_Compare_List,
 	ID_Compare_Button,
-	
-	ID_Backup_Panel_Start_Button,
 };
 
 void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor, 
 	bool growToFit, wxSizer *sizer);
+
+class ConfigChangeListener {
+	public:
+	virtual ~ConfigChangeListener() { }
+	virtual void NotifyChange() { }
+};
+
+class ClientConfig;
+class ServerConnection;
+class BackupFilesPanel;
+class ClientInfoPanel;
+class RestorePanel;
+
+class MainFrame : public wxFrame, public ConfigChangeListener {
+	public:
+	MainFrame(
+		const wxString* pConfigFileName,
+		const wxString& rBoxiExecutablePath,
+		const wxPoint& pos, const wxSize& size, 
+		long style = wxDEFAULT_FRAME_STYLE);
+
+	void ShowPanel(wxPanel* pPanel);
+	
+	private:
+	void OnFileNew	  (wxCommandEvent& event);
+	void OnFileOpen	  (wxCommandEvent& event);
+	void OnFileSave	  (wxCommandEvent& event);
+	void OnFileSaveAs (wxCommandEvent& event);
+	void OnFileQuit	  (wxCommandEvent& event);
+	void OnFileDir	  (wxCommandEvent& event);
+	void OnViewOld    (wxCommandEvent& event);
+	void OnViewDeleted(wxCommandEvent& event);
+	void OnHelpAbout  (wxCommandEvent& event);
+	void OnSize		  (wxSizeEvent&	   event);
+	void OnClose      (wxCloseEvent&   event);
+
+	void DoFileOpen   (const wxString& path);
+	void DoFileNew    ();
+	void DoFileSave   ();
+	void DoFileSaveAs ();
+	void DoFileSaveAs2();
+	
+	// implement ConfigChangeListener
+	void NotifyChange();
+	void UpdateTitle();
+	
+	wxStatusBar*        mpStatusBar;
+	wxString            mConfigFileName;
+	ClientConfig*       mpConfig;
+	ServerConnection*   mpServerConnection;
+	
+	wxNotebook*         mpTopNotebook;
+	BackupFilesPanel*   mpBackupFilesPanel;
+	ClientInfoPanel*    mpClientConfigPanel;
+	wxPanel*            mpLocationsPanel;
+	RestorePanel*       mpRestorePanel;
+	wxMenu*             mpViewMenu;
+	
+	DECLARE_EVENT_TABLE()
+};	
 
 #endif /* _MAIN_H */
