@@ -103,9 +103,6 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 	wxBoxSizer* pStateSizer = new wxBoxSizer( wxHORIZONTAL );
 	pScrollablePanelSizer->Add(pStateSizer, 0, wxGROW | wxALL, 4);
 
-	// duplicate in BackupFilesPanel
-	wxInitAllImageHandlers();
-	
 	LoadBitmap(tick16a_png, mTickBitmap);
 	LoadBitmap(cross16a_png, mCrossBitmap);
 	
