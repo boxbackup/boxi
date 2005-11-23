@@ -33,13 +33,17 @@
 #include "BackupPanel.h"
 
 BEGIN_EVENT_TABLE(BackupPanel, wxPanel)
-EVT_BUTTON(ID_Backup_Panel_Start_Button, BackupPanel::OnClickStartButton)
+EVT_BUTTON(ID_Backup_Locations_Button, BackupPanel::OnClickLocationsButton)
+EVT_BUTTON(ID_Backup_Config_Button,    BackupPanel::OnClickServerButton)
+EVT_BUTTON(ID_Backup_Start_Button,     BackupPanel::OnClickStartButton)
+EVT_BUTTON(wxID_CANCEL,                BackupPanel::OnClickCloseButton)
 END_EVENT_TABLE()
 
 BackupPanel::BackupPanel(
 	ClientConfig *pConfig,
-	BackupProgressPanel& rProgressPanel,
-	wxNotebook* pTopNotebook,
+	BackupProgressPanel* pProgressPanel,
+	MainFrame* pMainFrame,
+	ClientInfoPanel* pClientConfigPanel,
 	wxWindow* parent, 
 	wxWindowID id,
 	const wxPoint& pos, 
@@ -48,8 +52,9 @@ BackupPanel::BackupPanel(
 	const wxString& name)
 	: wxPanel(parent, id, pos, size, style, name),
 	  mpConfig(pConfig),
-	  mrProgressPanel(rProgressPanel),
-	  mpTopNotebook(pTopNotebook)
+	  mpClientConfigPanel(pClientConfigPanel),
+	  mpProgressPanel(pProgressPanel),
+	  mpMainFrame(pMainFrame)
 {
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -64,8 +69,8 @@ BackupPanel::BackupPanel(
 	pSourceBox->Add(pSourceCtrlSizer, 0, 
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	wxButton* pSourceEditButton = new wxButton(this, wxID_ANY, 
-		wxT("Edit List"));
+	wxButton* pSourceEditButton = new wxButton(this, 
+		ID_Backup_Locations_Button, wxT("Edit List"));
 	pSourceCtrlSizer->Add(pSourceEditButton, 0, wxGROW, 0);
 	
 	wxStaticBoxSizer* pDestBox = new wxStaticBoxSizer(wxVERTICAL, 
@@ -79,7 +84,7 @@ BackupPanel::BackupPanel(
 	pDestBox->Add(pDestCtrlSizer, 0, 
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	wxButton* pDestEditButton = new wxButton(this, wxID_ANY, 
+	wxButton* pDestEditButton = new wxButton(this, ID_Backup_Config_Button, 
 		wxT("Change Server"));
 	pDestCtrlSizer->Add(pDestEditButton, 0, wxGROW, 0);
 
@@ -88,8 +93,12 @@ BackupPanel::BackupPanel(
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	wxButton* pBackupStartButton = new wxButton(this, 
-		ID_Backup_Panel_Start_Button, wxT("Start Backup"));
+		ID_Backup_Start_Button, wxT("Start Backup"));
 	pActionCtrlSizer->Add(pBackupStartButton, 0, wxGROW, 0);
+
+	wxButton* pCloseButton = new wxButton(this, 
+		wxID_CANCEL, wxT("Close"));
+	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
 
 	SetSizer( pMainSizer );
 	
@@ -135,18 +144,24 @@ void BackupPanel::NotifyChange()
 	Update();
 }
 
+void BackupPanel::OnClickLocationsButton(wxCommandEvent& rEvent)
+{
+
+}
+
+void BackupPanel::OnClickServerButton(wxCommandEvent& rEvent)
+{
+	mpMainFrame->ShowPanel(mpClientConfigPanel);
+}
+
 void BackupPanel::OnClickStartButton(wxCommandEvent& rEvent)
 {
-	mrProgressPanel.Show();
-	for (size_t index = 0; index < mpTopNotebook->GetPageCount(); index++)
-	{
-		wxWindow* pPage = mpTopNotebook->GetPage(index);
-		if (pPage == &mrProgressPanel)
-		{
-			mpTopNotebook->SetSelection(index);
-			break;
-		}
-	}
+	mpMainFrame->ShowPanel(mpProgressPanel);
 	wxYield();
-	mrProgressPanel.StartBackup();
+	mpProgressPanel->StartBackup();
+}
+
+void BackupPanel::OnClickCloseButton(wxCommandEvent& rEvent)
+{
+	Hide();
 }

@@ -29,6 +29,7 @@
 #include <wx/thread.h>
 
 #include "ClientConfig.h"
+#include "ClientInfoPanel.h"
 #include "ClientConnection.h"
 #include "BackupProgressPanel.h"
 
@@ -43,8 +44,9 @@ class BackupPanel
 	public:
 	BackupPanel(
 		ClientConfig *pConfig,
-		BackupProgressPanel& rProgressPanel,
-		wxNotebook* pTopNotebook,
+		BackupProgressPanel* pProgressPanel,
+		MainFrame* pMainFrame,
+		ClientInfoPanel* pClientConfigPanel,
 		wxWindow* parent, wxWindowID id = -1,
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
@@ -53,14 +55,18 @@ class BackupPanel
 
 	private:
 	ClientConfig* mpConfig;
-	BackupProgressPanel& mrProgressPanel;
+	ClientInfoPanel* mpClientConfigPanel;
+	BackupProgressPanel* mpProgressPanel;
 	wxListBox*    mpSourceList;
 	wxStaticText* mpDestLabel;
-	wxNotebook*   mpTopNotebook;
+	MainFrame*    mpMainFrame;
 	
 	void NotifyChange();
 	void Update();
-	void OnClickStartButton(wxCommandEvent& rEvent);
+	void OnClickLocationsButton(wxCommandEvent& rEvent);
+	void OnClickServerButton   (wxCommandEvent& rEvent);
+	void OnClickStartButton    (wxCommandEvent& rEvent);
+	void OnClickCloseButton    (wxCommandEvent& rEvent);
 	
 	DECLARE_EVENT_TABLE()
 };
