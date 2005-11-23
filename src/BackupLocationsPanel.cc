@@ -767,7 +767,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 	Location*       pLocation   = pTreeNode->GetLocation();
 	MyExcludeEntry* pExcludedBy = pTreeNode->GetExcludedBy();
 	MyExcludeEntry* pIncludedBy = pTreeNode->GetIncludedBy();
-	MyExcludeList*  pList;
+	MyExcludeList*  pList = NULL;
 	if (pLocation) 
 		pList = &(pLocation->GetExcludeList());
 	bool updateParents  = FALSE;
@@ -820,7 +820,8 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				updateParents  = TRUE;
 				updateChildren = TRUE;
 			}
-			pList->RemoveEntry(pIncludedBy);
+			if (pList)
+				pList->RemoveEntry(pIncludedBy);
 		}			
 	} 
 	else if	(pExcludedBy != NULL)
@@ -839,7 +840,8 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			if (fn.SameAs(pTreeNode->GetFileName()))
 			{
 				updateChildren = TRUE;
-				pList->RemoveEntry(pExcludedBy);
+				if (pList)
+					pList->RemoveEntry(pExcludedBy);
 				handled = TRUE;
 			}
 		}
@@ -854,7 +856,8 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 					? ETI_ALWAYS_INCLUDE_DIR
 					: ETI_ALWAYS_INCLUDE_FILE],
 				buf.data());
-			pList->AddEntry(pNewEntry);
+			if (pList)
+				pList->AddEntry(pNewEntry);
 			updateChildren = TRUE;
 		}
 	}
@@ -894,7 +897,8 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 					pTreeNode->IsDirectory() ? ETI_EXCLUDE_DIR
 					: ETI_EXCLUDE_FILE],
 				buf.data());
-			pList->AddEntry(pNewEntry);
+			if (pList)
+				pList->AddEntry(pNewEntry);
 			updateChildren = TRUE;
 		}
 	}
