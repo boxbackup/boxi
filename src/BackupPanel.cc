@@ -31,6 +31,8 @@
 
 #include "main.h"
 #include "BackupPanel.h"
+#include "BackupLocationsPanel.h"
+#include "ClientInfoPanel.h"
 
 BEGIN_EVENT_TABLE(BackupPanel, wxPanel)
 EVT_BUTTON(ID_Backup_Locations_Button, BackupPanel::OnClickLocationsButton)
@@ -43,6 +45,7 @@ BackupPanel::BackupPanel(
 	ClientConfig *pConfig,
 	BackupProgressPanel* pProgressPanel,
 	MainFrame* pMainFrame,
+	BackupLocationsPanel* pBackupLocationsPanel,
 	ClientInfoPanel* pClientConfigPanel,
 	wxWindow* parent, 
 	wxWindowID id,
@@ -52,6 +55,7 @@ BackupPanel::BackupPanel(
 	const wxString& name)
 	: wxPanel(parent, id, pos, size, style, name),
 	  mpConfig(pConfig),
+	  mpBackupLocationsPanel(pBackupLocationsPanel),
 	  mpClientConfigPanel(pClientConfigPanel),
 	  mpProgressPanel(pProgressPanel),
 	  mpMainFrame(pMainFrame)
@@ -146,7 +150,7 @@ void BackupPanel::NotifyChange()
 
 void BackupPanel::OnClickLocationsButton(wxCommandEvent& rEvent)
 {
-
+	mpMainFrame->ShowPanel(mpBackupLocationsPanel);
 }
 
 void BackupPanel::OnClickServerButton(wxCommandEvent& rEvent)

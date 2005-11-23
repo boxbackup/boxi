@@ -28,8 +28,8 @@
 #include <wx/wx.h>
 #include <wx/thread.h>
 
-#include "ClientConfig.h"
-#include "ClientInfoPanel.h"
+// #include "ClientConfig.h"
+// #include "ClientInfoPanel.h"
 #include "ClientConnection.h"
 #include "BackupProgressPanel.h"
 
@@ -46,6 +46,7 @@ class BackupPanel
 		ClientConfig *pConfig,
 		BackupProgressPanel* pProgressPanel,
 		MainFrame* pMainFrame,
+		BackupLocationsPanel* pBackupLocationsPanel,
 		ClientInfoPanel* pClientConfigPanel,
 		wxWindow* parent, wxWindowID id = -1,
 		const wxPoint& pos = wxDefaultPosition, 
@@ -55,6 +56,7 @@ class BackupPanel
 
 	private:
 	ClientConfig* mpConfig;
+	BackupLocationsPanel* mpBackupLocationsPanel;
 	ClientInfoPanel* mpClientConfigPanel;
 	BackupProgressPanel* mpProgressPanel;
 	wxListBox*    mpSourceList;
