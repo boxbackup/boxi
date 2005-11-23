@@ -28,9 +28,7 @@
 #include <wx/wx.h>
 #include <wx/thread.h>
 
-#include "ClientConfig.h"
-#include "ClientConnection.h"
-#include "BackupProgressPanel.h"
+#include "BackupPanel.h"
 
 /** 
  * GeneralPanel
@@ -41,6 +39,8 @@ class GeneralPanel : public wxPanel
 {
 	public:
 	GeneralPanel(
+		MainFrame* pMainFrame,
+		BackupPanel* pBackupPanel,
 		wxWindow* parent, wxWindowID id = wxID_ANY,
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
@@ -48,6 +48,11 @@ class GeneralPanel : public wxPanel
 		const wxString& name = wxT("General Panel"));
 
 	private:
+	MainFrame*   mpMainFrame;
+	BackupPanel* mpBackupPanel;
+	
+	void OnBackupButtonClick(wxCommandEvent& event);
+	
 	DECLARE_EVENT_TABLE()
 };
 

@@ -29,17 +29,21 @@
 #include "GeneralPanel.h"
 
 BEGIN_EVENT_TABLE(GeneralPanel, wxPanel)
-//EVT_BUTTON(ID_Backup_Panel_Start_Button, GeneralPanel::OnClickStartButton)
+EVT_BUTTON(ID_General_Backup_Button, GeneralPanel::OnBackupButtonClick)
 END_EVENT_TABLE()
 
 GeneralPanel::GeneralPanel(
+	MainFrame* pMainFrame,
+	BackupPanel* pBackupPanel,
 	wxWindow* parent, 
 	wxWindowID id,
 	const wxPoint& pos, 
 	const wxSize& size,
 	long style, 
 	const wxString& name)
-	: wxPanel(parent, id, pos, size, style, name)
+: wxPanel(parent, id, pos, size, style, name),
+  mpMainFrame(pMainFrame),
+  mpBackupPanel(pBackupPanel)
 {
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 	SetSizer(pMainSizer);
@@ -54,7 +58,8 @@ GeneralPanel::GeneralPanel(
 		wxT("Copy files from this computer to the backup server"));
 	pBackupBox->Add(pBackupText, 1, wxALIGN_CENTER_VERTICAL | wxALL, 8);
 	
-	wxButton* pBackupButton = new wxButton(this, wxID_ANY, wxT("&Backup"));
+	wxButton* pBackupButton = new wxButton(this, 
+		ID_General_Backup_Button, wxT("&Backup"));
 	pBackupBox->Add(pBackupButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
 
@@ -62,13 +67,14 @@ GeneralPanel::GeneralPanel(
 	
 	wxStaticBoxSizer* pRestoreBox = new wxStaticBoxSizer(wxHORIZONTAL,
 		this, wxT("Restore"));
-	pMainSizer->Add(pRestoreBox, 0, wxGROW | wxALL, 8);
+	pMainSizer->Add(pRestoreBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	wxStaticText* pRestoreText = new wxStaticText(this, wxID_ANY, 
 		wxT("Copy files from the backup server to this computer"));
 	pRestoreBox->Add(pRestoreText, 1, wxALIGN_CENTER_VERTICAL | wxALL, 8);
 	
-	wxButton* pRestoreButton = new wxButton(this, wxID_ANY, wxT("&Restore"));
+	wxButton* pRestoreButton = new wxButton(this, 
+		ID_General_Restore_Button, wxT("&Restore"));
 	pRestoreBox->Add(pRestoreButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
 
@@ -76,14 +82,19 @@ GeneralPanel::GeneralPanel(
 	
 	wxStaticBoxSizer* pCompareBox = new wxStaticBoxSizer(wxHORIZONTAL,
 		this, wxT("Compare"));
-	pMainSizer->Add(pCompareBox, 0, wxGROW | wxALL, 8);
+	pMainSizer->Add(pCompareBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	wxStaticText* pCompareText = new wxStaticText(this, wxID_ANY, 
 		wxT("Compare files on the backup server with this computer"));
 	pCompareBox->Add(pCompareText, 1, wxALIGN_CENTER_VERTICAL | wxALL, 8);
 	
-	wxButton* pCompareButton = new wxButton(this, wxID_ANY, wxT("&Compare"));
+	wxButton* pCompareButton = new wxButton(this, 
+		ID_General_Compare_Button, wxT("&Compare"));
 	pCompareBox->Add(pCompareButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
+}
 
+void GeneralPanel::OnBackupButtonClick(wxCommandEvent& event)
+{
+	mpMainFrame->ShowPanel(mpBackupPanel);
 }
