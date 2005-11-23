@@ -715,7 +715,7 @@ bool RestoreTreeNode::_AddChildrenSlow(bool recursive)
 		
 		if (pNewNode->IsDeleted())
 			mpTreeCtrl->SetItemTextColour(pNewNode->mTreeId, 
-				*wxTheColourDatabase->FindColour(wxT("GREY")));
+				wxTheColourDatabase->Find(wxT("GREY")));
 			
 		if (pNewNode->IsDirectory())
 		{
