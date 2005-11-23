@@ -73,8 +73,15 @@ MainFrame::MainFrame(
 
 	mpServerConnection = new ServerConnection(mpConfig);
 	mpStatusBar = CreateStatusBar(1);
+
+	wxInitAllImageHandlers();
 	
 	mpTopNotebook = new wxNotebook(this, ID_Top_Notebook);
+
+	mpLocationsPanel = new BackupLocationsPanel(
+		mpConfig,
+		mpTopNotebook, 
+		ID_Client_Panel);
 
 	mpClientConfigPanel = new ClientInfoPanel(
 		mpConfig,
@@ -88,8 +95,8 @@ MainFrame::MainFrame(
 	pBackupProgressPanel->Hide();
 	
 	BackupPanel *pBackupPanel = new BackupPanel(
-		mpConfig, pBackupProgressPanel, this, mpClientConfigPanel,
-		mpTopNotebook, ID_Backup_Panel);
+		mpConfig, pBackupProgressPanel, this, mpLocationsPanel, 
+		mpClientConfigPanel, mpTopNotebook, ID_Backup_Panel);
 	mpConfig->AddListener(pBackupPanel);
 	pBackupPanel->Hide();
 
@@ -108,10 +115,6 @@ MainFrame::MainFrame(
 		-1);
 	mpTopNotebook->AddPage(pBackupDaemonPanel, wxT("Backup Process"));
 	
-	mpLocationsPanel = new BackupLocationsPanel(
-		mpConfig,
-		mpTopNotebook, 
-		ID_Client_Panel);
 	mpTopNotebook->AddPage(mpLocationsPanel, wxT("Backup"));
 
 	/*
