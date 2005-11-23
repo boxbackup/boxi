@@ -48,12 +48,16 @@ class BackupTreeCtrl : public wxTreeCtrl {
 	);
 	void UpdateExcludedStateIcon(BackupTreeNode* pNode, 
 		bool updateParents, bool updateChildren);
-
+	BackupTreeNode* GetRootNode() { return mpRootNode; }
+	
 	private:
 	int OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& item2);
 
+	BackupTreeNode *mpRootNode;
+
 	wxImageList mImages;
 	int mEmptyImageId;
+	int mPartialImageId;
 	int mCheckedImageId;
 	int mCheckedGreyImageId;
 	int mCrossedImageId;
@@ -77,6 +81,8 @@ class BackupTreeNode : public wxTreeItemData {
 	ClientConfig*   mpConfig;
 	
 	public:
+	int             mIconId;
+	
 	BackupTreeNode(BackupTreeCtrl* pTreeCtrl, ClientConfig* pConfig, 
 		const wxString& path
 	) { 
@@ -89,6 +95,7 @@ class BackupTreeNode : public wxTreeItemData {
 		mpExcludedBy = NULL;
 		mpIncludedBy = NULL;
 		mpConfig     = pConfig;
+		mIconId      = -1;
 	}
 	BackupTreeNode(BackupTreeNode* pParent, const wxString& path) { 
 		mpParentNode = pParent;
@@ -100,6 +107,7 @@ class BackupTreeNode : public wxTreeItemData {
 		mpExcludedBy = pParent->GetExcludedBy();
 		mpIncludedBy = pParent->GetIncludedBy();
 		mpConfig     = pParent->GetConfig();
+		mIconId      = -1;
 	}
 	
 	wxTreeItemId      GetTreeId()   { return mTreeId; }
