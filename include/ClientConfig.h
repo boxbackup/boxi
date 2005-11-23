@@ -29,12 +29,6 @@
 #include "Property.h"
 #include "Location.h"
 
-class ConfigChangeListener {
-	public:
-	virtual ~ConfigChangeListener() { }
-	virtual void NotifyChange() { }
-};
-
 class ClientConfig : public PropertyChangeListener {
 	private:
 	ClientConfig(const ClientConfig& forbidden);
