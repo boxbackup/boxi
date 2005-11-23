@@ -514,8 +514,6 @@ BackupFilesPanel::BackupFilesPanel(
 	
 	theBackupFileTree->SetItemHasChildren(theTreeRootItem, TRUE);
 	
-	wxInitAllImageHandlers();
-	
 	mCheckedImageId  = AddImage(tick16_png,      mTreeImages);
 	mCrossedImageId  = AddImage(cross16_png,     mTreeImages);
 	mUnknownImageId  = AddImage(unknown16_png,   mTreeImages);
