@@ -119,6 +119,7 @@ class ConfigChangeListener {
 class ClientConfig;
 class ServerConnection;
 class BackupFilesPanel;
+class BackupLocationsPanel;
 class ClientInfoPanel;
 class RestorePanel;
 
@@ -160,12 +161,12 @@ class MainFrame : public wxFrame, public ConfigChangeListener {
 	ClientConfig*       mpConfig;
 	ServerConnection*   mpServerConnection;
 	
-	wxNotebook*         mpTopNotebook;
-	BackupFilesPanel*   mpBackupFilesPanel;
-	ClientInfoPanel*    mpClientConfigPanel;
-	wxPanel*            mpLocationsPanel;
-	RestorePanel*       mpRestorePanel;
-	wxMenu*             mpViewMenu;
+	wxNotebook*           mpTopNotebook;
+	BackupFilesPanel*     mpBackupFilesPanel;
+	ClientInfoPanel*      mpClientConfigPanel;
+	BackupLocationsPanel* mpLocationsPanel;
+	RestorePanel*         mpRestorePanel;
+	wxMenu*               mpViewMenu;
 	
 	DECLARE_EVENT_TABLE()
 };	
