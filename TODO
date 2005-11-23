@@ -78,6 +78,15 @@ When a read-write connection is needed, we should disconnect and
 downgrade to a read-only connection as soon as it's finished, to make
 way for bbackupd.
 
+=item *
+Fix abort on clicking Add Exclusion with no path entered
+
+=item *
+Fix creation and display of exclusions in tree
+
+=item *
+Fix layout of advanced locations panel
+
 =back
 
-Last updated: 2005-06-05 by Chris Wilson.
+Last updated: 2005-11-23 by Chris Wilson.
