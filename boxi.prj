@@ -136,7 +136,8 @@ module.source.files=\
 	tickgrey16.png.c\
 	BackupPanel.cc\
 	BackupProgressPanel.cc\
-	GeneralPanel.cc
+	GeneralPanel.cc\
+	partialtick16.png.c
 
 module.pixmap.name=pixmaps
 module.pixmap.type=

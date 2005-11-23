@@ -40,5 +40,6 @@ src/tickgrey16.png.c
 src/BackupPanel.cc
 src/BackupProgressPanel.cc
 src/GeneralPanel.cc
+src/partialtick16.png.c
 
 

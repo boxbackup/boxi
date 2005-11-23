@@ -51,7 +51,8 @@ boxi_SOURCES = \
 	tickgrey16.png.c\
 	BackupPanel.cc\
 	BackupProgressPanel.cc\
-	GeneralPanel.cc
+	GeneralPanel.cc\
+	partialtick16.png.c
 
 boxi_LDFLAGS = 
 
