@@ -82,9 +82,6 @@ way for bbackupd.
 Fix abort on clicking Add Exclusion with no path entered
 
 =item *
-Fix creation and display of exclusions in tree
-
-=item *
 Fix layout of advanced locations panel
 
 =back
