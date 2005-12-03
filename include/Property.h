@@ -71,11 +71,7 @@ class Property {
 	PropertyChangeListener* mpListener;
 
 	public:
-	Property(const char * pKeyName, PropertyChangeListener* pListener)
-	{
-		mKeyName = pKeyName;
-		mpListener = pListener;
-	}
+	Property(const char * pKeyName, PropertyChangeListener* pListener);
 	virtual ~Property() { }
 	
 	virtual void SetFrom(const Configuration* pConf) = 0;
@@ -88,61 +84,17 @@ class BoolProperty : public Property
 {
 	public:
 	BoolProperty(const char * pKeyName, bool value, 
-		PropertyChangeListener* pListener) 
-	: Property(pKeyName, pListener) 
-	{
-		mValue = value;
-		mConfigured = TRUE;
-		SetClean();
-	}
-		
+		PropertyChangeListener* pListener);
 	BoolProperty(const char * pKeyName, const Configuration* pConf,
-		PropertyChangeListener* pListener) 
-	: Property(pKeyName, pListener) 
-	{
-		SetFrom(pConf);
-	}
+		PropertyChangeListener* pListener);
 	
-	void SetFrom(const Configuration* pConf) 
-	{
-		if (pConf->KeyExists(mKeyName.c_str())) {
-			mValue = pConf->GetKeyValueBool(mKeyName.c_str());
-			mConfigured = TRUE;
-		} else {
-			mConfigured = FALSE;
-		}
-		SetClean();
-	}
-	
-	const bool* Get()        { return mConfigured ? &mValue : NULL; }
-	void Set(bool newValue) 
-	{
-		bool changed = (newValue != mValue || mConfigured == FALSE);
-		mValue = newValue; 
-		mConfigured = TRUE; 
-		if (changed && mpListener) mpListener->OnPropertyChange(this);
-	}
-	void Clear()
-	{ 
-		bool changed = (mConfigured == TRUE);
-		mConfigured = FALSE; 
-		if (changed && mpListener) mpListener->OnPropertyChange(this);
-	}
-	bool GetInto(bool& dest) { 
-		if (mConfigured) 
-			dest = mValue; 
-		return mConfigured; 
-	}
-
-	void SetClean() { 
-		mWasConfigured = mConfigured; 
-		mOriginalValue = mValue; 
-	}
-	bool IsClean()  { 
-		if (mConfigured != mWasConfigured) return FALSE;
-		if (!mConfigured) return TRUE;
-		return (mOriginalValue == mValue);
-	}
+	void SetFrom(const Configuration* pConf);
+	const bool* Get();
+	void Set(bool newValue) ;
+	void Clear();
+	bool GetInto(bool& dest);
+	void SetClean();
+	bool IsClean();
 
 	private:
 	bool mValue, mOriginalValue;
@@ -153,65 +105,17 @@ class IntProperty : public Property
 {
 	public:
 	IntProperty(const char * pKeyName, int value,
-		PropertyChangeListener* pListener) 
-	: Property(pKeyName, pListener) 
-	{
-		this->mValue = value;
-		this->mConfigured = TRUE;
-		SetClean();
-	}
+		PropertyChangeListener* pListener);
 	IntProperty(const char * pKeyName, const Configuration* pConf,
-		PropertyChangeListener* pListener) 
-	: Property(pKeyName, pListener)
-	{
-		SetFrom(pConf);
-	}
-	
-	void SetFrom(const Configuration* pConf) 
-	{
-		if (pConf->KeyExists(mKeyName.c_str())) {
-			this->mValue = pConf->GetKeyValueInt(mKeyName.c_str());
-			this->mConfigured = TRUE;
-		} else {
-			this->mConfigured = FALSE;
-		}
-		SetClean();
-	}
-	
-	const int* Get()       { return mConfigured ? &mValue : NULL; }
-	void Set(int newValue) { 
-		bool changed = (newValue != mValue || mConfigured == FALSE);
-		mValue = newValue; 
-		mConfigured = TRUE; 
-		if (changed && mpListener) mpListener->OnPropertyChange(this);
-	}
-	void Clear() { 
-		bool changed = (mConfigured == TRUE);
-		mConfigured = FALSE;
-		if (changed && mpListener) mpListener->OnPropertyChange(this);
-	}
-	bool GetInto(std::string& dest) { 
-		if (!mConfigured) return FALSE;
-		wxString formatted;
-		formatted.Printf(wxT("%d"), mValue);
-		wxCharBuffer buf = formatted.mb_str(wxConvLibc);
-		dest = buf.data();
-		return TRUE;
-	}
-	bool GetInto(int& dest) { 
-		if (mConfigured) 
-			dest = mValue; 
-		return mConfigured; 
-	}
-	void SetClean() { 
-		mWasConfigured = mConfigured; 
-		mOriginalValue = mValue; 
-	}
-	bool IsClean()  {
-		if (mConfigured != mWasConfigured) return FALSE;
-		if (!mConfigured) return TRUE;
-		return (mOriginalValue == mValue);
-	}
+		PropertyChangeListener* pListener);
+	void SetFrom(const Configuration* pConf);
+	const int* Get();
+	void Set(int newValue);
+	void Clear();
+	bool GetInto(std::string& dest);
+	bool GetInto(int& dest);
+	void SetClean();
+	bool IsClean();
 	
 	private:
 	int mValue, mOriginalValue;
@@ -222,69 +126,18 @@ class StringProperty : public Property
 {
 	public:
 	StringProperty(const char * pKeyName, const std::string& value,
-		PropertyChangeListener* pListener) 
-	: Property(pKeyName, pListener) 
-	{
-		this->mValue = value;
-		if (value.length() > 0)
-			this->mConfigured = TRUE;
-		else
-			this->mConfigured = FALSE;
-		SetClean();
-	}
-	
+		PropertyChangeListener* pListener);
 	StringProperty(const char * pKeyName, const Configuration* pConf,
-		PropertyChangeListener* pListener) 
-	: Property(pKeyName, pListener) 
-	{
-		SetFrom(pConf);
-	}
+		PropertyChangeListener* pListener);
 
-	void SetFrom(const Configuration* pConf)	
-	{
-		if (pConf->KeyExists(mKeyName.c_str())) {
-			this->mValue = pConf->GetKeyValue(mKeyName.c_str());
-			this->mConfigured = TRUE;
-		} else {
-			this->mConfigured = FALSE;
-		}
-		SetClean();
-	}
-	
-	const std::string* Get()              { return mConfigured ? &mValue : NULL; }
-	void Set(const std::string& newValue) 
-	{ 
-		bool changed = (newValue != mValue || mConfigured == FALSE);
-		mValue = newValue; 
-		mConfigured = TRUE; 
-		if (changed && mpListener) mpListener->OnPropertyChange(this);
-	}
-	void Set(const char * newValue) { 
-		bool changed = (newValue != mValue || mConfigured == FALSE);
-		mValue = newValue; 
-		mConfigured = TRUE; 
-		if (changed && mpListener) mpListener->OnPropertyChange(this);
-	}
-	void Clear() { 
-		bool changed = (mConfigured == TRUE);
-		mConfigured = FALSE;
-		if (changed && mpListener) mpListener->OnPropertyChange(this);
-	}
-	bool GetInto(std::string& dest) { 
-		if (mConfigured) 
-			dest = mValue; 
-		return mConfigured;
-	}
-	
-	void SetClean() { 
-		mWasConfigured = mConfigured; 
-		mOriginalValue = mValue; 
-	}
-	bool IsClean()  { 
-		if (mConfigured != mWasConfigured) return FALSE;
-		if (!mConfigured) return TRUE;
-		return (mOriginalValue == mValue);
-	}
+	void SetFrom(const Configuration* pConf);
+	const std::string* Get();
+	void Set(const std::string& newValue);
+	void Set(const char * newValue);
+	void Clear();
+	bool GetInto(std::string& dest);
+	void SetClean();
+	bool IsClean();
 	
 	private:
 	std::string mValue, mOriginalValue;
