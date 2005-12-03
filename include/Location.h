@@ -54,6 +54,14 @@ enum ExcludeMatch {
 	EM_REGEX,
 };
 
+enum ExcludedState {
+	EST_UNKNOWN = 0,
+	EST_NOLOC,
+	EST_INCLUDED,
+	EST_EXCLUDED,
+	EST_ALWAYSINCLUDED,
+};
+
 class MyExcludeType {
 	private:
 
@@ -260,7 +268,12 @@ class Location {
 	
 	bool IsExcluded(const wxString& rLocalFileName, bool mIsDirectory, 
 		MyExcludeEntry** ppExcludedBy, MyExcludeEntry** ppIncludedBy);
-
+	ExcludedState GetExcludedState(const wxString& rLocalFileName, 
+		bool mIsDirectory, 
+		MyExcludeEntry** ppExcludedBy, 
+		MyExcludeEntry** ppIncludedBy,
+		ExcludedState ParentState = EST_UNKNOWN);
+	
 	ExcludeList* GetBoxExcludeList(bool listDirs);
 
 	private:

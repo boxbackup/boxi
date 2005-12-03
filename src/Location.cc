@@ -26,6 +26,8 @@
 #include <string>
 #include <regex.h>
 
+#include <wx/filename.h>
+
 #define NDEBUG
 #include "Utils.h"
 #undef NDEBUG
@@ -95,18 +97,72 @@ void MyExcludeList::RemoveEntry(MyExcludeEntry* oldEntry)
 bool Location::IsExcluded(const wxString& rLocalFileName, bool mIsDirectory, 
 	MyExcludeEntry** ppExcludedBy, MyExcludeEntry** ppIncludedBy)
 {
+	ExcludedState state = GetExcludedState(rLocalFileName, mIsDirectory,
+		ppExcludedBy, ppIncludedBy);
+	return (state == EST_UNKNOWN || state == EST_NOLOC 
+		||  state == EST_EXCLUDED);
+}
+	
+ExcludedState Location::GetExcludedState(const wxString& rLocalFileName, 
+	bool mIsDirectory, MyExcludeEntry** ppExcludedBy, 
+	MyExcludeEntry** ppIncludedBy, ExcludedState ParentState)
+{
+	wxLogDebug(wxT(" checking whether %s is excluded..."), 
+		rLocalFileName.c_str());
+	
 	const std::vector<MyExcludeEntry*>& rExcludeList =
 		mpExcluded->GetEntries();
+
+	// inherit default state from parent
+	ExcludedState isExcluded = EST_UNKNOWN;
+	
+	if (ParentState != EST_UNKNOWN)
+	{
+		isExcluded = ParentState;
+	}
+	else
+	{
+		wxFileName fn(rLocalFileName);
+		wxFileName locroot(GetPath());
+		wxFileName root(fn.GetPath());
+		root.SetPath(fn.GetPathSeparator());
+
+		*ppExcludedBy = NULL;
+		*ppIncludedBy = NULL;
+		
+		if (fn == locroot)
+		{
+			isExcluded = EST_INCLUDED;
+		}
+		else if (fn == root)
+		{
+			isExcluded = EST_NOLOC;
+		}
+		else
+		{
+			isExcluded = GetExcludedState(fn.GetPath(), TRUE,
+				ppExcludedBy, ppIncludedBy);
+		}
+	}
+	
+	if (isExcluded == EST_ALWAYSINCLUDED ||
+		isExcluded == EST_UNKNOWN ||
+		isExcluded == EST_NOLOC)
+	{
+		return isExcluded;
+	}
+
+	assert(isExcluded == EST_INCLUDED || isExcluded == EST_EXCLUDED);
 	
 	// on pass 1, remove Excluded files
 	// on pass 2, re-add AlwaysInclude files
 	
-	bool isExcluded = FALSE;
-	
-	for (int pass = 1; pass <= 2; pass++) {
-		wxLogDebug(wxT(" pass %d"), pass);
+	for (int pass = 1; pass <= 2; pass++) 
+	{
+		// wxLogDebug(wxT(" pass %d"), pass);
 
-		if (pass == 2 && !isExcluded) {
+		if (pass == 2 && isExcluded != EST_EXCLUDED) 
+		{
 			// not excluded, so don't bother checking the AlwaysInclude entries
 			continue;
 		}
@@ -156,8 +212,9 @@ bool Location::IsExcluded(const wxString& rLocalFileName, bool mIsDirectory,
 			
 			if (match == EM_EXACT) 
 			{
-				if (rLocalFileName.IsSameAs(value2)) 
+				if (rLocalFileName == value2) 
 				{
+					wxLogDebug(wxT("    exact match"));
 					matched = true;
 				}
 			} 
@@ -189,13 +246,13 @@ bool Location::IsExcluded(const wxString& rLocalFileName, bool mIsDirectory,
 			
 			if (sense == ES_EXCLUDE)
 			{
-				isExcluded = TRUE;
+				isExcluded = EST_EXCLUDED;
 				if (ppExcludedBy)
 					*ppExcludedBy = pExclude;
 			} 
 			else if (sense == ES_ALWAYSINCLUDE)
 			{
-				isExcluded = FALSE;
+				isExcluded = EST_ALWAYSINCLUDED;
 				if (ppIncludedBy)
 					*ppIncludedBy = pExclude;
 			}
