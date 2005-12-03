@@ -79,6 +79,7 @@ class BackupTreeNode : public wxTreeItemData {
 	MyExcludeEntry* mpExcludedBy;
 	MyExcludeEntry* mpIncludedBy;
 	ClientConfig*   mpConfig;
+	ExcludedState   mExcludedState;
 	
 	public:
 	int             mIconId;
@@ -96,6 +97,7 @@ class BackupTreeNode : public wxTreeItemData {
 		mpIncludedBy = NULL;
 		mpConfig     = pConfig;
 		mIconId      = -1;
+		mExcludedState = EST_UNKNOWN;
 	}
 	BackupTreeNode(BackupTreeNode* pParent, const wxString& path) { 
 		mpParentNode = pParent;
@@ -108,6 +110,7 @@ class BackupTreeNode : public wxTreeItemData {
 		mpIncludedBy = pParent->GetIncludedBy();
 		mpConfig     = pParent->GetConfig();
 		mIconId      = -1;
+		mExcludedState = EST_UNKNOWN;
 	}
 	
 	wxTreeItemId      GetTreeId()   { return mTreeId; }
@@ -171,7 +174,9 @@ class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
 	void UpdateExcludeCtrlEnabledState();
 	void PopulateLocationList();
 	void PopulateExclusionList();
-	void NotifyChange();
+	void NotifyChange(); /* ConfigChangeListener interface */
+	void UpdateTreeOnConfigChange();
+	void UpdateAdvancedTabOnConfigChange();
 	
 	long GetSelectedExcludeIndex();
 	MyExcludeEntry* GetExcludeEntry();

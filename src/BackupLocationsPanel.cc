@@ -96,11 +96,11 @@ void BackupTreeNode::_AddChildrenSlow(bool recursive)
 void BackupTreeCtrl::UpdateExcludedStateIcon(
 	BackupTreeNode* pNode, bool updateParents, bool updateChildren) 
 {
-	// wxLogDebug(wxT("Updating icon for: %s"), pNode->GetFullPath().c_str());
+	wxLogDebug(wxT("Updating icon for: %s"), pNode->GetFullPath().c_str());
 	
 	int iconId = mEmptyImageId;
 	
-	pNode->UpdateExcludedState(updateParents);
+	pNode->UpdateExcludedState(FALSE);
 	BackupTreeNode* pParent = pNode->GetParentNode();
 
 	if (updateParents && pNode->GetParentNode() != NULL)
@@ -191,12 +191,14 @@ void BackupTreeNode::UpdateExcludedState(bool updateParents)
 	
 	// by default, inherit our include/exclude state
 	// from our parent node, if we have one
+	ExcludedState ParentState = EST_UNKNOWN;
 	
 	if (mpParentNode) 
 	{
-		mpLocation = mpParentNode->mpLocation;
+		mpLocation   = mpParentNode->mpLocation;
 		mpExcludedBy = mpParentNode->mpExcludedBy;
 		mpIncludedBy = mpParentNode->mpIncludedBy;
+		ParentState  = mpParentNode->mExcludedState;
 	} 
 	else 
 	{
@@ -240,12 +242,14 @@ void BackupTreeNode::UpdateExcludedState(bool updateParents)
 			wxT("Full path does not start with location path!"),
 			wxT("Boxi Error"), wxOK | wxICON_ERROR, NULL);
 	}
-		
+	
+	/*	
 	wxLogDebug(wxT("Checking %s against exclude list for %s"),
 		mFullPath.c_str(), mpLocation->GetPath().c_str());
-
-	mpLocation->IsExcluded(mpLocation->GetPath(), mIsDirectory,
-		&mpExcludedBy, &mpIncludedBy);
+	*/
+	
+	mExcludedState = mpLocation->GetExcludedState(mFullPath, mIsDirectory,
+		&mpExcludedBy, &mpIncludedBy, ParentState);
 }
 
 static int AddImage(
@@ -301,7 +305,9 @@ BackupTreeCtrl::BackupTreeCtrl(
 	mAlwaysGreyImageId   = AddImage(plusgrey16_png,    mImages);
 
 	SetImageList(&mImages);
-	UpdateExcludedStateIcon(mpRootNode, false, false);
+	
+	// No need to UpdateExcludedStateIcon here: BackupLocationsPanel 
+	// constructor calls NotifyChange which does this anyway.
 }
 
 int BackupTreeCtrl::OnCompareItems(
@@ -803,10 +809,20 @@ void BackupLocationsPanel::OnLocationCmdClick(wxCommandEvent &event)
 
 void BackupLocationsPanel::NotifyChange()
 {
+	UpdateTreeOnConfigChange();
+	UpdateAdvancedTabOnConfigChange();	
+}
+
+void BackupLocationsPanel::UpdateTreeOnConfigChange()
+{
+	mpTree->UpdateExcludedStateIcon(mpTree->GetRootNode(), FALSE, TRUE);
+}
+
+void BackupLocationsPanel::UpdateAdvancedTabOnConfigChange()
+{
 	PopulateLocationList();
 	PopulateExclusionList();
 	UpdateExcludeCtrlEnabledState();
-	mpTree->UpdateExcludedStateIcon(mpTree->GetRootNode(), FALSE, TRUE);
 }
 
 void BackupLocationsPanel::OnTreeNodeExpand(wxTreeEvent& event)
@@ -836,8 +852,11 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 	if (pLocation) 
 		pList = &(pLocation->GetExcludeList());
 
+	BackupTreeNode* pUpdateFrom = NULL;
 	bool updateChildren = FALSE;
-	bool updateLocation = FALSE;
+	
+	// avoid updating whole tree
+	mpConfig->RemoveListener(this);
 	
 	if (pIncludedBy != NULL)
 	{
@@ -865,27 +884,48 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		
 		if (warnUser) 
 		{
+			wxString PathToExclude(pIncludedBy->GetValue().c_str(), 
+				wxConvLibc);
+			
 			wxString msg;
 			msg.Printf(wxT(
 				"To exclude this item, you will have to "
 				"exclude all of %s. Do you really want to "
 				"do this?"),
-				pIncludedBy->GetValue().c_str());
+				PathToExclude.c_str());
+			
 			int result = wxMessageBox(msg, wxT("Boxi Warning"), 
 				wxYES_NO | wxICON_EXCLAMATION);
 			if (result == wxYES)
 				doDelete = TRUE;
 		}
 		
-		if (doDelete) {
+		if (doDelete) 
+		{
+			pUpdateFrom = pTreeNode;
+			
 			if (pIncludedBy->GetMatch() != EM_EXACT)
 			{
-				updateLocation = TRUE;
+				for (BackupTreeNode* pParentNode = pTreeNode->GetParentNode();
+					pParentNode != NULL && 
+					pParentNode->GetLocation() == pLocation;
+					pParentNode = pParentNode->GetParentNode())
+				{
+					pUpdateFrom = pParentNode;
+				}
 			}
 			else
 			{
-				updateChildren = TRUE;
+				for (BackupTreeNode* pParentNode = pTreeNode->GetParentNode();
+					pParentNode != NULL && 
+					pParentNode->GetExcludedBy() == pExcludedBy;
+					pParentNode = pParentNode->GetParentNode())
+				{
+					pUpdateFrom = pParentNode;
+				}
 			}
+
+			updateChildren = TRUE;
 			
 			if (pList)
 			{
@@ -929,6 +969,8 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				pList->AddEntry(pNewEntry);
 			updateChildren = TRUE;
 		}
+
+		pUpdateFrom = pTreeNode;
 	}
 	else if (pLocation != NULL)
 	{
@@ -947,11 +989,14 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				"the location %s from the server, "
 				"and remove its configuration?"),
 				fn.GetFullPath().c_str());
+
 			int result = wxMessageBox(msg, wxT("Boxi Warning"), 
 				wxYES_NO | wxICON_EXCLAMATION);
+
 			if (result == wxYES)
 			{
 				mpConfig->RemoveLocation(pLocation);
+				pUpdateFrom = pTreeNode;
 				updateChildren = TRUE;
 			}
 			handled = TRUE;
@@ -961,13 +1006,17 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		{
 			wxCharBuffer buf = pTreeNode->GetFullPath()
 				.mb_str(wxConvLibc);
+
 			MyExcludeEntry* pNewEntry = new MyExcludeEntry(
 				&theExcludeTypes[
 					pTreeNode->IsDirectory() ? ETI_EXCLUDE_DIR
 					: ETI_EXCLUDE_FILE],
 				buf.data());
+
 			if (pList)
 				pList->AddEntry(pNewEntry);
+
+			pUpdateFrom = pTreeNode;
 			updateChildren = TRUE;
 		}
 	}
@@ -1004,26 +1053,16 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		Location* pNewLoc = new Location(newLocName, 
 			pTreeNode->GetFullPath());
 		mpConfig->AddLocation(pNewLoc);
+		pUpdateFrom = pTreeNode;
 		updateChildren = TRUE;
 	}
 	
-	NotifyChange();
+	mpConfig->AddListener(this);
+
+	UpdateAdvancedTabOnConfigChange();
 	
-	if (updateLocation) 
-	{
-		BackupTreeNode* pRoot = pTreeNode;
-		while (
-			pRoot->GetParentNode() != NULL && 
-			pRoot->GetParentNode()->GetLocation() != NULL)
-		{
-			pRoot = pRoot->GetParentNode();
-		}
-		mpTree->UpdateExcludedStateIcon(pRoot, TRUE, TRUE);
-	}
-	else
-	{
-		mpTree->UpdateExcludedStateIcon(pTreeNode, TRUE, updateChildren);
-	}
+	if (pUpdateFrom)
+		mpTree->UpdateExcludedStateIcon(pUpdateFrom, FALSE, updateChildren);
 	
 	// doesn't work? - FIXME
 	// event.Veto();
