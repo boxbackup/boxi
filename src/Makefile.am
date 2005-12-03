@@ -52,7 +52,8 @@ boxi_SOURCES = \
 	BackupPanel.cc\
 	BackupProgressPanel.cc\
 	GeneralPanel.cc\
-	partialtick16.png.c
+	partialtick16.png.c\
+	Property.cc
 
 boxi_LDFLAGS = 
 

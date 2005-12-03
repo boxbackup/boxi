@@ -137,7 +137,8 @@ module.source.files=\
 	BackupPanel.cc\
 	BackupProgressPanel.cc\
 	GeneralPanel.cc\
-	partialtick16.png.c
+	partialtick16.png.c\
+	Property.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=
