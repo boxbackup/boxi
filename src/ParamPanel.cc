@@ -144,9 +144,19 @@ void FileSelButton::OnClick(wxCommandEvent& event)
 	dir.SetExt(wxT(""));
 	dir.MakeAbsolute();
 	
-	wxString path = wxFileSelector(wxT("Set Property"), 
+	int flags = 0;
+	if (mFileMustExist)
+	{
+		flags = wxOPEN | wxFILE_MUST_EXIST;
+	}
+	else
+	{
+		flags = wxSAVE | wxOVERWRITE_PROMPT;
+	}
+	
+	wxString path = wxFileSelector(mFileSelectDialogTitle, 
 		dir.GetFullPath(), file.GetFullName(), wxT(""),
-		mFileSpec, wxOPEN | wxFILE_MUST_EXIST, this);
+		mFileSpec, flags, this);
 
 	if (path.empty()) return;
 
@@ -214,7 +224,7 @@ BoundStringCtrl* ParamPanel::AddParam(const wxChar * pLabel,
 	{
 		wxString spec(pFileSpec);
 		FileSelButton* pButton = new FileSelButton(this, 
-				-1, Bitmap, rProp, pCtrl, spec);
+				-1, rProp, pCtrl, spec);
 		pMiniSizer->Add(pButton, 0, wxGROW);
 	}
 	else if (DirSel)

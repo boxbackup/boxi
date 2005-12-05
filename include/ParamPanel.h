@@ -26,8 +26,10 @@
 #define _PARAMPANEL_H
 
 #include <wx/wx.h>
+#include <wx/artprov.h>
 
 #include "ClientConfig.h"
+#include "StaticImage.h"
 
 class BoundCtrl 
 {
@@ -114,18 +116,29 @@ class FileSelButton : public wxBitmapButton
 	StringProperty& mrProperty;
 	BoundStringCtrl* mpStringCtrl;
 	wxString mFileSpec;
+	wxString mFileSelectDialogTitle;
+	bool mFileMustExist;
 	
 	public:
 	FileSelButton(wxWindow* pParent, wxWindowID id, 
-		const wxBitmap& rBitmap, 
 		StringProperty& rProp, 
 		BoundStringCtrl* pStringCtrl,
-		wxString& rFileSpec)
-	: wxBitmapButton(pParent, id, rBitmap),
+		const wxString& rFileSpec,
+		const wxString& rFileSelectDialogTitle = wxT("Set Property"))
+	: wxBitmapButton(),
 	  mrProperty(rProp),
 	  mFileSpec(rFileSpec)
 	{
+		wxBitmap Bitmap = wxArtProvider::GetBitmap(wxART_FILE_OPEN, 
+			wxART_CMN_DIALOG, wxSize(16, 16));
+		Create(pParent, id, Bitmap);
 		mpStringCtrl = pStringCtrl;
+		mFileSelectDialogTitle = rFileSelectDialogTitle;
+		mFileMustExist = TRUE;
+	}
+	void SetFileMustExist(bool FileMustExist)
+	{
+		mFileMustExist = FileMustExist;
 	}
 	
 	void OnClick(wxCommandEvent& event);
@@ -174,17 +187,33 @@ class ParamPanel : public wxPanel {
 	int row;
 };
 
-class DirCtrl : public wxTextCtrl {
+class TickCrossIcon : public wxStaticBitmap
+{
+	private:
+	wxBitmap mTickBitmap;
+	wxBitmap mCrossBitmap;
+
 	public:
-	DirCtrl(
-		wxWindow* parent, 
-		wxWindowID id)
-	: wxTextCtrl(parent, id, wxT(""))
+	TickCrossIcon(wxWindow* parent)
+	: wxStaticBitmap()
 	{
-		Reload();
+		LoadBitmap(tick16a_png,  mTickBitmap);
+		LoadBitmap(cross16a_png, mCrossBitmap);
+		Create(parent, wxID_ANY, mCrossBitmap, wxDefaultPosition, 
+			wxSize(16, 16) /*wxDefaultSize*/);
 	}
-	void Reload();
-	void OnChange();
+	
+	void SetTicked(bool Ticked)
+	{
+		if (Ticked)
+		{
+			SetBitmap(mTickBitmap);
+		}
+		else
+		{
+			SetBitmap(mCrossBitmap);
+		}
+	}
 };
 
 #endif /* ! _PARAMPANEL_H */
