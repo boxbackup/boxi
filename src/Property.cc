@@ -149,13 +149,20 @@ void IntProperty::Clear()
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
-bool IntProperty::GetInto(std::string& dest) 
+bool IntProperty::GetInto(wxString& rDest) 
+{ 
+	if (!mConfigured) return FALSE;
+	rDest.Printf(wxT("%d"), mValue);
+	return TRUE;
+}
+
+bool IntProperty::GetInto(std::string& rDest) 
 { 
 	if (!mConfigured) return FALSE;
 	wxString formatted;
 	formatted.Printf(wxT("%d"), mValue);
 	wxCharBuffer buf = formatted.mb_str(wxConvLibc);
-	dest = buf.data();
+	rDest = buf.data();
 	return TRUE;
 }
 
@@ -218,18 +225,28 @@ const std::string* StringProperty::Get()
 	return mConfigured ? &mValue : NULL; 
 }
 
-void StringProperty::Set(const std::string& newValue) 
-{ 
-	bool changed = (newValue != mValue || mConfigured == FALSE);
-	mValue = newValue; 
+void StringProperty::Set(const wxString& rNewValue) 
+{
+	wxString oldValueString(mValue.c_str(), wxConvLibc);
+	bool changed = (rNewValue != oldValueString || mConfigured == FALSE);
+	wxCharBuffer buf = rNewValue.mb_str(wxConvLibc);
+	mValue = buf.data(); 
 	mConfigured = TRUE; 
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
-void StringProperty::Set(const char * newValue) 
+void StringProperty::Set(const std::string& rNewValue) 
+{ 
+	bool changed = (rNewValue != mValue || mConfigured == FALSE);
+	mValue = rNewValue; 
+	mConfigured = TRUE; 
+	if (changed && mpListener) mpListener->OnPropertyChange(this);
+}
+
+void StringProperty::Set(const char * pNewValue) 
 {	
-	bool changed = (newValue != mValue || mConfigured == FALSE);
-	mValue = newValue; 
+	bool changed = (pNewValue != mValue || mConfigured == FALSE);
+	mValue = pNewValue; 
 	mConfigured = TRUE; 
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
@@ -241,10 +258,17 @@ void StringProperty::Clear()
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
-bool StringProperty::GetInto(std::string& dest) 
+bool StringProperty::GetInto(std::string& rDest) 
 {
 	if (mConfigured) 
-		dest = mValue; 
+		rDest = mValue; 
+	return mConfigured;
+}
+
+bool StringProperty::GetInto(wxString& rDest) 
+{
+	if (mConfigured) 
+		rDest = wxString(mValue.c_str(), wxConvLibc); 
 	return mConfigured;
 }
 

@@ -112,7 +112,8 @@ class IntProperty : public Property
 	const int* Get();
 	void Set(int newValue);
 	void Clear();
-	bool GetInto(std::string& dest);
+	bool GetInto(wxString& rDest);
+	bool GetInto(std::string& rDest);
 	bool GetInto(int& dest);
 	void SetClean();
 	bool IsClean();
@@ -132,10 +133,12 @@ class StringProperty : public Property
 
 	void SetFrom(const Configuration* pConf);
 	const std::string* Get();
-	void Set(const std::string& newValue);
-	void Set(const char * newValue);
+	void Set(const wxString&    rNewValue);
+	void Set(const std::string& rNewValue);
+	void Set(const char *       pNewValue);
 	void Clear();
-	bool GetInto(std::string& dest);
+	bool GetInto(std::string& rDest);
+	bool GetInto(wxString&    rDest);
 	void SetClean();
 	bool IsClean();
 	
