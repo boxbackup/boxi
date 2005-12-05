@@ -73,7 +73,7 @@ BEGIN_EVENT_TABLE(ClientInfoPanel, wxPanel)
 	EVT_BUTTON(wxID_CANCEL, ClientInfoPanel::OnClickCloseButton)
 END_EVENT_TABLE()
 
-static void LoadBitmap(const struct StaticImage& rImageData, wxBitmap& rDest)
+void LoadBitmap(const struct StaticImage& rImageData, wxBitmap& rDest)
 {
 	wxMemoryInputStream byteStream(rImageData.data, rImageData.size);
 	wxImage img(byteStream, wxBITMAP_TYPE_PNG);
@@ -103,12 +103,7 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 	wxBoxSizer* pStateSizer = new wxBoxSizer( wxHORIZONTAL );
 	pScrollablePanelSizer->Add(pStateSizer, 0, wxGROW | wxALL, 4);
 
-	LoadBitmap(tick16a_png, mTickBitmap);
-	LoadBitmap(cross16a_png, mCrossBitmap);
-	
-	wxSize BitmapSize(16, 16);
-	mpConfigStateBitmap = new wxStaticBitmap(pVisibleArea, -1, mCrossBitmap, 
-		wxDefaultPosition, BitmapSize);
+	mpConfigStateBitmap = new TickCrossIcon(pVisibleArea);
 	pStateSizer->Add(mpConfigStateBitmap, 0, wxGROW | wxALL, 4);
 
 	mpConfigStateLabel = new wxStaticText(pVisibleArea, -1, wxT("Unknown state"));
@@ -303,12 +298,12 @@ void ClientInfoPanel::UpdateConfigState()
 	wxString msg;
 	if (mpConfig->Check(msg))
 	{
-		mpConfigStateBitmap->SetBitmap(mTickBitmap);
+		mpConfigStateBitmap->SetTicked(TRUE);
 		msg = wxT("Configuration looks OK");
 	}
 	else 
 	{
-		mpConfigStateBitmap->SetBitmap(mCrossBitmap);
+		mpConfigStateBitmap->SetTicked(FALSE);
 	}
 	mpConfigStateLabel->SetLabel(msg);
 }

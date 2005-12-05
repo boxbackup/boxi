@@ -45,4 +45,8 @@ extern const struct StaticImage tick16_png, tickgrey16_png,
 }
 #endif
 
+#ifdef __cplusplus
+extern void LoadBitmap(const struct StaticImage& rImageData, wxBitmap& rDest);
+#endif
+
 #endif /* _STATICIMAGE_H */

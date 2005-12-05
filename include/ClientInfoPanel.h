@@ -44,11 +44,9 @@ class ClientInfoPanel : public wxPanel, public ConfigChangeListener {
 	void Reload();
 	
 	private:
-	ClientConfig*	mpConfig;
-	wxBitmap 		mTickBitmap;
-	wxBitmap		mCrossBitmap;
-	wxStaticBitmap* mpConfigStateBitmap;
-	wxStaticText*   mpConfigStateLabel;
+	ClientConfig*  mpConfig;
+	TickCrossIcon* mpConfigStateBitmap;
+	wxStaticText*  mpConfigStateLabel;
 	
 #define STR_PROP(name)                 BoundStringCtrl* mp ## name ## Ctrl;
 #define STR_PROP_SUBCONF(name, parent) BoundStringCtrl* mp ## name ## Ctrl;
