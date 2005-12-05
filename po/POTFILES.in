@@ -42,5 +42,6 @@ src/BackupProgressPanel.cc
 src/GeneralPanel.cc
 src/partialtick16.png.c
 src/Property.cc
+src/SetupWizard.cc
 
 

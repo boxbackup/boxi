@@ -97,7 +97,8 @@ module.include.files=\
 	ParamPanel.h\
 	BackupPanel.h\
 	BackupProgressPanel.h\
-	GeneralPanel.h
+	GeneralPanel.h\
+	SetupWizard.h
 
 module.source.name=src
 module.source.type=
@@ -138,7 +139,8 @@ module.source.files=\
 	BackupProgressPanel.cc\
 	GeneralPanel.cc\
 	partialtick16.png.c\
-	Property.cc
+	Property.cc\
+	SetupWizard.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=
