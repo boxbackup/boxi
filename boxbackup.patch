@@ -1,19 +1,1871 @@
-diff -ru boxbackup-0.09/infrastructure/makebuildenv.pl boxbackup/infrastructure/makebuildenv.pl
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupctl/bbackupctl.cpp boxbackup/bin/bbackupctl/bbackupctl.cpp
+--- boxbackup-0.09/bin/bbackupctl/bbackupctl.cpp	2004-12-06 12:58:52.000000000 +0000
++++ boxbackup/bin/bbackupctl/bbackupctl.cpp	2005-05-25 00:30:18.000000000 +0100
+@@ -191,7 +191,7 @@
+ 			   "  MaxUploadWait = %d seconds\n",
+ 			   autoBackup?"true":"false", updateStoreInterval, minimumFileAge, maxUploadWait);
+ 	}
+-
++	
+ 	// Is the command the "wait for sync to start" command?
+ 	bool areWaitingForSync = false;
+ 	if(::strcmp(argv[0], "wait-for-sync") == 0)
+@@ -206,6 +206,13 @@
+ 		// Yes... set the flag so we know what we're waiting for a sync to start
+ 		areWaitingForSync = true;
+ 	}
++	// Is the command the "ping" command? We're now connected to the daemon,
++	// so we have pinged it successfully and we can just exit.
++	else if(::strcmp(argv[0], "ping") == 0)
++	{
++		std::string cmd("quit\n");
++		connection.Write(cmd.c_str(), cmd.size());		
++	}
+ 	else
+ 	{
+ 		// No? Just send the command given plus a quit command.
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupd/BackupClientContext.cpp boxbackup/bin/bbackupd/BackupClientContext.cpp
+--- boxbackup-0.09/bin/bbackupd/BackupClientContext.cpp	2004-12-06 12:58:52.000000000 +0000
++++ boxbackup/bin/bbackupd/BackupClientContext.cpp	2005-11-16 07:39:29.000000000 +0000
+@@ -70,9 +70,10 @@
+ //		Created: 2003/10/08
+ //
+ // --------------------------------------------------------------------------
+-BackupClientContext::BackupClientContext(BackupDaemon &rDaemon, TLSContext &rTLSContext, const std::string &rHostname,
+-			int32_t AccountNumber, bool ExtendedLogging)
+-	: mrDaemon(rDaemon),
++BackupClientContext::BackupClientContext(LocationResolver &rResolver, 
++	TLSContext &rTLSContext, const std::string &rHostname,
++	int32_t AccountNumber, bool ExtendedLogging)
++	: mrResolver(rResolver),
+ 	  mrTLSContext(rTLSContext),
+ 	  mHostname(rHostname),
+ 	  mAccountNumber(AccountNumber),
+@@ -461,7 +462,8 @@
+ 		{
+ 			// Location name -- look up in daemon's records
+ 			std::string locPath;
+-			if(!mrDaemon.FindLocationPathName(elementName.GetClearFilename(), locPath))
++			if(!mrResolver.FindLocationPathName(elementName.GetClearFilename(), 
++				locPath))
+ 			{
+ 				// Didn't find the location... so can't give the local filename
+ 				return false;
+@@ -488,5 +490,3 @@
+ 	// Found
+ 	return true;
+ }
+-
+-
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupd/BackupClientContext.h boxbackup/bin/bbackupd/BackupClientContext.h
+--- boxbackup-0.09/bin/bbackupd/BackupClientContext.h	2004-12-06 12:58:52.000000000 +0000
++++ boxbackup/bin/bbackupd/BackupClientContext.h	2005-11-16 07:39:29.000000000 +0000
+@@ -65,6 +65,23 @@
+ // --------------------------------------------------------------------------
+ //
+ // Class
++//		Name:    LocationResolver
++//		Purpose: Interface for classes that can resolve locations to paths,
++//		         like BackupDaemon
++//		Created: 2003/10/08
++//
++// --------------------------------------------------------------------------
++class LocationResolver {
++        public:
++        virtual ~LocationResolver() { }
++		virtual bool FindLocationPathName(const std::string &rLocationName, 
++			std::string &rPathOut) const = 0;
++};
++
++
++// --------------------------------------------------------------------------
++//
++// Class
+ //		Name:    BackupClientContext
+ //		Purpose: 
+ //		Created: 2003/10/08
+@@ -73,8 +90,9 @@
+ class BackupClientContext
+ {
+ public:
+-	BackupClientContext(BackupDaemon &rDaemon, TLSContext &rTLSContext, const std::string &rHostname,
+-		int32_t AccountNumber, bool ExtendedLogging);
++	BackupClientContext(LocationResolver &rResolver, TLSContext &rTLSContext, 
++		const std::string &rHostname, int32_t AccountNumber, 
++		bool ExtendedLogging);
+ 	~BackupClientContext();
+ private:
+ 	BackupClientContext(const BackupClientContext &);
+@@ -174,7 +192,7 @@
+ 		BackupStoreFilenameClear *pLeafname = 0); // not const as may connect to server
+ 
+ private:
+-	BackupDaemon &mrDaemon;
++	LocationResolver &mrResolver;
+ 	TLSContext &mrTLSContext;
+ 	std::string mHostname;
+ 	int32_t mAccountNumber;
+@@ -192,4 +210,3 @@
+ 
+ 
+ #endif // BACKUPCLIENTCONTEXT__H
+-
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupd/BackupClientDirectoryRecord.cpp boxbackup/bin/bbackupd/BackupClientDirectoryRecord.cpp
+--- boxbackup-0.09/bin/bbackupd/BackupClientDirectoryRecord.cpp	2004-12-06 12:58:52.000000000 +0000
++++ boxbackup/bin/bbackupd/BackupClientDirectoryRecord.cpp	2005-11-20 23:12:58.000000000 +0000
+@@ -144,8 +144,14 @@
+ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::SyncParams &rParams, int64_t ContainingDirectoryID,
+ 	const std::string &rLocalPath, bool ThisDirHasJustBeenCreated)
+ {
++	rParams.GetProgressNotifier().NotifyScanDirectory(this, rLocalPath);
++	
++	// Check for connections and commands on the command socket
++	if (rParams.mpCommandSocket)
++		rParams.mpCommandSocket->Wait(0);
++	
+ 	// Signal received by daemon?
+-	if(rParams.mrDaemon.StopRun())
++	if(rParams.StopRun())
+ 	{
+ 		// Yes. Stop now.
+ 		THROW_EXCEPTION(BackupStoreException, SignalReceived)
+@@ -176,7 +182,8 @@
+ 		{
+ 			// The directory has probably been deleted, so just ignore this error.
+ 			// In a future scan, this deletion will be noticed, deleted from server, and this object deleted.
+-			TRACE1("Stat failed for '%s' (directory)\n", rLocalPath.c_str());
++			rParams.GetProgressNotifier().NotifyDirStatFailed(
++				this, rLocalPath, strerror(errno));
+ 			return;
+ 		}
+ 		// Store inode number in map so directories are tracked in case they're renamed
+@@ -200,6 +207,7 @@
+ 	std::vector<std::string> dirs;
+ 	std::vector<std::string> files;
+ 	bool downloadDirectoryRecordBecauseOfFutureFiles = false;
++	
+ 	// BLOCK
+ 	{		
+ 		// read the contents...
+@@ -244,7 +252,8 @@
+ 				filename = rLocalPath + DIRECTORY_SEPARATOR + en->d_name;
+ 				if(::lstat(filename.c_str(), &st) != 0)
+ 				{
+-					TRACE1("Stat failed for '%s' (contents)\n", filename.c_str());
++					rParams.GetProgressNotifier().NotifyFileStatFailed(this, 
++						filename, strerror(errno));
+ 					THROW_EXCEPTION(CommonException, OSFileError)
+ 				}
+ 
+@@ -299,8 +308,8 @@
+ 					// Log that this has happened
+ 					if(!rParams.mHaveLoggedWarningAboutFutureFileTimes)
+ 					{
+-						::syslog(LOG_ERR, "Some files have modification times excessively in the future. Check clock syncronisation.\n");
+-						::syslog(LOG_ERR, "Example file (only one shown) : %s\n", filename.c_str());
++						rParams.GetProgressNotifier().NotifyFileModifiedInFuture(
++							this, filename);
+ 						rParams.mHaveLoggedWarningAboutFutureFileTimes = true;
+ 					}
+ 				}
+@@ -553,6 +562,8 @@
+ 			struct stat st;
+ 			if(::lstat(filename.c_str(), &st) != 0)
+ 			{
++				rParams.GetProgressNotifier().NotifyFileStatFailed(this, 
++					filename, strerror(errno));
+ 				THROW_EXCEPTION(CommonException, OSFileError)
+ 			}
+ 			
+@@ -724,6 +735,8 @@
+ 				{
+ 					// Connection errors should just be passed on to the main handler, retries
+ 					// would probably just cause more problems.
++					rParams.GetProgressNotifier().NotifyFileUploadException(this,
++						filename, e);
+ 					throw;
+ 				}
+ 				catch(BoxException &e)
+@@ -733,7 +746,8 @@
+ 					// Log it.
+ 					SetErrorWhenReadingFilesystemObject(rParams, filename.c_str());
+ 					// Log error.
+-					::syslog(LOG_ERR, "Error code when uploading was (%d/%d), %s", e.GetType(), e.GetSubType(), e.what());
++					rParams.GetProgressNotifier().NotifyFileUploadException(this,
++						filename, e);
+ 				}
+ 
+ 				// Update structures if the file was uploaded successfully.
+@@ -746,6 +760,11 @@
+ 					}
+ 				}
+ 			}
++			else
++			{
++				rParams.GetProgressNotifier().NotifyFileSkippedServerFull(this,
++					filename);
++			}
+ 		}
+ 		else if(en != 0 && en->GetAttributesHash() != attributesHash)
+ 		{
+@@ -822,6 +841,9 @@
+ 				}
+ 			}
+ 		}
++		
++		rParams.GetProgressNotifier().NotifyFileSynchronised(this, filename, 
++			fileSize);
+ 	}
+ 
+ 	// Erase contents of files to save space when recursing
+@@ -1096,6 +1118,8 @@
+ int64_t BackupClientDirectoryRecord::UploadFile(BackupClientDirectoryRecord::SyncParams &rParams, const std::string &rFilename, const BackupStoreFilename &rStoreFilename,
+ 			int64_t FileSize, box_time_t ModificationTime, box_time_t AttributesHash, bool NoPreviousVersionOnServer)
+ {
++	rParams.GetProgressNotifier().NotifyFileUploading(this, rFilename);
++	
+ 	// Get the connection
+ 	BackupProtocolClient &connection(rParams.mrContext.GetConnection());
+ 
+@@ -1116,7 +1140,11 @@
+ 			
+ 			if(diffFromID != 0)
+ 			{
+-				// Found an old version -- get the index
++				// Found an old version
++				rParams.GetProgressNotifier().NotifyFileUploadingPatch(this, 
++					rFilename);
++
++				// Get the index
+ 				std::auto_ptr<IOStream> blockIndexStream(connection.ReceiveStream());
+ 			
+ 				// Diff the file
+@@ -1161,7 +1189,7 @@
+ 				&& subtype == BackupProtocolClientError::Err_StorageLimitExceeded)
+ 			{
+ 				// The hard limit was exceeded on the server, notify!
+-				rParams.mrDaemon.NotifySysadmin(BackupDaemon::NotifyEvent_StoreFull);
++				rParams.NotifySysadmin(BackupDaemon::NotifyEvent_StoreFull);
+ 			}
+ 		}
+ 	
+@@ -1169,6 +1197,8 @@
+ 		throw;
+ 	}
+ 
++	rParams.GetProgressNotifier().NotifyFileUploaded(this, rFilename, FileSize);
++
+ 	// Return the new object ID of this file
+ 	return objID;
+ }
+@@ -1189,7 +1219,8 @@
+ 	::memset(mStateChecksum, 0, sizeof(mStateChecksum));
+ 
+ 	// Log the error
+-	::syslog(LOG_ERR, "Backup object failed, error when reading %s", Filename);
++	rParams.GetProgressNotifier().NotifyFileReadFailed(this, 
++		Filename, strerror(errno));
+ 
+ 	// Mark that an error occured in the parameters object
+ 	rParams.mReadErrorsOnFilesystemObjects = true;
+@@ -1205,14 +1236,20 @@
+ //		Created: 8/3/04
+ //
+ // --------------------------------------------------------------------------
+-BackupClientDirectoryRecord::SyncParams::SyncParams(BackupDaemon &rDaemon, BackupClientContext &rContext)
+-	: mSyncPeriodStart(0),
++BackupClientDirectoryRecord::SyncParams::SyncParams(
++	RunStatusProvider &rRunStatusProvider, 
++	SysadminNotifier &rSysadminNotifier,
++	ProgressNotifier &rProgressNotifier,
++	BackupClientContext &rContext)
++	: mrRunStatusProvider(rRunStatusProvider),
++	  mrSysadminNotifier(rSysadminNotifier),
++	  mrProgressNotifier(rProgressNotifier),
++	  mSyncPeriodStart(0),
+ 	  mSyncPeriodEnd(0),
+ 	  mMaxUploadWait(0),
+ 	  mMaxFileTimeInFuture(99999999999999999LL),
+ 	  mFileTrackingSizeThreshold(16*1024),
+ 	  mDiffingUploadSizeThreshold(16*1024),
+-	  mrDaemon(rDaemon),
+ 	  mrContext(rContext),
+ 	  mReadErrorsOnFilesystemObjects(false),
+ 	  mUploadAfterThisTimeInTheFuture(99999999999999999LL),
+@@ -1232,6 +1269,3 @@
+ BackupClientDirectoryRecord::SyncParams::~SyncParams()
+ {
+ }
+-
+-
+-
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupd/BackupClientDirectoryRecord.h boxbackup/bin/bbackupd/BackupClientDirectoryRecord.h
+--- boxbackup-0.09/bin/bbackupd/BackupClientDirectoryRecord.h	2004-12-06 12:58:52.000000000 +0000
++++ boxbackup/bin/bbackupd/BackupClientDirectoryRecord.h	2005-11-20 23:12:59.000000000 +0000
+@@ -59,6 +59,95 @@
+ 
+ class BackupClientContext;
+ class BackupDaemon;
++class CommandSocketManager;
++
++
++// --------------------------------------------------------------------------
++//
++// Class
++//		Name:    RunStatusProvider
++//		Purpose: Provides a StopRun() method which returns true if the current
++//		         backup should be halted.
++//		Created: 2005/11/15
++//
++// --------------------------------------------------------------------------
++class RunStatusProvider
++{
++	public:
++	virtual ~RunStatusProvider() { }
++	virtual bool StopRun() = 0;
++};
++
++// --------------------------------------------------------------------------
++//
++// Class
++//		Name:    SysadminNotifier
++//		Purpose: Provides a NotifySysadmin() method to send mail to the sysadmin
++//		Created: 2005/11/15
++//
++// --------------------------------------------------------------------------
++class SysadminNotifier
++{
++	public:
++	virtual ~SysadminNotifier() { }
++	virtual void NotifySysadmin(int Event) = 0;
++};
++
++// --------------------------------------------------------------------------
++//
++// Class
++//		Name:    ProgressNotifier
++//		Purpose: Provides methods for the backup library to inform the user
++//		         interface about its progress with the backup
++//		Created: 2005/11/20
++//
++// --------------------------------------------------------------------------
++class BackupClientDirectoryRecord;
++	
++class ProgressNotifier
++{
++	public:
++	virtual ~ProgressNotifier() { }
++	virtual void NotifyScanDirectory(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath) = 0;
++	virtual void NotifyDirStatFailed(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		const std::string& rErrorMsg) = 0;
++	virtual void NotifyFileStatFailed(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		const std::string& rErrorMsg) = 0;
++	virtual void NotifyFileReadFailed(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		const std::string& rErrorMsg) = 0;
++	virtual void NotifyFileModifiedInFuture(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath) = 0;
++	virtual void NotifyFileSkippedServerFull(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath) = 0;
++	virtual void NotifyFileUploadException(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		const BoxException& rException) = 0;
++	virtual void NotifyFileUploading(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath) = 0;
++	virtual void NotifyFileUploadingPatch(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath) = 0;
++	virtual void NotifyFileUploaded(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		int64_t FileSize) = 0;
++	virtual void NotifyFileSynchronised(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		int64_t FileSize) = 0;
++};
+ 
+ // --------------------------------------------------------------------------
+ //
+@@ -94,14 +183,21 @@
+ 	class SyncParams
+ 	{
+ 	public:
+-		SyncParams(BackupDaemon &rDaemon, BackupClientContext &rContext);
++		SyncParams(
++			RunStatusProvider &rRunStatusProvider, 
++			SysadminNotifier &rSysadminNotifier,
++			ProgressNotifier &rProgressNotifier,
++			BackupClientContext &rContext);
+ 		~SyncParams();
+ 	private:
+ 		// No copying
+ 		SyncParams(const SyncParams&);
+ 		SyncParams &operator=(const SyncParams&);
++		RunStatusProvider &mrRunStatusProvider;
++		SysadminNotifier &mrSysadminNotifier;
++		ProgressNotifier &mrProgressNotifier;
++		
+ 	public:
+-
+ 		// Data members are public, as accessors are not justified here
+ 		box_time_t mSyncPeriodStart;
+ 		box_time_t mSyncPeriodEnd;
+@@ -109,13 +205,23 @@
+ 		box_time_t mMaxFileTimeInFuture;
+ 		int32_t mFileTrackingSizeThreshold;
+ 		int32_t mDiffingUploadSizeThreshold;
+-		BackupDaemon &mrDaemon;
+ 		BackupClientContext &mrContext;
+ 		bool mReadErrorsOnFilesystemObjects;
+-		
++		CommandSocketManager* mpCommandSocket;
++	
+ 		// Member variables modified by syncing process
+ 		box_time_t mUploadAfterThisTimeInTheFuture;
+ 		bool mHaveLoggedWarningAboutFutureFileTimes;
++	
++		bool StopRun() { return mrRunStatusProvider.StopRun(); }
++		void NotifySysadmin(int Event) 
++		{ 
++			mrSysadminNotifier.NotifySysadmin(Event); 
++		}
++		ProgressNotifier& GetProgressNotifier() const 
++		{ 
++			return mrProgressNotifier;
++		}
+ 	};
+ 
+ 	void SyncDirectory(SyncParams &rParams, int64_t ContainingDirectoryID, const std::string &rLocalPath,
+@@ -150,5 +256,3 @@
+ };
+ 
+ #endif // BACKUPCLIENTDIRECTORYRECORD__H
+-
+-
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupd/BackupDaemon.cpp boxbackup/bin/bbackupd/BackupDaemon.cpp
+--- boxbackup-0.09/bin/bbackupd/BackupDaemon.cpp	2004-12-06 12:58:52.000000000 +0000
++++ boxbackup/bin/bbackupd/BackupDaemon.cpp	2005-11-20 11:21:57.000000000 +0000
+@@ -107,7 +107,7 @@
+ //
+ // --------------------------------------------------------------------------
+ BackupDaemon::BackupDaemon()
+-	: mState(BackupDaemon::State_Initialising),
++	: mState(State_Initialising),
+ 	  mpCommandSocketInfo(0),
+ 	  mDeleteUnusedRootDirEntriesAfter(0)
+ {
+@@ -258,10 +258,8 @@
+ 	if(conf.KeyExists("CommandSocket"))
+ 	{
+ 		// Yes, create a local UNIX socket
+-		mpCommandSocketInfo = new CommandSocketInfo;
+ 		const char *socketName = conf.GetKeyValue("CommandSocket").c_str();
+-		::unlink(socketName);
+-		mpCommandSocketInfo->mListeningSocket.Listen(Socket::TypeUNIX, socketName);
++		mpCommandSocketInfo = new CommandSocketManager(conf, this, socketName);
+ 	}
+ 
+ 	// Handle things nicely on exceptions
+@@ -350,8 +348,6 @@
+ 	{
+ 		// Flags used below
+ 		bool storageLimitExceeded = false;
+-		bool doSync = false;
+-		bool doSyncForcedByCommand = false;
+ 
+ 		// Is a delay necessary?
+ 		{
+@@ -375,7 +371,8 @@
+ 					if(mpCommandSocketInfo != 0)
+ 					{
+ 						// A command socket exists, so sleep by handling connections with it
+-						WaitOnCommandSocket(requiredDelay, doSync, doSyncForcedByCommand);
++						TRACE1("Wait on command socket, delay = %lld\n", requiredDelay);
++						mpCommandSocketInfo->Wait(requiredDelay);
+ 					}
+ 					else
+ 					{
+@@ -385,36 +382,45 @@
+ 					}
+ 				}
+ 				
+-			} while((!automaticBackup || (currentTime < nextSyncTime)) && !doSync && !StopRun());
++			} while((!automaticBackup || (currentTime < nextSyncTime)) 
++				&& !mSyncRequested && !mSyncForced && !StopRun());
+ 		}
+ 
+ 		// Time of sync start, and if it's time for another sync (and we're doing automatic syncs), set the flag
+ 		box_time_t currentSyncStartTime = GetCurrentBoxTime();
+ 		if(automaticBackup && currentSyncStartTime >= nextSyncTime)
+ 		{
+-			doSync = true;
++			mSyncRequested = true;
+ 		}
+ 		
++		bool doSync = mSyncForced;
++		
+ 		// Use a script to see if sync is allowed now?
+-		if(!doSyncForcedByCommand && doSync && !StopRun())
++		if(mSyncRequested && !StopRun())
+ 		{
+ 			int d = UseScriptToSeeIfSyncAllowed();
+ 			if(d > 0)
+ 			{
+ 				// Script has asked for a delay
+ 				nextSyncTime = GetCurrentBoxTime() + SecondsToBoxTime((uint32_t)d);
+-				doSync = false;
++			}
++			else
++			{
++				doSync = true;
+ 			}
+ 		}
+ 
+ 		// Ready to sync? (but only if we're not supposed to be stopping)
+ 		if(doSync && !StopRun())
+ 		{
++			mSyncRequested = false;
++			mSyncForced    = false;
++			
+ 			// Touch a file to record times in filesystem
+ 			TouchFileInWorkingDir("last_sync_start");
+ 		
+ 			// Tell anything connected to the command socket
+-			SendSyncStartOrFinish(true /* start */);
++			mpCommandSocketInfo->SendSyncStartOrFinish(true /* start */);
+ 			
+ 			// Reset statistics on uploads
+ 			BackupStoreFile::ResetStats();
+@@ -453,13 +459,15 @@
+ 					conf.GetKeyValueInt("AccountNumber"), conf.GetKeyValueBool("ExtendedLogging"));
+ 					
+ 				// Set up the sync parameters
+-				BackupClientDirectoryRecord::SyncParams params(*this, clientContext);
++				BackupClientDirectoryRecord::SyncParams params(*this, *this,
++					*this, clientContext);
+ 				params.mSyncPeriodStart = syncPeriodStart;
+ 				params.mSyncPeriodEnd = syncPeriodEndExtended; // use potentially extended end time
+ 				params.mMaxUploadWait = maxUploadWait;
+ 				params.mFileTrackingSizeThreshold = conf.GetKeyValueInt("FileTrackingSizeThreshold");
+ 				params.mDiffingUploadSizeThreshold = conf.GetKeyValueInt("DiffingUploadSizeThreshold");
+ 				params.mMaxFileTimeInFuture = SecondsToBoxTime((uint32_t)conf.GetKeyValueInt("MaxFileTimeInFuture"));
++				params.mpCommandSocket = mpCommandSocketInfo;
+ 				
+ 				// Set store marker
+ 				clientContext.SetClientStoreMarker(clientStoreMarker);
+@@ -589,7 +597,20 @@
+ 					// Not restart/terminate, pause and retry
+ 					SetState(State_Error);
+ 					::syslog(LOG_ERR, "Exception caught (%d/%d), reset state and waiting to retry...", errorCode, errorSubCode);
+-					::sleep(100);
++					
++					// Sleep somehow. There are choices on how this should be
++					// done, depending on the state of the control connection
++
++					if(mpCommandSocketInfo != 0)
++					{
++						// A command socket exists, so sleep by handling connections with it
++						mpCommandSocketInfo->Wait(100 * 1000 * 1000);
++					}
++					else
++					{
++						// No command socket or connection, just do a normal sleep
++						::sleep(100);
++					}
+ 				}
+ 			}
+ 
+@@ -600,7 +621,7 @@
+ 			BackupStoreFile::ResetStats();
+ 
+ 			// Tell anything connected to the command socket
+-			SendSyncStartOrFinish(false /* finish */);
++			mpCommandSocketInfo->SendSyncStartOrFinish(false /* finish */);
+ 
+ 			// Touch a file to record times in filesystem
+ 			TouchFileInWorkingDir("last_sync_finish");
+@@ -687,243 +708,6 @@
+ 
+ 
+ 
+-// --------------------------------------------------------------------------
+-//
+-// Function
+-//		Name:    BackupDaemon::WaitOnCommandSocket(box_time_t, bool &, bool &)
+-//		Purpose: Waits on a the command socket for a time of UP TO the required time
+-//				 but may be much less, and handles a command if necessary.
+-//		Created: 18/2/04
+-//
+-// --------------------------------------------------------------------------
+-void BackupDaemon::WaitOnCommandSocket(box_time_t RequiredDelay, bool &DoSyncFlagOut, bool &SyncIsForcedOut)
+-{
+-	ASSERT(mpCommandSocketInfo != 0);
+-	if(mpCommandSocketInfo == 0) {::sleep(1); return;} // failure case isn't too bad
+-	
+-	TRACE1("Wait on command socket, delay = %lld\n", RequiredDelay);
+-	
+-	try
+-	{
+-		// Timeout value for connections and things
+-		int timeout = ((int)BoxTimeToMilliSeconds(RequiredDelay)) + 1;
+-		// Handle bad boundary cases
+-		if(timeout <= 0) timeout = 1;
+-		if(timeout == INFTIM) timeout = 100000;
+-
+-		// Wait for socket connection, or handle a command?
+-		if(mpCommandSocketInfo->mpConnectedSocket.get() == 0)
+-		{
+-			// No connection, listen for a new one
+-			mpCommandSocketInfo->mpConnectedSocket.reset(mpCommandSocketInfo->mListeningSocket.Accept(timeout).release());
+-			
+-			if(mpCommandSocketInfo->mpConnectedSocket.get() == 0)
+-			{
+-				// If a connection didn't arrive, there was a timeout, which means we've
+-				// waited long enough and it's time to go.
+-				return;
+-			}
+-			else
+-			{
+-#ifdef PLATFORM_CANNOT_FIND_PEER_UID_OF_UNIX_SOCKET
+-				bool uidOK = true;
+-				::syslog(LOG_ERR, "On this platform, no security check can be made on the credientials of peers connecting to the command socket. (bbackupctl)");
+-#else
+-				// Security check -- does the process connecting to this socket have
+-				// the same UID as this process?
+-				bool uidOK = false;
+-				// BLOCK
+-				{
+-					uid_t remoteEUID = 0xffff;
+-					gid_t remoteEGID = 0xffff;
+-					if(mpCommandSocketInfo->mpConnectedSocket->GetPeerCredentials(remoteEUID, remoteEGID))
+-					{
+-						// Credentials are available -- check UID
+-						if(remoteEUID == ::getuid())
+-						{
+-							// Acceptable
+-							uidOK = true;
+-						}
+-					}
+-				}
+-#endif
+-				
+-				// Is this an acceptible connection?
+-				if(!uidOK)
+-				{
+-					// Dump the connection
+-					::syslog(LOG_ERR, "Incoming command connection from peer had different user ID than this process, or security check could not be completed.");
+-					mpCommandSocketInfo->mpConnectedSocket.reset();
+-					return;
+-				}
+-				else
+-				{
+-					// Log
+-					::syslog(LOG_INFO, "Connection from command socket");
+-					
+-					// Send a header line summarising the configuration and current state
+-					const Configuration &conf(GetConfiguration());
+-					char summary[256];
+-					int summarySize = sprintf(summary, "bbackupd: %d %d %d %d\nstate %d\n",
+-						conf.GetKeyValueBool("AutomaticBackup"),
+-						conf.GetKeyValueInt("UpdateStoreInterval"),
+-						conf.GetKeyValueInt("MinimumFileAge"),
+-						conf.GetKeyValueInt("MaxUploadWait"),
+-						mState);
+-					mpCommandSocketInfo->mpConnectedSocket->Write(summary, summarySize);
+-					
+-					// Set the timeout to something very small, so we don't wait too long on waiting
+-					// for any incoming data
+-					timeout = 10; // milliseconds
+-				}
+-			}
+-		}
+-
+-		// So there must be a connection now.
+-		ASSERT(mpCommandSocketInfo->mpConnectedSocket.get() != 0);
+-		
+-		// Is there a getline object ready?
+-		if(mpCommandSocketInfo->mpGetLine == 0)
+-		{
+-			// Create a new one
+-			mpCommandSocketInfo->mpGetLine = new IOStreamGetLine(*(mpCommandSocketInfo->mpConnectedSocket.get()));
+-		}
+-		
+-		// Ping the remote side, to provide errors which will mean the socket gets closed
+-		mpCommandSocketInfo->mpConnectedSocket->Write("ping\n", 5);
+-		
+-		// Wait for a command or something on the socket
+-		std::string command;
+-		while(mpCommandSocketInfo->mpGetLine != 0 && !mpCommandSocketInfo->mpGetLine->IsEOF()
+-			&& mpCommandSocketInfo->mpGetLine->GetLine(command, false /* no preprocessing */, timeout))
+-		{
+-			TRACE1("Receiving command '%s' over command socket\n", command.c_str());
+-			
+-			bool sendOK = false;
+-			bool sendResponse = true;
+-		
+-			// Command to process!
+-			if(command == "quit" || command == "")
+-			{
+-				// Close the socket.
+-				CloseCommandConnection();
+-				sendResponse = false;
+-			}
+-			else if(command == "sync")
+-			{
+-				// Sync now!
+-				DoSyncFlagOut = true;
+-				SyncIsForcedOut = false;
+-				sendOK = true;
+-			}
+-			else if(command == "force-sync")
+-			{
+-				// Sync now (forced -- overrides any SyncAllowScript)
+-				DoSyncFlagOut = true;
+-				SyncIsForcedOut = true;
+-				sendOK = true;
+-			}
+-			else if(command == "reload")
+-			{
+-				// Reload the configuration
+-				SetReloadConfigWanted();
+-				sendOK = true;
+-			}
+-			else if(command == "terminate")
+-			{
+-				// Terminate the daemon cleanly
+-				SetTerminateWanted();
+-				sendOK = true;
+-			}
+-			
+-			// Send a response back?
+-			if(sendResponse)
+-			{
+-				mpCommandSocketInfo->mpConnectedSocket->Write(sendOK?"ok\n":"error\n", sendOK?3:6);
+-			}
+-			
+-			// Set timeout to something very small, so this just checks for data which is waiting
+-			timeout = 1;
+-		}
+-		
+-		// Close on EOF?
+-		if(mpCommandSocketInfo->mpGetLine != 0 && mpCommandSocketInfo->mpGetLine->IsEOF())
+-		{
+-			CloseCommandConnection();
+-		}
+-	}
+-	catch(...)
+-	{
+-		// If an error occurs, and there is a connection active, just close that
+-		// connection and continue. Otherwise, let the error propagate.
+-		if(mpCommandSocketInfo->mpConnectedSocket.get() == 0)
+-		{
+-			throw;
+-		}
+-		else
+-		{
+-			// Close socket and ignore error
+-			CloseCommandConnection();
+-		}
+-	}
+-}
+-
+-
+-// --------------------------------------------------------------------------
+-//
+-// Function
+-//		Name:    BackupDaemon::CloseCommandConnection()
+-//		Purpose: Close the command connection, ignoring any errors
+-//		Created: 18/2/04
+-//
+-// --------------------------------------------------------------------------
+-void BackupDaemon::CloseCommandConnection()
+-{
+-	try
+-	{
+-		TRACE0("Closing command connection\n");
+-	
+-		if(mpCommandSocketInfo->mpGetLine)
+-		{
+-			delete mpCommandSocketInfo->mpGetLine;
+-			mpCommandSocketInfo->mpGetLine = 0;
+-		}
+-		mpCommandSocketInfo->mpConnectedSocket.reset();
+-	}
+-	catch(...)
+-	{
+-		// Ignore any errors
+-	}
+-}
+-
+-
+-// --------------------------------------------------------------------------
+-//
+-// File
+-//		Name:    BackupDaemon.cpp
+-//		Purpose: Send a start or finish sync message to the command socket, if it's connected.
+-//				 
+-//		Created: 18/2/04
+-//
+-// --------------------------------------------------------------------------
+-void BackupDaemon::SendSyncStartOrFinish(bool SendStart)
+-{
+-
+-	// The bbackupctl program can't rely on a state change, because it may never
+-	// change if the server doesn't need to be contacted.
+-	
+-	if(mpCommandSocketInfo != 0 && mpCommandSocketInfo->mpConnectedSocket.get() != 0)
+-	{
+-		try
+-		{
+-			mpCommandSocketInfo->mpConnectedSocket->Write(SendStart?"start-sync\n":"finish-sync\n", SendStart?11:12);
+-		}
+-		catch(...)
+-		{
+-			CloseCommandConnection();
+-		}
+-	}
+-}
+ 
+ 
+ 
+@@ -1447,7 +1231,7 @@
+ //		Created: 11/12/03
+ //
+ // --------------------------------------------------------------------------
+-void BackupDaemon::SetState(int State)
++void BackupDaemon::SetState(state_t State)
+ {
+ 	// Two little checks
+ 	if(State == mState) return;
+@@ -1462,19 +1246,9 @@
+ 	
+ 	// If there's a command socket connected, then inform it -- disconnecting from the
+ 	// command socket if there's an error
+-	if(mpCommandSocketInfo != 0 && mpCommandSocketInfo->mpConnectedSocket.get() != 0)
++	if(mpCommandSocketInfo != 0)
+ 	{
+-		// Something connected to the command socket, tell it about the new state
+-		char newState[64];
+-		char newStateSize = sprintf(newState, "state %d\n", State);
+-		try
+-		{
+-			mpCommandSocketInfo->mpConnectedSocket->Write(newState, newStateSize);
+-		}
+-		catch(...)
+-		{
+-			CloseCommandConnection();
+-		}
++		mpCommandSocketInfo->SendStateUpdate(mState);
+ 	}
+ }
+ 
+@@ -1628,36 +1402,3 @@
+ 		mpExcludeFiles = 0;
+ 	}
+ }
+-
+-
+-// --------------------------------------------------------------------------
+-//
+-// Function
+-//		Name:    BackupDaemon::CommandSocketInfo::CommandSocketInfo()
+-//		Purpose: Constructor
+-//		Created: 18/2/04
+-//
+-// --------------------------------------------------------------------------
+-BackupDaemon::CommandSocketInfo::CommandSocketInfo()
+-	: mpGetLine(0)
+-{
+-}
+-
+-
+-// --------------------------------------------------------------------------
+-//
+-// Function
+-//		Name:    BackupDaemon::CommandSocketInfo::~CommandSocketInfo()
+-//		Purpose: Destructor
+-//		Created: 18/2/04
+-//
+-// --------------------------------------------------------------------------
+-BackupDaemon::CommandSocketInfo::~CommandSocketInfo()
+-{
+-	if(mpGetLine)
+-	{
+-		delete mpGetLine;
+-		mpGetLine = 0;
+-	}
+-}
+-
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupd/BackupDaemon.h boxbackup/bin/bbackupd/BackupDaemon.h
+--- boxbackup-0.09/bin/bbackupd/BackupDaemon.h	2004-12-06 12:58:52.000000000 +0000
++++ boxbackup/bin/bbackupd/BackupDaemon.h	2005-11-20 23:12:59.000000000 +0000
+@@ -49,22 +49,24 @@
+ #ifndef BACKUPDAEMON__H
+ #define BACKUPDAEMON__H
+ 
++#include <syslog.h>
++
+ #include <vector>
+ #include <string>
+ #include <memory>
+ 
+ #include "Daemon.h"
+-#include "BoxTime.h"
+-#include "Socket.h"
+-#include "SocketListen.h"
+-#include "SocketStream.h"
++// #include "BoxTime.h"
++// #include "Socket.h"
++// #include "SocketListen.h"
++// #include "SocketStream.h"
++#include "CommandSocketManager.h"
++#include "BackupClientContext.h"
++#include "BackupClientDirectoryRecord.h"
+ 
+-class BackupClientDirectoryRecord;
+-class BackupClientContext;
+ class Configuration;
+ class BackupClientInodeToIDMap;
+ class ExcludeList;
+-class IOStreamGetLine;
+ 
+ // --------------------------------------------------------------------------
+ //
+@@ -74,7 +76,8 @@
+ //		Created: 2003/10/08
+ //
+ // --------------------------------------------------------------------------
+-class BackupDaemon : public Daemon
++class BackupDaemon : public Daemon, CommandListener, LocationResolver,
++	RunStatusProvider, SysadminNotifier, ProgressNotifier
+ {
+ public:
+ 	BackupDaemon();
+@@ -88,19 +91,10 @@
+ 	virtual const char *DaemonBanner() const;
+ 	const ConfigurationVerify *GetConfigVerify() const;
+ 
+-	bool FindLocationPathName(const std::string &rLocationName, std::string &rPathOut) const;
++	bool FindLocationPathName(const std::string &rLocationName, 
++		std::string &rPathOut) const;
+ 
+-	enum
+-	{
+-		// Add stuff to this, make sure the textual equivalents in SetState() are changed too.
+-		State_Initialising = -1,
+-		State_Idle = 0,
+-		State_Connected = 1,
+-		State_Error = 2,
+-		State_StorageLimitExceeded = 3
+-	};
+-
+-	int GetState() {return mState;}
++	state_t GetState() {return mState;}
+ 
+ 	// Allow other classes to call this too
+ 	enum
+@@ -132,11 +126,7 @@
+ 	
+ 	void MakeMapBaseName(unsigned int MountNumber, std::string &rNameOut) const;
+ 
+-	void SetState(int State);
+-	
+-	void WaitOnCommandSocket(box_time_t RequiredDelay, bool &DoSyncFlagOut, bool &SyncIsForcedOut);
+-	void CloseCommandConnection();
+-	void SendSyncStartOrFinish(bool SendStart);
++	void SetState(state_t State);
+ 	
+ 	void TouchFileInWorkingDir(const char *Filename);
+ 
+@@ -149,7 +139,6 @@
+ 
+ 	int UseScriptToSeeIfSyncAllowed();
+ 
+-private:
+ 	class Location
+ 	{
+ 	public:
+@@ -167,7 +156,7 @@
+ 		ExcludeList *mpExcludeDirs;
+ 	};
+ 
+-	int mState;		// what the daemon is currently doing
++	state_t mState; // what the daemon is currently doing
+ 
+ 	std::vector<Location *> mLocations;
+ 	
+@@ -175,23 +164,8 @@
+ 	std::vector<BackupClientInodeToIDMap *> mCurrentIDMaps;
+ 	std::vector<BackupClientInodeToIDMap *> mNewIDMaps;
+ 	
+-	// For the command socket
+-	class CommandSocketInfo
+-	{
+-	public:
+-		CommandSocketInfo();
+-		~CommandSocketInfo();
+-	private:
+-		CommandSocketInfo(const CommandSocketInfo &);	// no copying
+-		CommandSocketInfo &operator=(const CommandSocketInfo &);
+-	public:
+-		SocketListen<SocketStream, 1 /* listen backlog */> mListeningSocket;
+-		std::auto_ptr<SocketStream> mpConnectedSocket;
+-		IOStreamGetLine *mpGetLine;
+-	};
+-	
+ 	// Using a socket?
+-	CommandSocketInfo *mpCommandSocketInfo;
++	CommandSocketManager *mpCommandSocketInfo;
+ 	
+ 	// Stop notifications being repeated.
+ 	bool mNotificationsSent[NotifyEvent__MAX + 1];
+@@ -199,7 +173,78 @@
+ 	// Unused entries in the root directory wait a while before being deleted
+ 	box_time_t mDeleteUnusedRootDirEntriesAfter;	// time to delete them
+ 	std::vector<std::pair<int64_t,std::string> > mUnusedRootDirEntries;
++	
++	bool mSyncRequested;
++	bool mSyncForced;
++
++	void SetReloadConfigWanted() { this->Daemon::SetReloadConfigWanted(); }
++	void SetTerminateWanted()    { this->Daemon::SetTerminateWanted(); }
++	void SetSyncRequested()      { mSyncRequested = true; }
++	void SetSyncForced()         { mSyncForced    = true; }
++	
++	bool StopRun() { return this->Daemon::StopRun(); }
++
++	/* ProgressNotifier implementation */
++	virtual void NotifyScanDirectory(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath) { }
++	virtual void NotifyDirStatFailed(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath, 
++		const std::string& rErrorMsg)
++	{
++		TRACE2("Stat failed for '%s' (directory): %s\n", 
++			rLocalPath.c_str(), rErrorMsg.c_str());
++	}
++	virtual void NotifyFileStatFailed(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		const std::string& rErrorMsg)
++	{
++		TRACE1("Stat failed for '%s' (contents)\n", rLocalPath.c_str());
++	}
++	virtual void NotifyFileReadFailed(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		const std::string& rErrorMsg)
++	{
++		::syslog(LOG_ERR, "Backup object failed, error when reading %s", 
++			rLocalPath.c_str());
++	}
++	virtual void NotifyFileModifiedInFuture(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath)
++	{
++		::syslog(LOG_ERR, "Some files have modification times "
++			"excessively in the future. Check clock syncronisation.\n");
++		::syslog(LOG_ERR, "Example file (only one shown) : %s\n", 
++			rLocalPath.c_str());
++	}
++	virtual void NotifyFileSkippedServerFull(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath) { }
++	virtual void NotifyFileUploadException(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		const BoxException& rException)
++	{
++		::syslog(LOG_ERR, "Error code when uploading was (%d/%d), %s", 
++			rException.GetType(), rException.GetSubType(), rException.what());
++	}
++	virtual void NotifyFileUploading(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath) { }
++	virtual void NotifyFileUploadingPatch(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath) { }
++	virtual void NotifyFileUploaded(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		int64_t FileSize) { }
++	virtual void NotifyFileSynchronised(
++		const BackupClientDirectoryRecord* pDirRecord,
++		const std::string& rLocalPath,
++		int64_t FileSize) { }
+ };
+ 
+ #endif // BACKUPDAEMON__H
+-
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupd/CommandSocketManager.cpp boxbackup/bin/bbackupd/CommandSocketManager.cpp
+--- boxbackup-0.09/bin/bbackupd/CommandSocketManager.cpp	1970-01-01 01:00:00.000000000 +0100
++++ boxbackup/bin/bbackupd/CommandSocketManager.cpp	2005-05-25 00:30:21.000000000 +0100
+@@ -0,0 +1,357 @@
++// distribution boxbackup-0.09
++// 
++//  
++// Copyright (c) 2003, 2004
++//      Ben Summers.  All rights reserved.
++//  
++// Redistribution and use in source and binary forms, with or without
++// modification, are permitted provided that the following conditions
++// are met:
++// 1. Redistributions of source code must retain the above copyright
++//    notice, this list of conditions and the following disclaimer.
++// 2. Redistributions in binary form must reproduce the above copyright
++//    notice, this list of conditions and the following disclaimer in the
++//    documentation and/or other materials provided with the distribution.
++// 3. All use of this software and associated advertising materials must 
++//    display the following acknowledgement:
++//        This product includes software developed by Ben Summers.
++// 4. The names of the Authors may not be used to endorse or promote
++//    products derived from this software without specific prior written
++//    permission.
++// 
++// [Where legally impermissible the Authors do not disclaim liability for 
++// direct physical injury or death caused solely by defects in the software 
++// unless it is modified by a third party.]
++// 
++// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
++// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
++// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
++// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
++// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
++// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++// POSSIBILITY OF SUCH DAMAGE.
++//  
++//  
++//  
++// --------------------------------------------------------------------------
++//
++// File
++//		Name:    CommandSocketManager.cpp
++//		Purpose: Implementation for command socket management interface
++//		Created: 2005/04/08
++//
++// --------------------------------------------------------------------------
++
++#include <syslog.h>
++
++#include "Box.h"
++#include "IOStreamGetLine.h"
++#include "CommandSocketManager.h"
++
++// --------------------------------------------------------------------------
++//
++// Function
++//		Name:    CommandSocketManager::CommandSocketManager()
++//		Purpose: Constructor
++//		Created: 18/2/04
++//
++// --------------------------------------------------------------------------
++CommandSocketManager::CommandSocketManager(
++	const Configuration& rConf,
++	CommandListener* pListener, 
++	const char * pSocketName)
++	: mpGetLine(0),
++	  mConf(rConf),
++	  mState(State_Initialising)
++{
++	mpListener = pListener;
++	::unlink(pSocketName);
++	mListeningSocket.Listen(Socket::TypeUNIX, pSocketName);
++}
++
++
++// --------------------------------------------------------------------------
++//
++// Function
++//		Name:    BackupDaemon::CommandSocketInfo::~CommandSocketInfo()
++//		Purpose: Destructor
++//		Created: 18/2/04
++//
++// --------------------------------------------------------------------------
++CommandSocketManager::~CommandSocketManager()
++{
++	if (mpConnectedSocket.get() != 0)
++	{
++		CloseConnection();
++	}
++}
++
++// --------------------------------------------------------------------------
++//
++// Function
++//		Name:    CommandSocketManager::Wait(box_time_t, bool &, bool &)
++//		Purpose: Waits on a the command socket for a time of UP TO the required time
++//				 but may be much less, and handles a command if necessary.
++//		Created: 18/2/04
++//
++// --------------------------------------------------------------------------
++
++void CommandSocketManager::Wait(box_time_t RequiredDelay)
++{
++	// TRACE1("Wait on command socket, delay = %lld\n", RequiredDelay);
++	
++	try
++	{
++		// Timeout value for connections and things
++		int timeout = ((int)BoxTimeToMilliSeconds(RequiredDelay));
++		// Handle bad boundary cases
++		if(timeout <= 0) timeout = 1;
++		if(timeout == INFTIM) timeout = 100000;
++
++		// Wait for socket connection, or handle a command?
++		if(mpConnectedSocket.get() == 0)
++		{
++			// No connection, listen for a new one
++			mpConnectedSocket.reset(mListeningSocket.Accept(timeout).release());
++			
++			if(mpConnectedSocket.get() == 0)
++			{
++				// If a connection didn't arrive, there was a timeout, which means we've
++				// waited long enough and it's time to go.
++				return;
++			}
++			else
++			{
++#ifdef PLATFORM_CANNOT_FIND_PEER_UID_OF_UNIX_SOCKET
++				bool uidOK = true;
++				::syslog(LOG_ERR, "On this platform, no security check "
++					"can be made on the credientials of peers connecting "
++					"to the command socket. (bbackupctl)");
++#else
++				// Security check -- does the process connecting
++				// to this socket have the same UID as this process?
++				bool uidOK = false;
++				// BLOCK
++				{
++					uid_t remoteEUID = 0xffff;
++					gid_t remoteEGID = 0xffff;
++					if(mpConnectedSocket->GetPeerCredentials(remoteEUID, 
++						remoteEGID))
++					{
++						// Credentials are available -- check UID
++						if(remoteEUID == ::getuid())
++						{
++							// Acceptable
++							uidOK = true;
++						}
++					}
++				}
++#endif
++				
++				// Is this an acceptible connection?
++				if(!uidOK)
++				{
++					// Dump the connection
++					::syslog(LOG_ERR, "Incoming command connection from peer "
++						"had different user ID than this process, or security "
++						"check could not be completed.");
++					mpConnectedSocket.reset();
++					return;
++				}
++
++				// Log
++				::syslog(LOG_INFO, "Incoming connection to command socket");
++				TRACE0("Accepted new command connection\n");
++				
++				// Send a header line summarising the configuration and current state
++				char summary[256];
++				int summarySize = sprintf(summary, "bbackupd: %d %d %d %d\n"
++					"state %d\n",
++					mConf.GetKeyValueBool("AutomaticBackup"),
++					mConf.GetKeyValueInt("UpdateStoreInterval"),
++					mConf.GetKeyValueInt("MinimumFileAge"),
++					mConf.GetKeyValueInt("MaxUploadWait"),
++					mState);
++				mpConnectedSocket->Write(summary, summarySize);
++				
++				// Set the timeout to something very small, so we don't
++				// spend too long on waiting for any incoming data
++				timeout = 10; // milliseconds
++			}
++		}
++
++		// So there must be a connection now.
++		ASSERT(mpConnectedSocket.get() != 0);
++		
++		// Is there a getline object ready?
++		if(mpGetLine == 0)
++		{
++			// Create a new one
++			mpGetLine = new IOStreamGetLine(*(mpConnectedSocket.get()));
++		}
++		
++		// Ping the remote side, to provide errors which will mean the socket gets closed
++		// Don't do this if the timeout requested was zero, as we don't want
++		// to flood the connection during background polling
++		if (RequiredDelay > 0)
++			mpConnectedSocket->Write("ping\n", 5);
++		
++		// Wait for a command or something on the socket
++		std::string command;
++		while(mpGetLine != 0 && !mpGetLine->IsEOF()
++			&& mpGetLine->GetLine(command, false /* no preprocessing */, timeout))
++		{
++			TRACE1("Receiving command '%s' over command socket\n", command.c_str());
++			
++			bool sendOK = false;
++			bool sendResponse = true;
++		
++			// Command to process!
++			if(command == "quit" || command == "")
++			{
++				// Close the socket.
++				CloseConnection();
++				sendResponse = false;
++			}
++			else if(command == "sync")
++			{
++				// Sync now!
++				mpListener->SetSyncRequested();
++				sendOK = true;
++			}
++			else if(command == "force-sync")
++			{
++				// Sync now (forced -- overrides any SyncAllowScript)
++				mpListener->SetSyncForced();
++				sendOK = true;
++			}
++			else if(command == "reload")
++			{
++				// Reload the configuration
++				mpListener->SetReloadConfigWanted();
++				sendOK = true;
++			}
++			else if(command == "terminate")
++			{
++				// Terminate the daemon cleanly
++				mpListener->SetTerminateWanted();
++				sendOK = true;
++			}
++			
++			// Send a response back?
++			if(sendResponse)
++			{
++				mpConnectedSocket->Write(sendOK?"ok\n":"error\n", sendOK?3:6);
++			}
++			
++			// Set timeout to something very small, 
++			// so this just checks for data which is waiting
++			timeout = 1;
++		}
++		
++		// Close on EOF?
++		if(mpGetLine != 0 && mpGetLine->IsEOF())
++		{
++			CloseConnection();
++		}
++	}
++	catch(...)
++	{
++		// If an error occurs, and there is a connection active, just close that
++		// connection and continue. Otherwise, let the error propagate.
++		if(mpConnectedSocket.get() == 0)
++		{
++			throw;
++		}
++		else
++		{
++			// Close socket and ignore error
++			CloseConnection();
++		}
++	}
++}
++
++
++// --------------------------------------------------------------------------
++//
++// Function
++//		Name:    CommandSocketManager::CloseConnection()
++//		Purpose: Close the command connection, ignoring any errors
++//		Created: 18/2/04
++//
++// --------------------------------------------------------------------------
++void CommandSocketManager::CloseConnection()
++{
++	try
++	{
++		TRACE0("Closing command connection\n");
++	
++		if(mpGetLine)
++		{
++			delete mpGetLine;
++			mpGetLine = 0;
++		}
++		mpConnectedSocket.reset();
++	}
++	catch(...)
++	{
++		// Ignore any errors
++	}
++}
++
++
++// --------------------------------------------------------------------------
++//
++// Function
++//		Name:    CommandSocketManager::SendSyncStartOrFinish(bool sendStart)
++//		Purpose: Send a message to any connected client when a sync starts or
++//			finishes.
++//		Created: 18/2/04
++//
++// --------------------------------------------------------------------------
++void CommandSocketManager::SendSyncStartOrFinish(bool SendStart)
++{
++
++	// The bbackupctl program can't rely on a state change, because it may never
++	// change if the server doesn't need to be contacted.
++	
++	if(mpConnectedSocket.get() != 0)
++	{
++		try
++		{
++			mpConnectedSocket->Write(
++				SendStart ? "start-sync\n" : "finish-sync\n", 
++				SendStart ? 11 : 12);
++		}
++		catch(...)
++		{
++			CloseConnection();
++		}
++	}
++}
++
++void CommandSocketManager::SendStateUpdate(state_t State)
++{
++	mState = State;
++	
++	// If there's a command socket connected, then inform it -- 
++	// disconnecting from the command socket if there's an error
++	if(mpConnectedSocket.get() == 0)
++		return;
++	
++	// Something connected to the command socket, tell it about the new state
++	char newState[64];
++	char newStateSize = sprintf(newState, "state %d\n", State);
++	try
++	{
++		mpConnectedSocket->Write(newState, newStateSize);
++	}
++	catch(...)
++	{
++		CloseConnection();
++	}
++}
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupd/CommandSocketManager.h boxbackup/bin/bbackupd/CommandSocketManager.h
+--- boxbackup-0.09/bin/bbackupd/CommandSocketManager.h	1970-01-01 01:00:00.000000000 +0100
++++ boxbackup/bin/bbackupd/CommandSocketManager.h	2005-11-18 15:44:37.000000000 +0000
+@@ -0,0 +1,106 @@
++// distribution boxbackup-0.09
++// 
++//  
++// Copyright (c) 2003, 2004
++//      Ben Summers.  All rights reserved.
++//  
++// Redistribution and use in source and binary forms, with or without
++// modification, are permitted provided that the following conditions
++// are met:
++// 1. Redistributions of source code must retain the above copyright
++//    notice, this list of conditions and the following disclaimer.
++// 2. Redistributions in binary form must reproduce the above copyright
++//    notice, this list of conditions and the following disclaimer in the
++//    documentation and/or other materials provided with the distribution.
++// 3. All use of this software and associated advertising materials must 
++//    display the following acknowledgement:
++//        This product includes software developed by Ben Summers.
++// 4. The names of the Authors may not be used to endorse or promote
++//    products derived from this software without specific prior written
++//    permission.
++// 
++// [Where legally impermissible the Authors do not disclaim liability for 
++// direct physical injury or death caused solely by defects in the software 
++// unless it is modified by a third party.]
++// 
++// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
++// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
++// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
++// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
++// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
++// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++// POSSIBILITY OF SUCH DAMAGE.
++//  
++//  
++//  
++// --------------------------------------------------------------------------
++//
++// File
++//		Name:    CommandSocketManager.h
++//		Purpose: Interface for managing command socket and processing
++//			 client commands
++//		Created: 2003/10/08
++//
++// --------------------------------------------------------------------------
++
++#ifndef COMMANDSOCKETMANAGER__H
++#define COMMANDSOCKETMANAGER__H
++
++#include "BoxTime.h"
++#include "Socket.h"
++#include "SocketListen.h"
++#include "SocketStream.h"
++#include "Configuration.h"
++
++typedef enum
++{
++	// Add stuff to this, make sure the textual equivalents 
++	// in BackupDaemon::SetState() are changed too.
++	State_Initialising = -1,
++	State_Idle = 0,
++	State_Connected = 1,
++	State_Error = 2,
++	State_StorageLimitExceeded = 3
++} state_t;
++
++class IOStreamGetLine;
++
++class CommandListener
++{
++	public:
++	virtual ~CommandListener() { }
++	virtual void SetReloadConfigWanted() = 0;
++	virtual void SetTerminateWanted() = 0;
++	virtual void SetSyncRequested() = 0;
++	virtual void SetSyncForced() = 0;
++};
++
++class CommandSocketManager
++{
++public:
++	CommandSocketManager(
++		const Configuration& rConf, 
++		CommandListener* pListener,
++		const char * pSocketName);
++	~CommandSocketManager();
++	void Wait(box_time_t RequiredDelay);
++	void CloseConnection();
++	void SendSyncStartOrFinish(bool SendStart);
++	void SendStateUpdate(state_t newState);
++
++private:
++	CommandSocketManager(const CommandSocketManager &);	// no copying
++	CommandSocketManager &operator=(const CommandSocketManager &);
++	SocketListen<SocketStream, 1 /* listen backlog */> mListeningSocket;
++	std::auto_ptr<SocketStream> mpConnectedSocket;
++	IOStreamGetLine *mpGetLine;
++	CommandListener* mpListener;
++	Configuration mConf;
++	state_t mState;
++};
++
++#endif // COMMANDSOCKETMANAGER__H
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupquery/BackupQueries.cpp boxbackup/bin/bbackupquery/BackupQueries.cpp
+--- boxbackup-0.09/bin/bbackupquery/BackupQueries.cpp	2004-12-06 12:58:52.000000000 +0000
++++ boxbackup/bin/bbackupquery/BackupQueries.cpp	2005-11-13 23:47:31.000000000 +0000
+@@ -372,16 +372,21 @@
+ 			return;
+ 		}
+ 	}
+-	
+-	// List it
+-	List(rootDir, listRoot, opts, true /* first level to list */);
++
++	try
++	{	
++		// List it
++		List(rootDir, listRoot, opts, true /* first level to list */);
++	} catch (BoxException &e) {
++		printf("Error from server: %s\n", e.what());
++	}
+ }
+ 
+ 
+ // --------------------------------------------------------------------------
+ //
+ // Function
+-//		Name:    BackupQueries::CommandList2(int64_t, const std::string &, const bool *)
++//		Name:    BackupQueries::List(int64_t, const std::string &, const bool *)
+ //		Purpose: Do the actual listing of directories and files
+ //		Created: 2003/10/10
+ //
+@@ -394,12 +399,30 @@
+ 	if(!opts[LIST_OPTION_ALLOWDELETED]) excludeFlags |= BackupProtocolClientListDirectory::Flags_Deleted;
+ 
+ 	// Do communication
+-	mrConnection.QueryListDirectory(
++	BackupProtocolClientListDirectory send(
+ 			DirID,
+ 			BackupProtocolClientListDirectory::Flags_INCLUDE_EVERYTHING,	// both files and directories
+ 			excludeFlags,
+ 			true /* want attributes */);
+ 
++	try 
++	{
++		mrConnection.Query(send);
++	}
++	catch (BoxException &e)
++	{
++		int type, subtype;
++		if (send.IsError(type, subtype) &&
++			type == BackupProtocolClientError::ErrorType)
++		{
++			throw ConnectionException(subtype);
++		}
++		else
++		{
++			throw ConnectionException(e.GetSubType());
++		}
++	}
++
+ 	// Retrieve the directory from the stream following
+ 	BackupStoreDirectory dir;
+ 	std::auto_ptr<IOStream> dirstream(mrConnection.ReceiveStream());
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbstored/BackupCommands.cpp boxbackup/bin/bbstored/BackupCommands.cpp
+--- boxbackup-0.09/bin/bbstored/BackupCommands.cpp	2004-12-06 12:58:51.000000000 +0000
++++ boxbackup/bin/bbstored/BackupCommands.cpp	2005-11-13 23:47:32.000000000 +0000
+@@ -51,6 +51,7 @@
+ #include <syslog.h>
+ 
+ #include "autogen_BackupProtocolServer.h"
++#include "autogen_RaidFileException.h"
+ #include "BackupConstants.h"
+ #include "BackupContext.h"
+ #include "CollectInBufferStream.h"
+@@ -195,18 +196,31 @@
+ 	CHECK_PHASE(Phase_Commands)
+ 
+ 	// Ask the context for a directory
+-	const BackupStoreDirectory &rdir(rContext.GetDirectory(mObjectID));
++	try {
++		const BackupStoreDirectory &rdir(
++			rContext.GetDirectory(mObjectID));
++	
++		// Store the listing to a stream
++		std::auto_ptr<CollectInBufferStream> stream(
++			new CollectInBufferStream);
++		rdir.WriteToStream(*stream, mFlagsMustBeSet, 
++			mFlagsNotToBeSet, mSendAttributes,
++			false /* never send dependency info to the client */);
++		stream->SetForReading();
+ 	
+-	// Store the listing to a stream
+-	std::auto_ptr<CollectInBufferStream> stream(new CollectInBufferStream);
+-	rdir.WriteToStream(*stream, mFlagsMustBeSet, mFlagsNotToBeSet, mSendAttributes,
+-		false /* never send dependency info to the client */);
+-	stream->SetForReading();
+-	
+-	// Get the protocol to send the stream
+-	rProtocol.SendStreamAfterCommand(stream.release());
++		// Get the protocol to send the stream
++		rProtocol.SendStreamAfterCommand(stream.release());
+ 
+-	return std::auto_ptr<ProtocolObject>(new BackupProtocolServerSuccess(mObjectID));
++		return std::auto_ptr<ProtocolObject>(
++			new BackupProtocolServerSuccess(mObjectID));
++	} catch (RaidFileException &e) {
++		return std::auto_ptr<ProtocolObject>(
++			new BackupProtocolServerError(
++				BackupProtocolServerError::ErrorType, 
++				BackupProtocolServerError::Err_RaidFileDoesntExist
++				)
++			);
++	}
+ }
+ 
+ // --------------------------------------------------------------------------
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbstored/backupprotocol.txt boxbackup/bin/bbstored/backupprotocol.txt
+--- boxbackup-0.09/bin/bbstored/backupprotocol.txt	2004-12-06 12:58:52.000000000 +0000
++++ boxbackup/bin/bbstored/backupprotocol.txt	2005-11-13 23:47:32.000000000 +0000
+@@ -39,6 +39,7 @@
+ 	CONSTANT	Err_DiffFromFileDoesNotExist	12
+ 	CONSTANT	Err_DoesNotExistInDirectory		13
+ 	CONSTANT	Err_PatchConsistencyError		14
++	CONSTANT	Err_RaidFileDoesntExist		15
+ 
+ Version		1	Command(Version)	Reply
+ 	int32	Version
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/infrastructure/BoxPlatform.pm boxbackup/infrastructure/BoxPlatform.pm
+--- boxbackup-0.09/infrastructure/BoxPlatform.pm	2004-12-06 12:58:50.000000000 +0000
++++ boxbackup/infrastructure/BoxPlatform.pm	2005-11-13 20:18:08.000000000 +0000
+@@ -65,7 +65,7 @@
+ 	open COMPILER,"gcc -v 2>&1 |" or die "Can't open gcc -v";
+ 	while(<COMPILER>)
+ 	{
+-		$gcc_v3 = 1 if (m/version gcc 3/ || m/gcc version 3/ || m/gcc \(GCC\) 3/i || m/gcc.Version\s+3/i);
++		$gcc_v3 = 1 if (m/version gcc [34]/ || m/gcc version [34]/ || m/gcc \(GCC\) [34]/i || m/gcc.Version\s+[34]/i);
+ 	}
+ 	close COMPILER;
+ 
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/infrastructure/makebuildenv.pl boxbackup/infrastructure/makebuildenv.pl
 --- boxbackup-0.09/infrastructure/makebuildenv.pl	2004-12-06 12:58:50.000000000 +0000
-+++ boxbackup/infrastructure/makebuildenv.pl	2005-02-16 20:26:00.000000000 +0000
++++ boxbackup/infrastructure/makebuildenv.pl	2005-06-04 23:42:41.000000000 +0100
 @@ -784,13 +784,13 @@
  AR = ar
  RANLIB = ranlib
  .ifdef RELEASE
 -CXXFLAGS = -DNDEBUG -O2 -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
-+CXXFLAGS = -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
++CXXFLAGS = -DNDEBUG -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
  OUTBASE = ../../release
  OUTDIR = ../../release/$mod
  DEPENDMAKEFLAGS = -D RELEASE
  VARIENT = RELEASE
  .else
 -CXXFLAGS = -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
-+CXXFLAGS = O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
++CXXFLAGS = -DNDEBUG -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
  OUTBASE = ../../debug
  OUTDIR = ../../debug/$mod
  DEPENDMAKEFLAGS =
+@@ -929,9 +929,9 @@
+ 	additional_objects_from_make_fragment("$mod/Makefile.extra", \@objs, \@makefile_includes);
+ 	additional_objects_from_make_fragment("$mod/Makefile.extra.$build_os", \@objs, \@makefile_includes);
+ 
++	print MAKE "all:\tdep_modules $end_target\n\n" if not $bsd_make;
+ 	my $o_file_list = join(' ',map {'$(OUTDIR)/'.$_.'.o'} @objs);
+ 	print MAKE $end_target,': ',$o_file_list;
+-	print MAKE ' dep_modules' if !$bsd_make;
+ 	print MAKE " ",$lib_files unless $type eq 'lib';
+ 	print MAKE "\n";
+ 	
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/infrastructure/makeparcels.pl boxbackup/infrastructure/makeparcels.pl
+--- boxbackup-0.09/infrastructure/makeparcels.pl	2004-12-06 12:58:50.000000000 +0000
++++ boxbackup/infrastructure/makeparcels.pl	2005-11-20 21:34:09.000000000 +0000
+@@ -106,14 +106,20 @@
+ 
+ __E
+ 
+-print MAKE "all:\t",join(' ',map {parcel_target($_)} @parcels),"\n\n";
++print MAKE "all:\t",
++	join(' ',map {parcel_target($_)} @parcels),"\n\n";
+ 
+-print MAKE "clean:\n";
++print MAKE "clean-parcels:\n";
+ for my $parcel (@parcels)
+ {
+ 	print MAKE "\trm -rf ",parcel_dir($parcel),"\n";
+ 	print MAKE "\trm -f ",parcel_target($parcel),"\n";
+ }
++
++print MAKE "\n";
++print MAKE "clean:\tclean-parcels\n";
++print MAKE "\tfind . -name '*.o' | xargs -r rm\n";
++print MAKE "\tfind . -name '*.a' | xargs -r rm\n";
+ print MAKE "\n";
+ 
+ print MAKE "test:\trelease/common/test\n\nrelease/common/test:\n\t./runtest.pl ALL release\n\n";
+@@ -122,15 +128,34 @@
+ 
+ for my $parcel (@parcels)
+ {
++	my @parcel_deps;
++
++	for (@{$parcel_contents{$parcel}})
++	{
++		my ($type,$name) = split /\s+/;
++		if($type eq 'bin')
++		{
++			my $exeext = ($build_os eq 'CYGWIN')?'.exe':'';
++			# my $depname = "release/bin/$name/$name$exeext";
++			push @parcel_deps, $name;
++			print MAKE "$name:\n" .
++				"\t(cd bin/$name; $make_command $release_flag)\n\n";
++		}
++		elsif ($type eq 'script')
++		{
++			push @parcel_deps, $name;
++		}
++	}
++
+ 	my $target = parcel_target($parcel);
+-	print MAKE $target,":\n";
++	print MAKE $target,": @parcel_deps\n";
+ 	
+ 	my $dir = parcel_dir($parcel);
+-	print MAKE "\tmkdir $dir\n";
++	print MAKE "\tmkdir -p $dir\n";
+ 	
+ 	open SCRIPT,">parcels/scripts/install-$parcel" or die "Can't open installer script for $parcel for writing";
+ 	print SCRIPT "#!/bin/sh\n\n";
+-	
++
+ 	for(@{$parcel_contents{$parcel}})
+ 	{
+ 		my ($type,$name) = split /\s+/;
+@@ -138,7 +163,6 @@
+ 		if($type eq 'bin')
+ 		{
+ 			my $exeext = ($build_os eq 'CYGWIN')?'.exe':'';
+-			print MAKE "\t(cd bin/$name; $make_command $release_flag)\n";
+ 			print MAKE "\tcp release/bin/$name/$name$exeext $dir\n";
+ 		}
+ 		elsif ($type eq 'script')
+@@ -149,9 +173,10 @@
+ 			$name = $1;
+ 		}
+ 
+-		print SCRIPT "install $name $install_into_dir\n";
++		print SCRIPT "install $name ".
++			"\$DESTDIR\${PREFIX:-$install_into_dir}\n";
+ 	}
+-	
++
+ 	close SCRIPT;
+ 	
+ 	chmod 0755,"parcels/scripts/install-$parcel";
+@@ -163,7 +188,7 @@
+ 	print MAKE "\n";
+ 	
+ 	print MAKE "install-$parcel:\n";
+-	print MAKE "\t(cd $dir; ./install-$parcel)\n\n";
++	print MAKE "\t(cd $dir; ./install-$parcel \$(DESTDIR))\n\n";
+ }
+ 
+ print MAKE <<__E;
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/lib/common/DebugMemLeakFinder.cpp boxbackup/lib/common/DebugMemLeakFinder.cpp
+--- boxbackup-0.09/lib/common/DebugMemLeakFinder.cpp	2004-12-06 12:58:47.000000000 +0000
++++ boxbackup/lib/common/DebugMemLeakFinder.cpp	2005-05-25 00:30:36.000000000 +0100
+@@ -215,7 +215,9 @@
+ 	}
+ 	else
+ 	{
+-		sNotLeaksPre[sNotLeaksPreNum++] = ptr;
++		if ( sNotLeaksPreNum < 
++			 (unsigned)( sizeof(sNotLeaksPre)/sizeof(*sNotLeaksPre) ) )
++			sNotLeaksPre[sNotLeaksPreNum++] = ptr;
+ 	}
+ /*	{
+ 		std::map<void *, MallocBlockInfo>::iterator i(sMallocBlocks.find(ptr));
+diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/lib/server/ConnectionException.txt boxbackup/lib/server/ConnectionException.txt
+--- boxbackup-0.09/lib/server/ConnectionException.txt	2004-12-06 12:58:48.000000000 +0000
++++ boxbackup/lib/server/ConnectionException.txt	2005-11-13 20:17:21.000000000 +0000
+@@ -10,7 +10,7 @@
+ TLSHandshakeFailed			30
+ TLSShutdownFailed			32
+ TLSWriteFailed				33	Probably a network issue between client and server.
+-TLSReadFailed				34	Probably a network issue between client and server.
++TLSReadFailed				34	Probably a network issue between client and server, or account corrupted on server.
+ TLSNoPeerCertificate		36
+ TLSPeerCertificateInvalid	37	Check certification process
+ TLSClosedWhenWriting		38
