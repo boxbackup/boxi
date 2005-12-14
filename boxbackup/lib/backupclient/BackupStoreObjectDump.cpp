@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -135,11 +96,19 @@ void BackupStoreDirectory::Dump(void *clibFileHandle, bool ToTrace)
 		int depends_l = 0;
 		if((*i)->GetDependsNewer() != 0)
 		{
+#ifdef WIN32
+			depends_l += ::sprintf(depends + depends_l, " depNew(%I64x)", (*i)->GetDependsNewer());
+#else
 			depends_l += ::sprintf(depends + depends_l, " depNew(%llx)", (*i)->GetDependsNewer());
+#endif
 		}
 		if((*i)->GetDependsOlder() != 0)
 		{
+#ifdef WIN32
+			depends_l += ::sprintf(depends + depends_l, " depOld(%I64x)", (*i)->GetDependsOlder());
+#else
 			depends_l += ::sprintf(depends + depends_l, " depOld(%llx)", (*i)->GetDependsOlder());
+#endif
 		}
 
 		// Output item
@@ -191,9 +160,9 @@ void BackupStoreFile::DumpFile(void *clibFileHandle, bool ToTrace, IOStream &rFi
 	}
 
 	OutputLine(file, ToTrace, "File object.\nContainer ID: %llx\nModification time: %llx\n"\
-		"Max block clear size: %d\nOptions: %08x\nNum blocks: %d\n", ntoh64(hdr.mContainerID),
-			ntoh64(hdr.mModificationTime), ntohl(hdr.mMaxBlockClearSize), ntohl(hdr.mOptions),
-			ntoh64(hdr.mNumBlocks));
+		"Max block clear size: %d\nOptions: %08x\nNum blocks: %d\n", box_ntoh64(hdr.mContainerID),
+			box_ntoh64(hdr.mModificationTime), ntohl(hdr.mMaxBlockClearSize), ntohl(hdr.mOptions),
+			box_ntoh64(hdr.mNumBlocks));
 
 	// Read the next two objects
 	BackupStoreFilename fn;
@@ -217,9 +186,9 @@ void BackupStoreFile::DumpFile(void *clibFileHandle, bool ToTrace, IOStream &rFi
 		OutputLine(file, ToTrace, "WARNING: Block header doesn't have the correct magic\n");
 	}
 	// number of blocks
-	int64_t nblocks = ntoh64(bhdr.mNumBlocks);
+	int64_t nblocks = box_ntoh64(bhdr.mNumBlocks);
 	OutputLine(file, ToTrace, "Other file ID (for block refs): %llx\nNum blocks (in blk hdr): %lld\n",
-		ntoh64(bhdr.mOtherFileID), nblocks);
+		box_ntoh64(bhdr.mOtherFileID), nblocks);
 
 	// Dump info about each block
 	OutputLine(file, ToTrace, "======== ===== ==========\n   Index Where  EncSz/Idx\n");
@@ -232,7 +201,7 @@ void BackupStoreFile::DumpFile(void *clibFileHandle, bool ToTrace, IOStream &rFi
 			OutputLine(file, ToTrace, "Didn't manage to read block %lld from file\n", b);
 			continue;
 		}
-		int64_t s = ntoh64(en.mEncodedSize);
+		int64_t s = box_ntoh64(en.mEncodedSize);
 		if(s > 0)
 		{
 			nnew++;

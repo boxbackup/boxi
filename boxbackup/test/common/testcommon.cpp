@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -178,7 +139,6 @@ int test(int argc, const char *argv[])
 		void *block = ::malloc(12);
 		TEST_THAT(memleakfinder_numleaks() == 1);
 		void *b2 = ::realloc(block, 128*1024);
-		TEST_THAT(block != b2);
 		TEST_THAT(memleakfinder_numleaks() == 1);
 		::free(b2);
 		TEST_THAT(memleakfinder_numleaks() == 0);
@@ -221,7 +181,8 @@ int test(int argc, const char *argv[])
 
 	// First, test the FdGetLine class -- rather important this works!
 	{
-		FileHandleGuard<O_RDONLY> file("testfiles/fdgetlinetest.txt");
+		FileHandleGuard<O_RDONLY> file("testfiles"
+			DIRECTORY_SEPARATOR "fdgetlinetest.txt");
 		FdGetLine getline(file);
 		
   		int l = 0;
@@ -238,8 +199,10 @@ int test(int argc, const char *argv[])
 	}
 	// and again without pre-processing
 	{
-		FileHandleGuard<O_RDONLY> file("testfiles/fdgetlinetest.txt");
-		FILE *file2 = fopen("testfiles/fdgetlinetest.txt", "r");
+		FileHandleGuard<O_RDONLY> file("testfiles"
+			DIRECTORY_SEPARATOR "fdgetlinetest.txt");
+		FILE *file2 = fopen("testfiles" DIRECTORY_SEPARATOR 
+			"fdgetlinetest.txt", "r");
 		TEST_THAT_ABORTONFAIL(file2 != 0);
 		FdGetLine getline(file);
 		char ll[512];
@@ -267,7 +230,8 @@ int test(int argc, const char *argv[])
 	
 	// Then the IOStream version of get line, seeing as we're here...
 	{
-		FileStream file("testfiles/fdgetlinetest.txt", O_RDONLY);
+		FileStream file("testfiles" DIRECTORY_SEPARATOR 
+			"fdgetlinetest.txt", O_RDONLY);
 		IOStreamGetLine getline(file);
 		
   		int l = 0;
@@ -287,10 +251,12 @@ int test(int argc, const char *argv[])
 	}
 	// and again without pre-processing
 	{
-		FileStream file("testfiles/fdgetlinetest.txt", O_RDONLY);
+		FileStream file("testfiles" DIRECTORY_SEPARATOR 
+			"fdgetlinetest.txt", O_RDONLY);
 		IOStreamGetLine getline(file);
 
-		FILE *file2 = fopen("testfiles/fdgetlinetest.txt", "r");
+		FILE *file2 = fopen("testfiles" DIRECTORY_SEPARATOR 
+			"fdgetlinetest.txt", "r");
 		TEST_THAT_ABORTONFAIL(file2 != 0);
 		char ll[512];
 		
@@ -321,13 +287,20 @@ int test(int argc, const char *argv[])
 	// Doesn't exist
 	{
 		std::string errMsg;
-		TEST_CHECK_THROWS(std::auto_ptr<Configuration> pconfig(Configuration::LoadAndVerify("testfiles/DOESNTEXIST", &verify, errMsg)), CommonException, OSFileOpenError);
+		TEST_CHECK_THROWS(std::auto_ptr<Configuration> pconfig(
+			Configuration::LoadAndVerify(
+				"testfiles" DIRECTORY_SEPARATOR "DOESNTEXIST", 
+				&verify, errMsg)), 
+			CommonException, OSFileOpenError);
 	}
 
 	// Basic configuration test
 	{
 		std::string errMsg;
-		std::auto_ptr<Configuration> pconfig(Configuration::LoadAndVerify("testfiles/config1.txt", &verify, errMsg));
+		std::auto_ptr<Configuration> pconfig(
+			Configuration::LoadAndVerify(
+				"testfiles" DIRECTORY_SEPARATOR "config1.txt", 
+				&verify, errMsg));
 		if(!errMsg.empty())
 		{
 			printf("UNEXPECTED error msg is:\n------\n%s------\n", errMsg.c_str());
@@ -372,22 +345,38 @@ int test(int argc, const char *argv[])
 
 	static const char *file[] =
 	{
-		"testfiles/config2.txt", // Value missing from root
-		"testfiles/config3.txt", // Unexpected {
-		"testfiles/config4.txt", // Missing }
-		"testfiles/config5.txt", // { expected, but wasn't there
-		"testfiles/config6.txt", // Duplicate key
-		"testfiles/config7.txt", // Invalid key (no name)
-		"testfiles/config8.txt", // Not all sub blocks terminated
-		"testfiles/config9.txt", // Not valid integer
-		"testfiles/config9b.txt", // Not valid integer
-		"testfiles/config9c.txt", // Not valid integer
-		"testfiles/config9d.txt", // Not valid integer
-		"testfiles/config10.txt", // Missing key (in subblock)
-		"testfiles/config11.txt", // Unknown key
-		"testfiles/config12.txt", // Missing block
-		"testfiles/config13.txt", // Subconfig (wildcarded) should exist, but missing (ie nothing present)
-		"testfiles/config16.txt", // bad boolean value
+		"testfiles" DIRECTORY_SEPARATOR "config2.txt", 
+			// Value missing from root
+		"testfiles" DIRECTORY_SEPARATOR "config3.txt", 
+			// Unexpected {
+		"testfiles" DIRECTORY_SEPARATOR "config4.txt", 
+			// Missing }
+		"testfiles" DIRECTORY_SEPARATOR "config5.txt", 
+			// { expected, but wasn't there
+		"testfiles" DIRECTORY_SEPARATOR "config6.txt", 
+			// Duplicate key
+		"testfiles" DIRECTORY_SEPARATOR "config7.txt", 
+			// Invalid key (no name)
+		"testfiles" DIRECTORY_SEPARATOR "config8.txt", 
+			// Not all sub blocks terminated
+		"testfiles" DIRECTORY_SEPARATOR "config9.txt", 
+			// Not valid integer
+		"testfiles" DIRECTORY_SEPARATOR "config9b.txt", 
+			// Not valid integer
+		"testfiles" DIRECTORY_SEPARATOR "config9c.txt", 
+			// Not valid integer
+		"testfiles" DIRECTORY_SEPARATOR "config9d.txt", 
+			// Not valid integer
+		"testfiles" DIRECTORY_SEPARATOR "config10.txt", 
+			// Missing key (in subblock)
+		"testfiles" DIRECTORY_SEPARATOR "config11.txt", 
+			// Unknown key
+		"testfiles" DIRECTORY_SEPARATOR "config12.txt", 
+			// Missing block
+		"testfiles" DIRECTORY_SEPARATOR "config13.txt", 
+			// Subconfig (wildcarded) should exist, but missing (ie nothing present)
+		"testfiles" DIRECTORY_SEPARATOR "config16.txt", 
+			// bad boolean value
 		0
 	};
 
@@ -404,7 +393,10 @@ int test(int argc, const char *argv[])
 	// (single value in a multivalue already checked)
 	{
 		std::string errMsg;
-		std::auto_ptr<Configuration> pconfig(Configuration::LoadAndVerify("testfiles/config14.txt", &verify, errMsg));
+		std::auto_ptr<Configuration> pconfig(
+			Configuration::LoadAndVerify(
+				"testfiles" DIRECTORY_SEPARATOR "config14.txt",
+			&verify, errMsg));
 		TEST_THAT(pconfig.get() != 0);
 		TEST_THAT(errMsg.empty());
 		TEST_THAT(pconfig->KeyExists("MultiValue"));
@@ -418,7 +410,10 @@ int test(int argc, const char *argv[])
 	// Check boolean values	
 	{
 		std::string errMsg;
-		std::auto_ptr<Configuration> pconfig(Configuration::LoadAndVerify("testfiles/config15.txt", &verify, errMsg));
+		std::auto_ptr<Configuration> pconfig(
+			Configuration::LoadAndVerify(
+				"testfiles" DIRECTORY_SEPARATOR "config15.txt",
+			&verify, errMsg));
 		TEST_THAT(pconfig.get() != 0);
 		TEST_THAT(errMsg.empty());
 		TEST_THAT(pconfig->GetKeyValueBool("BoolTrue1") == true);
@@ -431,30 +426,50 @@ int test(int argc, const char *argv[])
 	{
 		NamedLock lock1;
 		// Try and get a lock on a name in a directory which doesn't exist
-		TEST_CHECK_THROWS(lock1.TryAndGetLock("testfiles/non-exist/lock"), CommonException, OSFileError);
+		TEST_CHECK_THROWS(lock1.TryAndGetLock(
+				"testfiles" 
+				DIRECTORY_SEPARATOR "non-exist"
+				DIRECTORY_SEPARATOR "lock"), 
+			CommonException, OSFileError);
+
 		// And a more resonable request
-		TEST_THAT(lock1.TryAndGetLock("testfiles/lock1") == true);
+		TEST_THAT(lock1.TryAndGetLock(
+			"testfiles" DIRECTORY_SEPARATOR "lock1") == true);
+
 		// Try to lock something using the same lock
-		TEST_CHECK_THROWS(lock1.TryAndGetLock("testfiles/non-exist/lock2"), CommonException, NamedLockAlreadyLockingSomething);		
+		TEST_CHECK_THROWS(
+			lock1.TryAndGetLock(
+				"testfiles" 
+				DIRECTORY_SEPARATOR "non-exist"
+				DIRECTORY_SEPARATOR "lock2"), 
+			CommonException, NamedLockAlreadyLockingSomething);		
+#if defined(HAVE_FLOCK) || HAVE_DECL_O_EXLOCK
 		// And again on that name
 		NamedLock lock2;
-		TEST_THAT(lock2.TryAndGetLock("testfiles/lock1") == false);
+		TEST_THAT(lock2.TryAndGetLock(
+			"testfiles" DIRECTORY_SEPARATOR "lock1") == false);
+#endif
 	}
 	{
 		// Check that it unlocked when it went out of scope
 		NamedLock lock3;
-		TEST_THAT(lock3.TryAndGetLock("testfiles/lock1") == true);
+		TEST_THAT(lock3.TryAndGetLock(
+			"testfiles" DIRECTORY_SEPARATOR "lock1") == true);
 	}
 	{
 		// And unlocking works
 		NamedLock lock4;
-		TEST_CHECK_THROWS(lock4.ReleaseLock(), CommonException, NamedLockNotHeld);		
-		TEST_THAT(lock4.TryAndGetLock("testfiles/lock4") == true);
+		TEST_CHECK_THROWS(lock4.ReleaseLock(), CommonException, 
+			NamedLockNotHeld);
+		TEST_THAT(lock4.TryAndGetLock(
+			"testfiles" DIRECTORY_SEPARATOR "lock4") == true);
 		lock4.ReleaseLock();
 		NamedLock lock5;
-		TEST_THAT(lock5.TryAndGetLock("testfiles/lock4") == true);
+		TEST_THAT(lock5.TryAndGetLock(
+			"testfiles" DIRECTORY_SEPARATOR "lock4") == true);
 		// And can reuse it
-		TEST_THAT(lock4.TryAndGetLock("testfiles/lock5") == true);
+		TEST_THAT(lock4.TryAndGetLock(
+			"testfiles" DIRECTORY_SEPARATOR "lock5") == true);
 	}
 
 	// Test the ReadGatherStream
@@ -522,7 +537,7 @@ int test(int argc, const char *argv[])
 		TEST_THAT(elist.SizeOfDefiniteList() == 4);
 
 		// Add regex entries
-		#ifndef PLATFORM_REGEX_NOT_SUPPORTED
+		#ifdef HAVE_REGEX_H
 			elist.AddRegexEntries(std::string("[a-d]+\\.reg$" "\x01" "EXCLUDE" "\x01" "^exclude$"));
 			elist.AddRegexEntries(std::string(""));
 			TEST_CHECK_THROWS(elist.AddRegexEntries(std::string("[:not_valid")), CommonException, BadRegularExpression);
@@ -537,7 +552,7 @@ int test(int argc, const char *argv[])
 		TEST_THAT(elist.IsExcluded(std::string("ThingDefThree")) == true);
 		TEST_THAT(elist.IsExcluded(std::string("AnotherDef")) == true);
 		TEST_THAT(elist.IsExcluded(std::string("dir/DefNumberTwo")) == false);
-		#ifndef PLATFORM_REGEX_NOT_SUPPORTED
+		#ifdef HAVE_REGEX_H
 			TEST_THAT(elist.IsExcluded(std::string("b.reg")) == true);
 			TEST_THAT(elist.IsExcluded(std::string("e.reg")) == false);
 			TEST_THAT(elist.IsExcluded(std::string("b.Reg")) == false);

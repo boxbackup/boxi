@@ -1,43 +1,4 @@
 #!/usr/bin/perl
-# distribution boxbackup-0.09
-# 
-#  
-# Copyright (c) 2003, 2004
-#      Ben Summers.  All rights reserved.
-#  
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. All use of this software and associated advertising materials must 
-#    display the following acknowledgement:
-#        This product includes software developed by Ben Summers.
-# 4. The names of the Authors may not be used to endorse or promote
-#    products derived from this software without specific prior written
-#    permission.
-# 
-# [Where legally impermissible the Authors do not disclaim liability for 
-# direct physical injury or death caused solely by defects in the software 
-# unless it is modified by a third party.]
-# 
-# THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-#  
-#  
-#  
 
 use strict;
 use lib 'infrastructure';
@@ -65,7 +26,7 @@ open PARCELS,"parcels.txt" or die "Can't open parcels file";
 		next if m/\AEND-OMIT/;
 		if(m/\AOMIT:(.+)/)
 		{
-			if($1 eq $build_os)
+			if($1 eq $build_os or $1 eq $target_os)
 			{
 				while(<PARCELS>)
 				{
@@ -73,6 +34,21 @@ open PARCELS,"parcels.txt" or die "Can't open parcels file";
 				}
 			}
 			next;
+		}
+
+		if (m'\AONLY:(.+)')
+		{
+			my @only_targets = split m'\,', $1;
+
+			if (not grep {$_ eq $build_os or $_ eq $target_os}
+				@only_targets)
+			{
+				while (<PARCELS>)
+				{
+					last if m'\AEND-ONLY';
+				}
+				next;
+			}
 		}
 		
 		# new parcel, or a new parcel definition?
@@ -104,22 +80,18 @@ print MAKE <<__E;
 #
 #
 
+MAKE = $make_command
+
 __E
 
-print MAKE "all:\t",
-	join(' ',map {parcel_target($_)} @parcels),"\n\n";
+print MAKE "all:\t",join(' ',map {parcel_target($_)} @parcels),"\n\n";
 
-print MAKE "clean-parcels:\n";
+print MAKE "clean:\n";
 for my $parcel (@parcels)
 {
 	print MAKE "\trm -rf ",parcel_dir($parcel),"\n";
 	print MAKE "\trm -f ",parcel_target($parcel),"\n";
 }
-
-print MAKE "\n";
-print MAKE "clean:\tclean-parcels\n";
-print MAKE "\tfind . -name '*.o' | xargs -r rm\n";
-print MAKE "\tfind . -name '*.a' | xargs -r rm\n";
 print MAKE "\n";
 
 print MAKE "test:\trelease/common/test\n\nrelease/common/test:\n\t./runtest.pl ALL release\n\n";
@@ -128,41 +100,23 @@ my $release_flag = BoxPlatform::make_flag('RELEASE');
 
 for my $parcel (@parcels)
 {
-	my @parcel_deps;
-
-	for (@{$parcel_contents{$parcel}})
-	{
-		my ($type,$name) = split /\s+/;
-		if($type eq 'bin')
-		{
-			my $exeext = ($build_os eq 'CYGWIN')?'.exe':'';
-			# my $depname = "release/bin/$name/$name$exeext";
-			push @parcel_deps, $name;
-			print MAKE "$name:\n" .
-				"\t(cd bin/$name; $make_command $release_flag)\n\n";
-		}
-		elsif ($type eq 'script')
-		{
-			push @parcel_deps, $name;
-		}
-	}
-
 	my $target = parcel_target($parcel);
-	print MAKE $target,": @parcel_deps\n";
+	print MAKE $target,":\n";
 	
 	my $dir = parcel_dir($parcel);
-	print MAKE "\tmkdir -p $dir\n";
+	print MAKE "\tmkdir $dir\n";
 	
 	open SCRIPT,">parcels/scripts/install-$parcel" or die "Can't open installer script for $parcel for writing";
 	print SCRIPT "#!/bin/sh\n\n";
-
+	
 	for(@{$parcel_contents{$parcel}})
 	{
 		my ($type,$name) = split /\s+/;
 		
 		if($type eq 'bin')
 		{
-			my $exeext = ($build_os eq 'CYGWIN')?'.exe':'';
+			my $exeext = $platform_exe_ext;
+			print MAKE "\t(cd bin/$name; \$(MAKE) $release_flag)\n";
 			print MAKE "\tcp release/bin/$name/$name$exeext $dir\n";
 		}
 		elsif ($type eq 'script')
@@ -173,10 +127,9 @@ for my $parcel (@parcels)
 			$name = $1;
 		}
 
-		print SCRIPT "install $name ".
-			"\$DESTDIR\${PREFIX:-$install_into_dir}\n";
+		print SCRIPT "install $name $install_into_dir\n";
 	}
-
+	
 	close SCRIPT;
 	
 	chmod 0755,"parcels/scripts/install-$parcel";
@@ -188,7 +141,7 @@ for my $parcel (@parcels)
 	print MAKE "\n";
 	
 	print MAKE "install-$parcel:\n";
-	print MAKE "\t(cd $dir; ./install-$parcel \$(DESTDIR))\n\n";
+	print MAKE "\t(cd $dir; ./install-$parcel)\n\n";
 }
 
 print MAKE <<__E;
@@ -208,7 +161,7 @@ __E
 
 for(@parcels)
 {
-	print INSTALLMSG "    make install-".$_."\n";
+	print INSTALLMSG "    $make_command install-".$_."\n";
 }
 print INSTALLMSG "\n";
 

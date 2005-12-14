@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -98,7 +59,7 @@ void BackupStoreFile::ReverseDiffFile(IOStream &rDiff, IOStream &rFrom, IOStream
 	// Build an index of common blocks.
 	// For each block in the from file, we want to know it's index in the 
 	// diff file. Allocate memory for this information.
-	int64_t fromNumBlocks = ntoh64(hdr.mNumBlocks);
+	int64_t fromNumBlocks = box_ntoh64(hdr.mNumBlocks);
 	int64_t *pfromIndexInfo = (int64_t*)::malloc(fromNumBlocks * sizeof(int64_t));
 	if(pfromIndexInfo == 0)
 	{
@@ -135,7 +96,7 @@ void BackupStoreFile::ReverseDiffFile(IOStream &rDiff, IOStream &rFrom, IOStream
 		}
 
 		// And then read in each entry
-		int64_t diffNumBlocks = ntoh64(diffIdxHdr.mNumBlocks);
+		int64_t diffNumBlocks = box_ntoh64(diffIdxHdr.mNumBlocks);
 		for(int64_t b = 0; b < diffNumBlocks; ++b)
 		{
 			file_BlockIndexEntry e;
@@ -145,7 +106,7 @@ void BackupStoreFile::ReverseDiffFile(IOStream &rDiff, IOStream &rFrom, IOStream
 			}
 
 			// Where's the block?
-			int64_t blockEn = ntoh64(e.mEncodedSize);
+			int64_t blockEn = box_ntoh64(e.mEncodedSize);
 			if(blockEn > 0)
 			{
 				// Block is in the delta file, is ignored for now -- not relevant to rebuilding the from file
@@ -175,7 +136,7 @@ void BackupStoreFile::ReverseDiffFile(IOStream &rDiff, IOStream &rFrom, IOStream
 			THROW_EXCEPTION(BackupStoreException, CouldntReadEntireStructureFromStream)
 		}
 		if(ntohl(fromIdxHdr.mMagicValue) != OBJECTMAGIC_FILE_BLOCKS_MAGIC_VALUE_V1
-			|| ntoh64(fromIdxHdr.mOtherFileID) != 0)
+			|| box_ntoh64(fromIdxHdr.mOtherFileID) != 0)
 		{
 			THROW_EXCEPTION(BackupStoreException, BadBackupStoreFile)
 		}
@@ -192,7 +153,7 @@ void BackupStoreFile::ReverseDiffFile(IOStream &rDiff, IOStream &rFrom, IOStream
 			}
 
 			// Get size
-			int64_t blockSize = hton64(e.mEncodedSize);
+			int64_t blockSize = box_hton64(e.mEncodedSize);
 			if(blockSize < 0)
 			{
 				THROW_EXCEPTION(BackupStoreException, BadBackupStoreFile)
@@ -243,7 +204,7 @@ void BackupStoreFile::ReverseDiffFile(IOStream &rDiff, IOStream &rFrom, IOStream
 		}
 		
 		// Then write the index, modified header first
-		fromIdxHdr.mOtherFileID = isCompletelyDifferent?0:(hton64(ObjectIDOfFrom));
+		fromIdxHdr.mOtherFileID = isCompletelyDifferent?0:(box_hton64(ObjectIDOfFrom));
 		rOut.Write(&fromIdxHdr, sizeof(fromIdxHdr));
 
 		// Move to start of index entries
@@ -264,7 +225,7 @@ void BackupStoreFile::ReverseDiffFile(IOStream &rDiff, IOStream &rFrom, IOStream
 			// Adjust to reflect real block index (remember 0 has a different meaning here)
 			if(s < 0) ++s;
 			// Insert
-			e.mEncodedSize = hton64(s);
+			e.mEncodedSize = box_hton64(s);
 			// Write
 			rOut.Write(&e, sizeof(e));
 		}

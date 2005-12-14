@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -61,14 +22,25 @@
 //
 // --------------------------------------------------------------------------
 FileStream::FileStream(const char *Filename, int flags, int mode)
+#ifdef WIN32
+	: mOSFileHandle(::openfile(Filename, flags, mode)),
+#else
 	: mOSFileHandle(::open(Filename, flags, mode)),
+#endif
 	  mIsEOF(false)
 {
+#ifdef WIN32
+	if(mOSFileHandle == 0)
+#else
 	if(mOSFileHandle < 0)
+#endif
 	{
 		MEMLEAKFINDER_NOT_A_LEAK(this);
 		THROW_EXCEPTION(CommonException, OSFileOpenError)
 	}
+#ifdef WIN32
+	this->fileName = Filename;
+#endif
 }
 
 
@@ -80,7 +52,7 @@ FileStream::FileStream(const char *Filename, int flags, int mode)
 //		Created: 2003/08/28
 //
 // --------------------------------------------------------------------------
-FileStream::FileStream(int FileDescriptor)
+FileStream::FileStream(tOSFileHandle FileDescriptor)
 	: mOSFileHandle(FileDescriptor),
 	  mIsEOF(false)
 {
@@ -91,7 +63,7 @@ FileStream::FileStream(int FileDescriptor)
 	}
 }
 
-
+#if 0
 // --------------------------------------------------------------------------
 //
 // Function
@@ -110,6 +82,7 @@ FileStream::FileStream(const FileStream &rToCopy)
 		THROW_EXCEPTION(CommonException, OSFileOpenError)
 	}
 }
+#endif // 0
 
 // --------------------------------------------------------------------------
 //
@@ -121,7 +94,7 @@ FileStream::FileStream(const FileStream &rToCopy)
 // --------------------------------------------------------------------------
 FileStream::~FileStream()
 {
-	if(mOSFileHandle >= 0)
+	if(mOSFileHandle != INVALID_FILE)
 	{
 		Close();
 	}
@@ -137,8 +110,33 @@ FileStream::~FileStream()
 // --------------------------------------------------------------------------
 int FileStream::Read(void *pBuffer, int NBytes, int Timeout)
 {
-	if(mOSFileHandle == -1) {THROW_EXCEPTION(CommonException, FileClosed)}
+	if(mOSFileHandle == INVALID_FILE) 
+	{
+		THROW_EXCEPTION(CommonException, FileClosed)
+	}
+
+#ifdef WIN32
+	int r;
+	DWORD numBytesRead = 0;
+	BOOL valid = ReadFile(
+		this->mOSFileHandle,
+		pBuffer,
+		NBytes,
+		&numBytesRead,
+		NULL
+		);
+
+	if ( valid )
+	{
+		r = numBytesRead;
+	}
+	else
+	{
+		r = -1;
+	}
+#else
 	int r = ::read(mOSFileHandle, pBuffer, NBytes);
+#endif
 	if(r == -1)
 	{
 		THROW_EXCEPTION(CommonException, OSFileReadError)
@@ -182,11 +180,32 @@ IOStream::pos_type FileStream::BytesLeftToRead()
 // --------------------------------------------------------------------------
 void FileStream::Write(const void *pBuffer, int NBytes)
 {
-	if(mOSFileHandle == -1) {THROW_EXCEPTION(CommonException, FileClosed)}
+	if(mOSFileHandle == INVALID_FILE) 
+	{
+		THROW_EXCEPTION(CommonException, FileClosed)
+	}
+
+#ifdef WIN32
+	DWORD numBytesWritten = 0;
+	BOOL res = WriteFile(
+		this->mOSFileHandle,
+		pBuffer,
+		NBytes,
+		&numBytesWritten,
+		NULL
+		);
+
+	if ( (res == 0) || (numBytesWritten != NBytes))
+	{
+		// DWORD err = GetLastError();
+		THROW_EXCEPTION(CommonException, OSFileWriteError)
+	}
+#else
 	if(::write(mOSFileHandle, pBuffer, NBytes) != NBytes)
 	{
 		THROW_EXCEPTION(CommonException, OSFileWriteError)
 	}
+#endif
 }
 
 
@@ -200,7 +219,21 @@ void FileStream::Write(const void *pBuffer, int NBytes)
 // --------------------------------------------------------------------------
 IOStream::pos_type FileStream::GetPosition() const
 {
-	if(mOSFileHandle == -1) {THROW_EXCEPTION(CommonException, FileClosed)}
+	if(mOSFileHandle == INVALID_FILE) 
+	{
+		THROW_EXCEPTION(CommonException, FileClosed)
+	}
+
+#ifdef WIN32
+	LARGE_INTEGER conv;
+
+	conv.HighPart = 0;
+	conv.LowPart = 0;
+
+	conv.LowPart = SetFilePointer(this->mOSFileHandle, 0, &conv.HighPart, FILE_CURRENT);
+
+	return (IOStream::pos_type)conv.QuadPart;
+#else // ! WIN32
 	off_t p = ::lseek(mOSFileHandle, 0, SEEK_CUR);
 	if(p == -1)
 	{
@@ -208,6 +241,7 @@ IOStream::pos_type FileStream::GetPosition() const
 	}
 	
 	return (IOStream::pos_type)p;
+#endif // WIN32
 }
 
 
@@ -221,12 +255,28 @@ IOStream::pos_type FileStream::GetPosition() const
 // --------------------------------------------------------------------------
 void FileStream::Seek(IOStream::pos_type Offset, int SeekType)
 {
-	if(mOSFileHandle == -1) {THROW_EXCEPTION(CommonException, FileClosed)}
+	if(mOSFileHandle == INVALID_FILE) 
+	{
+		THROW_EXCEPTION(CommonException, FileClosed)
+	}
+
+#ifdef WIN32
+	LARGE_INTEGER conv;
+
+	conv.QuadPart = Offset;
+	DWORD retVal = SetFilePointer(this->mOSFileHandle, conv.LowPart, &conv.HighPart, ConvertSeekTypeToOSWhence(SeekType));
+
+	if ( retVal == INVALID_SET_FILE_POINTER && (GetLastError() != NO_ERROR) )
+	{
+		THROW_EXCEPTION(CommonException, OSFileError)
+	}
+#else // ! WIN32
 	if(::lseek(mOSFileHandle, Offset, ConvertSeekTypeToOSWhence(SeekType)) == -1)
 	{
 		THROW_EXCEPTION(CommonException, OSFileError)
 	}
-	
+#endif // WIN32
+
 	// Not end of file any more!
 	mIsEOF = false;
 }
@@ -246,12 +296,21 @@ void FileStream::Close()
 	{
 		THROW_EXCEPTION(CommonException, FileAlreadyClosed)
 	}
+#ifdef WIN32
+	if(::CloseHandle(mOSFileHandle) == 0)
+	{
+		THROW_EXCEPTION(CommonException, OSFileCloseError)
+	}
+	mOSFileHandle = NULL;
+	mIsEOF = true;
+#else
 	if(::close(mOSFileHandle) != 0)
 	{
 		THROW_EXCEPTION(CommonException, OSFileCloseError)
 	}
 	mOSFileHandle = -1;
 	mIsEOF = true;
+#endif
 }
 
 

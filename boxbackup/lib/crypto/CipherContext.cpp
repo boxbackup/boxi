@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -68,7 +29,7 @@ CipherContext::CipherContext()
 	: mInitialised(false),
 	  mWithinTransform(false),
 	  mPaddingOn(true)
-#ifdef PLATFORM_OLD_OPENSSL
+#ifdef HAVE_OLD_SSL
 	, mFunction(Decrypt),
 	  mpDescription(0)
 #endif
@@ -91,7 +52,7 @@ CipherContext::~CipherContext()
 		EVP_CIPHER_CTX_cleanup(&ctx);
 		mInitialised = false;
 	}
-#ifdef PLATFORM_OLD_OPENSSL
+#ifdef HAVE_OLD_SSL
 	if(mpDescription != 0)
 	{
 		delete mpDescription;
@@ -122,7 +83,7 @@ void CipherContext::Init(CipherContext::CipherFunction Function, const CipherDes
 	}
 	
 	// Initialise the cipher
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 	EVP_CIPHER_CTX_init(&ctx); // no error return code, even though the docs says it does
 
 	if(EVP_CipherInit_ex(&ctx, rDescription.GetCipher(), NULL, NULL, NULL, Function) != 1)
@@ -139,7 +100,7 @@ void CipherContext::Init(CipherContext::CipherFunction Function, const CipherDes
 	
 	try
 	{
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 		// Let the description set up everything else
 		rDescription.SetupParameters(&ctx);
 #else
@@ -176,7 +137,7 @@ void CipherContext::Reset()
 		EVP_CIPHER_CTX_cleanup(&ctx);
 		mInitialised = false;
 	}
-#ifdef PLATFORM_OLD_OPENSSL
+#ifdef HAVE_OLD_SSL
 	if(mpDescription != 0)
 	{
 		delete mpDescription;
@@ -309,7 +270,7 @@ int CipherContext::Final(void *pOutBuffer, int OutLength)
 	
 	// Do the transform
 	int outLength = OutLength;
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 	if(EVP_CipherFinal_ex(&ctx, (unsigned char*)pOutBuffer, &outLength) != 1)
 	{
 		THROW_EXCEPTION(CipherException, EVPFinalFailure)
@@ -324,7 +285,7 @@ int CipherContext::Final(void *pOutBuffer, int OutLength)
 }
 
 
-#ifdef PLATFORM_OLD_OPENSSL
+#ifdef HAVE_OLD_SSL
 // --------------------------------------------------------------------------
 //
 // Function
@@ -497,7 +458,7 @@ int CipherContext::TransformBlock(void *pOutBuffer, int OutLength, const void *p
 		}
 		// Finalise
 		int outLength2 = OutLength - outLength;
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 		if(EVP_CipherFinal_ex(&ctx, ((unsigned char*)pOutBuffer) + outLength, &outLength2) != 1)
 		{
 			THROW_EXCEPTION(CipherException, EVPFinalFailure)
@@ -511,7 +472,7 @@ int CipherContext::TransformBlock(void *pOutBuffer, int OutLength, const void *p
 	{
 		// Finalise the context, so definately ready for the next caller
 		int outs = OutLength;
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 		EVP_CipherFinal_ex(&ctx, (unsigned char*)pOutBuffer, &outs);
 #else
 		OldOpenSSLFinal((unsigned char*)pOutBuffer, outs);
@@ -569,7 +530,7 @@ void CipherContext::SetIV(const void *pIV)
 		THROW_EXCEPTION(CipherException, EVPInitFailure)
 	}
 
-#ifdef PLATFORM_OLD_OPENSSL
+#ifdef HAVE_OLD_SSL
 	// Update description
 	if(mpDescription != 0)
 	{
@@ -617,7 +578,7 @@ const void *CipherContext::SetRandomIV(int &rLengthOut)
 		THROW_EXCEPTION(CipherException, EVPInitFailure)
 	}	
 
-#ifdef PLATFORM_OLD_OPENSSL
+#ifdef HAVE_OLD_SSL
 	// Update description
 	if(mpDescription != 0)
 	{
@@ -641,7 +602,7 @@ const void *CipherContext::SetRandomIV(int &rLengthOut)
 // --------------------------------------------------------------------------
 void CipherContext::UsePadding(bool Padding)
 {
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 	if(EVP_CIPHER_CTX_set_padding(&ctx, Padding) != 1)
 	{
 		THROW_EXCEPTION(CipherException, EVPSetPaddingFailure)

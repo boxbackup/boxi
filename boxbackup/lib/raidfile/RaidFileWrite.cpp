@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -151,10 +112,21 @@ void RaidFileWrite::Open(bool AllowOverwrite)
 	}
 	
 	// Get a lock on the write file
+#ifdef HAVE_FLOCK
+	int errnoBlock = EWOULDBLOCK;
 	if(::flock(mOSFileHandle, LOCK_EX | LOCK_NB) != 0)
+#else
+	int errnoBlock = EAGAIN;
+	struct flock desc;
+	desc.l_type = F_WRLCK;
+	desc.l_whence = SEEK_SET;
+	desc.l_start = 0;
+	desc.l_len = 0;
+	if(::fcntl(mOSFileHandle, F_SETLK, &desc) != 0)
+#endif
 	{
 		// Lock was not obtained.
-		bool wasLocked = (errno == EWOULDBLOCK);
+		bool wasLocked = (errno == errnoBlock);
 		// Close the file
 		::close(mOSFileHandle);
 		mOSFileHandle = -1;
@@ -415,14 +387,14 @@ void RaidFileWrite::TransformToRaidStorage()
 	// Then open them all for writing (in strict order)
 	try
 	{
-#ifdef PLATFORM_LINUX
-		FileHandleGuard<(O_WRONLY | O_CREAT | O_EXCL)> stripe1(stripe1FilenameW.c_str());
-		FileHandleGuard<(O_WRONLY | O_CREAT | O_EXCL)> stripe2(stripe2FilenameW.c_str());
-		FileHandleGuard<(O_WRONLY | O_CREAT | O_EXCL)> parity(parityFilenameW.c_str());
-#else
+#if HAVE_DECL_O_EXLOCK
 		FileHandleGuard<(O_WRONLY | O_CREAT | O_EXCL | O_EXLOCK)> stripe1(stripe1FilenameW.c_str());
 		FileHandleGuard<(O_WRONLY | O_CREAT | O_EXCL | O_EXLOCK)> stripe2(stripe2FilenameW.c_str());
 		FileHandleGuard<(O_WRONLY | O_CREAT | O_EXCL | O_EXLOCK)> parity(parityFilenameW.c_str());
+#else
+		FileHandleGuard<(O_WRONLY | O_CREAT | O_EXCL)> stripe1(stripe1FilenameW.c_str());
+		FileHandleGuard<(O_WRONLY | O_CREAT | O_EXCL)> stripe2(stripe2FilenameW.c_str());
+		FileHandleGuard<(O_WRONLY | O_CREAT | O_EXCL)> parity(parityFilenameW.c_str());
 #endif
 
 		// Then... read in data...
@@ -487,13 +459,9 @@ void RaidFileWrite::TransformToRaidStorage()
 					{
 						// XOR in the size at the end of the parity block
 						ASSERT(sizeof(RaidFileRead::FileSizeType) == (2*sizeof(unsigned int)));
-#ifdef PLATFORM_LINUX
 						ASSERT(sizeof(RaidFileRead::FileSizeType) >= sizeof(off_t));
-#else
-						ASSERT(sizeof(RaidFileRead::FileSizeType) == sizeof(off_t));
-#endif
 						int sizePos = (blockSize/sizeof(unsigned int)) - 2;
-						RaidFileRead::FileSizeType sw = hton64(writeFileStat.st_size);
+						RaidFileRead::FileSizeType sw = box_hton64(writeFileStat.st_size);
 						unsigned int *psize = (unsigned int *)(&sw);
 						pparity[sizePos+0] = pstripe1[sizePos+0] ^ psize[0];
 						pparity[sizePos+1] = pstripe1[sizePos+1] ^ psize[1];
@@ -548,12 +516,8 @@ void RaidFileWrite::TransformToRaidStorage()
 		// if it can't be worked out some other means -- size is required to rebuild the file if one of the stripe files is missing
 		if(sizeRecordRequired)
 		{
-#ifdef PLATFORM_LINUX
 			ASSERT(sizeof(writeFileStat.st_size) <= sizeof(RaidFileRead::FileSizeType));
-#else
-			ASSERT(sizeof(writeFileStat.st_size) == sizeof(RaidFileRead::FileSizeType));
-#endif
-			RaidFileRead::FileSizeType sw = hton64(writeFileStat.st_size);
+			RaidFileRead::FileSizeType sw = box_hton64(writeFileStat.st_size);
 			ASSERT((::lseek(parity, 0, SEEK_CUR) % blockSize) == 0);
 			if(::write(parity, &sw, sizeof(sw)) != sizeof(sw))
 			{

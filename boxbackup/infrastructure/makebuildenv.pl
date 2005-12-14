@@ -1,43 +1,4 @@
 #!/usr/bin/perl
-# distribution boxbackup-0.09
-# 
-#  
-# Copyright (c) 2003, 2004
-#      Ben Summers.  All rights reserved.
-#  
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. All use of this software and associated advertising materials must 
-#    display the following acknowledgement:
-#        This product includes software developed by Ben Summers.
-# 4. The names of the Authors may not be used to endorse or promote
-#    products derived from this software without specific prior written
-#    permission.
-# 
-# [Where legally impermissible the Authors do not disclaim liability for 
-# direct physical injury or death caused solely by defects in the software 
-# unless it is modified by a third party.]
-# 
-# THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-#  
-#  
-#  
 use strict;
 use Symbol;
 
@@ -51,7 +12,7 @@ $|=1;
 
 # note: Mac OS X resource forks and .DS_Store files are explicity ignored
 
-print "Box build environment setup.\n\nChecking environment...\n";
+print "Box build environment setup.\n\n";
 
 
 my $implicit_dep = 'lib/common';
@@ -60,40 +21,12 @@ my $implicit_dep = 'lib/common';
 use lib 'infrastructure';
 use BoxPlatform;
 
-# don't allow old versions of openssl by default.
-my $old_version_of_openssl_ok = 0;
+# keep copy of command line args
+my $makebuildenv_args = join(' ',@ARGV);
 
 # do command line arguments
 my $compile_line_extra = $platform_compile_line_extra;
 my $link_line_extra = $platform_link_line_extra;
-for(@ARGV)
-{
-	if($_ eq 'allow-old-openssl')
-	{
-		$old_version_of_openssl_ok = 1;
-		next;
-	}
-	my ($k,$v) = split /:/,$_,2;
-	if($k eq 'compile')
-	{
-		$compile_line_extra .= $v . ' ';
-	}
-	elsif($k eq 'link')
-	{
-		$link_line_extra .= $v . ' ';
-	}
-	elsif($k eq 'openssl')
-	{
-		# assume that the bin/lib/include dirs are under the specified path
-		chop $v if ($v =~ /\/$/);
-		$compile_line_extra = "-I$v/include $compile_line_extra"; 
-		$link_line_extra    = "-L$v/lib $link_line_extra";
-	}
-	else
-	{
-		die "invalid option $_ specified on command line"
-	}
-}
 
 # make sure local files directory exists
 unless(-d 'local')
@@ -104,261 +37,8 @@ unless(-d 'local')
 
 # flags about the environment
 my %env_flags;
-# messages on test failure
-my $test_failure_text;
-
-# run all tests
-{
-	opendir DIR,'infrastructure/tests' or die "Can't read the tests directory";
-	my @tests = grep {m/_tests\.pl\Z/} readdir DIR;
-	closedir DIR;
-	for(@tests)
-	{
-		require "infrastructure/tests/$_";
-	}
-}
-
-
-# ---- LINUX start --------------------------------------------------------------------------
-# do configuration on Linux... find out what's available, and configure appropraitely.
-if($build_os eq 'Linux')
-{
-	# setup the basic library translation flags -- these will omit those libraries from the compile line
-	$env_flags{'LIBTRANS_-lreadline'} = '';
-	$env_flags{'LIBTRANS_-lLINUX_DB'} = '';
-
-	my $curses_lib = '-lcurses';
-	if((!exists($env_flags{'curses_PRESENT'})) && exists($env_flags{'ncurses_PRESENT'}))
-	{
-		# got to use ncurses instead...
-		$env_flags{'LIBTRANS_-lcurses'} = '-lncurses';
-		$curses_lib = '-lncurses';
-	}
-
-	my ($linux_readline_h, $linux_db_h);
-	my $db_ver = -1;
-	
-	open H_FILES,"find /usr/include |" or die "Can't open find";
-	while(<H_FILES>)
-	{
-		chomp;
-		
-		if(m~/readline.h\Z~)
-		{
-			my $rlh = strip_h_name($_);
-			if(check_readline_h($rlh,$curses_lib))
-			{
-				$linux_readline_h = $rlh;
-				# allow readline library to be used
-				delete $env_flags{'LIBTRANS_-lreadline'};
-			}
-		}
-		if(m~/db(|_1\d+).h\Z~)
-		{
-			# version?
-			my $dv = 0;
-			$dv = $1 if m~(\d+)/db~;
-			my $fn = $_;
-
-			# check this file mentions dbopen
-			open DB_H,$_ or die "Can't open $_";
-			my $found = 0;
-			while(<DB_H>)
-			{
-				if(m/dbopen/)
-				{
-					$found = 1;
-					last;
-				}
-			}
-			close DB_H;
-			next unless $found;
-
-			# see if this version works
-			print("Checking db version...\n");
-			my $db_h = strip_h_name($fn);
-			my $db_lib = 'db';
-			$db_lib .= $db_ver if $db_ver > 0;
-			if(!check_db_lib($db_h, $db_lib))
-			{
-				# try another
-				$db_lib = 'db';
-				next unless check_db_lib($db_h, $db_lib)
-			}
-
-	 		# good version?
-			if($dv > $db_ver)
-			{
-				$linux_db_h = $db_h;
-				$db_ver = $dv;
-				$env_flags{'LIBTRANS_-lLINUX_DB'} = '-l'.$db_lib;
-			}
-		}
-	}
-	print "Finished checking headers\n";
-	close H_FILES;
-
-	# write the platform file accordingly and tell the user what's happened.
-	open LIN,">local/_linux_platform.h" or die "Can't open file for writing";
-	if($linux_readline_h eq '')
-	{
-		print("---------------------\nWARNING: readline isn't installed\n---------------------\n");
-		print LIN "#define PLATFORM_READLINE_NOT_SUPPORTED\n";
-
-	}
-	else
-	{
-		open RL_H,">local/_linux_readline.h" or die "Can't open file for writing";
-		print RL_H "#include <$linux_readline_h>\n";
-		my $hist = $linux_readline_h;
-		$hist =~ s/readline\.h/history.h/;
-		print RL_H "#include <$hist>\n";
-		close RL_H;
-	}
-	if($linux_db_h eq '')
-	{
-		print("---------------------\nWARNING: db is not installed -- will run in reduced efficiency mode without it.\n---------------------\n");
-		print LIN "#define PLATFORM_BERKELEY_DB_NOT_SUPPORTED\n";
-	}	
-	else
-	{
-		open DB_H,">local/_linux_db.h" or die "Can't open file for writing";
-		print DB_H "#include <$linux_db_h>\n";
-		close DB_H;
-	}
-	close LIN;
-}
-sub strip_h_name
-{
-	my $i = $_[0];
-	$i =~ s~\A/usr/include/~~;
-	return $i;
-}
-sub check_readline_h
-{
-	my ($h,$curses_lib) = @_;
-	print "Check readline from $h...\n";
-	my $hist = $h;
-	$hist =~ s/readline\.h/history.h/;
-	open READLINEH,">readlineh.cpp" or die "Can't open readline test file for writing";
-	print READLINEH <<__E;
-#include <unistd.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <$h>
-#include <$hist>
-int main(int argc, char *argv[])
-{
-	using_history();
-	add_history(0);
-	readline(0);
-	return 0;
-}
-__E
-	close READLINEH;
-	# attempt to compile
-	my $r = system("g++ readlineh.cpp -lreadline $curses_lib -o readlineh $compile_line_extra $link_line_extra 2>/dev/null >/dev/null");
-	# delete test files
-	unlink 'readlineh';
-	unlink 'readlineh.cpp';
-	return $r == 0; # compilation succeeded
-}
-sub check_db_lib
-{
-	my ($h,$db) = @_;
-	open TESTDBLIB,">testdblib.cpp" or die "Can't open db test file for writing";
-	print TESTDBLIB <<__E;
-#include <$h>
-int main(int argc, char *argv[])
-{
-	DB *dbp = 0;
-	dbp = dbopen(0, 0, 0, DB_HASH, 0);
-	dbp->close(dbp);
-	DBT data;
-	dbp->put(dbp, &data, &data, 0);
-	dbp->get(dbp, &data, &data, 0);
-	return 0;
-}
-__E
-	close TESTDBLIB;
-	# attempt to compile
-	my $r = system("g++ testdblib.cpp -l$db -o testdblib $compile_line_extra $link_line_extra 2>/dev/null >/dev/null");
-	# delete test files
-	unlink 'testdblib';
-	unlink 'testdblib.cpp';
-	return $r == 0; # compilation succeeded
-}
-# ---- LINUX end --------------------------------------------------------------------------
 
 # print "Flag: $_\n" for(keys %env_flags);
-
-# check the version of openssl installed
-if(!exists $env_flags{'OPENSSL_OK'})
-{
-	# failed somehow...
-
-	# is an old version present?
-	my $old_version = (exists $env_flags{'OLD_OPENSSL_OK'});
-
-	if(!$old_version && !-e '/usr/include/openssl/evp.h')
-	{
-		# headers not installed?
-		print "\n\nERROR: OpenSSL library and headers need to be installed.\n\nSee documentation on web site if you need to add extra search paths.\n\n";
-		exit(1);
-	}
-	else
-	{
-		if($old_version)
-		{
-			if($old_version_of_openssl_ok)
-			{
-				print "\n\nWARNING: Configuring for old version of OpenSSL.\nPerformance will be lower than with version 0.9.7\n\n";
-				$compile_line_extra .= '-DPLATFORM_OLD_OPENSSL ';
-			}
-			else
-			{
-				# tell user how they might try anyway with an old version of openssl
-				print <<__E;
-
-===============================================================================
-
-You appear to have a version of OpenSSL installed which is less than 0.9.7.
-
-It is possible to configure to use this old version, but performance will be
-lower than if you have 0.9.7 -- the later version is recommended.
-
-If you wish to use this old version, repeat the configuration with the extra
-argument 'allow-old-openssl', like this:
-
-   ./configure allow-old-openssl
-
-* Please do not distribute binary packages with this option enabled.
-
-* Please do not distribute ports which set this option by default.
-
-IMPORTANT: Support for older versions of OpenSSL should be considered
-experimental. It is not recommended for production use, but provided to allow
-easier evaluation of this software before installing the latest OpenSSL.
-
-===============================================================================
-
-__E
-				exit(1);
-			}
-		}
-		else
-		{
-			print "\n\nERROR: You need to install OpenSSL, preferably at least version 0.9.7.\n\n";
-			print "If you believe you have installed OpenSSL, check that the headers are installed\nas well ('dev' packages?)\n\nSee documentation on web site if you need to add extra search paths.\n\n";
-			exit(1);
-		}
-	}
-}
-
-
-# finished checking the environment
-print "done\n\n";
-
 
 # seed autogen code
 print "Seeding autogen code...\n";
@@ -433,7 +113,6 @@ close FL;
 
 # extra platform defines
 my $extra_platform_defines = '';
-$extra_platform_defines .= ' -DPLATFORM_GCC3' if $gcc_v3;
 
 # read in module definitions file, and any files it includes
 my @modules_files;
@@ -503,6 +182,7 @@ sub make_obj_symlink
 print "Scanning code...\n";
 
 my $modules_omitted = 0;
+my $modules_omitting = 0;
 
 # process lines in flattened modules files
 for(@modules_files)
@@ -512,16 +192,20 @@ for(@modules_files)
 	next unless m/\S/;
 	
 	# omit bits on some platforms?
-	next if m/\AEND-OMIT/;
+	if(m/\AEND-OMIT/)
+	{
+		$modules_omitting = 0;
+		next;
+	}
+
+	next if $modules_omitting;
+
 	if(m/\AOMIT:(.+)/)
 	{
-		if($1 eq $build_os)
+		if($1 eq $build_os or $1 eq $target_os)
 		{
 			$modules_omitted = 1;
-			while(<MODULES>)
-			{
-				last if m/\AEND-OMIT/;	
-			}
+			$modules_omitting = 1;
 		}
 		next;
 	}
@@ -723,8 +407,10 @@ __E
 			close TESTFILE;
 		}
 		
-		writetestfile("$mod/_t", './test $1 $2 $3 $4 $5', $mod);
-		writetestfile("$mod/_t-gdb", 'gdb ./test', $mod);
+		writetestfile("$mod/_t", 
+			'./test' . $platform_exe_ext . '$1 $2 $3 $4 $5', $mod);
+		writetestfile("$mod/_t-gdb", 
+			'gdb ./test ' . $platform_exe_ext, $mod);
 		
 	}
 	
@@ -761,19 +447,40 @@ __E
 	
 
 	# make include path
-	my $include_paths = join(' ',map {'-I../../'.$_} @all_deps_for_module);
+	my $include_paths = "-I../../lib/win32 " .
+		join(' ',map {'-I../../'.$_} @all_deps_for_module);
+
+	# is target a library?
+	my $target_is_library = ($type ne 'bin' && $type ne 'test');
 
 	# make target name
 	my $end_target = $name;
-	$end_target .= '.a' if $type eq 'lib';
-	$end_target = 'test' if $type eq 'test';
+
+	if ($target_is_library)
+	{
+		$end_target .= '.a';
+	}
+	else
+	{
+		$end_target .= $platform_exe_ext;
+	}
+
+	$end_target = 'test'.$platform_exe_ext if $type eq 'test';
+
 	# adjust for outdir
 	$end_target = '$(OUTDIR)/' . $end_target;
 
 	# start the makefile
 	my $mk_name_extra = ($bsd_make)?'':'X';
 	open MAKE,">$mod/Makefile".$mk_name_extra or die "Can't open Makefile for $mod\n";
-	my $debug_link_extra = ($type ne 'lib')?'../../debug/lib/debug/debug.a':'';
+	my $debug_link_extra = ($target_is_library)?'':'../../debug/lib/debug/debug.a';
+
+	my $release_flags = "-O2";
+	if ($target_os eq "mingw32")
+	{
+		$release_flags = "-O0 -g";
+	}
+
 	print MAKE <<__E;
 #
 # AUTOMATICALLY GENERATED FILE
@@ -784,13 +491,13 @@ CXX = g++
 AR = ar
 RANLIB = ranlib
 .ifdef RELEASE
-CXXFLAGS = -DNDEBUG -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
+CXXFLAGS = -DNDEBUG $release_flags -Wall $include_paths $extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
 OUTBASE = ../../release
 OUTDIR = ../../release/$mod
 DEPENDMAKEFLAGS = -D RELEASE
 VARIENT = RELEASE
 .else
-CXXFLAGS = -DNDEBUG -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
+CXXFLAGS = -g -Wall $include_paths $extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
 OUTBASE = ../../debug
 OUTDIR = ../../debug/$mod
 DEPENDMAKEFLAGS =
@@ -885,6 +592,7 @@ __E
 	my $has_deps = ($#{$module_dependency{$mod}} >= 0);
 # ----- # always has dependencies with debug library
 	$has_deps = 1;
+	$has_deps = 0 if $target_is_library;
 
 	# Depenency stuff
 	my $deps_makeinfo;
@@ -912,7 +620,7 @@ __E
 		# run make for things we require
 		for my $dep (@all_deps_for_module)
 		{
-			$deps_makeinfo .= "\t\t(cd ../../$dep; $make_command$sub_make_options \$(DEPENDMAKEFLAGS) -D NODEPS)\n";
+			$deps_makeinfo .= "\t\t(cd ../../$dep; \$(MAKE)$sub_make_options \$(DEPENDMAKEFLAGS) -D NODEPS)\n";
 		}
 		$deps_makeinfo .= ".\tendif\n.endif\n\n";
 	}
@@ -929,14 +637,14 @@ __E
 	additional_objects_from_make_fragment("$mod/Makefile.extra", \@objs, \@makefile_includes);
 	additional_objects_from_make_fragment("$mod/Makefile.extra.$build_os", \@objs, \@makefile_includes);
 
-	print MAKE "all:\tdep_modules $end_target\n\n" if not $bsd_make;
 	my $o_file_list = join(' ',map {'$(OUTDIR)/'.$_.'.o'} @objs);
 	print MAKE $end_target,': ',$o_file_list;
-	print MAKE " ",$lib_files unless $type eq 'lib';
+	print MAKE ' dep_modules' if $has_deps and not $bsd_make;
+	print MAKE " ",$lib_files unless $target_is_library;
 	print MAKE "\n";
 	
 	# stuff to make the final target...
-	if($type eq 'lib')
+	if($target_is_library)
 	{
 		# make a library archive...
 		print MAKE "\t(echo -n > $end_target; rm $end_target)\n";
@@ -965,7 +673,7 @@ __E
 		}
 	
 		# link line...
-		print MAKE "\t\$(CXX) $link_line_extra -o $end_target $o_file_list $lib_files$lo\n";
+		print MAKE "\t\$(CXX) $link_line_extra -o $end_target $o_file_list $lib_files$lo $platform_lib_files\n";
 	}
 	# tests need to copy the test file over
 	if($type eq 'test')
@@ -976,7 +684,7 @@ __E
 	# dependency line?
 	print MAKE "\n";
 
-	# module dependcies for GNU make?
+	# module dependencies for GNU make?
 	print MAKE $deps_makeinfo if !$bsd_make;
 	
 	# print the rest of the file
@@ -986,7 +694,7 @@ __E
 	print MAKE "clean:\n\t-rm -rf \$(OUTDIR)/*\n.\tifndef SUBCLEAN\n";
 	for my $dep (@all_deps_for_module)
 	{
-		print MAKE "\t(cd ../../$dep; $make_command \$(DEPENDMAKEFLAGS) -D SUBCLEAN clean)\n";
+		print MAKE "\t(cd ../../$dep; \$(MAKE) \$(DEPENDMAKEFLAGS) -D SUBCLEAN clean)\n";
 	}
 	print MAKE ".\tendif\n";
 	
@@ -1006,7 +714,7 @@ __E
 	}
 	
 	# and finally a target for rebuilding the build system
-	print MAKE "\nbuildsystem:\n\t(cd ../..; perl ./infrastructure/makebuildenv.pl)\n\n";
+	print MAKE "\nbuildsystem:\n\t(cd ../..; perl ./infrastructure/makebuildenv.pl $makebuildenv_args)\n\n";
 	
 	close MAKE;
 
@@ -1031,8 +739,6 @@ __E
 }
 
 print "\nType 'cd <module_dir>; $make_command' to build a module\n\n";
-
-print $test_failure_text;
 
 if($modules_omitted)
 {
@@ -1088,65 +794,3 @@ sub ignore_module
 {
 	exists $env_flags{'IGNORE_'.$_[0]}
 }
-
-# how to run a test
-sub do_test
-{
-	my %t = @_;
-	
-	print $t{'Name'},':';
-	open TEST_CODE,">envtest.cpp" or die "Can't open envtest.cpp for writing";
-	print TEST_CODE $t{'Code'};
-	close TEST_CODE;
-	my $result = (system("g++ envtest.cpp ".$t{'TestCompileFlags'}." -o envtest $compile_line_extra $link_line_extra 2>/dev/null >/dev/null") == 0);
-	if($result && exists $t{'RunCode'})
-	{
-		$result = 0 unless (system('./envtest') == 0);
-	}
-	unlink 'envtest.cpp';
-	unlink 'envtest';
-	print $result?" yes\n":" no\n";
-	if($result)
-	{
-		# success
-		if(exists $t{'SuccessFlags'})
-		{
-			for(@{$t{'SuccessFlags'}})
-			{
-				my ($k,$v) = split /=>/,$_;
-				$v = 1 if $v eq '';
-				$env_flags{$k} = $v
-			}
-		}
-		$compile_line_extra .= $t{'SuccessCompileFlags'}.' ' if exists $t{'SuccessCompileFlags'};
-		$link_line_extra .= $t{'SuccessLinkFlags'}.' ' if exists $t{'SuccessLinkFlags'};
-	}
-	else
-	{
-		# aborting failure?
-		if(exists $t{'AbortOnFailure'})
-		{
-			print $t{'FailureText'};
-			print "\nAborting configuration, cannot build in this environment.\n";
-			exit(1);
-		}
-	
-		# failure
-		if(exists $t{'FailureFlags'})
-		{
-			for(@{$t{'FailureFlags'}})
-			{
-				my ($k,$v) = split /=>/,$_;
-				$v = 1 if $v eq '';
-				$env_flags{$k} = $v
-			}
-		}
-		$compile_line_extra .= $t{'FailureCompileFlags'}.' ' if exists $t{'FailureCompileFlags'};
-		$link_line_extra .= $t{'FailureLinkFlags'}.' ' if exists $t{'FailureLinkFlags'};
-		$test_failure_text .= $t{'FailureText'} if exists $t{'FailureText'};
-	}
-	$result
-}
-
-
-

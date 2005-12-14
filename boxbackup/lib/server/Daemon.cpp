@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -50,10 +11,13 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <signal.h>
 #include <string.h>
 #include <stdarg.h>
+
+#ifndef WIN32
+#include <syslog.h>
+#endif
 
 #include "Daemon.h"
 #include "Configuration.h"
@@ -179,8 +143,13 @@ int Daemon::Main(const char *DefaultConfigFile, int argc, const char *argv[])
 		// Let the derived class have a go at setting up stuff in the initial process
 		SetupInInitialProcess();
 		
+#ifndef WIN32		
 		// Set signal handler
-		if(::signal(SIGHUP, SignalHandler) == SIG_ERR || ::signal(SIGTERM, SignalHandler) == SIG_ERR)
+		struct sigaction sa;
+		sa.sa_handler = SignalHandler;
+		sa.sa_flags = 0;
+		sigemptyset(&sa.sa_mask);		// macro
+		if(::sigaction(SIGHUP, &sa, NULL) != 0 || ::sigaction(SIGTERM, &sa, NULL) != 0)
 		{
 			THROW_EXCEPTION(ServerException, DaemoniseFailed)
 		}
@@ -254,12 +223,14 @@ int Daemon::Main(const char *DefaultConfigFile, int argc, const char *argv[])
 				break;
 			}
 		}
+#endif // ! WIN32
 
 		// open the log
 		::openlog(DaemonName(), LOG_PID, LOG_LOCAL6);
 		// Log the start message
 		::syslog(LOG_INFO, "Starting daemon (config: %s) (version " BOX_VERSION ")", configfile);
 
+#ifndef WIN32
 		// Write PID to file
 		char pid[32];
 		int pidsize = sprintf(pid, "%d", (int)getpid());
@@ -268,6 +239,7 @@ int Daemon::Main(const char *DefaultConfigFile, int argc, const char *argv[])
 			::syslog(LOG_ERR, "can't write pid file");
 			THROW_EXCEPTION(ServerException, DaemoniseFailed)
 		}
+#endif
 		
 		// Set up memory leak reporting
 		#ifdef BOX_MEMORY_LEAK_TESTING
@@ -280,6 +252,7 @@ int Daemon::Main(const char *DefaultConfigFile, int argc, const char *argv[])
 	
 		if(asDaemon)
 		{
+#ifndef WIN32
 			// Close standard streams
 			::close(0);
 			::close(1);
@@ -300,8 +273,9 @@ int Daemon::Main(const char *DefaultConfigFile, int argc, const char *argv[])
 			{
 				::close(devnull);
 			}
-			
-			// And definately don't try and send anything to those file descriptors
+#endif // ! WIN32
+
+			// And definitely don't try and send anything to those file descriptors
 			// -- this has in the past sent text to something which isn't expecting it.
 			TRACE_TO_STDOUT(false);
 		}		
@@ -392,9 +366,15 @@ int Daemon::Main(const char *DefaultConfigFile, int argc, const char *argv[])
 // --------------------------------------------------------------------------
 void Daemon::EnterChild()
 {
+#ifndef WIN32
 	// Unset signal handlers
-	::signal(SIGHUP, SIG_DFL);
-	::signal(SIGTERM, SIG_DFL);
+	struct sigaction sa;
+	sa.sa_handler = SIG_DFL;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);			// macro
+	::sigaction(SIGHUP, &sa, NULL);
+	::sigaction(SIGTERM, &sa, NULL);
+#endif
 }
 
 
@@ -408,6 +388,7 @@ void Daemon::EnterChild()
 // --------------------------------------------------------------------------
 void Daemon::SignalHandler(int sigraised)
 {
+#ifndef WIN32
 	if(spDaemon != 0)
 	{
 		switch(sigraised)
@@ -424,6 +405,7 @@ void Daemon::SignalHandler(int sigraised)
 			break;
 		}
 	}
+#endif
 }
 
 // --------------------------------------------------------------------------
@@ -551,7 +533,7 @@ void Daemon::SetProcessTitle(const char *format, ...)
 	// -- make sure other platforms include the image name somewhere so ps listings give
 	// useful information.
 
-#ifdef PLATFORM_HAVE_setproctitle
+#ifdef HAVE_SETPROCTITLE
 	// optional arguments
 	va_list args;
 	va_start(args, format);
@@ -563,7 +545,5 @@ void Daemon::SetProcessTitle(const char *format, ...)
 	// Set process title
 	::setproctitle("%s", title);
 	
-#endif // PLATFORM_HAVE_setproctitle
+#endif // HAVE_SETPROCTITLE
 }
-
-

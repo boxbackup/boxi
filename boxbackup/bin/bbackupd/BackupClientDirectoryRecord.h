@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -59,95 +20,6 @@
 
 class BackupClientContext;
 class BackupDaemon;
-class CommandSocketManager;
-
-
-// --------------------------------------------------------------------------
-//
-// Class
-//		Name:    RunStatusProvider
-//		Purpose: Provides a StopRun() method which returns true if the current
-//		         backup should be halted.
-//		Created: 2005/11/15
-//
-// --------------------------------------------------------------------------
-class RunStatusProvider
-{
-	public:
-	virtual ~RunStatusProvider() { }
-	virtual bool StopRun() = 0;
-};
-
-// --------------------------------------------------------------------------
-//
-// Class
-//		Name:    SysadminNotifier
-//		Purpose: Provides a NotifySysadmin() method to send mail to the sysadmin
-//		Created: 2005/11/15
-//
-// --------------------------------------------------------------------------
-class SysadminNotifier
-{
-	public:
-	virtual ~SysadminNotifier() { }
-	virtual void NotifySysadmin(int Event) = 0;
-};
-
-// --------------------------------------------------------------------------
-//
-// Class
-//		Name:    ProgressNotifier
-//		Purpose: Provides methods for the backup library to inform the user
-//		         interface about its progress with the backup
-//		Created: 2005/11/20
-//
-// --------------------------------------------------------------------------
-class BackupClientDirectoryRecord;
-	
-class ProgressNotifier
-{
-	public:
-	virtual ~ProgressNotifier() { }
-	virtual void NotifyScanDirectory(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath) = 0;
-	virtual void NotifyDirStatFailed(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath,
-		const std::string& rErrorMsg) = 0;
-	virtual void NotifyFileStatFailed(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath,
-		const std::string& rErrorMsg) = 0;
-	virtual void NotifyFileReadFailed(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath,
-		const std::string& rErrorMsg) = 0;
-	virtual void NotifyFileModifiedInFuture(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath) = 0;
-	virtual void NotifyFileSkippedServerFull(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath) = 0;
-	virtual void NotifyFileUploadException(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath,
-		const BoxException& rException) = 0;
-	virtual void NotifyFileUploading(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath) = 0;
-	virtual void NotifyFileUploadingPatch(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath) = 0;
-	virtual void NotifyFileUploaded(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath,
-		int64_t FileSize) = 0;
-	virtual void NotifyFileSynchronised(
-		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath,
-		int64_t FileSize) = 0;
-};
 
 // --------------------------------------------------------------------------
 //
@@ -183,21 +55,14 @@ public:
 	class SyncParams
 	{
 	public:
-		SyncParams(
-			RunStatusProvider &rRunStatusProvider, 
-			SysadminNotifier &rSysadminNotifier,
-			ProgressNotifier &rProgressNotifier,
-			BackupClientContext &rContext);
+		SyncParams(BackupDaemon &rDaemon, BackupClientContext &rContext);
 		~SyncParams();
 	private:
 		// No copying
 		SyncParams(const SyncParams&);
 		SyncParams &operator=(const SyncParams&);
-		RunStatusProvider &mrRunStatusProvider;
-		SysadminNotifier &mrSysadminNotifier;
-		ProgressNotifier &mrProgressNotifier;
-		
 	public:
+
 		// Data members are public, as accessors are not justified here
 		box_time_t mSyncPeriodStart;
 		box_time_t mSyncPeriodEnd;
@@ -205,23 +70,13 @@ public:
 		box_time_t mMaxFileTimeInFuture;
 		int32_t mFileTrackingSizeThreshold;
 		int32_t mDiffingUploadSizeThreshold;
+		BackupDaemon &mrDaemon;
 		BackupClientContext &mrContext;
 		bool mReadErrorsOnFilesystemObjects;
-		CommandSocketManager* mpCommandSocket;
-	
+		
 		// Member variables modified by syncing process
 		box_time_t mUploadAfterThisTimeInTheFuture;
 		bool mHaveLoggedWarningAboutFutureFileTimes;
-	
-		bool StopRun() { return mrRunStatusProvider.StopRun(); }
-		void NotifySysadmin(int Event) 
-		{ 
-			mrSysadminNotifier.NotifySysadmin(Event); 
-		}
-		ProgressNotifier& GetProgressNotifier() const 
-		{ 
-			return mrProgressNotifier;
-		}
 	};
 
 	void SyncDirectory(SyncParams &rParams, int64_t ContainingDirectoryID, const std::string &rLocalPath,
@@ -256,3 +111,5 @@ private:
 };
 
 #endif // BACKUPCLIENTDIRECTORYRECORD__H
+
+

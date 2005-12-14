@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -48,7 +9,9 @@
 
 #include "Box.h"
 
-#include <sys/syscall.h>
+#ifdef HAVE_SYS_SYSCALL_H
+	#include <sys/syscall.h>
+#endif
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/uio.h>
@@ -56,8 +19,12 @@
 
 #ifndef PLATFORM_CLIB_FNS_INTERCEPTION_IMPOSSIBLE
 
-#ifdef PLATFORM_DARWIN
-	// For some reason, __syscall just doesn't work on Darwin
+#if !defined(HAVE_SYSCALL) && !defined(HAVE___SYSCALL) && !defined(HAVE___SYSCALL_NEED_DEFN)
+	#define PLATFORM_NO_SYSCALL
+#endif
+
+#ifdef PLATFORM_NO_SYSCALL
+	// For some reason, syscall just doesn't work on Darwin
 	// so instead, we build functions using assembler in a varient
 	// of the technique used in the Darwin Libc
 	extern "C" int
@@ -73,12 +40,13 @@
 	extern "C" off_t
 	TEST_lseek(int fildes, off_t offset, int whence);
 #else
-	#ifdef PLATFORM_LINUX
-		#undef __syscall
-		#define __syscall syscall
-	#else
-		// Need this, not declared in syscall.h
+	#ifdef HAVE___SYSCALL_NEED_DEFN
+		// Need this, not declared in syscall.h nor unistd.h
 		extern "C" off_t __syscall(quad_t number, ...);
+	#endif
+	#ifndef HAVE_SYSCALL
+		#undef syscall
+		#define syscall __syscall
 	#endif
 #endif
 
@@ -90,7 +58,7 @@
 bool intercept_enabled = false;
 const char *intercept_filename = 0;
 int intercept_filedes = -1;
-unsigned int intercept_errorafter = 0;
+off_t intercept_errorafter = 0;
 int intercept_errno = 0;
 int intercept_syscall = 0;
 off_t intercept_filepos = 0;
@@ -136,7 +104,7 @@ bool intercept_errornow(int d, int size, int syscallnum)
 			return true;
 		}
 		// where are we in the file?
-		if(intercept_filepos >= intercept_errorafter || intercept_filepos >= ((int)intercept_errorafter - size))
+		if(intercept_filepos >= intercept_errorafter || intercept_filepos >= ((off_t)intercept_errorafter - size))
 		{
 			TRACE3("Returning error %d for syscall %d, file pos %d\n", intercept_errno, syscallnum, (int)intercept_filepos);
 			return true;
@@ -176,10 +144,10 @@ open(const char *path, int flags, mode_t mode)
 			return -1;
 		}
 	}
-#ifdef PLATFORM_DARWIN
+#ifdef PLATFORM_NO_SYSCALL
 	int r = TEST_open(path, flags, mode);
 #else
-	int r = __syscall(SYS_open, path, flags, mode);
+	int r = syscall(SYS_open, path, flags, mode);
 #endif
 	if(intercept_enabled && intercept_filedes == -1)
 	{
@@ -197,10 +165,10 @@ extern "C" int
 close(int d)
 {
 	CHECK_FOR_FAKE_ERROR_COND(d, SIZE_ALWAYS_ERROR, SYS_close, -1);
-#ifdef PLATFORM_DARWIN
+#ifdef PLATFORM_NO_SYSCALL
 	int r = TEST_close(d);
 #else
-	int r = __syscall(SYS_close, d);
+	int r = syscall(SYS_close, d);
 #endif
 	if(r == 0)
 	{
@@ -216,10 +184,10 @@ extern "C" ssize_t
 write(int d, const void *buf, size_t nbytes)
 {
 	CHECK_FOR_FAKE_ERROR_COND(d, nbytes, SYS_write, -1);
-#ifdef PLATFORM_DARWIN
+#ifdef PLATFORM_NO_SYSCALL
 	int r = TEST_write(d, buf, nbytes);
 #else
-	int r = __syscall(SYS_write, d, buf, nbytes);
+	int r = syscall(SYS_write, d, buf, nbytes);
 #endif
 	if(r != -1)
 	{
@@ -232,10 +200,10 @@ extern "C" ssize_t
 read(int d, void *buf, size_t nbytes)
 {
 	CHECK_FOR_FAKE_ERROR_COND(d, nbytes, SYS_read, -1);
-#ifdef PLATFORM_DARWIN
+#ifdef PLATFORM_NO_SYSCALL
 	int r = TEST_read(d, buf, nbytes);
 #else
-	int r = __syscall(SYS_read, d, buf, nbytes);
+	int r = syscall(SYS_read, d, buf, nbytes);
 #endif
 	if(r != -1)
 	{
@@ -255,10 +223,10 @@ readv(int d, const struct iovec *iov, int iovcnt)
 	}
 
 	CHECK_FOR_FAKE_ERROR_COND(d, nbytes, SYS_readv, -1);
-#ifdef PLATFORM_DARWIN
+#ifdef PLATFORM_NO_SYSCALL
 	int r = TEST_readv(d, iov, iovcnt);
 #else
-	int r = __syscall(SYS_readv, d, iov, iovcnt);
+	int r = syscall(SYS_readv, d, iov, iovcnt);
 #endif
 	if(r != -1)
 	{
@@ -272,13 +240,13 @@ lseek(int fildes, off_t offset, int whence)
 {
 	// random magic for lseek syscall, see /usr/src/lib/libc/sys/lseek.c
 	CHECK_FOR_FAKE_ERROR_COND(fildes, 0, SYS_lseek, -1);
-#ifdef PLATFORM_DARWIN
+#ifdef PLATFORM_NO_SYSCALL
 	int r = TEST_lseek(fildes, offset, whence);
 #else
-	#ifdef PLATFORM_LINUX
-		off_t r = __syscall(SYS_lseek, fildes, offset, whence);
+	#ifdef HAVE_LSEEK_DUMMY_PARAM
+		off_t r = syscall(SYS_lseek, fildes, 0 /* extra 0 required here! */, offset, whence);
 	#else
-		off_t r = __syscall(SYS_lseek, fildes, 0 /* extra 0 required here! */, offset, whence);
+		off_t r = syscall(SYS_lseek, fildes, offset, whence);
 	#endif
 #endif
 	if(r != -1)

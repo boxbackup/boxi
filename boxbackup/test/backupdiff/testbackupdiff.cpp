@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -103,14 +64,25 @@ bool files_identical(const char *file1, const char *file2)
 	return true;
 }
 
-void make_file_of_zeros(const char *filename, int size)
+void make_file_of_zeros(const char *filename, size_t size)
 {
-	void *b = malloc(size);
-	memset(b, 0, size);
+	static const size_t bs = 0x10000;
+	size_t remSize = size;
+	void *b = malloc(bs);
+	memset(b, 0, bs);
 	FILE *f = fopen(filename, "wb");
-	fwrite(b, size, 1, f);
+
+	// Using largish blocks like this is much faster, while not consuming too much RAM
+	while(remSize > bs)
+	{
+		fwrite(b, bs, 1, f);
+		remSize -= bs;
+	}
+	fwrite(b, remSize, 1, f);
+
 	fclose(f);
 	free(b);
+
 	TEST_THAT(TestGetFileSize(filename) == size);
 }
 
@@ -131,9 +103,9 @@ void check_encoded_file(const char *filename, int64_t OtherFileID, int new_block
 	file_BlockIndexHeader hdr;
 	TEST_THAT(enc.ReadFullBuffer(&hdr, sizeof(hdr), 0));
 	TEST_THAT(hdr.mMagicValue == (int32_t)htonl(OBJECTMAGIC_FILE_BLOCKS_MAGIC_VALUE_V1));
-	TEST_THAT((uint64_t)ntoh64(hdr.mOtherFileID) == (uint64_t)OtherFileID);
+	TEST_THAT((uint64_t)box_ntoh64(hdr.mOtherFileID) == (uint64_t)OtherFileID);
 	// number of blocks
-	int64_t nblocks = ntoh64(hdr.mNumBlocks);
+	int64_t nblocks = box_ntoh64(hdr.mNumBlocks);
 	TRACE2("Reading index from '%s', has %lld blocks\n", filename, nblocks);
 	TRACE0("======== ===== ========== ======== ========\n   Index Where  EncSz/Idx     Size  WChcksm\n");
 	// Read them all in
@@ -142,7 +114,7 @@ void check_encoded_file(const char *filename, int64_t OtherFileID, int new_block
 	{
 		file_BlockIndexEntry en;
 		TEST_THAT(enc.ReadFullBuffer(&en, sizeof(en), 0));
-		int64_t s = ntoh64(en.mEncodedSize);
+		int64_t s = box_ntoh64(en.mEncodedSize);
 		if(s > 0)
 		{
 			nnew++;
@@ -154,7 +126,7 @@ void check_encoded_file(const char *filename, int64_t OtherFileID, int new_block
 			TRACE2("%8lld other i=%8lld", b, 0 - s);		
 		}
 		// Decode the rest
-		uint64_t iv = ntoh64(hdr.mEntryIVBase);
+		uint64_t iv = box_ntoh64(hdr.mEntryIVBase);
 		iv += b;
 		sBlowfishDecryptBlockEntry.SetIV(&iv);			
 		file_BlockIndexEntryEnc entryEnc;
@@ -494,8 +466,8 @@ int test(int argc, const char *argv[])
 
 	// Found a nasty case where files of lots of the same thing sock up lots of processor
 	// time -- because of lots of matches found. Check this out!
-	make_file_of_zeros("testfiles/zero.0", 20*1024);
-	make_file_of_zeros("testfiles/zero.1", 200*1024);
+	make_file_of_zeros("testfiles/zero.0", 20*1024*1024);
+	make_file_of_zeros("testfiles/zero.1", 200*1024*1024);
 	// Generate a first encoded file
 	{
 		BackupStoreFilenameClear f0name("zero.0");
@@ -517,6 +489,9 @@ int test(int argc, const char *argv[])
 		encoded->CopyStreamTo(out);
 		TEST_THAT(time(0) < (beginTime + 20));
 	}
+	// Remove zero-files to save disk space
+	remove("testfiles/zero.0");
+	remove("testfiles/zero.1");
 
 #if 0
 	// Code for a nasty real world example! (16Mb files, won't include them in the distribution

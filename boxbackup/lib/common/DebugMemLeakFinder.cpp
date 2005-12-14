@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -132,33 +93,37 @@ void *memleakfinder_realloc(void *ptr, size_t size)
 
 	// Check it's been allocated
 	std::map<void *, MallocBlockInfo>::iterator i(sMallocBlocks.find(ptr));
-	if(i == sMallocBlocks.end())
+	if(ptr && i == sMallocBlocks.end())
 	{
 		TRACE1("Block %x realloc(), but not in list. Error? Or allocated in startup static objects?\n", ptr);
-		void *b = ::realloc(ptr, size);
-		memleakfinder_malloc_add_block(b, size, "FOUND-IN-REALLOC", 0);
-		return b;
 	}
 
 	void *b = ::realloc(ptr, size);
-	
-	// Worked?
-	if(b != 0)
+
+	if(ptr && i!=sMallocBlocks.end())
 	{
-		// Update map
-		MallocBlockInfo inf = i->second;
-		inf.size = size;
-		sMallocBlocks.erase(i);
-		sMallocBlocks[b] = inf;
-		
-		if(sTrackMallocInSection)
+		// Worked?
+		if(b != 0)
 		{
-			std::set<void *>::iterator si(sSectionMallocBlocks.find(ptr));
-			if(si != sSectionMallocBlocks.end()) sSectionMallocBlocks.erase(si);
-			sSectionMallocBlocks.insert(b);
+			// Update map
+			MallocBlockInfo inf = i->second;
+			inf.size = size;
+			sMallocBlocks.erase(i);
+			sMallocBlocks[b] = inf;
+
+			if(sTrackMallocInSection)
+			{
+				std::set<void *>::iterator si(sSectionMallocBlocks.find(ptr));
+				if(si != sSectionMallocBlocks.end()) sSectionMallocBlocks.erase(si);
+				sSectionMallocBlocks.insert(b);
+			}
 		}
 	}
-	
+	else
+	{
+		memleakfinder_malloc_add_block(b, size, "FOUND-IN-REALLOC", 0);
+	}
+
 	//TRACE3("realloc(), %d, %08x->%08x\n", size, ptr, b);
 	return b;
 }
@@ -215,9 +180,7 @@ void memleakfinder_notaleak(void *ptr)
 	}
 	else
 	{
-		if ( sNotLeaksPreNum < 
-			 (unsigned)( sizeof(sNotLeaksPre)/sizeof(*sNotLeaksPre) ) )
-			sNotLeaksPre[sNotLeaksPreNum++] = ptr;
+		sNotLeaksPre[sNotLeaksPreNum++] = ptr;
 	}
 /*	{
 		std::map<void *, MallocBlockInfo>::iterator i(sMallocBlocks.find(ptr));
@@ -257,12 +220,12 @@ void memleakfinder_traceblocksinsection()
 		}
 		else
 		{
-			TRACE4("Block 0x%08x size %d allocated at %s:%d\n", (int)i->first, i->second.size, i->second.file, i->second.line);
+			TRACE4("Block 0x%08lx size %d allocated at %s:%d\n", (long)i->first, i->second.size, i->second.file, i->second.line);
 		}
 	}
 	for(std::map<void *, ObjectInfo>::const_iterator i(sSectionObjectBlocks.begin()); i != sSectionObjectBlocks.end(); ++i)
 	{
-		TRACE5("Object%s 0x%08x size %d allocated at %s:%d\n", i->second.array?" []":"", (int)i->first, i->second.size, i->second.file, i->second.line);
+		TRACE5("Object%s 0x%08lx size %d allocated at %s:%d\n", i->second.array?" []":"", (long)i->first, i->second.size, i->second.file, i->second.line);
 	}
 }
 
@@ -287,11 +250,11 @@ void memleakfinder_reportleaks_file(FILE *file)
 {
 	for(std::map<void *, MallocBlockInfo>::const_iterator i(sMallocBlocks.begin()); i != sMallocBlocks.end(); ++i)
 	{
-		if(is_leak(i->first)) ::fprintf(file, "Block 0x%08x size %d allocated at %s:%d\n", (int)i->first, i->second.size, i->second.file, i->second.line);
+		if(is_leak(i->first)) ::fprintf(file, "Block 0x%08lx size %d allocated at %s:%d\n", (long)i->first, i->second.size, i->second.file, i->second.line);
 	}
 	for(std::map<void *, ObjectInfo>::const_iterator i(sObjectBlocks.begin()); i != sObjectBlocks.end(); ++i)
 	{
-		if(is_leak(i->first)) ::fprintf(file, "Object%s 0x%08x size %d allocated at %s:%d\n", i->second.array?" []":"", (int)i->first, i->second.size, i->second.file, i->second.line);
+		if(is_leak(i->first)) ::fprintf(file, "Object%s 0x%08lx size %d allocated at %s:%d\n", i->second.array?" []":"", (long)i->first, i->second.size, i->second.file, i->second.line);
 	}
 }
 

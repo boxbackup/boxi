@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -58,7 +19,7 @@
 #include "MemLeakFindOn.h"
 
 // set packing to one byte
-#ifdef STRUCTURE_PATCKING_FOR_WIRE_USE_HEADERS
+#ifdef STRUCTURE_PACKING_FOR_WIRE_USE_HEADERS
 #include "BeginStructPackForWire.h"
 #else
 BEGIN_STRUCTURE_PACKING_FOR_WIRE
@@ -98,7 +59,7 @@ typedef struct
 } en_StreamFormatDepends;
 
 // Use default packing
-#ifdef STRUCTURE_PATCKING_FOR_WIRE_USE_HEADERS
+#ifdef STRUCTURE_PACKING_FOR_WIRE_USE_HEADERS
 #include "EndStructPackForWire.h"
 #else
 END_STRUCTURE_PACKING_FOR_WIRE
@@ -174,9 +135,9 @@ void BackupStoreDirectory::ReadFromStream(IOStream &rStream, int Timeout)
 	}
 	
 	// Get data
-	mObjectID = ntoh64(hdr.mObjectID);
-	mContainerID = ntoh64(hdr.mContainerID);
-	mAttributesModTime = ntoh64(hdr.mAttributesModTime);
+	mObjectID = box_ntoh64(hdr.mObjectID);
+	mContainerID = box_ntoh64(hdr.mContainerID);
+	mAttributesModTime = box_ntoh64(hdr.mAttributesModTime);
 	
 	// Options
 	int32_t options = ntohl(hdr.mOptionsPresent);
@@ -270,9 +231,9 @@ void BackupStoreDirectory::WriteToStream(IOStream &rStream, int16_t FlagsMustBeS
 	dir_StreamFormat hdr;
 	hdr.mMagicValue = htonl(OBJECTMAGIC_DIR_MAGIC_VALUE);
 	hdr.mNumEntries = htonl(count);
-	hdr.mObjectID = hton64(mObjectID);
-	hdr.mContainerID = hton64(mContainerID);
-	hdr.mAttributesModTime = hton64(mAttributesModTime);
+	hdr.mObjectID = box_hton64(mObjectID);
+	hdr.mContainerID = box_hton64(mContainerID);
+	hdr.mAttributesModTime = box_hton64(mAttributesModTime);
 	hdr.mOptionsPresent = htonl(options);
 	
 	// Write header
@@ -519,10 +480,10 @@ void BackupStoreDirectory::Entry::ReadFromStream(IOStream &rStream, int Timeout)
 	mAttributes.ReadFromStream(rStream, Timeout);
 
 	// Store the rest of the bits
-	mModificationTime =		ntoh64(entry.mModificationTime);
-	mObjectID = 			ntoh64(entry.mObjectID);
-	mSizeInBlocks = 		ntoh64(entry.mSizeInBlocks);
-	mAttributesHash =		ntoh64(entry.mAttributesHash);
+	mModificationTime =		box_ntoh64(entry.mModificationTime);
+	mObjectID = 			box_ntoh64(entry.mObjectID);
+	mSizeInBlocks = 		box_ntoh64(entry.mSizeInBlocks);
+	mAttributesHash =		box_ntoh64(entry.mAttributesHash);
 	mFlags = 				ntohs(entry.mFlags);
 	mName =					name;
 }
@@ -540,10 +501,10 @@ void BackupStoreDirectory::Entry::WriteToStream(IOStream &rStream) const
 {
 	// Build a structure
 	en_StreamFormat entry;
-	entry.mModificationTime = 	hton64(mModificationTime);
-	entry.mObjectID = 			hton64(mObjectID);
-	entry.mSizeInBlocks = 		hton64(mSizeInBlocks);
-	entry.mAttributesHash =		hton64(mAttributesHash);
+	entry.mModificationTime = 	box_hton64(mModificationTime);
+	entry.mObjectID = 			box_hton64(mObjectID);
+	entry.mSizeInBlocks = 		box_hton64(mSizeInBlocks);
+	entry.mAttributesHash =		box_hton64(mAttributesHash);
 	entry.mFlags = 				htons(mFlags);
 	
 	// Write it
@@ -575,8 +536,8 @@ void BackupStoreDirectory::Entry::ReadFromStreamDependencyInfo(IOStream &rStream
 	}
 
 	// Store the data
-	mDependsNewer = ntoh64(depends.mDependsNewer);
-	mDependsOlder = ntoh64(depends.mDependsOlder);
+	mDependsNewer = box_ntoh64(depends.mDependsNewer);
+	mDependsOlder = box_ntoh64(depends.mDependsOlder);
 }
 
 
@@ -592,8 +553,8 @@ void BackupStoreDirectory::Entry::WriteToStreamDependencyInfo(IOStream &rStream)
 {
 	// Build structure
 	en_StreamFormatDepends depends;	
-	depends.mDependsNewer = hton64(mDependsNewer);
-	depends.mDependsOlder = hton64(mDependsOlder);
+	depends.mDependsNewer = box_hton64(mDependsNewer);
+	depends.mDependsOlder = box_hton64(mDependsOlder);
 	// Write
 	rStream.Write(&depends, sizeof(depends));
 }

@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -623,9 +584,9 @@ typedef struct
 	int objectsNotDel;
 	int deleted;
 	int old;
-} recusive_count_objects_results;
+} recursive_count_objects_results;
 
-void recusive_count_objects_r(BackupProtocolClient &protocol, int64_t id, recusive_count_objects_results &results)
+void recursive_count_objects_r(BackupProtocolClient &protocol, int64_t id, recursive_count_objects_results &results)
 {
 	// Command
 	std::auto_ptr<BackupProtocolClientSuccess> dirreply(protocol.QueryListDirectory(
@@ -650,12 +611,12 @@ void recusive_count_objects_r(BackupProtocolClient &protocol, int64_t id, recusi
 		
 		if(en->GetFlags() & BackupStoreDirectory::Entry::Flags_Dir)
 		{
-			recusive_count_objects_r(protocol, en->GetObjectID(), results);
+			recursive_count_objects_r(protocol, en->GetObjectID(), results);
 		}
 	}
 }
 
-void recusive_count_objects(const char *hostname, int64_t id, recusive_count_objects_results &results)
+void recursive_count_objects(const char *hostname, int64_t id, recursive_count_objects_results &results)
 {
 	// Context
 	TLSContext context;
@@ -676,7 +637,7 @@ void recusive_count_objects(const char *hostname, int64_t id, recusive_count_obj
 	}
 	
 	// Count objects
-	recusive_count_objects_r(protocolReadOnly, id, results);
+	recursive_count_objects_r(protocolReadOnly, id, results);
 
 	// Close it
 	protocolReadOnly.QueryFinished();
@@ -1745,9 +1706,9 @@ int test3(int argc, const char *argv[])
 		
 		// Test the deletion of objects by the housekeeping system
 		// First, things as they are now.
-		recusive_count_objects_results before = {0,0,0};
+		recursive_count_objects_results before = {0,0,0};
 
-		recusive_count_objects("localhost", BackupProtocolClientListDirectory::RootDirectory, before);
+		recursive_count_objects("localhost", BackupProtocolClientListDirectory::RootDirectory, before);
 		
 		TEST_THAT(before.objectsNotDel != 0);
 		TEST_THAT(before.deleted != 0);
@@ -1771,7 +1732,7 @@ int test3(int argc, const char *argv[])
 		
 		// wait for housekeeping to happen
 		printf("waiting for housekeeping:\n");
-		for(int l = 0; l < 12; ++l)
+		for(int l = 0; l < 30; ++l)
 		{
 			::sleep(1);
 			printf(".");
@@ -1780,9 +1741,11 @@ int test3(int argc, const char *argv[])
 		printf("\n");
 
 		// Count the objects again
-		recusive_count_objects_results after = {0,0,0};
-		recusive_count_objects("localhost", BackupProtocolClientListDirectory::RootDirectory, after);
-		
+		recursive_count_objects_results after = {0,0,0};
+		recursive_count_objects("localhost", BackupProtocolClientListDirectory::RootDirectory, after);
+printf("after.objectsNotDel=%i, deleted=%i, old=%i\n",after.objectsNotDel, after.deleted, after.old);
+
+		// If these tests fail then try increasing the timeout above
 		TEST_THAT(after.objectsNotDel == before.objectsNotDel);
 		TEST_THAT(after.deleted == 0);
 		TEST_THAT(after.old == 0);

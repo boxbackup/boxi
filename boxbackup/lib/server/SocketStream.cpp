@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -50,8 +11,11 @@
 
 #include <unistd.h>
 #include <sys/types.h>
-#include <poll.h>
 #include <errno.h>
+
+#ifndef WIN32
+#include <poll.h>
+#endif
 
 #include "SocketStream.h"
 #include "ServerException.h"
@@ -179,7 +143,11 @@ void SocketStream::Open(int Type, const char *Name, int Port)
 	if(::connect(mSocketHandle, &addr.sa_generic, addrLen) == -1)
 	{
 		// Dispose of the socket
+#ifdef WIN32
+		::closesocket(mSocketHandle);
+#else
 		::close(mSocketHandle);
+#endif
 		mSocketHandle = -1;
 		THROW_EXCEPTION(ConnectionException, Conn_SocketConnectError)
 	}
@@ -230,7 +198,11 @@ int SocketStream::Read(void *pBuffer, int NBytes, int Timeout)
 		}
 	}
 
+#ifdef WIN32
+	int r = ::recv(mSocketHandle, (char*)pBuffer, NBytes, 0);
+#else
 	int r = ::read(mSocketHandle, pBuffer, NBytes);
+#endif
 	if(r == -1)
 	{
 		if(errno == EINTR)
@@ -275,7 +247,11 @@ void SocketStream::Write(const void *pBuffer, int NBytes)
 	while(bytesLeft > 0)
 	{
 		// Try to send.
+#ifdef WIN32
+		int sent = ::send(mSocketHandle, buffer, bytesLeft, 0);
+#else
 		int sent = ::write(mSocketHandle, buffer, bytesLeft);
+#endif
 		if(sent == -1)
 		{
 			// Error.
@@ -322,8 +298,11 @@ void SocketStream::Write(const void *pBuffer, int NBytes)
 void SocketStream::Close()
 {
 	if(mSocketHandle == -1) {THROW_EXCEPTION(ServerException, BadSocketHandle)}
-	
+#ifdef WIN32
+	if(::closesocket(mSocketHandle) == -1)
+#else
 	if(::close(mSocketHandle) == -1)
+#endif
 	{
 		THROW_EXCEPTION(ServerException, SocketCloseError)
 	}
@@ -393,7 +372,7 @@ bool SocketStream::StreamClosed()
 //		Created: 2003/08/06
 //
 // --------------------------------------------------------------------------
-int SocketStream::GetSocketHandle()
+tOSSocketHandle SocketStream::GetSocketHandle()
 {
 	if(mSocketHandle == -1) {THROW_EXCEPTION(ServerException, BadSocketHandle)}
 	return mSocketHandle;
@@ -411,7 +390,7 @@ int SocketStream::GetSocketHandle()
 // --------------------------------------------------------------------------
 bool SocketStream::GetPeerCredentials(uid_t &rUidOut, gid_t &rGidOut)
 {
-#ifdef PLATFORM_HAVE_getpeereid
+#ifdef HAVE_GETPEEREID
 	uid_t remoteEUID = 0xffff;
 	gid_t remoteEGID = 0xffff;
 
@@ -421,9 +400,9 @@ bool SocketStream::GetPeerCredentials(uid_t &rUidOut, gid_t &rGidOut)
 		rGidOut = remoteEGID;
 		return true;
 	}
-#endif // PLATFORM_HAVE_getpeereid
+#endif
 
-#ifdef PLATFORM_HAVE_getsockopt_SO_PEERCRED
+#if HAVE_DECL_SO_PEERCRED
 	struct ucred cred;
 	socklen_t credLen = sizeof(cred);
 
@@ -433,7 +412,7 @@ bool SocketStream::GetPeerCredentials(uid_t &rUidOut, gid_t &rGidOut)
 		rGidOut = cred.gid;
 		return true;
 	}
-#endif // PLATFORM_HAVE_getsockopt_SO_PEERCRED
+#endif
 
 	// Not available
 	return false;

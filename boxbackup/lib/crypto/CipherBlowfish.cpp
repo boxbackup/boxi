@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -50,7 +11,7 @@
 
 #include <openssl/evp.h>
 
-#ifdef PLATFORM_OLD_OPENSSL
+#ifdef HAVE_OLD_SSL
 	#include <string.h>
 	#include <strings.h>
 #endif
@@ -73,7 +34,7 @@
 CipherBlowfish::CipherBlowfish(CipherDescription::CipherMode Mode, const void *pKey, unsigned int KeyLength, const void *pInitialisationVector)
 	: CipherDescription(),
 	  mMode(Mode)
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 	, mpKey(pKey),
 	  mKeyLength(KeyLength),
 	  mpInitialisationVector(pInitialisationVector)
@@ -105,7 +66,7 @@ CipherBlowfish::CipherBlowfish(CipherDescription::CipherMode Mode, const void *p
 CipherBlowfish::CipherBlowfish(const CipherBlowfish &rToCopy)
 	: CipherDescription(rToCopy),
 	  mMode(rToCopy.mMode),
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 	  mpKey(rToCopy.mpKey),
 	  mKeyLength(rToCopy.mKeyLength),
 	  mpInitialisationVector(rToCopy.mpInitialisationVector)
@@ -119,7 +80,7 @@ CipherBlowfish::CipherBlowfish(const CipherBlowfish &rToCopy)
 #endif
 
 
-#ifdef PLATFORM_OLD_OPENSSL
+#ifdef HAVE_OLD_SSL
 // Hack functions to support old OpenSSL API
 CipherDescription *CipherBlowfish::Clone() const
 {
@@ -149,7 +110,7 @@ void CipherBlowfish::SetIV(const void *pIV)
 // --------------------------------------------------------------------------
 CipherBlowfish::~CipherBlowfish()
 {
-#ifdef PLATFORM_OLD_OPENSSL
+#ifdef HAVE_OLD_SSL
 	// Zero copy of key
 	for(unsigned int l = 0; l < mKey.size(); ++l)
 	{
@@ -173,7 +134,7 @@ CipherBlowfish &CipherBlowfish::operator=(const CipherBlowfish &rToCopy)
 	CipherDescription::operator=(rToCopy);
 
 	mMode = rToCopy.mMode;
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 	mpKey = rToCopy.mpKey;
 	mKeyLength = rToCopy.mKeyLength;
 	mpInitialisationVector = rToCopy.mpInitialisationVector;
@@ -235,7 +196,7 @@ void CipherBlowfish::SetupParameters(EVP_CIPHER_CTX *pCipherContext) const
 	ASSERT(pCipherContext != 0);
 	
 	// Set key length
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 	if(EVP_CIPHER_CTX_set_key_length(pCipherContext, mKeyLength) != 1)
 #else
 	if(EVP_CIPHER_CTX_set_key_length(pCipherContext, mKey.size()) != 1)
@@ -244,7 +205,7 @@ void CipherBlowfish::SetupParameters(EVP_CIPHER_CTX *pCipherContext) const
 		THROW_EXCEPTION(CipherException, EVPBadKeyLength)
 	}
 	// Set key
-#ifndef PLATFORM_OLD_OPENSSL
+#ifndef HAVE_OLD_SSL
 	if(EVP_CipherInit_ex(pCipherContext, NULL, NULL, (unsigned char*)mpKey, (unsigned char*)mpInitialisationVector, -1) != 1)
 #else
 	if(EVP_CipherInit(pCipherContext, NULL, (unsigned char*)mKey.c_str(), (unsigned char*)mInitialisationVector, -1) != 1)

@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -67,10 +28,6 @@
 #include "RaidFileException.h"
 #include "RaidFileController.h"
 #include "RaidFileUtil.h"
-
-#ifdef PLATFORM_LINUX
-	#include "LinuxWorkaround.h"
-#endif
 
 #include "MemLeakFindOn.h"
 
@@ -356,11 +313,7 @@ RaidFileRead_Raid::RaidFileRead_Raid(int SetNumber, const std::string &Filename,
 	  mEOF(false)
 {
 	// Make sure size of the IOStream::pos_type matches the pos_type used
-#ifdef PLATFORM_LINUX
 	ASSERT(sizeof(pos_type) >= sizeof(off_t));
-#else
-	ASSERT(sizeof(pos_type) == sizeof(off_t));
-#endif
 	
 	// Sanity check handles
 	if(mStripe1Handle != -1 && mStripe2Handle != -1)
@@ -758,7 +711,7 @@ int RaidFileRead_Raid::ReadRecovered(void *pBuffer, int NBytes)
 					if(mLastBlockHasSize)
 					{
 						int sizeXorOffset = (mBlockSize - sizeof(FileSizeType)) + ((mStripe1Handle != -1)?mBlockSize:0);
-						*((FileSizeType*)(mRecoveryBuffer + sizeXorOffset)) ^= ntoh64(mFileSize);
+						*((FileSizeType*)(mRecoveryBuffer + sizeXorOffset)) ^= box_ntoh64(mFileSize);
 					}
 				}
 				else
@@ -1276,7 +1229,7 @@ std::auto_ptr<RaidFileRead> RaidFileRead::Open(int SetNumber, const std::string 
 			if(parityIntegralPlusOffT)
 			{
 				// Wonderful! Have the value
-				length = ntoh64(parityLastData);
+				length = box_ntoh64(parityLastData);
 			}
 			else
 			{
@@ -1341,7 +1294,7 @@ std::auto_ptr<RaidFileRead> RaidFileRead::Open(int SetNumber, const std::string 
 						// Lovely!
 						length = stripe1LastData ^ parityLastData;
 						// Convert to host byte order
-						length = ntoh64(length);
+						length = box_ntoh64(length);
 						ASSERT(length <= (paritySize + stripe1Size));
 						// Mark is as having this to aid code later
 						lastBlockHasSize = true;
@@ -1574,10 +1527,6 @@ bool RaidFileRead::ReadDirectoryContents(int SetNumber, const std::string &rDirN
 			struct dirent *en = 0;
 			while((en = ::readdir(dirHandle)) != 0)
 			{
-#ifdef PLATFORM_LINUX
-			LinuxWorkaround_FinishDirentStruct(en, dn.c_str());
-#endif
-
 				if(en->d_name[0] == '.' && 
 					(en->d_name[1] == '\0' || (en->d_name[1] == '.' && en->d_name[2] == '\0')))
 				{
@@ -1585,18 +1534,22 @@ bool RaidFileRead::ReadDirectoryContents(int SetNumber, const std::string &rDirN
 					continue;
 				}
 				
-				// stat the file to find out what type it is
-/*				struct stat st;
-				std::string fullName(dn + DIRECTORY_SEPARATOR + en->d_name);
-				if(::stat(fullName.c_str(), &st) != 0)
-				{
-					THROW_EXCEPTION(RaidFileException, OSError)
-				}*/
-				
 				// Entry...
 				std::string name;
 				unsigned int countToAdd = 1;
-				if(DirReadType == DirReadType_FilesOnly && en->d_type == DT_REG) // (st.st_mode & S_IFDIR) == 0)
+
+				// stat the file to find out what type it is
+#ifdef HAVE_VALID_DIRENT_D_TYPE
+				if(DirReadType == DirReadType_FilesOnly && en->d_type == DT_REG)
+#else
+				struct stat st;
+				std::string fullName(dn + DIRECTORY_SEPARATOR + en->d_name);
+				if(::lstat(fullName.c_str(), &st) != 0)
+				{
+					THROW_EXCEPTION(RaidFileException, OSError)
+				}
+				if(DirReadType == DirReadType_FilesOnly && (st.st_mode & S_IFDIR) == 0)
+#endif
 				{
 					// File. Complex, need to check the extension
 					int dot = -1;
@@ -1624,7 +1577,11 @@ bool RaidFileRead::ReadDirectoryContents(int SetNumber, const std::string &rDirN
 						}
 					}
 				}
-				if(DirReadType == DirReadType_DirsOnly && en->d_type == DT_DIR) // (st.st_mode & S_IFDIR))
+#ifdef HAVE_VALID_DIRENT_D_TYPE
+				if(DirReadType == DirReadType_DirsOnly && en->d_type == DT_DIR)
+#else
+				if(DirReadType == DirReadType_DirsOnly && (st.st_mode & S_IFDIR))
+#endif
 				{
 					// Directory, and we want directories
 					name = en->d_name;

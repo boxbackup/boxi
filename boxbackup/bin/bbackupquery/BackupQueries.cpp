@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -372,21 +333,16 @@ void BackupQueries::CommandList(const std::vector<std::string> &args, const bool
 			return;
 		}
 	}
-
-	try
-	{	
-		// List it
-		List(rootDir, listRoot, opts, true /* first level to list */);
-	} catch (BoxException &e) {
-		printf("Error from server: %s\n", e.what());
-	}
+	
+	// List it
+	List(rootDir, listRoot, opts, true /* first level to list */);
 }
 
 
 // --------------------------------------------------------------------------
 //
 // Function
-//		Name:    BackupQueries::List(int64_t, const std::string &, const bool *)
+//		Name:    BackupQueries::CommandList2(int64_t, const std::string &, const bool *)
 //		Purpose: Do the actual listing of directories and files
 //		Created: 2003/10/10
 //
@@ -399,29 +355,11 @@ void BackupQueries::List(int64_t DirID, const std::string &rListRoot, const bool
 	if(!opts[LIST_OPTION_ALLOWDELETED]) excludeFlags |= BackupProtocolClientListDirectory::Flags_Deleted;
 
 	// Do communication
-	BackupProtocolClientListDirectory send(
+	mrConnection.QueryListDirectory(
 			DirID,
 			BackupProtocolClientListDirectory::Flags_INCLUDE_EVERYTHING,	// both files and directories
 			excludeFlags,
 			true /* want attributes */);
-
-	try 
-	{
-		mrConnection.Query(send);
-	}
-	catch (BoxException &e)
-	{
-		int type, subtype;
-		if (send.IsError(type, subtype) &&
-			type == BackupProtocolClientError::ErrorType)
-		{
-			throw ConnectionException(subtype);
-		}
-		else
-		{
-			throw ConnectionException(e.GetSubType());
-		}
-	}
 
 	// Retrieve the directory from the stream following
 	BackupStoreDirectory dir;
@@ -442,7 +380,11 @@ void BackupQueries::List(int64_t DirID, const std::string &rListRoot, const bool
 		{
 			// add object ID to line
 			char oid[32];
+#ifdef WIN32
+			sprintf(oid, "%08I64x ", en->GetObjectID());
+#else
 			sprintf(oid, "%08llx ", en->GetObjectID());
+#endif
 			line += oid;
 		}
 		
@@ -466,6 +408,7 @@ void BackupQueries::List(int64_t DirID, const std::string &rListRoot, const bool
 			}
 			// attributes flags
 			*(f++) = (en->HasAttributes())?'a':'-';
+
 			// terminate
 			*(f++) = ' ';
 			*(f++) = '\0';
@@ -486,14 +429,22 @@ void BackupQueries::List(int64_t DirID, const std::string &rListRoot, const bool
 		if(opts[LIST_OPTION_DISPLAY_HASH])
 		{
 			char hash[64];
+#ifdef WIN32
+			::sprintf(hash, "%016I64x ", en->GetAttributesHash());
+#else
 			::sprintf(hash, "%016llx ", en->GetAttributesHash());
+#endif
 			line += hash;
 		}
 		
 		if(opts[LIST_OPTION_SIZEINBLOCKS])
 		{
 			char num[32];
+#ifdef WIN32
+			sprintf(num, "%05I64d ", en->GetSizeInBlocks());
+#else
 			sprintf(num, "%05lld ", en->GetSizeInBlocks());
+#endif
 			line += num;
 		}
 		
@@ -1096,7 +1047,8 @@ void BackupQueries::CompareLocation(const std::string &rLocation, BackupQueries:
 		}
 				
 		// Then get it compared
-		Compare(std::string("/") + rLocation, loc.GetKeyValue("Path"), rParams);
+		Compare(std::string(DIRECTORY_SEPARATOR) + rLocation, 
+			loc.GetKeyValue("Path"), rParams);
 	}
 	catch(...)
 	{
@@ -1225,9 +1177,9 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 				continue;
 			}
 
-#ifdef PLATFORM_dirent_BROKEN_d_type
+#ifndef HAVE_VALID_DIRENT_D_TYPE
 			std::string fn(rLocalDir);
-			fn += '/';
+			fn += DIRECTORY_SEPARATOR_ASCHAR;
 			fn += localDirEn->d_name;
 			struct stat st;
 			if(::lstat(fn.c_str(), &st) != 0)
@@ -1258,7 +1210,7 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 				// Directory
 				localDirs.insert(std::string(localDirEn->d_name));
 			}
-#endif // PLATFORM_dirent_BROKEN_d_type
+#endif
 		}
 		// Close directory
 		if(::closedir(dirhandle) != 0)

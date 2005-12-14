@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -50,16 +11,84 @@
 #include "BackupDaemon.h"
 #include "MainHelper.h"
 #include "BoxPortsAndFiles.h"
+#include "BackupStoreException.h"
 
 #include "MemLeakFindOn.h"
+
+#ifdef WIN32
+	#include "Win32ServiceFunctions.h"
+	#include "Win32BackupService.h"
+
+	extern Win32BackupService gDaemonService;
+#endif
 
 int main(int argc, const char *argv[])
 {
 	MAINHELPER_START
 
+#ifdef WIN32
+
+	::openlog("Box Backup (bbackupd)", 0, 0);
+
+	if(argc == 2 &&
+		(::strcmp(argv[1], "--help") == 0 ||
+		 ::strcmp(argv[1], "-h") == 0))
+	{
+		printf("-h help, -i install service, -r remove service,\n"
+			"-c <config file> start daemon now");
+		return 2;
+	}
+	if(argc == 2 && ::strcmp(argv[1], "-r") == 0)
+	{
+		RemoveService();
+		return 0;
+	}
+	if(argc == 2 && ::strcmp(argv[1], "-i") == 0)
+	{
+		InstallService();
+		return 0;
+	}
+		
+	// Under win32 we must initialise the Winsock library
+	// before using sockets
+		
+	WSADATA info;
+
+	if (WSAStartup(MAKELONG(1, 1), &info) == SOCKET_ERROR) 
+	{
+		// box backup will not run without sockets
+		::syslog(LOG_ERR, "Failed to initialise Windows Sockets");
+		THROW_EXCEPTION(BackupStoreException, Internal)
+	}
+
+	EnableBackupRights();
+
+	int ExitCode = 0;
+
+	if (argc == 2 && ::strcmp(argv[1], "--service") == 0)
+	{
+		syslog(LOG_INFO,"Starting Box Backup Service");
+		OurService();
+	}
+	else
+	{
+		ExitCode = gDaemonService.Main(
+			BOX_FILE_BBACKUPD_DEFAULT_CONFIG, argc, argv);
+	}
+
+	// Clean up our sockets
+	WSACleanup();
+
+	::closelog();
+
+	return ExitCode;
+
+#else // !WIN32
+
 	BackupDaemon daemon;
 	return daemon.Main(BOX_FILE_BBACKUPD_DEFAULT_CONFIG, argc, argv);
-	
+
+#endif // WIN32
+
 	MAINHELPER_END
 }
-

@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -51,9 +12,12 @@
 #define TLS_CLASS_IMPLEMENTATION_CPP
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
-#include <poll.h>
 #include <errno.h>
-#include <sys/ioctl.h>
+#include <fcntl.h>
+
+#ifndef WIN32
+#include <poll.h>
+#endif
 
 #include "SocketStreamTLS.h"
 #include "SSLLib.h"
@@ -159,7 +123,8 @@ void SocketStreamTLS::Handshake(const TLSContext &rContext, bool IsServer)
 		SSLLib::LogError("Create socket bio");
 		THROW_EXCEPTION(ServerException, TLSAllocationFailed)
 	}
-	int socket = GetSocketHandle();
+
+	tOSSocketHandle socket = GetSocketHandle();
 	BIO_set_fd(mpBIO, socket, BIO_NOCLOSE);
 	
 	// Then the SSL object
@@ -170,13 +135,26 @@ void SocketStreamTLS::Handshake(const TLSContext &rContext, bool IsServer)
 		THROW_EXCEPTION(ServerException, TLSAllocationFailed)
 	}
 
+#ifndef WIN32
 	// Make the socket non-blocking so timeouts on Read work
-	int nonblocking = true;
-	if(::ioctl(socket, FIONBIO, &nonblocking) == -1)
+	// This is more portable than using ioctl with FIONBIO
+	int statusFlags = 0;
+	if(::fcntl(socket, F_GETFL, &statusFlags) < 0
+	   || ::fcntl(socket, F_SETFL, statusFlags | O_NONBLOCK) == -1)
 	{
 		THROW_EXCEPTION(ServerException, SocketSetNonBlockingFailed)
 	}
+#endif
 	
+	// FIXME: This is less portable than the above. However, it MAY be needed
+	// for cygwin, which has/had bugs with fcntl
+	//
+	// int nonblocking = true;
+	// if(::ioctl(socket, FIONBIO, &nonblocking) == -1)
+	// {
+	// 	THROW_EXCEPTION(ServerException, SocketSetNonBlockingFailed)
+	// }
+
 	// Set the two to know about each other
 	::SSL_set_bio(mpSSL, mpBIO, mpBIO);
 
@@ -492,5 +470,3 @@ std::string SocketStreamTLS::GetPeerCommonName()
 	// Done.
 	return std::string(commonName);
 }
-
-

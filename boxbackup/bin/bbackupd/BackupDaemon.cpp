@@ -1,42 +1,3 @@
-// distribution boxbackup-0.09
-// 
-//  
-// Copyright (c) 2003, 2004
-//      Ben Summers.  All rights reserved.
-//  
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All use of this software and associated advertising materials must 
-//    display the following acknowledgement:
-//        This product includes software developed by Ben Summers.
-// 4. The names of the Authors may not be used to endorse or promote
-//    products derived from this software without specific prior written
-//    permission.
-// 
-// [Where legally impermissible the Authors do not disclaim liability for 
-// direct physical injury or death caused solely by defects in the software 
-// unless it is modified by a third party.]
-// 
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//  
-//  
-//  
 // --------------------------------------------------------------------------
 //
 // File
@@ -48,20 +9,31 @@
 
 #include "Box.h"
 
+#include <stdio.h>
 #include <unistd.h>
-#include <syslog.h>
-#include <sys/param.h>
-#include <sys/mount.h>
-#include <signal.h>
-#ifdef PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
-	#include <mntent.h>
+
+#ifndef WIN32
+	#include <signal.h>
+	#include <syslog.h>
+	#include <sys/param.h>
+	#include <sys/wait.h>
 #endif
-#include <sys/wait.h>
+#ifdef HAVE_SYS_MOUNT_H
+	#include <sys/mount.h>
+#endif
+#ifdef HAVE_MNTENT_H
+	#include <mntent.h>
+#endif 
+#ifdef HAVE_SYS_MNTTAB_H
+	#include <cstdio>
+	#include <sys/mnttab.h>
+#endif
 
 #include "Configuration.h"
 #include "IOStream.h"
 #include "MemBlockStream.h"
 #include "CommonException.h"
+#include "BoxPortsAndFiles.h"
 
 #include "SSLLib.h"
 #include "TLSContext.h"
@@ -107,7 +79,7 @@
 //
 // --------------------------------------------------------------------------
 BackupDaemon::BackupDaemon()
-	: mState(State_Initialising),
+	: mState(BackupDaemon::State_Initialising),
 	  mpCommandSocketInfo(0),
 	  mDeleteUnusedRootDirEntriesAfter(0)
 {
@@ -193,8 +165,9 @@ const ConfigurationVerify *BackupDaemon::GetConfigVerify() const
 //
 // Function
 //		Name:    BackupDaemon::SetupInInitialProcess()
-//		Purpose: Platforms with non-checkable credientals on local sockets only.
-//				 Prints a warning if the command socket is used.
+//		Purpose: Platforms with non-checkable credentials on 
+//			local sockets only.
+//			Prints a warning if the command socket is used.
 //		Created: 25/2/04
 //
 // --------------------------------------------------------------------------
@@ -239,6 +212,133 @@ void BackupDaemon::DeleteAllLocations()
 	mIDMapMounts.clear();
 }
 
+#ifdef WIN32
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    HelperThread()
+//		Purpose: Background thread function, called by Windows,
+//			calls the BackupDaemon's RunHelperThread method
+//			to listen for and act on control communications
+//		Created: 18/2/04
+//
+// --------------------------------------------------------------------------
+unsigned int WINAPI HelperThread( LPVOID lpParam ) 
+{ 
+	printf( "Parameter = %lu.\n", *(DWORD*)lpParam ); 
+	((BackupDaemon *)lpParam)->RunHelperThread();
+
+	return 0;
+}
+
+void BackupDaemon::RunHelperThread(void)
+{
+	mpCommandSocketInfo = new CommandSocketInfo;
+	this->mReceivedCommandConn = false;
+
+	while ( !IsTerminateWanted() )
+	{
+		try
+		{
+			mpCommandSocketInfo->mListeningSocket.Accept(
+				BOX_NAMED_PIPE_NAME);
+
+			// This next section comes from Ben's original function
+			// Log
+			::syslog(LOG_INFO, "Connection from command socket");
+
+			// Send a header line summarising the configuration 
+			// and current state
+			const Configuration &conf(GetConfiguration());
+			char summary[256];
+			size_t summarySize = sprintf(summary, 
+				"bbackupd: %d %d %d %d\nstate %d\n",
+				conf.GetKeyValueBool("AutomaticBackup"),
+				conf.GetKeyValueInt("UpdateStoreInterval"),
+				conf.GetKeyValueInt("MinimumFileAge"),
+				conf.GetKeyValueInt("MaxUploadWait"),
+				mState);
+
+			mpCommandSocketInfo->mListeningSocket.Write(summary, summarySize);
+			mpCommandSocketInfo->mListeningSocket.Write("ping\n", 5);
+
+			IOStreamGetLine readLine(mpCommandSocketInfo->mListeningSocket);
+			std::string command;
+
+			while (mpCommandSocketInfo->mListeningSocket.IsConnected() &&
+			       readLine.GetLine(command) )
+			{
+				TRACE1("Receiving command '%s' over "
+					"command socket\n", command.c_str());
+
+				bool sendOK = false;
+				bool sendResponse = true;
+				bool disconnect = false;
+
+				// Command to process!
+				if(command == "quit" || command == "")
+				{
+					// Close the socket.
+					disconnect = true;
+					sendResponse = false;
+				}
+				else if(command == "sync")
+				{
+					// Sync now!
+					this->mDoSyncFlagOut = true;
+					this->mSyncIsForcedOut = false;
+					sendOK = true;
+				}
+				else if(command == "force-sync")
+				{
+					// Sync now (forced -- overrides any SyncAllowScript)
+					this->mDoSyncFlagOut = true;
+					this->mSyncIsForcedOut = true;
+					sendOK = true;
+				}
+				else if(command == "reload")
+				{
+					// Reload the configuration
+					SetReloadConfigWanted();
+					sendOK = true;
+				}
+				else if(command == "terminate")
+				{
+					// Terminate the daemon cleanly
+					SetTerminateWanted();
+					sendOK = true;
+				}
+
+				// Send a response back?
+				if (sendResponse)
+				{
+					const char* response = sendOK ? "ok\n" : "error\n";
+					mpCommandSocketInfo->mListeningSocket.Write(
+						response, strlen(response));
+				}
+
+				if (disconnect) 
+				{
+					break;
+				}
+
+				this->mReceivedCommandConn = true;
+			}
+
+			mpCommandSocketInfo->mListeningSocket.Close();
+		}
+		catch (BoxException &e)
+		{
+			::syslog(LOG_ERR, "Communication error with "
+				"control client: %s", e.what());
+		}
+		catch (...)
+		{
+			::syslog(LOG_ERR, "Communication error with control client");
+		}
+	}
+} 
+#endif
 
 // --------------------------------------------------------------------------
 //
@@ -250,6 +350,25 @@ void BackupDaemon::DeleteAllLocations()
 // --------------------------------------------------------------------------
 void BackupDaemon::Run()
 {
+#ifdef WIN32
+
+	// Create a thread to handle the named pipe
+	HANDLE hThread;
+	unsigned int dwThreadId;
+
+	hThread = (HANDLE) _beginthreadex( 
+        	NULL,                        // default security attributes 
+        	0,                           // use default stack size  
+        	HelperThread,                // thread function 
+        	this,                        // argument to thread function 
+        	0,                           // use default creation flags 
+        	&dwThreadId);                // returns the thread identifier 
+
+	// init our own timer for file diff timeouts
+	InitTimer();
+
+#else // ! WIN32
+
 	// Ignore SIGPIPE (so that if a command connection is broken, the daemon doesn't terminate)
 	::signal(SIGPIPE, SIG_IGN);
 
@@ -258,9 +377,13 @@ void BackupDaemon::Run()
 	if(conf.KeyExists("CommandSocket"))
 	{
 		// Yes, create a local UNIX socket
+		mpCommandSocketInfo = new CommandSocketInfo;
 		const char *socketName = conf.GetKeyValue("CommandSocket").c_str();
-		mpCommandSocketInfo = new CommandSocketManager(conf, this, socketName);
+		::unlink(socketName);
+		mpCommandSocketInfo->mListeningSocket.Listen(Socket::TypeUNIX, socketName);
 	}
+	
+#endif // WIN32
 
 	// Handle things nicely on exceptions
 	try
@@ -284,6 +407,11 @@ void BackupDaemon::Run()
 		delete mpCommandSocketInfo;
 		mpCommandSocketInfo = 0;
 	}
+
+#ifdef WIN32
+	// clean up windows specific stuff.
+	FiniTimer();
+#endif
 }
 
 // --------------------------------------------------------------------------
@@ -334,9 +462,9 @@ void BackupDaemon::Run2()
 
 	// When the last sync started (only updated if the store was not full when the sync ended)
 	box_time_t lastSyncTime = 0;
-	
-	// --------------------------------------------------------------------------------------------
 
+	// --------------------------------------------------------------------------------------------
+	
 	// And what's the current client store marker?
 	int64_t clientStoreMarker = BackupClientContext::ClientStoreMarker_NotKnown;		// haven't contacted the store yet
 
@@ -348,6 +476,8 @@ void BackupDaemon::Run2()
 	{
 		// Flags used below
 		bool storageLimitExceeded = false;
+		bool doSync = false;
+		bool doSyncForcedByCommand = false;
 
 		// Is a delay necessary?
 		{
@@ -371,8 +501,7 @@ void BackupDaemon::Run2()
 					if(mpCommandSocketInfo != 0)
 					{
 						// A command socket exists, so sleep by handling connections with it
-						TRACE1("Wait on command socket, delay = %lld\n", requiredDelay);
-						mpCommandSocketInfo->Wait(requiredDelay);
+						WaitOnCommandSocket(requiredDelay, doSync, doSyncForcedByCommand);
 					}
 					else
 					{
@@ -382,45 +511,36 @@ void BackupDaemon::Run2()
 					}
 				}
 				
-			} while((!automaticBackup || (currentTime < nextSyncTime)) 
-				&& !mSyncRequested && !mSyncForced && !StopRun());
+			} while((!automaticBackup || (currentTime < nextSyncTime)) && !doSync && !StopRun());
 		}
 
 		// Time of sync start, and if it's time for another sync (and we're doing automatic syncs), set the flag
 		box_time_t currentSyncStartTime = GetCurrentBoxTime();
 		if(automaticBackup && currentSyncStartTime >= nextSyncTime)
 		{
-			mSyncRequested = true;
+			doSync = true;
 		}
 		
-		bool doSync = mSyncForced;
-		
 		// Use a script to see if sync is allowed now?
-		if(mSyncRequested && !StopRun())
+		if(!doSyncForcedByCommand && doSync && !StopRun())
 		{
 			int d = UseScriptToSeeIfSyncAllowed();
 			if(d > 0)
 			{
 				// Script has asked for a delay
 				nextSyncTime = GetCurrentBoxTime() + SecondsToBoxTime((uint32_t)d);
-			}
-			else
-			{
-				doSync = true;
+				doSync = false;
 			}
 		}
 
 		// Ready to sync? (but only if we're not supposed to be stopping)
 		if(doSync && !StopRun())
 		{
-			mSyncRequested = false;
-			mSyncForced    = false;
-			
 			// Touch a file to record times in filesystem
 			TouchFileInWorkingDir("last_sync_start");
 		
 			// Tell anything connected to the command socket
-			mpCommandSocketInfo->SendSyncStartOrFinish(true /* start */);
+			SendSyncStartOrFinish(true /* start */);
 			
 			// Reset statistics on uploads
 			BackupStoreFile::ResetStats();
@@ -448,6 +568,8 @@ void BackupDaemon::Run2()
 			// Do sync
 			bool errorOccurred = false;
 			int errorCode = 0, errorSubCode = 0;
+			const char* errorString = "unknown";
+
 			try
 			{
 				// Set state and log start
@@ -459,15 +581,13 @@ void BackupDaemon::Run2()
 					conf.GetKeyValueInt("AccountNumber"), conf.GetKeyValueBool("ExtendedLogging"));
 					
 				// Set up the sync parameters
-				BackupClientDirectoryRecord::SyncParams params(*this, *this,
-					*this, clientContext);
+				BackupClientDirectoryRecord::SyncParams params(*this, clientContext);
 				params.mSyncPeriodStart = syncPeriodStart;
 				params.mSyncPeriodEnd = syncPeriodEndExtended; // use potentially extended end time
 				params.mMaxUploadWait = maxUploadWait;
 				params.mFileTrackingSizeThreshold = conf.GetKeyValueInt("FileTrackingSizeThreshold");
 				params.mDiffingUploadSizeThreshold = conf.GetKeyValueInt("DiffingUploadSizeThreshold");
 				params.mMaxFileTimeInFuture = SecondsToBoxTime((uint32_t)conf.GetKeyValueInt("MaxFileTimeInFuture"));
-				params.mpCommandSocket = mpCommandSocketInfo;
 				
 				// Set store marker
 				clientContext.SetClientStoreMarker(clientStoreMarker);
@@ -553,6 +673,7 @@ void BackupDaemon::Run2()
 			catch(BoxException &e)
 			{
 				errorOccurred = true;
+				errorString = e.what();
 				errorCode = e.GetType();
 				errorSubCode = e.GetSubType();
 			}
@@ -596,21 +717,13 @@ void BackupDaemon::Run2()
 				{
 					// Not restart/terminate, pause and retry
 					SetState(State_Error);
-					::syslog(LOG_ERR, "Exception caught (%d/%d), reset state and waiting to retry...", errorCode, errorSubCode);
-					
-					// Sleep somehow. There are choices on how this should be
-					// done, depending on the state of the control connection
-
-					if(mpCommandSocketInfo != 0)
-					{
-						// A command socket exists, so sleep by handling connections with it
-						mpCommandSocketInfo->Wait(100 * 1000 * 1000);
-					}
-					else
-					{
-						// No command socket or connection, just do a normal sleep
-						::sleep(100);
-					}
+					::syslog(LOG_ERR, 
+						"Exception caught (%s %d/%d), "
+						"reset state and waiting "
+						"to retry...", 
+						errorString, errorCode, 
+						errorSubCode);
+					::sleep(10);
 				}
 			}
 
@@ -621,7 +734,7 @@ void BackupDaemon::Run2()
 			BackupStoreFile::ResetStats();
 
 			// Tell anything connected to the command socket
-			mpCommandSocketInfo->SendSyncStartOrFinish(false /* finish */);
+			SendSyncStartOrFinish(false /* finish */);
 
 			// Touch a file to record times in filesystem
 			TouchFileInWorkingDir("last_sync_finish");
@@ -708,11 +821,288 @@ int BackupDaemon::UseScriptToSeeIfSyncAllowed()
 
 
 
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    BackupDaemon::WaitOnCommandSocket(box_time_t, bool &, bool &)
+//		Purpose: Waits on a the command socket for a time of UP TO the required time
+//				 but may be much less, and handles a command if necessary.
+//		Created: 18/2/04
+//
+// --------------------------------------------------------------------------
+void BackupDaemon::WaitOnCommandSocket(box_time_t RequiredDelay, bool &DoSyncFlagOut, bool &SyncIsForcedOut)
+{
+#ifdef WIN32
+	// Really could use some interprocess protection, mutex etc
+	// any side effect should be too bad???? :)
+	DWORD timeout = BoxTimeToMilliSeconds(RequiredDelay);
+
+	while ( this->mReceivedCommandConn == false )
+	{
+		Sleep(1);
+
+		if ( timeout == 0 )
+		{
+			DoSyncFlagOut = false;
+			SyncIsForcedOut = false;
+			return;
+		}
+		timeout--;
+	}
+	this->mReceivedCommandConn = false;
+	DoSyncFlagOut = this->mDoSyncFlagOut;
+	SyncIsForcedOut = this->mSyncIsForcedOut;
+
+	return;
+#else // ! WIN32
+	ASSERT(mpCommandSocketInfo != 0);
+	if(mpCommandSocketInfo == 0) {::sleep(1); return;} // failure case isn't too bad
+	
+	TRACE1("Wait on command socket, delay = %lld\n", RequiredDelay);
+	
+	try
+	{
+		// Timeout value for connections and things
+		int timeout = ((int)BoxTimeToMilliSeconds(RequiredDelay)) + 1;
+		// Handle bad boundary cases
+		if(timeout <= 0) timeout = 1;
+		if(timeout == INFTIM) timeout = 100000;
+
+		// Wait for socket connection, or handle a command?
+		if(mpCommandSocketInfo->mpConnectedSocket.get() == 0)
+		{
+			// No connection, listen for a new one
+			mpCommandSocketInfo->mpConnectedSocket.reset(mpCommandSocketInfo->mListeningSocket.Accept(timeout).release());
+			
+			if(mpCommandSocketInfo->mpConnectedSocket.get() == 0)
+			{
+				// If a connection didn't arrive, there was a timeout, which means we've
+				// waited long enough and it's time to go.
+				return;
+			}
+			else
+			{
+#ifdef PLATFORM_CANNOT_FIND_PEER_UID_OF_UNIX_SOCKET
+				bool uidOK = true;
+				::syslog(LOG_ERR, "On this platform, no security check can be made on the credientials of peers connecting to the command socket. (bbackupctl)");
+#else
+				// Security check -- does the process connecting to this socket have
+				// the same UID as this process?
+				bool uidOK = false;
+				// BLOCK
+				{
+					uid_t remoteEUID = 0xffff;
+					gid_t remoteEGID = 0xffff;
+					if(mpCommandSocketInfo->mpConnectedSocket->GetPeerCredentials(remoteEUID, remoteEGID))
+					{
+						// Credentials are available -- check UID
+						if(remoteEUID == ::getuid())
+						{
+							// Acceptable
+							uidOK = true;
+						}
+					}
+				}
+#endif // PLATFORM_CANNOT_FIND_PEER_UID_OF_UNIX_SOCKET
+				
+				// Is this an acceptable connection?
+				if(!uidOK)
+				{
+					// Dump the connection
+					::syslog(LOG_ERR, "Incoming command connection from peer had different user ID than this process, or security check could not be completed.");
+					mpCommandSocketInfo->mpConnectedSocket.reset();
+					return;
+				}
+				else
+				{
+					// Log
+					::syslog(LOG_INFO, "Connection from command socket");
+					
+					// Send a header line summarising the configuration and current state
+					const Configuration &conf(GetConfiguration());
+					char summary[256];
+					int summarySize = sprintf(summary, "bbackupd: %d %d %d %d\nstate %d\n",
+						conf.GetKeyValueBool("AutomaticBackup"),
+						conf.GetKeyValueInt("UpdateStoreInterval"),
+						conf.GetKeyValueInt("MinimumFileAge"),
+						conf.GetKeyValueInt("MaxUploadWait"),
+						mState);
+					mpCommandSocketInfo->mpConnectedSocket->Write(summary, summarySize);
+					
+					// Set the timeout to something very small, so we don't wait too long on waiting
+					// for any incoming data
+					timeout = 10; // milliseconds
+				}
+			}
+		}
+
+		// So there must be a connection now.
+		ASSERT(mpCommandSocketInfo->mpConnectedSocket.get() != 0);
+		
+		// Is there a getline object ready?
+		if(mpCommandSocketInfo->mpGetLine == 0)
+		{
+			// Create a new one
+			mpCommandSocketInfo->mpGetLine = new IOStreamGetLine(*(mpCommandSocketInfo->mpConnectedSocket.get()));
+		}
+		
+		// Ping the remote side, to provide errors which will mean the socket gets closed
+		mpCommandSocketInfo->mpConnectedSocket->Write("ping\n", 5);
+		
+		// Wait for a command or something on the socket
+		std::string command;
+		while(mpCommandSocketInfo->mpGetLine != 0 && !mpCommandSocketInfo->mpGetLine->IsEOF()
+			&& mpCommandSocketInfo->mpGetLine->GetLine(command, false /* no preprocessing */, timeout))
+		{
+			TRACE1("Receiving command '%s' over command socket\n", command.c_str());
+			
+			bool sendOK = false;
+			bool sendResponse = true;
+		
+			// Command to process!
+			if(command == "quit" || command == "")
+			{
+				// Close the socket.
+				CloseCommandConnection();
+				sendResponse = false;
+			}
+			else if(command == "sync")
+			{
+				// Sync now!
+				DoSyncFlagOut = true;
+				SyncIsForcedOut = false;
+				sendOK = true;
+			}
+			else if(command == "force-sync")
+			{
+				// Sync now (forced -- overrides any SyncAllowScript)
+				DoSyncFlagOut = true;
+				SyncIsForcedOut = true;
+				sendOK = true;
+			}
+			else if(command == "reload")
+			{
+				// Reload the configuration
+				SetReloadConfigWanted();
+				sendOK = true;
+			}
+			else if(command == "terminate")
+			{
+				// Terminate the daemon cleanly
+				SetTerminateWanted();
+				sendOK = true;
+			}
+			
+			// Send a response back?
+			if(sendResponse)
+			{
+				mpCommandSocketInfo->mpConnectedSocket->Write(sendOK?"ok\n":"error\n", sendOK?3:6);
+			}
+			
+			// Set timeout to something very small, so this just checks for data which is waiting
+			timeout = 1;
+		}
+		
+		// Close on EOF?
+		if(mpCommandSocketInfo->mpGetLine != 0 && mpCommandSocketInfo->mpGetLine->IsEOF())
+		{
+			CloseCommandConnection();
+		}
+	}
+	catch(...)
+	{
+		// If an error occurs, and there is a connection active, just close that
+		// connection and continue. Otherwise, let the error propagate.
+		if(mpCommandSocketInfo->mpConnectedSocket.get() == 0)
+		{
+			throw;
+		}
+		else
+		{
+			// Close socket and ignore error
+			CloseCommandConnection();
+		}
+	}
+#endif // WIN32
+}
+
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    BackupDaemon::CloseCommandConnection()
+//		Purpose: Close the command connection, ignoring any errors
+//		Created: 18/2/04
+//
+// --------------------------------------------------------------------------
+void BackupDaemon::CloseCommandConnection()
+{
+	try
+	{
+		TRACE0("Closing command connection\n");
+		
+#ifdef WIN32
+		mpCommandSocketInfo->mListeningSocket.Close();
+#else
+		if(mpCommandSocketInfo->mpGetLine)
+		{
+			delete mpCommandSocketInfo->mpGetLine;
+			mpCommandSocketInfo->mpGetLine = 0;
+		}
+		mpCommandSocketInfo->mpConnectedSocket.reset();
+#endif
+	}
+	catch(...)
+	{
+		// Ignore any errors
+	}
+}
+
+
+// --------------------------------------------------------------------------
+//
+// File
+//		Name:    BackupDaemon.cpp
+//		Purpose: Send a start or finish sync message to the command socket, if it's connected.
+//				 
+//		Created: 18/2/04
+//
+// --------------------------------------------------------------------------
+void BackupDaemon::SendSyncStartOrFinish(bool SendStart)
+{
+	// The bbackupctl program can't rely on a state change, because it may never
+	// change if the server doesn't need to be contacted.
+	
+	if (mpCommandSocketInfo != NULL &&
+#ifdef WIN32
+	    mpCommandSocketInfo->mListeningSocket.IsConnected()
+#else
+	    mpCommandSocketInfo->mpConnectedSocket.get() != 0
+#endif
+	    )
+	{
+		const char* message = SendStart ? "start-sync\n" : "finish-sync\n";
+		try
+		{
+#ifdef WIN32
+			mpCommandSocketInfo->mListeningSocket.Write(message, 
+				strlen(message));
+#else
+			mpCommandSocketInfo->mpConnectedSocket->Write(message,
+				strlen(message));
+#endif
+		}
+		catch(...)
+		{
+			CloseCommandConnection();
+		}
+	}
+}
 
 
 
 
-#ifdef PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
+#ifndef HAVE_STRUCT_STATFS_F_MNTONNAME
 	// string comparison ordering for when mount points are handled
 	// by code, rather than the OS.
 	typedef struct
@@ -775,22 +1165,29 @@ void BackupDaemon::SetupLocations(BackupClientContext &rClientContext, const Con
 	std::map<std::string, int> mounts;
 	int numIDMaps = 0;
 
-#ifdef PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
-	// Linux can't tell you where a directory is mounted. So we have to
-	// read the mount entries from /etc/mtab! Bizarre that the OS itself
-	// can't tell you, but there you go.
+#ifdef HAVE_MOUNTS
+#ifndef HAVE_STRUCT_STATFS_F_MNTONNAME
+	// Linux and others can't tell you where a directory is mounted. So we
+	// have to read the mount entries from /etc/mtab! Bizarre that the OS
+	// itself can't tell you, but there you go.
 	std::set<std::string, mntLenCompare> mountPoints;
 	// BLOCK
 	FILE *mountPointsFile = 0;
+
+#ifdef HAVE_STRUCT_MNTENT_MNT_DIR
+	// Open mounts file
+	mountPointsFile = ::setmntent("/proc/mounts", "r");
+	if(mountPointsFile == 0)
+	{
+		mountPointsFile = ::setmntent("/etc/mtab", "r");
+	}
+	if(mountPointsFile == 0)
+	{
+		THROW_EXCEPTION(CommonException, OSFileError);
+	}
+
 	try
 	{
-		// Open mounts file
-		mountPointsFile = ::setmntent("/etc/mtab", "r");
-		if(mountPointsFile == 0)
-		{
-			THROW_EXCEPTION(CommonException, OSFileError);
-		}
-		
 		// Read all the entries, and put them in the set
 		struct mntent *entry = 0;
 		while((entry = ::getmntent(mountPointsFile)) != 0)
@@ -798,18 +1195,43 @@ void BackupDaemon::SetupLocations(BackupClientContext &rClientContext, const Con
 			TRACE1("Found mount point at %s\n", entry->mnt_dir);
 			mountPoints.insert(std::string(entry->mnt_dir));
 		}
-		
+
 		// Close mounts file
 		::endmntent(mountPointsFile);
 	}
 	catch(...)
 	{
-		if(mountPointsFile != 0)
-		{
 			::endmntent(mountPointsFile);
-		}
 		throw;
 	}
+#else // ! HAVE_STRUCT_MNTENT_MNT_DIR
+	// Open mounts file
+	mountPointsFile = ::fopen("/etc/mnttab", "r");
+	if(mountPointsFile == 0)
+	{
+		THROW_EXCEPTION(CommonException, OSFileError);
+	}
+
+	try
+	{
+
+		// Read all the entries, and put them in the set
+		struct mnttab entry;
+		while(getmntent(mountPointsFile, &entry) == 0)
+		{
+			TRACE1("Found mount point at %s\n", entry.mnt_mountp);
+			mountPoints.insert(std::string(entry.mnt_mountp));
+		}
+
+		// Close mounts file
+		::fclose(mountPointsFile);
+	}
+	catch(...)
+	{
+		::fclose(mountPointsFile);
+		throw;
+	}
+#endif // HAVE_STRUCT_MNTENT_MNT_DIR
 	// Check sorting and that things are as we expect
 	ASSERT(mountPoints.size() > 0);
 #ifndef NDEBUG
@@ -818,7 +1240,8 @@ void BackupDaemon::SetupLocations(BackupClientContext &rClientContext, const Con
 		ASSERT(*i == "/");
 	}
 #endif // n NDEBUG
-#endif // PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
+#endif // n HAVE_STRUCT_STATFS_F_MNTONNAME
+#endif // HAVE_MOUNTS
 
 	// Then... go through each of the entries in the configuration,
 	// making sure there's a directory created for it.
@@ -840,7 +1263,21 @@ TRACE0("new location\n");
 			
 			// Do a fsstat on the pathname to find out which mount it's on
 			{
-#ifdef PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
+
+#if defined HAVE_STRUCT_STATFS_F_MNTONNAME || defined WIN32
+
+				// BSD style statfs -- includes mount point, which is nice.
+				struct statfs s;
+				if(::statfs(ploc->mPath.c_str(), &s) != 0)
+				{
+					THROW_EXCEPTION(CommonException, OSFileError)
+				}
+
+				// Where the filesystem is mounted
+				std::string mountName(s.f_mntonname);
+
+#else // !HAVE_STRUCT_STATFS_F_MNTONNAME && !WIN32
+
 				// Warn in logs if the directory isn't absolute
 				if(ploc->mPath[0] != '/')
 				{
@@ -866,16 +1303,7 @@ TRACE0("new location\n");
 					}
 					TRACE2("mount point chosen for %s is %s\n", ploc->mPath.c_str(), mountName.c_str());
 				}
-#else
-				// BSD style statfs -- includes mount point, which is nice.
-				struct statfs s;
-				if(::statfs(ploc->mPath.c_str(), &s) != 0)
-				{
-					THROW_EXCEPTION(CommonException, OSFileError)
-				}
-				
-				// Where the filesystem is mounted
-				std::string mountName(s.f_mntonname);
+
 #endif
 				
 				// Got it?
@@ -1162,6 +1590,10 @@ void BackupDaemon::CommitIDMapsAfterSync()
 		std::string newmap(target + ".n");
 		
 		// Try to rename
+#ifdef WIN32
+		// win32 rename doesn't overwrite existing files
+		::remove(target.c_str());
+#endif
 		if(::rename(newmap.c_str(), target.c_str()) != 0)
 		{
 			THROW_EXCEPTION(CommonException, OSFileError)
@@ -1231,7 +1663,7 @@ bool BackupDaemon::FindLocationPathName(const std::string &rLocationName, std::s
 //		Created: 11/12/03
 //
 // --------------------------------------------------------------------------
-void BackupDaemon::SetState(state_t State)
+void BackupDaemon::SetState(int State)
 {
 	// Two little checks
 	if(State == mState) return;
@@ -1243,13 +1675,43 @@ void BackupDaemon::SetState(state_t State)
 	// Set process title
 	const static char *stateText[] = {"idle", "connected", "error -- waiting for retry", "over limit on server -- not backing up"};
 	SetProcessTitle(stateText[State]);
-	
+
 	// If there's a command socket connected, then inform it -- disconnecting from the
 	// command socket if there's an error
-	if(mpCommandSocketInfo != 0)
+
+	char newState[64];
+	char newStateSize = sprintf(newState, "state %d\n", State);
+
+#ifdef WIN32
+	#warning FIX ME: race condition
+	// what happens if the socket is closed by the other thread before
+	// we can write to it? Null pointer deref at best.
+	if (mpCommandSocketInfo && 
+	    mpCommandSocketInfo->mListeningSocket.IsConnected())
 	{
-		mpCommandSocketInfo->SendStateUpdate(mState);
+		try
+		{
+			mpCommandSocketInfo->mListeningSocket.Write(newState, newStateSize);
+		}
+		catch(...)
+		{
+			CloseCommandConnection();
+		}
 	}
+#else
+	if(mpCommandSocketInfo != 0 && mpCommandSocketInfo->mpConnectedSocket.get() != 0)
+	{
+		// Something connected to the command socket, tell it about the new state
+		try
+		{
+			mpCommandSocketInfo->mpConnectedSocket->Write(newState, newStateSize);
+		}
+		catch(...)
+		{
+			CloseCommandConnection();
+		}
+	}
+#endif
 }
 
 
@@ -1400,5 +1862,37 @@ BackupDaemon::Location::~Location()
 	{
 		delete mpExcludeFiles;
 		mpExcludeFiles = 0;
+	}
+}
+
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    BackupDaemon::CommandSocketInfo::CommandSocketInfo()
+//		Purpose: Constructor
+//		Created: 18/2/04
+//
+// --------------------------------------------------------------------------
+BackupDaemon::CommandSocketInfo::CommandSocketInfo()
+	: mpGetLine(0)
+{
+}
+
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    BackupDaemon::CommandSocketInfo::~CommandSocketInfo()
+//		Purpose: Destructor
+//		Created: 18/2/04
+//
+// --------------------------------------------------------------------------
+BackupDaemon::CommandSocketInfo::~CommandSocketInfo()
+{
+	if(mpGetLine)
+	{
+		delete mpGetLine;
+		mpGetLine = 0;
 	}
 }
