@@ -1,0 +1,71 @@
+package BoxPlatform;
+use Exporter;
+@ISA = qw/Exporter/;
+@EXPORT = qw/$build_os $build_cpu $target_os $make_command $bsd_make $platform_define $platform_cpu $gcc_v3 $product_version $product_name $install_into_dir $sub_make_options $platform_compile_line_extra $platform_link_line_extra $platform_lib_files $platform_exe_ext/;
+
+BEGIN
+{
+
+	# which OS are we building under?
+	$build_os = `uname`;
+	chomp $build_os;
+	$build_cpu = `uname -p`;
+	chomp $build_cpu;
+	# Cygwin Builds usually something like CYGWIN_NT-5.0, CYGWIN_NT-5.1
+	# Box Backup tried on Win2000,XP only :)
+	
+    $build_os = 'CYGWIN' if $build_os =~ m/CYGWIN/;
+
+	$make_command = ($build_os eq 'Darwin') ? 'bsdmake' : ($build_os eq 'SunOS') ? 'gmake' : 'make';
+	$bsd_make = ($build_os ne 'Linux' && $build_os ne 'CYGWIN' && $build_os ne "SunOS");
+
+	# blank extra flags by default
+	$platform_compile_line_extra = '@CPPFLAGS@ @CXXFLAGS@ @CXXFLAGS_STRICT@';
+	$platform_link_line_extra = '@LDFLAGS@';
+	$platform_lib_files = '@LIBS@';
+	$target_os = '@target_os@';
+	$platform_exe_ext = '@EXEEXT@';
+
+	# get version
+	open VERSION,"VERSION.txt" or die "VERSION.txt: $!";
+	$product_version = <VERSION>;
+	chomp $product_version;
+	$product_name = <VERSION>;
+	chomp $product_name;
+	close VERSION;
+	
+	# where to put the files
+	$install_into_dir = '@bindir@';
+	
+	# if it's Darwin,
+	if($build_os eq 'Darwin')
+	{
+		# see how many processors there are, and set make flags accordingly
+		my $cpus = `sysctl hw.ncpu`;
+		if($cpus =~ m/hw.ncpu:\s(\d+)/ && $1 > 1)
+		{
+			print "$1 processors detected, will set make to perform concurrent jobs\n";
+			$sub_make_options = ' -j '.($1 + 1);
+		}
+		
+		# test for fink installation
+		if(-d '/sw/include' && -d '/sw/lib')
+		{
+			print "Fink installation detected, will use headers and libraries\n";
+			$platform_compile_line_extra = '-I/sw/include ';
+			$platform_link_line_extra = '-L/sw/lib ';
+		}
+	}
+}
+
+sub make_flag
+{
+	if($bsd_make)
+	{
+		return "-D $_[0]"
+	}
+	return $_[0].'=1';
+}
+
+1;
+
