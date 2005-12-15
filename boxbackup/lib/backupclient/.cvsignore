@@ -1,4 +1,5 @@
-./lib/backupclient/autogen_BackupProtocolClient.cpp
-./lib/backupclient/autogen_BackupProtocolClient.h
-./lib/backupclient/autogen_BackupStoreException.cpp
-./lib/backupclient/autogen_BackupStoreException.h
+autogen_BackupProtocolClient.cpp
+autogen_BackupProtocolClient.h
+autogen_BackupStoreException.cpp
+autogen_BackupStoreException.h
+Makefile

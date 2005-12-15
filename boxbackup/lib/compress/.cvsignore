@@ -1,2 +1,3 @@
-./lib/compress/autogen_CompressException.cpp
-./lib/compress/autogen_CompressException.h
+autogen_CompressException.cpp
+autogen_CompressException.h
+Makefile

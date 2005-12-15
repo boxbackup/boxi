@@ -1,4 +1,5 @@
-./lib/server/autogen_ServerException.cpp
-./lib/server/autogen_ServerException.h
-./lib/server/autogen_ConnectionException.cpp
-./lib/server/autogen_ConnectionException.h
+autogen_ServerException.cpp
+autogen_ServerException.h
+autogen_ConnectionException.cpp
+autogen_ConnectionException.h
+Makefile

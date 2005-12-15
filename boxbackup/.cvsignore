@@ -1,0 +1,8 @@
+Makefile
+ExceptionCodes.txt
+Makefile.in
+bbstored.memleaks
+debug
+parcels
+release
+local

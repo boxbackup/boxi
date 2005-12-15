@@ -1,2 +1,3 @@
-./bin/bbstored/autogen_BackupProtocolServer.cpp
-./bin/bbstored/autogen_BackupProtocolServer.h
+autogen_BackupProtocolServer.cpp
+autogen_BackupProtocolServer.h
+Makefile
