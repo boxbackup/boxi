@@ -1,15 +1,6 @@
 diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupctl/bbackupctl.cpp boxbackup/bin/bbackupctl/bbackupctl.cpp
 --- boxbackup-0.09/bin/bbackupctl/bbackupctl.cpp	2004-12-06 12:58:52.000000000 +0000
 +++ boxbackup/bin/bbackupctl/bbackupctl.cpp	2005-05-25 00:30:18.000000000 +0100
-@@ -191,7 +191,7 @@
- 			   "  MaxUploadWait = %d seconds\n",
- 			   autoBackup?"true":"false", updateStoreInterval, minimumFileAge, maxUploadWait);
- 	}
--
-+	
- 	// Is the command the "wait for sync to start" command?
- 	bool areWaitingForSync = false;
- 	if(::strcmp(argv[0], "wait-for-sync") == 0)
 @@ -206,6 +206,13 @@
  		// Yes... set the flag so we know what we're waiting for a sync to start
  		areWaitingForSync = true;
@@ -51,12 +42,6 @@ diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupd/Ba
  			{
  				// Didn't find the location... so can't give the local filename
  				return false;
-@@ -488,5 +490,3 @@
- 	// Found
- 	return true;
- }
--
--
 diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbackupd/BackupClientContext.h boxbackup/bin/bbackupd/BackupClientContext.h
 --- boxbackup-0.09/bin/bbackupd/BackupClientContext.h	2004-12-06 12:58:52.000000000 +0000
 +++ boxbackup/bin/bbackupd/BackupClientContext.h	2005-11-16 07:39:29.000000000 +0000
@@ -1709,7 +1694,7 @@ diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/bin/bbstored/ba
  	int32	Version
 diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/infrastructure/BoxPlatform.pm boxbackup/infrastructure/BoxPlatform.pm
 --- boxbackup-0.09/infrastructure/BoxPlatform.pm	2004-12-06 12:58:50.000000000 +0000
-+++ boxbackup/infrastructure/BoxPlatform.pm	2005-11-13 20:18:08.000000000 +0000
++++ boxbackup/infrastructure/BoxPlatform.pm.in	2005-11-13 20:18:08.000000000 +0000
 @@ -65,7 +65,7 @@
  	open COMPILER,"gcc -v 2>&1 |" or die "Can't open gcc -v";
  	while(<COMPILER>)
@@ -1719,46 +1704,15 @@ diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/infrastructure/
  	}
  	close COMPILER;
  
-diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/infrastructure/makebuildenv.pl boxbackup/infrastructure/makebuildenv.pl
---- boxbackup-0.09/infrastructure/makebuildenv.pl	2004-12-06 12:58:50.000000000 +0000
-+++ boxbackup/infrastructure/makebuildenv.pl	2005-06-04 23:42:41.000000000 +0100
-@@ -784,13 +784,13 @@
- AR = ar
- RANLIB = ranlib
- .ifdef RELEASE
--CXXFLAGS = -DNDEBUG -O2 -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
-+CXXFLAGS = -DNDEBUG -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
- OUTBASE = ../../release
- OUTDIR = ../../release/$mod
- DEPENDMAKEFLAGS = -D RELEASE
- VARIENT = RELEASE
- .else
--CXXFLAGS = -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
-+CXXFLAGS = -DNDEBUG -O0 -g -Wall $include_paths -D$platform_define$extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
- OUTBASE = ../../debug
- OUTDIR = ../../debug/$mod
- DEPENDMAKEFLAGS =
-@@ -929,9 +929,9 @@
- 	additional_objects_from_make_fragment("$mod/Makefile.extra", \@objs, \@makefile_includes);
- 	additional_objects_from_make_fragment("$mod/Makefile.extra.$build_os", \@objs, \@makefile_includes);
- 
-+	print MAKE "all:\tdep_modules $end_target\n\n" if not $bsd_make;
- 	my $o_file_list = join(' ',map {'$(OUTDIR)/'.$_.'.o'} @objs);
- 	print MAKE $end_target,': ',$o_file_list;
--	print MAKE ' dep_modules' if !$bsd_make;
- 	print MAKE " ",$lib_files unless $type eq 'lib';
- 	print MAKE "\n";
- 	
 diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/infrastructure/makeparcels.pl boxbackup/infrastructure/makeparcels.pl
 --- boxbackup-0.09/infrastructure/makeparcels.pl	2004-12-06 12:58:50.000000000 +0000
 +++ boxbackup/infrastructure/makeparcels.pl	2005-11-20 21:34:09.000000000 +0000
-@@ -106,14 +106,20 @@
+@@ -106,14 +106,19 @@
  
  __E
  
 -print MAKE "all:\t",join(' ',map {parcel_target($_)} @parcels),"\n\n";
-+print MAKE "all:\t",
-+	join(' ',map {parcel_target($_)} @parcels),"\n\n";
++print MAKE "all:\t",join(' ',map {parcel_target($_)} @parcels),"\n\n";
  
 -print MAKE "clean:\n";
 +print MAKE "clean-parcels:\n";
@@ -1808,19 +1762,10 @@ diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/infrastructure/
  	
  	open SCRIPT,">parcels/scripts/install-$parcel" or die "Can't open installer script for $parcel for writing";
  	print SCRIPT "#!/bin/sh\n\n";
--	
-+
+ 	
  	for(@{$parcel_contents{$parcel}})
  	{
  		my ($type,$name) = split /\s+/;
-@@ -138,7 +163,6 @@
- 		if($type eq 'bin')
- 		{
- 			my $exeext = ($build_os eq 'CYGWIN')?'.exe':'';
--			print MAKE "\t(cd bin/$name; $make_command $release_flag)\n";
- 			print MAKE "\tcp release/bin/$name/$name$exeext $dir\n";
- 		}
- 		elsif ($type eq 'script')
 @@ -149,9 +173,10 @@
  			$name = $1;
  		}
@@ -1829,8 +1774,7 @@ diff -Nrux CVS -x '*.html' -x status_protocol.txt boxbackup-0.09/infrastructure/
 +		print SCRIPT "install $name ".
 +			"\$DESTDIR\${PREFIX:-$install_into_dir}\n";
  	}
--	
-+
+ 	
  	close SCRIPT;
  	
  	chmod 0755,"parcels/scripts/install-$parcel";
