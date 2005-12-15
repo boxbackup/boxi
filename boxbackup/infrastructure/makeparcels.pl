@@ -112,9 +112,7 @@ for my $parcel (@parcels)
  		my ($type,$name) = split /\s+/;
  		if($type eq 'bin')
  		{
- 			my $exeext = ($build_os eq 'CYGWIN')?'.exe':'';
- 			# my $depname = "release/bin/$name/$name$exeext";
- 			push @parcel_deps, $name;
+ 			push @parcel_deps, $name.$platform_exe_ext;
  			print MAKE "$name:\n" .
  				"\t(cd bin/$name; $make_command $release_flag)\n\n";
  		}
@@ -130,7 +128,9 @@ for my $parcel (@parcels)
 	my $dir = parcel_dir($parcel);
 	print MAKE "\tmkdir -p $dir\n";
 	
-	open SCRIPT,">parcels/scripts/install-$parcel" or die "Can't open installer script for $parcel for writing";
+	open SCRIPT,">parcels/scripts/install-$parcel" 
+		or die "Can't open installer script for $parcel for writing";
+
 	print SCRIPT "#!/bin/sh\n\n";
 	
 	for(@{$parcel_contents{$parcel}})
@@ -142,14 +142,16 @@ for my $parcel (@parcels)
 			my $exeext = $platform_exe_ext;
 			print MAKE "\t(cd bin/$name; \$(MAKE) $release_flag)\n";
 			print MAKE "\tcp release/bin/$name/$name$exeext $dir\n";
+			$name .= $exeext; # for install
 		}
 		elsif ($type eq 'script')
 		{
 			print MAKE "\tcp $name $dir\n";
-			# remove path from script name
-			$name =~ m~/([^/]+)\Z~;
-			$name = $1;
 		}
+
+		# remove path from file name, for install
+		$name =~ m~/([^/]+)\Z~;
+		$name = $1;
 
 		print SCRIPT "install $name ".
 			"\$DESTDIR\${PREFIX:-$install_into_dir}\n";
