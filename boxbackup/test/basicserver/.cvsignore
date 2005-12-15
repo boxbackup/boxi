@@ -1,0 +1,8 @@
+Makefile
+_main.cpp
+_t
+_t-gdb
+./test/basicserver/autogen_TestProtocolServer.cpp
+./test/basicserver/autogen_TestProtocolServer.h
+./test/basicserver/autogen_TestProtocolClient.cpp
+./test/basicserver/autogen_TestProtocolClient.h

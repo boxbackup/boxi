@@ -1,0 +1,4 @@
+./lib/common/autogen_CommonException.cpp
+./lib/common/autogen_CommonException.h
+./lib/common/autogen_ConversionException.cpp
+./lib/common/autogen_ConversionException.h
