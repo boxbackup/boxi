@@ -26,14 +26,14 @@
 #include <wx/artprov.h>
 #include <wx/image.h>
 
-#include "SetupWizardPanel.h"
+#include "SetupWizard.h"
 #include "ParamPanel.h"
 
 class SetupWizardPage : public wxWizardPageSimple
 {
 	public:
 	SetupWizardPage(ClientConfig *config, wxWizard* parent = NULL,
-		wxString Text)
+		wxString Text = wxT("No page text defined"))
  	: wxWizardPageSimple(parent)
 	{
 		mpConfig = config;
