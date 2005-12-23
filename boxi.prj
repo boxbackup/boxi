@@ -1,4 +1,4 @@
-# Anjuta Version 1.2.4 
+# Anjuta Version 1.2.2 
 Compatibility Level: 1 
 
 <PROJECT_DESCRIPTION_START>
@@ -35,7 +35,7 @@ fi
 
 props.file.type=project
 
-anjuta.version=1.2.4
+anjuta.version=1.2.2
 anjuta.compatibility.level=1
 
 project.name=boxi
@@ -166,9 +166,9 @@ compiler.options.include.paths=\
 	../boxbackup/lib/backupclient\
 	../boxbackup/lib/server\
 	../include\
-	/usr/include/libxml2\
 	../boxbackup/bin/bbackupd\
-	../boxbackup/lib/crypto
+	../boxbackup/lib/crypto\
+	../boxbackup/lib/win32
 compiler.options.library.paths=
 compiler.options.libraries=\
 	ssl\
