@@ -550,25 +550,25 @@ void BackupProgressPanel::CountDirectory(BackupClientContext& rContext,
 	NotifyMoreFilesCounted(filesCounted, bytesCounted);
 }
 
-#ifdef PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
-// string comparison ordering for when mount points are handled
-// by code, rather than the OS.
-typedef struct
-{
-	bool operator()(const std::string &s1, const std::string &s2)
+#ifndef HAVE_STRUCT_STATFS_F_MNTONNAME
+	// string comparison ordering for when mount points are handled
+	// by code, rather than the OS.
+	typedef struct
 	{
-		if(s1.size() == s2.size())
+		bool operator()(const std::string &s1, const std::string &s2)
 		{
-			// Equal size, sort according to natural sort order
-			return s1 < s2;
+			if(s1.size() == s2.size())
+			{
+				// Equal size, sort according to natural sort order
+				return s1 < s2;
+			}
+			else
+			{
+				// Make sure longer strings go first
+				return s1.size() > s2.size();
+			}
 		}
-		else
-		{
-			// Make sure longer strings go first
-			return s1.size() > s2.size();
-		}
-	}
-} mntLenCompare;
+	} mntLenCompare;
 #endif
 
 // --------------------------------------------------------------------------
@@ -617,22 +617,29 @@ void BackupProgressPanel::SetupLocations(BackupClientContext &rClientContext)
 	std::map<std::string, int> mounts;
 	int numIDMaps = 0;
 
-#ifdef PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
-	// Linux can't tell you where a directory is mounted. So we have to
-	// read the mount entries from /etc/mtab! Bizarre that the OS itself
-	// can't tell you, but there you go.
+#ifdef HAVE_MOUNTS
+#ifndef HAVE_STRUCT_STATFS_F_MNTONNAME
+	// Linux and others can't tell you where a directory is mounted. So we
+	// have to read the mount entries from /etc/mtab! Bizarre that the OS
+	// itself can't tell you, but there you go.
 	std::set<std::string, mntLenCompare> mountPoints;
 	// BLOCK
 	FILE *mountPointsFile = 0;
+
+#ifdef HAVE_STRUCT_MNTENT_MNT_DIR
+	// Open mounts file
+	mountPointsFile = ::setmntent("/proc/mounts", "r");
+	if(mountPointsFile == 0)
+	{
+		mountPointsFile = ::setmntent("/etc/mtab", "r");
+	}
+	if(mountPointsFile == 0)
+	{
+		THROW_EXCEPTION(CommonException, OSFileError);
+	}
+
 	try
 	{
-		// Open mounts file
-		mountPointsFile = ::setmntent("/etc/mtab", "r");
-		if(mountPointsFile == 0)
-		{
-			THROW_EXCEPTION(CommonException, OSFileError);
-		}
-		
 		// Read all the entries, and put them in the set
 		struct mntent *entry = 0;
 		while((entry = ::getmntent(mountPointsFile)) != 0)
@@ -640,18 +647,43 @@ void BackupProgressPanel::SetupLocations(BackupClientContext &rClientContext)
 			TRACE1("Found mount point at %s\n", entry->mnt_dir);
 			mountPoints.insert(std::string(entry->mnt_dir));
 		}
-		
+
 		// Close mounts file
 		::endmntent(mountPointsFile);
 	}
 	catch(...)
 	{
-		if(mountPointsFile != 0)
-		{
 			::endmntent(mountPointsFile);
-		}
 		throw;
 	}
+#else // ! HAVE_STRUCT_MNTENT_MNT_DIR
+	// Open mounts file
+	mountPointsFile = ::fopen("/etc/mnttab", "r");
+	if(mountPointsFile == 0)
+	{
+		THROW_EXCEPTION(CommonException, OSFileError);
+	}
+
+	try
+	{
+
+		// Read all the entries, and put them in the set
+		struct mnttab entry;
+		while(getmntent(mountPointsFile, &entry) == 0)
+		{
+			TRACE1("Found mount point at %s\n", entry.mnt_mountp);
+			mountPoints.insert(std::string(entry.mnt_mountp));
+		}
+
+		// Close mounts file
+		::fclose(mountPointsFile);
+	}
+	catch(...)
+	{
+		::fclose(mountPointsFile);
+		throw;
+	}
+#endif // HAVE_STRUCT_MNTENT_MNT_DIR
 	// Check sorting and that things are as we expect
 	ASSERT(mountPoints.size() > 0);
 #ifndef NDEBUG
@@ -660,7 +692,8 @@ void BackupProgressPanel::SetupLocations(BackupClientContext &rClientContext)
 		ASSERT(*i == "/");
 	}
 #endif // n NDEBUG
-#endif // PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
+#endif // n HAVE_STRUCT_STATFS_F_MNTONNAME
+#endif // HAVE_MOUNTS
 
 	// Then... go through each of the entries in the configuration,
 	// making sure there's a directory created for it.
@@ -670,7 +703,7 @@ void BackupProgressPanel::SetupLocations(BackupClientContext &rClientContext)
 	for (tLocations::const_iterator i = rLocations.begin();
 		i != rLocations.end(); i++)
 	{
-TRACE0("new location\n");
+		TRACE0("new location\n");
 		// Create a record for it
 		Location* pLocation = *i;
 		LocationRecord *pLocRecord = new LocationRecord;
@@ -690,7 +723,20 @@ TRACE0("new location\n");
 			
 			// Do a fsstat on the pathname to find out which mount it's on
 			{
-#ifdef PLATFORM_USES_MTAB_FILE_FOR_MOUNTS
+#if defined HAVE_STRUCT_STATFS_F_MNTONNAME || defined WIN32
+
+				// BSD style statfs -- includes mount point, which is nice.
+				struct statfs s;
+				if(::statfs(ploc->mPath.c_str(), &s) != 0)
+				{
+					THROW_EXCEPTION(CommonException, OSFileError)
+				}
+
+				// Where the filesystem is mounted
+				std::string mountName(s.f_mntonname);
+
+#else // !HAVE_STRUCT_STATFS_F_MNTONNAME && !WIN32
+
 				// Warn in logs if the directory isn't absolute
 				if(pLocRecord->mPath[0] != '/')
 				{
@@ -720,17 +766,8 @@ TRACE0("new location\n");
 					TRACE2("mount point chosen for %s is %s\n", 
 						pLocRecord->mPath.c_str(), mountName.c_str());
 				}
-#else
-				// BSD style statfs -- includes mount point, which is nice.
-				struct statfs s;
-				if(::statfs(pLocRecord->mPath.c_str(), &s) != 0)
-				{
-					THROW_EXCEPTION(CommonException, OSFileError)
-				}
-				
-				// Where the filesystem is mounted
-				std::string mountName(s.f_mntonname);
-#endif
+
+#endif // HAVE_STRUCT_STATFS_F_MNTONNAME || WIN32
 				
 				// Got it?
 				std::map<std::string, int>::iterator f(mounts.find(mountName));
@@ -755,9 +792,12 @@ TRACE0("new location\n");
 		
 			// Does this exist on the server?
 			BackupStoreDirectory::Iterator iter(dir);
-			BackupStoreFilenameClear dirname(pLocRecord->mName);	// generate the filename
+			
+			// generate the filename
+			BackupStoreFilenameClear dirname(pLocRecord->mName);	
 			BackupStoreDirectory::Entry *en = iter.FindMatchingClearName(dirname);
 			int64_t oid = 0;
+			
 			if(en != 0)
 			{
 				oid = en->GetObjectID();
