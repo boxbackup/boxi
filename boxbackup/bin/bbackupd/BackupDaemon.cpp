@@ -1423,40 +1423,6 @@ void BackupDaemon::SetState(state_t State)
   	{
  		mpCommandSocketInfo->SendStateUpdate(mState);
 	}
-
-	char newState[64];
-	char newStateSize = sprintf(newState, "state %d\n", State);
-
-#ifdef WIN32
-	#warning FIX ME: race condition
-	// what happens if the socket is closed by the other thread before
-	// we can write to it? Null pointer deref at best.
-	if (mpCommandSocketInfo && 
-	    mpCommandSocketInfo->mListeningSocket.IsConnected())
-	{
-		try
-		{
-			mpCommandSocketInfo->mListeningSocket.Write(newState, newStateSize);
-		}
-		catch(...)
-		{
-			CloseCommandConnection();
-		}
-	}
-#else
-	if(mpCommandSocketInfo != 0 && mpCommandSocketInfo->mpConnectedSocket.get() != 0)
-	{
-		// Something connected to the command socket, tell it about the new state
-		try
-		{
-			mpCommandSocketInfo->mpConnectedSocket->Write(newState, newStateSize);
-		}
-		catch(...)
-		{
-			CloseCommandConnection();
-		}
-	}
-#endif
 }
 
 
