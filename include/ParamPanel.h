@@ -114,7 +114,7 @@ class FileSelButton : public wxBitmapButton
 {
 	private:
 	StringProperty& mrProperty;
-	BoundStringCtrl* mpStringCtrl;
+	wxTextCtrl* mpTextCtrl;
 	wxString mFileSpec;
 	wxString mFileSelectDialogTitle;
 	bool mFileMustExist;
@@ -122,19 +122,19 @@ class FileSelButton : public wxBitmapButton
 	public:
 	FileSelButton(wxWindow* pParent, wxWindowID id, 
 		StringProperty& rProp, 
-		BoundStringCtrl* pStringCtrl,
+		wxTextCtrl* pTextCtrl,
 		const wxString& rFileSpec,
 		const wxString& rFileSelectDialogTitle = wxT("Set Property"))
 	: wxBitmapButton(),
 	  mrProperty(rProp),
-	  mFileSpec(rFileSpec)
+	  mpTextCtrl(pTextCtrl),
+	  mFileSpec(rFileSpec),
+	  mFileSelectDialogTitle(rFileSelectDialogTitle),
+	  mFileMustExist(TRUE)
 	{
 		wxBitmap Bitmap = wxArtProvider::GetBitmap(wxART_FILE_OPEN, 
 			wxART_CMN_DIALOG, wxSize(16, 16));
 		Create(pParent, id, Bitmap);
-		mpStringCtrl = pStringCtrl;
-		mFileSelectDialogTitle = rFileSelectDialogTitle;
-		mFileMustExist = TRUE;
 	}
 	void SetFileMustExist(bool FileMustExist)
 	{

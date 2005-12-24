@@ -160,9 +160,7 @@ void FileSelButton::OnClick(wxCommandEvent& event)
 
 	if (path.empty()) return;
 
-	wxCharBuffer buf = path.mb_str(wxConvLibc);
-	mrProperty.Set(buf.data());
-	mpStringCtrl->Reload();
+	mpTextCtrl->SetValue(path);
 }
 
 BEGIN_EVENT_TABLE(DirSelButton, wxBitmapButton)
