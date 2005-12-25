@@ -1,4 +1,4 @@
-/***************************************************************************
+/***************************************************************************
  *            SetupWizard.cc
  *
  *  Created 2005-12-24 01:05
@@ -25,13 +25,14 @@
  */
 
 #include <wx/html/htmlwin.h>
-#include <wx/artprov.h>
-#include <wx/image.h>
+#include <wx/progdlg.h>
 
-#include <openssl/x509.h>
 #include <openssl/conf.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
 #include <openssl/ssl.h>
+#include <openssl/x509.h>
 
 #include "SetupWizard.h"
 #include "ParamPanel.h"
@@ -74,6 +75,29 @@ class SetupWizardIntroPage : public SetupWizardPage
 		"</body></html>"))
 	{ }
 };
+
+static int numChecked = 0;
+
+static void MySslProgressCallback(int p, int n, void* cbinfo)
+{
+	wxProgressDialog* pProgress = (wxProgressDialog *)cbinfo;
+	wxString msg;
+	msg.Printf(wxT("Generating your new private key (2048 bits).\n"
+			"This may take a minute.\n\n(%d potential primes checked)"),
+			++numChecked);
+	pProgress->Update(0, msg);
+	// wxSafeYield();
+	/*
+	char c = '?';
+	
+	if (p == 0) c = '.';
+	if (p == 1) c = '+';
+	if (p == 2) c = '*';
+	if (p == 3) c = '\n';
+	putc(c, stdout);
+	fflush(stdout);
+	*/
+}
 
 class SetupWizardPrivateKeyPage : public SetupWizardPage
 {
@@ -135,14 +159,18 @@ class SetupWizardPrivateKeyPage : public SetupWizardPage
 	
 	void OnWizardPageChanging(wxWizardEvent& event)
 	{
-		bool ok = FALSE;
+		bool isOk = FALSE;
 		
 		if (mpExistingRadio->GetValue())
 		{
-			ok = CheckExistingKey();
+			isOk = CheckExistingKey();
+		}
+		else if (mpNewRadio->GetValue())
+		{
+			isOk = CreateNewKey();
 		}
 		
-		if (!ok) event.Veto();
+		if (!isOk) event.Veto();
 	}
 	
 	bool CheckExistingKey()
@@ -152,14 +180,9 @@ class SetupWizardPrivateKeyPage : public SetupWizardPage
 			wxMessageBox(wxT("The specified private key file "
 				"could not be found"), wxT("Boxi Error"),
 					  wxICON_ERROR | wxOK, this);
-			// return FALSE;
+			return FALSE;
 		}
 		
-		CRYPTO_malloc_init();
-		OpenSSL_add_all_algorithms();
-		ERR_load_crypto_strings();
-		SSL_load_error_strings();
-			
 		wxString opensslConfigPath(X509_get_default_cert_area(), 
 			wxConvLibc);
 		wxString opensslConfigFileName(wxT("openssl.cnf"));
@@ -290,9 +313,153 @@ class SetupWizardPrivateKeyPage : public SetupWizardPage
 		{
 			wxMessageBox(wxT("This private key is protected with a passphrase. "
 				"It cannot be used with Box Backup."), wxT("Boxi Error"), 
-			wxICON_ERROR | wxOK, this);
+				wxICON_ERROR | wxOK, this);
 			return FALSE;
 		}
+		
+		return TRUE;
+	}
+
+	bool CreateNewKey()
+	{	
+		wxFileName keyFileName(mpLocationText->GetValue());
+
+		if (wxFileName::FileExists(keyFileName.GetFullPath()))
+		{
+			int result = wxMessageBox(wxT("The specified private key file "
+				"already exists! If you overwrite an existing key, "
+				"you may lose access to the server and your backups. "
+				"Are you REALLY SURE you want to overwrite it?\n\n"
+				"This operation CANNOT be undone!"), 
+				wxT("Boxi Warning"), wxICON_WARNING | wxYES_NO, this);
+			
+			if (result != wxYES)
+				return FALSE;
+
+			if (! wxFile::Access(keyFileName.GetFullPath(), wxFile::write))
+			{
+				wxMessageBox(wxT("The specified private key file is read-only "
+					"and cannot be overwritten."), wxT("Boxi Error"), 
+					wxICON_ERROR | wxOK, this);
+				return FALSE;
+			}
+		}
+		else if (!wxFileName::DirExists(keyFileName.GetPath()))
+		{
+			wxMessageBox(wxT("The directory where you want to create the "
+				"private key file does not exist, so the file cannot be "
+				"created."), wxT("Boxi Error"), wxICON_ERROR | wxOK, this);
+			return FALSE;
+		}
+		else // does not exist yet
+		{
+			if (! wxFile::Access(keyFileName.GetPath(), wxFile::write))
+			{
+				wxMessageBox(wxT("The directory where you want to create the "
+					"private key file is read-only, so the file cannot be "
+					"created."), wxT("Boxi Error"), wxICON_ERROR | wxOK, this);
+				return FALSE;
+			}
+		}
+		
+		BIGNUM* pBigNum = BN_new();
+		if (!pBigNum)
+		{
+			ShowSslError(wxT("Failed to create an OpenSSL BN object"));
+			return FALSE;
+		}
+		
+		RSA* pRSA = RSA_new();
+		if (!pRSA)
+		{
+			ShowSslError(wxT("Failed to create an OpenSSL RSA object"));
+			BN_free(pBigNum);
+			return FALSE;
+		}
+		
+		bool isOk = CreateNewKeyWithBigNumRSA(pBigNum, pRSA);
+		
+		RSA_free(pRSA);
+		BN_free(pBigNum);
+		
+		return isOk;
+	}
+	
+	bool CreateNewKeyWithBigNumRSA(BIGNUM* pBigNum, RSA* pRSA)
+	{
+		BIO* pKeyOutBio = BIO_new(BIO_s_file());
+		if (!pKeyOutBio)
+		{
+			ShowSslError(wxT("Failed to create an OpenSSL BIO object "
+				"for key output"));
+			return FALSE;
+		}
+		
+		bool isOk = CreateNewKeyWithBio(pBigNum, pRSA, pKeyOutBio);
+		
+		BIO_free_all(pKeyOutBio);
+		
+		return isOk;
+	}
+	
+	bool CreateNewKeyWithBio(BIGNUM* pBigNum, RSA* pRSA, BIO* pKeyOutBio)
+	{
+		char* filename = strdup(
+			mpLocationText->GetValue().mb_str(wxConvLibc).data());		
+		int result = BIO_write_filename(pKeyOutBio, filename);
+		free(filename);
+		
+		if (result <= 0)
+		{
+			ShowSslError(wxT("Failed to open key file using an OpenSSL BIO"));
+			return FALSE;
+		}
+
+		if (!RAND_status())
+		{
+			int result = wxMessageBox(wxT("Your system is not configured "
+				"with a random number generator. It may be possible for "
+				"an attacker to guess your keys and gain access to your data. "
+				"Do you want to continue anyway?"), 
+				wxT("Boxi Warning"), wxICON_WARNING | wxYES_NO, this);
+			
+			if (result != wxYES)
+				return FALSE;
+		}
+		
+		if (!BN_set_word(pBigNum, RSA_F4))
+		{
+			ShowSslError(wxT("Failed to set key type to RSA F4"));
+			return FALSE;
+		}
+
+		/*		
+		BN_GENCB sslProgressCallbackInfo;
+		BN_GENCB_set(&sslProgressCallbackInfo, MySslProgressCallback, NULL);
+		*/
+		
+		wxProgressDialog progress(wxT("Boxi: Generating Private Key"),
+			wxT("Generating your new private key (2048 bits).\n"
+			"This may take a minute.\n\n(0 potential primes checked)"), 2, this, 
+			wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
+		numChecked = 0;
+		
+		RSA* pRSA2 = RSA_generate_key(2048, 0x10001, MySslProgressCallback, 
+			&progress);
+		if (!pRSA2)
+		{
+			ShowSslError(wxT("Failed to generate an RSA key"));
+			return FALSE;
+		}
+		
+		progress.Hide();
+		
+		if (!PEM_write_bio_RSAPrivateKey(pKeyOutBio, pRSA2, NULL, NULL, 0,
+                NULL, NULL))
+		{
+			ShowSslError(wxT("Failed to write the key to the specified file"));
+			return FALSE;
+		}			
 		
 		return TRUE;
 	}
@@ -312,6 +479,11 @@ SetupWizard::SetupWizard(ClientConfig *config,
 		wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {
 	mpConfig = config;
+
+	CRYPTO_malloc_init();
+	OpenSSL_add_all_algorithms();
+	ERR_load_crypto_strings();
+	SSL_load_error_strings();
 
 	GetPageAreaSizer()->SetMinSize(500, 400);
 	
