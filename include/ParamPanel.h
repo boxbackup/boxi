@@ -63,6 +63,41 @@ class BoundStringCtrl : public wxTextCtrl, public BoundCtrl {
 	}
 	void Reload();
 	void OnChange();
+	void OnTextChanged(wxCommandEvent& rEvent) { OnChange(); }
+
+	DECLARE_EVENT_TABLE()
+};
+
+class IntCtrl : public wxTextCtrl 
+{
+	private:
+	int mValue;
+	bool mIsValid;
+	wxString mFormat;
+	
+	public:
+	IntCtrl(wxWindow* parent, 
+		wxWindowID id,
+		int initialValue,
+		const char * pFormat)
+	: wxTextCtrl(parent, id, wxT("")),
+	  mValue(initialValue),
+	  mFormat(pFormat, wxConvLibc)
+	{
+		Reload();
+	}
+	void Reload();
+	void OnChange();
+	void OnFocusLost(wxFocusEvent& event) 
+	{
+		Reload();
+		event.Skip();
+	}
+	void OnTextChanged(wxCommandEvent& rEvent) { OnChange(); }
+	int  GetValueInt() { return mValue; }
+	bool IsValid()     { return mIsValid; }
+	
+	DECLARE_EVENT_TABLE()	
 };
 
 class BoundIntCtrl : public wxTextCtrl, public BoundCtrl {
@@ -87,8 +122,9 @@ class BoundIntCtrl : public wxTextCtrl, public BoundCtrl {
 		Reload();
 		event.Skip();
 	}
+	void OnTextChanged(wxCommandEvent& rEvent) { OnChange(); }
 
-	DECLARE_EVENT_TABLE()	
+	DECLARE_EVENT_TABLE()
 };
 
 class BoundBoolCtrl : public wxCheckBox, public BoundCtrl {
@@ -108,12 +144,14 @@ class BoundBoolCtrl : public wxCheckBox, public BoundCtrl {
 	}
 	void Reload();
 	void OnChange();
+	void OnCheckboxClicked(wxCommandEvent& rEvent) { OnChange(); }
+
+	DECLARE_EVENT_TABLE()
 };	
 
 class FileSelButton : public wxBitmapButton 
 {
 	private:
-	StringProperty& mrProperty;
 	wxTextCtrl* mpTextCtrl;
 	wxString mFileSpec;
 	wxString mFileSelectDialogTitle;
@@ -121,12 +159,10 @@ class FileSelButton : public wxBitmapButton
 	
 	public:
 	FileSelButton(wxWindow* pParent, wxWindowID id, 
-		StringProperty& rProp, 
 		wxTextCtrl* pTextCtrl,
 		const wxString& rFileSpec,
 		const wxString& rFileSelectDialogTitle = wxT("Set Property"))
 	: wxBitmapButton(),
-	  mrProperty(rProp),
 	  mpTextCtrl(pTextCtrl),
 	  mFileSpec(rFileSpec),
 	  mFileSelectDialogTitle(rFileSelectDialogTitle),
@@ -149,16 +185,16 @@ class FileSelButton : public wxBitmapButton
 class DirSelButton : public wxBitmapButton 
 {
 	private:
-	StringProperty& mrProperty;
-	BoundStringCtrl* mpStringCtrl;
+	wxTextCtrl* mpTextCtrl;
 	
 	public:
-	DirSelButton(wxWindow* pParent, wxWindowID id, const wxBitmap& rBitmap, 
-		StringProperty& rProp, BoundStringCtrl* pStringCtrl)
-	: wxBitmapButton(pParent, id, rBitmap),
-	  mrProperty(rProp)
+	DirSelButton(wxWindow* pParent, wxWindowID id, wxTextCtrl* pTextCtrl)
+	: wxBitmapButton(),
+	  mpTextCtrl(pTextCtrl)
 	{
-		mpStringCtrl = pStringCtrl;
+		wxBitmap Bitmap = wxArtProvider::GetBitmap(wxART_FILE_OPEN, 
+			wxART_CMN_DIALOG, wxSize(16, 16));
+		Create(pParent, id, Bitmap);
 	}
 	
 	void OnClick(wxCommandEvent& event);

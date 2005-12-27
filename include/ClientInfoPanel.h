@@ -58,7 +58,6 @@ ALL_PROPS
 #undef STR_PROP_SUBCONF
 #undef STR_PROP
 	
-	void OnControlChange   (wxCommandEvent& rEvent);
 	void OnClickCloseButton(wxCommandEvent& rEvent);
 	void NotifyChange();
 	bool CheckConfig(wxString& rMsg);

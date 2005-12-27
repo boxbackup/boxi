@@ -29,6 +29,10 @@
 #include "ParamPanel.h"
 #include "main.h"
 
+BEGIN_EVENT_TABLE(BoundStringCtrl, wxTextCtrl)
+	EVT_TEXT(wxID_ANY, BoundStringCtrl::OnTextChanged)
+END_EVENT_TABLE()
+
 void BoundStringCtrl::Reload() 
 {
 	const std::string * pValue = mrStringProp.Get();
@@ -57,8 +61,58 @@ void BoundStringCtrl::OnChange()
 	}
 }
 
+BEGIN_EVENT_TABLE(IntCtrl, wxTextCtrl)
+	EVT_KILL_FOCUS(IntCtrl::OnFocusLost)
+	EVT_TEXT(wxID_ANY, IntCtrl::OnTextChanged)
+END_EVENT_TABLE()
+		
+void IntCtrl::Reload()
+{
+	int value = mValue;
+	wxString ValueString;
+	ValueString.Printf(
+		wxString(mFormat.c_str(), wxConvLibc), 
+		mValue);
+	SetValue(ValueString);
+	// work around Windows bug
+	mValue = value;
+}
+
+void IntCtrl::OnChange()
+{
+	mIsValid = FALSE;
+	
+	wxString tempString = GetValue();
+	if (tempString.Length() == 0) 
+	{
+		return;
+	}
+	
+	unsigned int tempValue;
+	char *endptr;
+
+	wxCharBuffer buf = tempString.mb_str(wxConvLibc);
+	
+	if (tempString.StartsWith(wxT("0x"))) 
+	{
+		tempValue = strtol(buf.data() + 2, &endptr, 16);
+	} 
+	else 
+	{
+		tempValue = strtol(buf.data(), &endptr, 10);
+	}
+	
+	if (*endptr != '\0') {
+		return;
+	}
+
+	mValue = tempValue;
+	mIsValid = TRUE;
+}
+
 BEGIN_EVENT_TABLE(BoundIntCtrl, wxTextCtrl)
-EVT_KILL_FOCUS(BoundIntCtrl::OnFocusLost)
+	EVT_KILL_FOCUS(BoundIntCtrl::OnFocusLost)
+	EVT_TEXT(wxID_ANY, BoundIntCtrl::OnTextChanged)
 END_EVENT_TABLE()
 		
 void BoundIntCtrl::Reload()
@@ -108,6 +162,10 @@ void BoundIntCtrl::OnChange()
 	mrIntProp.Set(tempValue);
 }
 
+BEGIN_EVENT_TABLE(BoundBoolCtrl, wxCheckBox)
+	EVT_CHECKBOX(wxID_ANY, BoundBoolCtrl::OnCheckboxClicked)
+END_EVENT_TABLE()
+
 void BoundBoolCtrl::Reload()
 {
 	const bool * value = mrBoolProp.Get();
@@ -130,18 +188,15 @@ void BoundBoolCtrl::OnChange()
 }
 
 BEGIN_EVENT_TABLE(FileSelButton, wxBitmapButton)
-EVT_BUTTON(wxID_ANY, FileSelButton::OnClick)
+	EVT_BUTTON(wxID_ANY, FileSelButton::OnClick)
 END_EVENT_TABLE()
 
 void FileSelButton::OnClick(wxCommandEvent& event)
 {
-	std::string oldValue;
-	mrProperty.GetInto(oldValue);
+	wxString fileName = mpTextCtrl->GetValue();
+	wxFileName file(fileName);
 	
-	wxFileName file(wxString(oldValue.c_str(), wxConvLibc));
-	wxFileName dir(file);
-	dir.SetName(wxT(""));
-	dir.SetExt(wxT(""));
+	wxFileName dir(file.GetPath());
 	dir.MakeAbsolute();
 	
 	int flags = 0;
@@ -164,15 +219,13 @@ void FileSelButton::OnClick(wxCommandEvent& event)
 }
 
 BEGIN_EVENT_TABLE(DirSelButton, wxBitmapButton)
-EVT_BUTTON(wxID_ANY, DirSelButton::OnClick)
+	EVT_BUTTON(wxID_ANY, DirSelButton::OnClick)
 END_EVENT_TABLE()
 
 void DirSelButton::OnClick(wxCommandEvent& event)
 {
-	std::string oldValue;
-	mrProperty.GetInto(oldValue);
-	
-	wxFileName dir(wxString(oldValue.c_str(), wxConvLibc));
+	wxString dirName = mpTextCtrl->GetValue();
+	wxFileName dir(dirName);
 	dir.MakeAbsolute();
 	
 	wxString newDir = wxDirSelector(
@@ -180,9 +233,7 @@ void DirSelButton::OnClick(wxCommandEvent& event)
 		wxDefaultPosition, this);
 	
 	if (newDir.empty()) return;
-	wxCharBuffer buf = newDir.mb_str(wxConvLibc);
-	mrProperty.Set(buf.data());
-	mpStringCtrl->Reload();
+	mpTextCtrl->SetValue(newDir);
 }
 
 ParamPanel::ParamPanel(
@@ -220,15 +271,12 @@ BoundStringCtrl* ParamPanel::AddParam(const wxChar * pLabel,
 
 	if (FileSel) 
 	{
-		wxString spec(pFileSpec);
-		FileSelButton* pButton = new FileSelButton(this, 
-				-1, rProp, pCtrl, spec);
+		FileSelButton* pButton = new FileSelButton(this, -1, pCtrl, pFileSpec);
 		pMiniSizer->Add(pButton, 0, wxGROW);
 	}
 	else if (DirSel)
 	{
-		DirSelButton* pButton = new DirSelButton(this, 
-				-1, Bitmap, rProp, pCtrl);
+		DirSelButton* pButton = new DirSelButton(this, -1, pCtrl);
 		pMiniSizer->Add(pButton, 0, wxGROW);
 	}
 	

@@ -34,42 +34,6 @@
 #include "ParamPanel.h"
 
 BEGIN_EVENT_TABLE(ClientInfoPanel, wxPanel)
-	EVT_TEXT(ID_ClientProp_StoreHostname,   
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_AccountNumber,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_KeysFile,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_CertificateFile,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_PrivateKeyFile,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_TrustedCAsFile,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_DataDirectory,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_NotifyScript,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_UpdateStoreInterval,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_MinimumFileAge,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_MaxUploadWait,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_FileTrackingSizeThreshold,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_DiffingUploadSizeThreshold,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_MaximumDiffingTime,
-		ClientInfoPanel::OnControlChange)
-	EVT_CHECKBOX(ID_ClientProp_ExtendedLogging,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_SyncAllowScript,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_CommandSocket,
-		ClientInfoPanel::OnControlChange)
-	EVT_TEXT(ID_ClientProp_PidFile,
-		ClientInfoPanel::OnControlChange)
 	EVT_BUTTON(wxID_CANCEL, ClientInfoPanel::OnClickCloseButton)
 END_EVENT_TABLE()
 
@@ -214,51 +178,6 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 	// pScrollablePanelSizer->SetSizeHints(this);
 	
 	UpdateConfigState();
-}
-
-void ClientInfoPanel::OnControlChange(wxCommandEvent& rEvent)
-{
-	// only one of these is validly typed, depending on the actual source 
-	// of the event, determined by ID below.
-	BoundStringCtrl* pString = (BoundStringCtrl*)( rEvent.GetEventObject() );
-	BoundIntCtrl*    pInt    = (BoundIntCtrl*   )( rEvent.GetEventObject() );
-	BoundBoolCtrl*   pBool   = (BoundBoolCtrl*  )( rEvent.GetEventObject() );
-	
-	switch (rEvent.GetId()) 
-	{
-	case ID_ClientProp_StoreHostname:
-	case ID_ClientProp_KeysFile:
-	case ID_ClientProp_CertificateFile:
-	case ID_ClientProp_PrivateKeyFile:
-	case ID_ClientProp_TrustedCAsFile:
-	case ID_ClientProp_DataDirectory:
-	case ID_ClientProp_NotifyScript:
-	case ID_ClientProp_SyncAllowScript:
-	case ID_ClientProp_CommandSocket:
-	case ID_ClientProp_PidFile:
-		pString->OnChange();
-		break;
-	
-	case ID_ClientProp_AccountNumber:
-	case ID_ClientProp_UpdateStoreInterval:
-	case ID_ClientProp_MinimumFileAge:
-	case ID_ClientProp_MaxUploadWait:
-	case ID_ClientProp_FileTrackingSizeThreshold:
-	case ID_ClientProp_DiffingUploadSizeThreshold:
-	case ID_ClientProp_MaximumDiffingTime:
-		pInt->OnChange();
-		break;
-
-	case ID_ClientProp_ExtendedLogging:
-		pBool->OnChange();
-		break;
-
-	default:
-		wxMessageBox(
-			wxT("Update to unknown control"), 
-			wxT("Internal error"), 
-			wxOK | wxICON_ERROR, this);	
-	}
 }
 
 void ClientInfoPanel::OnClickCloseButton(wxCommandEvent& rEvent)
