@@ -31,6 +31,7 @@
 #include "Configuration.h"
 
 #define STR_PROPS \
+STR_PROP(CertRequestFile) \
 STR_PROP(CertificateFile) \
 STR_PROP(PrivateKeyFile) \
 STR_PROP(DataDirectory) \
@@ -108,9 +109,12 @@ class IntProperty : public Property
 		PropertyChangeListener* pListener);
 	IntProperty(const char * pKeyName, const Configuration* pConf,
 		PropertyChangeListener* pListener);
+	IntProperty(const char * pKeyName, PropertyChangeListener* pListener);
+	
 	void SetFrom(const Configuration* pConf);
 	const int* Get();
 	void Set(int newValue);
+	bool SetFromString(const wxString& rSource);
 	void Clear();
 	bool GetInto(wxString& rDest);
 	bool GetInto(std::string& rDest);
@@ -130,6 +134,7 @@ class StringProperty : public Property
 		PropertyChangeListener* pListener);
 	StringProperty(const char * pKeyName, const Configuration* pConf,
 		PropertyChangeListener* pListener);
+	StringProperty(const char * pKeyName, PropertyChangeListener* pListener);
 
 	void SetFrom(const Configuration* pConf);
 	const std::string* Get();
@@ -141,6 +146,7 @@ class StringProperty : public Property
 	bool GetInto(wxString&    rDest);
 	void SetClean();
 	bool IsClean();
+	bool IsConfigured() { return mConfigured; }
 	
 	private:
 	std::string mValue, mOriginalValue;

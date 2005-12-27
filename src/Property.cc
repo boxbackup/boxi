@@ -118,6 +118,14 @@ IntProperty::IntProperty(
 	SetFrom(pConf);
 }
 
+IntProperty::IntProperty(
+	const char * pKeyName, PropertyChangeListener* pListener) 
+: Property(pKeyName, pListener) 
+{
+	this->mConfigured = FALSE;
+	SetClean();
+}
+
 void IntProperty::SetFrom(const Configuration* pConf) 
 {
 	if (pConf->KeyExists(mKeyName.c_str())) {
@@ -140,6 +148,32 @@ void IntProperty::Set(int newValue)
 	mValue = newValue; 
 	mConfigured = TRUE; 
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
+}
+
+bool IntProperty::SetFromString(const wxString& rSource)
+{
+	if (rSource.Length() == 0) {
+		Clear();
+		return TRUE;
+	}
+	
+	unsigned int tempValue;
+	char *endptr;
+
+	wxCharBuffer buf = rSource.mb_str(wxConvLibc);
+	
+	if (rSource.StartsWith(wxT("0x"))) {
+		tempValue = strtol(buf.data() + 2, &endptr, 16);
+	} else {
+		tempValue = strtol(buf.data(), &endptr, 10);
+	}
+	
+	if (*endptr != '\0') {
+		return FALSE;
+	}
+
+	Set(tempValue);
+	return TRUE;
 }
 
 void IntProperty::Clear() 
@@ -207,6 +241,14 @@ StringProperty::StringProperty(
 : Property(pKeyName, pListener) 
 {
 	SetFrom(pConf);
+}
+
+StringProperty::StringProperty(
+	const char * pKeyName, PropertyChangeListener* pListener) 
+: Property(pKeyName, pListener) 
+{
+	this->mConfigured = FALSE;
+	SetClean();
 }
 
 void StringProperty::SetFrom(const Configuration* pConf)	

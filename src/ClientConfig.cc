@@ -36,18 +36,20 @@
 #include "ClientConfig.h"
 
 #define INIT_PROP(name, value) name(#name, value, this)
+#define INIT_PROP_EMPTY(name)  name(#name, this)
 ClientConfig::ClientConfig()
-: 	INIT_PROP(CertificateFile, "/etc/box/bbackupd/999-cert.pem"),
-	INIT_PROP(PrivateKeyFile,  "/etc/box/bbackupd/999-key.pem"),
+:	INIT_PROP_EMPTY(CertRequestFile),
+	INIT_PROP_EMPTY(CertificateFile),
+	INIT_PROP_EMPTY(PrivateKeyFile),
 	INIT_PROP(DataDirectory,   "/var/bbackupd"),
 	INIT_PROP(NotifyScript,    "/etc/box/bbackupd/NotifySysadmin.sh"),
 	INIT_PROP(TrustedCAsFile,  "/etc/box/bbackupd/serverCA.pem"),
-	INIT_PROP(KeysFile,        "/etc/box/bbackupd/999-FileEncKeys.raw"),
-	INIT_PROP(StoreHostname,   "my.server.host"),
+	INIT_PROP_EMPTY(KeysFile),
+	INIT_PROP_EMPTY(StoreHostname),
 	INIT_PROP(SyncAllowScript, ""),
 	INIT_PROP(CommandSocket,   "/var/run/bbackupd.sock"),
 	INIT_PROP(PidFile,         "/var/run/bbackupd.pid"),
-	INIT_PROP(AccountNumber,   999),
+	INIT_PROP_EMPTY(AccountNumber),
 	INIT_PROP(UpdateStoreInterval, 3600),
 	INIT_PROP(MinimumFileAge,  21600),
 	INIT_PROP(MaxUploadWait,   86400),
@@ -61,17 +63,18 @@ ClientConfig::ClientConfig()
 }
 
 ClientConfig::ClientConfig(const wxString& rConfigFileName) 
-: 	INIT_PROP(CertificateFile, "/etc/box/bbackupd/999-cert.pem"),
-	INIT_PROP(PrivateKeyFile,  "/etc/box/bbackupd/999-key.pem"),
+:	INIT_PROP_EMPTY(CertRequestFile),
+	INIT_PROP_EMPTY(CertificateFile),
+	INIT_PROP_EMPTY(PrivateKeyFile),
 	INIT_PROP(DataDirectory,   "/var/bbackupd"),
 	INIT_PROP(NotifyScript,    "/etc/box/bbackupd/NotifySysadmin.sh"),
 	INIT_PROP(TrustedCAsFile,  "/etc/box/bbackupd/serverCA.pem"),
-	INIT_PROP(KeysFile,        "/etc/box/bbackupd/999-FileEncKeys.raw"),
-	INIT_PROP(StoreHostname,   "my.server.host"),
+	INIT_PROP_EMPTY(KeysFile),
+	INIT_PROP_EMPTY(StoreHostname),
 	INIT_PROP(SyncAllowScript, ""),
 	INIT_PROP(CommandSocket,   "/var/run/bbackupd.sock"),
 	INIT_PROP(PidFile,         "/var/run/bbackupd.pid"),
-	INIT_PROP(AccountNumber,   999),
+	INIT_PROP_EMPTY(AccountNumber),
 	INIT_PROP(UpdateStoreInterval, 3600),
 	INIT_PROP(MinimumFileAge,  21600),
 	INIT_PROP(MaxUploadWait,   86400),
