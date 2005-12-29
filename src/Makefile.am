@@ -22,7 +22,6 @@ boxi_SOURCES = \
 	ClientConfig.cc\
 	Location.cc\
 	ClientInfoPanel.cc\
-	BackupFilesPanel.cc\
 	BackupLocationsPanel.cc\
 	Restore.cc\
 	cross16.png.c\

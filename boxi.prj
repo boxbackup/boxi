@@ -1,4 +1,4 @@
-# Anjuta Version 1.2.2 
+# Anjuta Version 1.2.4 
 Compatibility Level: 1 
 
 <PROJECT_DESCRIPTION_START>
@@ -35,7 +35,7 @@ fi
 
 props.file.type=project
 
-anjuta.version=1.2.2
+anjuta.version=1.2.4
 anjuta.compatibility.level=1
 
 project.name=boxi
@@ -84,7 +84,6 @@ module.include.files=\
 	main.h\
 	ServerFilesPanel.h\
 	Location.h\
-	BackupFilesPanel.h\
 	BackupLocationsPanel.h\
 	ClientConfig.h\
 	ClientInfoPanel.h\
@@ -98,7 +97,8 @@ module.include.files=\
 	BackupPanel.h\
 	BackupProgressPanel.h\
 	GeneralPanel.h\
-	SetupWizard.h
+	SetupWizard.h\
+	SslConfig.h
 
 module.source.name=src
 module.source.type=
@@ -108,7 +108,6 @@ module.source.files=\
 	ClientConfig.cc\
 	Location.cc\
 	ClientInfoPanel.cc\
-	BackupFilesPanel.cc\
 	BackupLocationsPanel.cc\
 	Restore.cc\
 	cross16.png.c\

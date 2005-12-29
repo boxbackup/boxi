@@ -10,7 +10,6 @@ boxi_include_DATA = \
 	main.h\
 	ServerFilesPanel.h\
 	Location.h\
-	BackupFilesPanel.h\
 	BackupLocationsPanel.h\
 	ClientConfig.h\
 	ClientInfoPanel.h\
@@ -24,6 +23,7 @@ boxi_include_DATA = \
 	BackupPanel.h\
 	BackupProgressPanel.h\
 	GeneralPanel.h\
-	SetupWizard.h
+	SetupWizard.h\
+	SslConfig.h
 
 EXTRA_DIST = $(boxi_include_DATA)
