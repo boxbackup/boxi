@@ -112,12 +112,11 @@ BackupPanel::BackupPanel(
 void BackupPanel::Update()
 {
 	mpSourceList->Clear();
-	const std::vector<Location*>& rLocations = mpConfig->GetLocations();
-	for (std::vector<Location*>::const_iterator i = rLocations.begin();
-		i != rLocations.end(); i++)
+	const std::vector<Location>& rLocations = mpConfig->GetLocations();
+	for (std::vector<Location>::const_iterator pLoc = rLocations.begin();
+		pLoc != rLocations.end(); pLoc++)
 	{
-		const Location* pLocation = *i;
-		mpSourceList->Append(pLocation->GetPath());
+		mpSourceList->Append(pLoc->GetPath());
 	}
 	
 	wxString label;

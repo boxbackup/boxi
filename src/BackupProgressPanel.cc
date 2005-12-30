@@ -697,15 +697,14 @@ void BackupProgressPanel::SetupLocations(BackupClientContext &rClientContext)
 
 	// Then... go through each of the entries in the configuration,
 	// making sure there's a directory created for it.
-	typedef const std::vector<Location*> tLocations;
+	typedef const std::vector<Location> tLocations;
 	tLocations& rLocations = mpConfig->GetLocations();
 	
-	for (tLocations::const_iterator i = rLocations.begin();
-		i != rLocations.end(); i++)
+	for (tLocations::const_iterator pLocation = rLocations.begin();
+		pLocation != rLocations.end(); pLocation++)
 	{
 		TRACE0("new location\n");
 		// Create a record for it
-		Location* pLocation = *i;
 		LocationRecord *pLocRecord = new LocationRecord;
 		try
 		{

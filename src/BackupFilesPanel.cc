@@ -167,21 +167,23 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 		mExcluded = TRUE;
 	}
 		
-	const std::vector<Location*>& rLocations = 
+	const std::vector<Location>& rLocations = 
 		mpRootNode->mpConfig->GetLocations();
 
 	if (!mpLocation) {
 		// determine whether or not this node's path
 		// is inside a backup location.
 	
-		for (size_t i = 0; i < rLocations.size(); i++) {
-			Location* pLoc = rLocations[i];
+		for (std::vector<Location>::const_iterator pLoc = rLocations.begin();
+			pLoc != rLocations.end(); pLoc++) 
+		{
 			const wxString& rPath = pLoc->GetPath();
 			// std::cout << "Compare " << mFullPath 
 			//	<< " against " << rPath << "\n";
-			if (mFullPath.CompareTo(rPath) == 0) {
+			if (mFullPath.CompareTo(rPath) == 0) 
+			{
 				// std::cout << "Found location: " << pLoc->GetName() << "\n";
-				mpLocation = pLoc;
+				mpLocation = mpConfig->GetLocation(*pLoc);
 				break;
 			}
 		}
@@ -213,7 +215,7 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 	// std::cout << "Checking " << mFullPath << " against exclude list for " 
 	// 	<< mpLocation->GetPath() << "\n";
 
-	const std::vector<MyExcludeEntry*>& rExcludeList =
+	const std::vector<MyExcludeEntry>& rExcludeList =
 		mpLocation->GetExcludeList().GetEntries();
 	
 	// on pass 1, remove Excluded files
@@ -230,16 +232,17 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 			continue;
 		}
 		
-		for (size_t i = 0; i < rExcludeList.size(); i++) {
-			MyExcludeEntry* pExclude = rExcludeList[i];
-			ExcludeMatch match = pExclude->GetMatch();
-			std::string  value = pExclude->GetValue();
+		for (std::vector<MyExcludeEntry>::const_iterator pEntry = rExcludeList.begin();
+			pEntry != rExcludeList.end(); pEntry++)
+		{
+			ExcludeMatch match = pEntry->GetMatch();
+			std::string  value = pEntry->GetValue();
 			wxString value2(value.c_str(), wxConvLibc);
 			bool matched = false;
 			
 			// std::cout << "Checking against " << pExclude->ToString() << ": ";
 			
-			ExcludeSense sense = pExclude->GetSense();
+			ExcludeSense sense = pEntry->GetSense();
 			if (pass == 1 && sense != ES_EXCLUDE) {
 				// std::cout << "Not an Exclude entry\n";
 				continue;
@@ -249,7 +252,7 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 				continue;
 			}
 			
-			ExcludeFileDir fileOrDir = pExclude->GetFileDir();
+			ExcludeFileDir fileOrDir = pEntry->GetFileDir();
 			if (fileOrDir == EFD_FILE && mIsDirectory) {
 				// std::cout << "Doesn't match directories\n";
 				continue;
@@ -296,17 +299,20 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 			
 			// std::cout << "Matched!\n";
 			
-			if (sense == ES_EXCLUDE) {
+			if (sense == ES_EXCLUDE) 
+			{
 				mExcluded = TRUE;
-				mpExcludedBy = pExclude;
+				mpExcludedBy = &(*pEntry);
 				mExcludedByString = wxString(
-					pExclude->ToString().c_str(),
+					pEntry->ToString().c_str(),
 					wxConvLibc);
-			} else if (sense == ES_ALWAYSINCLUDE) {
+			} 
+			else if (sense == ES_ALWAYSINCLUDE) 
+			{
 				mExcluded = FALSE;
-				mpIncludedBy = pExclude;
+				mpIncludedBy = &(*pEntry);
 				mIncludedByString = wxString(
-					pExclude->ToString().c_str(),
+					pEntry->ToString().c_str(),
 					wxConvLibc);
 			}
 		}

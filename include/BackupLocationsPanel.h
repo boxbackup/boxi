@@ -76,8 +76,8 @@ class BackupTreeNode : public wxTreeItemData {
 	BackupTreeCtrl* mpTreeCtrl;
 	bool            mIsDirectory;
 	Location*       mpLocation;
-	MyExcludeEntry* mpExcludedBy;
-	MyExcludeEntry* mpIncludedBy;
+	const MyExcludeEntry* mpExcludedBy;
+	const MyExcludeEntry* mpIncludedBy;
 	ClientConfig*   mpConfig;
 	ExcludedState   mExcludedState;
 	
@@ -124,14 +124,17 @@ class BackupTreeNode : public wxTreeItemData {
 	void UpdateExcludedState(bool updateParents);
 	BackupTreeNode* GetParentNode() { return mpParentNode; }
 	Location*       GetLocation()   { return mpLocation; }
-	MyExcludeEntry* GetExcludedBy() { return mpExcludedBy; }
-	MyExcludeEntry* GetIncludedBy() { return mpIncludedBy; }
 	ClientConfig*   GetConfig()     { return mpConfig; }
+
+	const MyExcludeEntry* GetExcludedBy() { return mpExcludedBy; }
+	const MyExcludeEntry* GetIncludedBy() { return mpIncludedBy; }
 
 	private:
 	BackupTreeCtrl* GetTreeCtrl() { return mpTreeCtrl; }
 	void _AddChildrenSlow(bool recurse);
 };
+
+class LocationsPanel;
 
 class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
 	public:
@@ -145,7 +148,9 @@ class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
 	private:
 	ClientConfig*   mpConfig;
 	BackupTreeCtrl* mpTree;
-	wxListCtrl 		*theLocationList;
+	// LocationsPanel* mpLocationsPanel;
+	/*
+	wxListBox*      mpLocationPanelLocList;
 	wxButton 		*theLocationAddBtn;
 	wxButton 		*theLocationEditBtn;
 	wxButton 		*theLocationRemoveBtn;
@@ -166,22 +171,30 @@ class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
 	void OnExcludeTypeChoice   (wxCommandEvent& rEvent);
 	void OnExcludePathChange   (wxCommandEvent& rEvent);
 	void OnExcludeCmdClick     (wxCommandEvent& rEvent);
+	*/
+
 	void OnClickCloseButton    (wxCommandEvent& rEvent);
+	
 	void OnTreeNodeExpand      (wxTreeEvent&    rEvent);
 	void OnTreeNodeCollapse    (wxTreeEvent&    rEvent);
 	void OnTreeNodeActivate    (wxTreeEvent&    rEvent);
+
+	void NotifyChange(); // ConfigChangeListener interface
+	void UpdateTreeOnConfigChange();
+	
+	/*
 	void UpdateLocationCtrlEnabledState();
 	void UpdateExcludeCtrlEnabledState();
 	void PopulateLocationList();
 	void PopulateExclusionList();
-	void NotifyChange(); /* ConfigChangeListener interface */
-	void UpdateTreeOnConfigChange();
+	
 	void UpdateAdvancedTabOnConfigChange();
 	
 	long GetSelectedExcludeIndex();
 	MyExcludeEntry* GetExcludeEntry();
 	const MyExcludeType* GetExcludeTypeByName(const std::string& name);
-
+	*/
+	
 	DECLARE_EVENT_TABLE()
 };
 

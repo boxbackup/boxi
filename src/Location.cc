@@ -34,17 +34,30 @@
 
 #include "Location.h"
 
-MyExcludeList::MyExcludeList(const Configuration& conf) 
+MyExcludeType theExcludeTypes [] = {
+	MyExcludeType(ES_EXCLUDE, 		EFD_DIR, 	EM_EXACT),
+	MyExcludeType(ES_EXCLUDE, 		EFD_DIR, 	EM_REGEX),
+	MyExcludeType(ES_EXCLUDE, 		EFD_FILE, 	EM_EXACT),
+	MyExcludeType(ES_EXCLUDE, 		EFD_FILE, 	EM_REGEX),
+	MyExcludeType(ES_ALWAYSINCLUDE, EFD_DIR, 	EM_EXACT),
+	MyExcludeType(ES_ALWAYSINCLUDE, EFD_DIR, 	EM_REGEX),
+	MyExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, 	EM_EXACT),
+	MyExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, 	EM_REGEX),
+};
+
+MyExcludeList::MyExcludeList(const Configuration& conf, 
+	LocationChangeListener* pListener) 
+: mpListener(pListener)
 {
 	for (size_t i = 0; i < sizeof(theExcludeTypes) / sizeof(MyExcludeType); i++)
 	{
-		const MyExcludeType& t = theExcludeTypes[i];
+		MyExcludeType& t = theExcludeTypes[i];
 		addConfigList(conf, t.ToString(), t);
 	}
 }	
 
 inline void MyExcludeList::addConfigList(const Configuration& conf, 
-	const std::string& keyName, const MyExcludeType& type)
+	const std::string& keyName, MyExcludeType& type)
 {
 	if (!conf.KeyExists(keyName.c_str())) return;
 	std::string value = conf.GetKeyValue(keyName.c_str());
@@ -52,7 +65,7 @@ inline void MyExcludeList::addConfigList(const Configuration& conf,
 }
 
 inline void MyExcludeList::addSeparatedList(const std::string& entries, 
-	const MyExcludeType& type)
+	MyExcludeType& type)
 {
 	std::vector<std::string> temp;
 	SplitString(entries, Configuration::MultiValueSeparator, temp);
@@ -60,42 +73,85 @@ inline void MyExcludeList::addSeparatedList(const std::string& entries,
 		temp.begin(); i != temp.end(); i++)
 	{
 		std::string temp = *i;
-		mEntries.push_back(new MyExcludeEntry(&type, temp));
+		mEntries.push_back(MyExcludeEntry(type, temp));
 	}
 }
 
-void MyExcludeList::AddEntry(MyExcludeEntry* newEntry) {
-	mEntries.push_back(newEntry);
+void MyExcludeList::AddEntry(const MyExcludeEntry& rNewEntry) 
+{
+	mEntries.push_back(rNewEntry);
+	if (mpListener)
+	{
+		mpListener->OnExcludeListChange(this);
+	}
 }
 
-void MyExcludeList::ReplaceEntry(int index, MyExcludeEntry* newEntry) {
-	mEntries[index] = newEntry;
+void MyExcludeList::ReplaceEntry(const MyExcludeEntry& rOldEntry, 
+	const MyExcludeEntry& rNewEntry) 
+{
+	std::vector<MyExcludeEntry>::iterator current;
+	for (current = mEntries.begin(); 
+		current != mEntries.end() && !current->IsSameAs(rOldEntry); current++) 
+		{ }
+	if (current == mEntries.end()) throw "item not found";
+	*current = rNewEntry;
+	if (mpListener)
+	{
+		mpListener->OnExcludeListChange(this);
+	}
 }
 
+/*
 void MyExcludeList::RemoveEntry(int target) 
 {
-	std::vector<MyExcludeEntry*>::iterator current = mEntries.begin();
-	int i;
-	for (i = 0; i < target; i++) 
+	std::vector<MyExcludeEntry>::iterator current;
+	for (current = mEntries.begin();
+		current != mEntries.end() && target != 0;
+		current++, target--) { }
+	if (current == mEntries.end())
 	{
-		current++;
+		throw "index out of bounds";
 	}
-	if (i == target)
-		mEntries.erase(current);
+	mEntries.erase(current);
+	if (mpListener)
+	{
+		mpListener->OnExcludeListChange(this);
+	}
+}
+*/
+
+void MyExcludeList::RemoveEntry(const MyExcludeEntry& rOldEntry) 
+{
+	std::vector<MyExcludeEntry>::iterator current;
+	for (current = mEntries.begin(); 
+		current != mEntries.end() && !current->IsSameAs(rOldEntry); current++) 
+		{ }
+	if (current == mEntries.end())
+	{
+		throw "index out of bounds";
+	}
+	mEntries.erase(current);
+	if (mpListener)
+	{
+		mpListener->OnExcludeListChange(this);
+	}
 }
 
-void MyExcludeList::RemoveEntry(MyExcludeEntry* oldEntry) 
+MyExcludeEntry* MyExcludeList::UnConstEntry(const MyExcludeEntry& rEntry)
 {
-	std::vector<MyExcludeEntry*>::iterator current = mEntries.begin();
-	for ( ; current != mEntries.end() && *current != oldEntry; current++) 
+	std::vector<MyExcludeEntry>::iterator current;
+	for (current = mEntries.begin(); 
+		current != mEntries.end() && !current->IsSameAs(rEntry); current++) 
 		{ }
-		
-	if (*current == oldEntry)
-		mEntries.erase(current);
+	if (current == mEntries.end())
+	{
+		return NULL;
+	}
+	return &(*current);
 }
 
 bool Location::IsExcluded(const wxString& rLocalFileName, bool mIsDirectory, 
-	MyExcludeEntry** ppExcludedBy, MyExcludeEntry** ppIncludedBy)
+	const MyExcludeEntry** ppExcludedBy, const MyExcludeEntry** ppIncludedBy)
 {
 	ExcludedState state = GetExcludedState(rLocalFileName, mIsDirectory,
 		ppExcludedBy, ppIncludedBy);
@@ -104,14 +160,14 @@ bool Location::IsExcluded(const wxString& rLocalFileName, bool mIsDirectory,
 }
 	
 ExcludedState Location::GetExcludedState(const wxString& rLocalFileName, 
-	bool mIsDirectory, MyExcludeEntry** ppExcludedBy, 
-	MyExcludeEntry** ppIncludedBy, ExcludedState ParentState)
+	bool mIsDirectory, const MyExcludeEntry** ppExcludedBy, 
+	const MyExcludeEntry** ppIncludedBy, ExcludedState ParentState)
 {
 	wxLogDebug(wxT(" checking whether %s is excluded..."), 
 		rLocalFileName.c_str());
 	
-	const std::vector<MyExcludeEntry*>& rExcludeList =
-		mpExcluded->GetEntries();
+	const std::vector<MyExcludeEntry>& rExcludeList =
+		mExcluded.GetEntries();
 
 	// inherit default state from parent
 	ExcludedState isExcluded = EST_UNKNOWN;
@@ -172,22 +228,24 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 			continue;
 		}
 		
-		for (size_t i = 0; i < rExcludeList.size(); i++) 
+		typedef std::vector<MyExcludeEntry>::const_iterator iterator;
+		
+		for (iterator pEntry = rExcludeList.begin();
+			pEntry != rExcludeList.end(); pEntry++)
 		{
-			MyExcludeEntry* pExclude = rExcludeList[i];
-			ExcludeMatch match = pExclude->GetMatch();
-			std::string  value = pExclude->GetValue();
+			ExcludeMatch match = pEntry->GetMatch();
+			std::string  value = pEntry->GetValue();
 			wxString value2(value.c_str(), wxConvLibc);
 			bool matched = false;
 
 			{
-				std::string name = pExclude->ToString();
+				std::string name = pEntry->ToString();
 				wxString name2(name.c_str(), wxConvLibc);
 				wxLogDebug(wxT("  checking against %s"),
 					name2.c_str());
 			}
 
-			ExcludeSense sense = pExclude->GetSense();
+			ExcludeSense sense = pEntry->GetSense();
 			
 			if (pass == 1 && sense != ES_EXCLUDE) 
 			{
@@ -201,7 +259,7 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 				continue;
 			}
 			
-			ExcludeFileDir fileOrDir = pExclude->GetFileDir();
+			ExcludeFileDir fileOrDir = pEntry->GetFileDir();
 			
 			if (fileOrDir == EFD_FILE && mIsDirectory) 
 			{
@@ -253,13 +311,13 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 			{
 				isExcluded = EST_EXCLUDED;
 				if (ppExcludedBy)
-					*ppExcludedBy = pExclude;
+					*ppExcludedBy = &(*pEntry);
 			} 
 			else if (sense == ES_ALWAYSINCLUDE)
 			{
 				isExcluded = EST_ALWAYSINCLUDED;
 				if (ppIncludedBy)
-					*ppIncludedBy = pExclude;
+					*ppIncludedBy = &(*pEntry);
 			}
 		}
 	}
@@ -275,23 +333,21 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 //		Created: 28/1/04
 //
 // --------------------------------------------------------------------------
-ExcludeList* Location::GetBoxExcludeList(bool listDirs)
+ExcludeList* Location::GetBoxExcludeList(bool listDirs) const
 {
 	// Create the exclude list
 	ExcludeList *pExclude = new ExcludeList;
 	ExcludeList *pInclude = new ExcludeList;
 	pExclude->SetAlwaysIncludeList(pInclude);
 	
-	typedef const std::vector<MyExcludeEntry*> tMyExcludeEntries;
-	tMyExcludeEntries& rEntries = mpExcluded->GetEntries();
+	typedef const std::vector<MyExcludeEntry> tMyExcludeEntries;
+	tMyExcludeEntries& rEntries(mExcluded.GetEntries());
 	
 	try
 	{
-		for (tMyExcludeEntries::const_iterator i = rEntries.begin();
-			i != rEntries.end(); i++)
+		for (tMyExcludeEntries::const_iterator pEntry = rEntries.begin();
+			pEntry != rEntries.end(); pEntry++)
 		{
-			const MyExcludeEntry* pEntry = *i;
-			
 			if (listDirs && (pEntry->GetFileDir() == EFD_FILE))
 				continue;
 			
