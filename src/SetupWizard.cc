@@ -26,7 +26,6 @@
 
 #include <wx/html/htmlwin.h>
 #include <wx/progdlg.h>
-#include <wx/socket.h>
 
 #include <openssl/conf.h>
 #include <openssl/err.h>
@@ -38,6 +37,7 @@
 
 #include "SetupWizard.h"
 #include "ParamPanel.h"
+#include "SslConfig.h"
 
 class SetupWizardPage : public wxWizardPageSimple
 {
@@ -93,127 +93,14 @@ class SetupWizardPage : public wxWizardPageSimple
 		msg.Append(wxString(ERR_error_string(err, NULL), wxConvLibc));
 		
 		ShowError(msg);
-	}
-	
-	wxString opensslConfigFileName;
-	
-	CONF* ConfigureSsl()
-	{
-		wxString opensslConfigPath(X509_get_default_cert_area(), 
-			wxConvLibc);
-		opensslConfigFileName = wxT("openssl.cnf");
-		wxFileName opensslConfigFile(opensslConfigPath, 
-			opensslConfigFileName);
-			
-		CONF* pConfig = NCONF_new(NULL);
-		if (!pConfig)
-		{
-			ShowSslError(wxT("Failed to create an "
-				"OpenSSL configuration object"));
-			return NULL;
-		}
-		
-		long errline;
-
-		if (!NCONF_load(pConfig, 
-			opensslConfigFile.GetFullPath().mb_str(wxConvLibc), &errline))
-		{
-			wxString msg;
-			msg.Printf(wxT("Failed to initialise OpenSSL. Perhaps the "
-				"configuration file could not be found or read? (%s)"),
-				opensslConfigFile.GetFullPath().c_str());
-			ShowSslError(msg);
-			NCONF_free(pConfig);
-			return NULL;
-		}
-
-		OPENSSL_load_builtin_modules();
-		
-		if (CONF_modules_load(pConfig, NULL, 0) <= 0)
-		{
-			ShowSslError(wxT("Failed to configure OpenSSL"));
-			NCONF_free(pConfig);
-			return NULL;
-		}
-
-		return pConfig;
-	}
-	
-	void FreeSsl(CONF* pConfig)
-	{
-		NCONF_free(pConfig);
-	}
-	
-	bool GetCommonName(X509_NAME* pX509SubjectName, wxString* pTarget)
-	{
-		int commonNameNid = OBJ_txt2nid("commonName");
-		if (commonNameNid == NID_undef)
-		{
-			ShowSslError(wxT("Failed to find NID of "
-				"X.509 CommonName attribute"));
-			return FALSE;
-		}
-		
-		char commonNameBuf[256];
-
-		X509_NAME_get_text_by_NID(pX509SubjectName, commonNameNid, 
-			commonNameBuf, sizeof(commonNameBuf)-1);
-		commonNameBuf[sizeof(commonNameBuf)-1] = 0;
-
-		// X509_NAME_free(pX509SubjectName);
-		
-		*pTarget = wxString(commonNameBuf, wxConvLibc);
-		return TRUE;
-	}
-	
-	EVP_PKEY* LoadKey(wxString& rKeyFileName)
-	{
-		BIO *pKeyBio = BIO_new(BIO_s_file());
-		if (!pKeyBio)
-		{
-			ShowSslError(wxT("Failed to create an OpenSSL BIO "
-				"to read the private key"));
-			return NULL;
-		}
-		
-		if (BIO_read_filename(pKeyBio, 
-			rKeyFileName.mb_str(wxConvLibc).data()) <= 0)
-		{
-			wxString msg;
-			msg.Printf(wxT("Failed to read the private key file (%s)"),
-				rKeyFileName.c_str());
-			ShowSslError(msg);
-			BIO_free(pKeyBio);
-			return NULL;
-		}
-		
-		EVP_PKEY* pKey = PEM_read_bio_PrivateKey(pKeyBio, NULL, NULL, NULL);
-		BIO_free(pKeyBio);
-		
-		if (!pKey)
-		{
-			wxString msg;
-			msg.Printf(wxT("Failed to read the private key (%s)"),
-				rKeyFileName.c_str());
-			ShowSslError(msg);
-			return NULL;
-		}
-		
-		return pKey;
-	}
-	
-	void FreeKey(EVP_PKEY* pKey)
-	{
-		EVP_PKEY_free(pKey);
-	}
+	}	
 };
 
 class IntroPage : public SetupWizardPage
 {
 	public:
-	IntroPage(ClientConfig *config,
-		wxWizard* parent = NULL)
- 	: SetupWizardPage(config, parent, wxT(
+	IntroPage(ClientConfig *pConfig, wxWizard* pParent)
+ 	: SetupWizardPage(pConfig, pParent, wxT(
 		"<html><body><h1>Boxi Setup Wizard</h1>"
 		"<p>This wizard can help you configure Boxi for a new server, "
 		"or change your settings, as simply as possible.</p>"
@@ -226,39 +113,36 @@ class IntroPage : public SetupWizardPage
 class AccountPage : public SetupWizardPage
 {
 	private:
-	wxTextCtrl* mpServerName;
-	IntCtrl*    mpAccountNumber;
+	BoundStringCtrl* mpStoreHostnameCtrl;
+	BoundIntCtrl*    mpAccountNumberCtrl;
 	
 	public:
-	AccountPage(ClientConfig *config,
-		wxWizard* parent = NULL)
- 	: SetupWizardPage(config, parent, wxT(
+	AccountPage(ClientConfig *pConfig, wxWizard* pParent)
+ 	: SetupWizardPage(pConfig, pParent, wxT(
 		"<html><body><h1>Account Details</h1>"
 		"<p>To use a particular server, you must contact the server's operator "
 		"and ask them for an account. If they accept, they will give you a "
-		"server name and account number. Please enter them here.</p>"
+		"store hostname and account number. Please enter them here.</p>"
 		"</body></html>"))
 	{
 		wxGridSizer* pLocationSizer = new wxGridSizer(2, 8, 8);
 		mpSizer->Add(pLocationSizer, 0, wxGROW | wxTOP, 8);
 
 		wxStaticText* pLabel = new wxStaticText(this, wxID_ANY,
-			wxT("Server name:"));
+			wxT("Store hostname:"));
 		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
 		
-		wxString serverName;
-		mpConfig->StoreHostname.GetInto(serverName);
-		mpServerName = new wxTextCtrl(this, wxID_ANY, serverName);
-		pLocationSizer->Add(mpServerName, 1, 
+		mpStoreHostnameCtrl = new BoundStringCtrl(this, wxID_ANY, 
+			mpConfig->StoreHostname);
+		pLocationSizer->Add(mpStoreHostnameCtrl, 1, 
 			wxALIGN_CENTER_VERTICAL | wxGROW, 8);
 		
 		pLabel = new wxStaticText(this, wxID_ANY, wxT("Account number:"));
 		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
 		
-		int account = 0;
-		mpConfig->AccountNumber.GetInto(account);
-		mpAccountNumber = new IntCtrl(this, wxID_ANY, account, "%d");
-		pLocationSizer->Add(mpAccountNumber, 1, 
+		mpAccountNumberCtrl = new BoundIntCtrl(this, wxID_ANY, 
+			mpConfig->AccountNumber, "%d");
+		pLocationSizer->Add(mpAccountNumberCtrl, 1, 
 			wxALIGN_CENTER_VERTICAL | wxGROW, 8);
 		
 		Connect(wxID_ANY,wxEVT_WIZARD_PAGE_CHANGING,
@@ -274,12 +158,7 @@ class AccountPage : public SetupWizardPage
 		if (!event.GetDirection())
 			return;
 		
-		if (CheckAccountDetails())
-		{
-			mpConfig->StoreHostname.Set(mpServerName->GetValue());
-			mpConfig->AccountNumber.Set(mpAccountNumber->GetValueInt());
-		}
-		else
+		if (!CheckAccountDetails())
 		{
 			event.Veto();
 		}
@@ -287,28 +166,12 @@ class AccountPage : public SetupWizardPage
 	
 	bool CheckAccountDetails()
 	{
-		if (! mpAccountNumber->IsValid())
-		{
-			ShowError(wxT("The account number is empty or not valid"));
-			return FALSE;
-		}
+		wxString msg;
 		
-		if (mpAccountNumber->GetValueInt() <= 0)
+		if (!mpConfig->CheckAccountNumber(&msg) ||
+			!mpConfig->CheckStoreHostname(&msg))
 		{
-			ShowError(wxT("The account number is zero or negative"));
-			return FALSE;
-		}
-		
-		if (mpAccountNumber->GetValueInt() > 0x7FFFFFFF)
-		{
-			ShowError(wxT("The account number is too large"));
-			return FALSE;
-		}
-		
-		wxIPV4address addr;
-		if (!addr.Hostname(mpServerName->GetValue()))
-		{
-			ShowError(wxT("The server name is not valid"));
+			ShowError(msg);
 			return FALSE;
 		}
 		
@@ -331,13 +194,13 @@ static void MySslProgressCallback(int p, int n, void* cbinfo)
 class FileSavingPage : public SetupWizardPage
 {
 	private:
-	wxRadioButton* mpExistingRadio;
-	wxRadioButton* mpNewRadio;
-	wxTextCtrl* mpLocationText;
-	StringProperty& mrProperty;
+	wxRadioButton*   mpExistingRadio;
+	wxRadioButton*   mpNewRadio;
+	BoundStringCtrl* mpBoundCtrl;
+	StringProperty&  mrProperty;
 	
 	public:
-	FileSavingPage(ClientConfig *pConfig, wxWizard* pParent = NULL, 
+	FileSavingPage(ClientConfig *pConfig, wxWizard* pParent, 
 		const wxString& rDescriptionText, const wxString& rFileDesc,
 		const wxString& rFileNamePattern, StringProperty& rProperty)
  	: SetupWizardPage(pConfig, pParent, rDescriptionText),
@@ -361,9 +224,8 @@ class FileSavingPage : public SetupWizardPage
 		wxStaticText* pLabel = new wxStaticText(this, wxID_ANY, label);
 		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
 		
-		rProperty.GetInto(mFileNameString);
-		mpLocationText = new wxTextCtrl(this, wxID_ANY, mFileNameString);
-		pLocationSizer->Add(mpLocationText, 1, 
+		mpBoundCtrl = new BoundStringCtrl(this, wxID_ANY, rProperty);
+		pLocationSizer->Add(mpBoundCtrl, 1, 
 			wxALIGN_CENTER_VERTICAL | wxLEFT, 8);
 		
 		wxString fileSpec;
@@ -374,12 +236,14 @@ class FileSavingPage : public SetupWizardPage
 		openDialogTitle.Printf(wxT("Open %s File"), rFileDesc.c_str());
 		
 		FileSelButton* pFileSelButton = new FileSelButton(
-			this, wxID_ANY, mpLocationText, fileSpec, openDialogTitle);
+			this, wxID_ANY, mpBoundCtrl, fileSpec, openDialogTitle);
 		pLocationSizer->Add(pFileSelButton, 0, wxGROW | wxLEFT, 8);
 		
 		Connect(wxID_ANY,wxEVT_WIZARD_PAGE_CHANGING,
                 wxWizardEventHandler(
 					FileSavingPage::OnWizardPageChanging));
+
+		rProperty.GetInto(mFileNameString);
 	}
 	
 	const wxString&   GetFileNameString() { return mFileNameString; }
@@ -388,7 +252,7 @@ class FileSavingPage : public SetupWizardPage
 	{
 		mFileNameString = rFileName;
 		mFileName = wxFileName(rFileName);
-		mpLocationText->SetValue(rFileName);
+		mpBoundCtrl->SetValue(rFileName);
 	}
 	
 	private:
@@ -403,9 +267,7 @@ class FileSavingPage : public SetupWizardPage
 
 		bool isOk = FALSE;
 		
-		mFileNameString = mpLocationText->GetValue();
-		
-		if (mFileNameString.IsEmpty())
+		if (!mrProperty.GetInto(mFileNameString))
 		{
 			ShowError(wxT("You must specify a location for the file!"));
 		}
@@ -413,21 +275,17 @@ class FileSavingPage : public SetupWizardPage
 		{
 			mFileName = wxFileName(mFileNameString);
 			
-			if (mpExistingRadio->GetValue())
+			if (mpNewRadio->GetValue())
+			{
+				isOk = CreateNewFile() && CheckExistingFile();
+			}
+			else
 			{
 				isOk = CheckExistingFile();
 			}
-			else if (mpNewRadio->GetValue())
-			{
-				isOk = CreateNewFile();
-			}
 		}
 		
-		if (isOk) 
-		{
-			mrProperty.Set(mFileNameString);
-		}
-		else
+		if (!isOk) 
 		{
 			event.Veto();
 		}
@@ -518,94 +376,11 @@ class PrivateKeyPage : public FileSavingPage
 	{ }
 	
 	bool CheckExistingFileImpl()
-	{	
-		CONF* pConfig = ConfigureSsl();
-		if (!pConfig)
-		{
-			return FALSE;
-		}
-		
-		bool isOk = CheckExistingKeyWithOpenSslConfigured(pConfig);
-		
-		FreeSsl(pConfig);
-		
-		return isOk;
-	}
-	
-	bool CheckExistingKeyWithOpenSslConfigured(CONF* pConfig)
 	{
-		BIO* pKeyBio = BIO_new(BIO_s_file());
-		
-		if (pKeyBio == NULL)
+		wxString msg;
+		if (!mpConfig->CheckPrivateKeyFile(&msg))
 		{
-			ShowSslError(wxT("Failed to create an OpenSSL BIO"));
-			return FALSE;
-		}
-		
-		bool isOk = CheckExistingKeyWithBio(pKeyBio);
-
-		BIO_free(pKeyBio);
-		
-		return isOk;
-	}
-	
-	bool CheckExistingKeyWithBio(BIO* pKeyBio)
-	{
-		if (BIO_read_filename(pKeyBio, 
-			GetFileNameString().mb_str(wxConvLibc).data()) <= 0)
-		{
-			ShowSslError(wxT("Failed to read key file"));
-			return FALSE;
-		}
-		
-		char *pName = NULL, *pHeader = NULL;
-		unsigned char *pData = NULL;
-		long len;
-		
-		for (;;)
-		{
-			if (!PEM_read_bio(pKeyBio, &pName, &pHeader, &pData, &len)) 
-			{
-				if (ERR_GET_REASON(ERR_peek_error()) == PEM_R_NO_START_LINE)
-				{
-					ERR_add_error_data(2, "Expecting: ", PEM_STRING_EVP_PKEY);
-					ShowSslError(wxT("Failed to read key file"));
-					return FALSE;
-				}
-			}
-			
-			if (strcmp(pName, PEM_STRING_RSA) == 0)
-				break;
-			
-			OPENSSL_free(pName);
-			OPENSSL_free(pHeader);
-			OPENSSL_free(pData);
-		}
-		
-		bool isOk = CheckExistingKeyWithData(pName, pHeader, pData);
-		
-		OPENSSL_free(pName);
-		OPENSSL_free(pHeader);
-		OPENSSL_free(pData);
-		
-		return isOk;
-	}
-	
-	bool CheckExistingKeyWithData(char* pName, char* pHeader,
-		unsigned char* pData)
-	{
-		EVP_CIPHER_INFO cipher;
-		
-		if (!PEM_get_EVP_CIPHER_INFO(pHeader, &cipher))
-		{
-			ShowSslError(wxT("Failed to decipher key file"));
-			return FALSE;
-		}
-		
-		if (cipher.cipher != NULL)
-		{
-			ShowError(wxT("This private key is protected with a passphrase. "
-				"It cannot be used with Box Backup."));
+			ShowError(msg);
 			return FALSE;
 		}
 		
@@ -827,11 +602,17 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 		if (!mpConfig->PrivateKeyFile.GetInto(keyFileName))
 		{
 			ShowError(wxT("The private key filename is not set, "
-				"but it should be!"));
+				"but it should be"));
 			return FALSE;
 		}
 		
-		EVP_PKEY* pKey = LoadKey(keyFileName);
+		wxString msg;
+		EVP_PKEY* pKey = LoadKey(keyFileName, &msg);
+		if (!pKey)
+		{
+			ShowError(msg);
+			return FALSE;
+		}
 
 		bool isOk = CheckCertRequestWithKey(pRequest, pKey);
 		
@@ -843,8 +624,11 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 	bool CheckCertRequestWithKey(X509_REQ* pRequest, EVP_PKEY* pKey)
 	{
 		wxString commonNameActual;
-		if (!GetCommonName(X509_REQ_get_subject_name(pRequest), &commonNameActual))
+		wxString msg;
+		if (!GetCommonName(X509_REQ_get_subject_name(pRequest), 
+			&commonNameActual, &msg))
 		{
+			ShowError(msg);
 			return FALSE;
 		}
 		
@@ -880,35 +664,30 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 
 	bool CreateNewFileImpl()
 	{
-		CONF* pConfig = ConfigureSsl();
-		if (!pConfig)
+		wxString msg;
+		std::auto_ptr<SslConfig> apConfig(SslConfig::Get(&msg));
+		if (!apConfig.get())
 		{
+			ShowError(msg);
 			return FALSE;
-		}
-		
-		bool isOk = GenerateCertRequestWithOpenSslConfigured(pConfig);
-		
-		FreeSsl(pConfig);
-		
-		return isOk;
-	}
-	
-	bool GenerateCertRequestWithOpenSslConfigured(CONF* pConfig)
-	{
-		char* pExtensions = NCONF_get_string(pConfig, "req", "x509_extensions");
+		}			
+
+		char* pExtensions = NCONF_get_string(apConfig->GetConf(), "req", 
+			"x509_extensions");
 		if (pExtensions) 
 		{
 			/* Check syntax of file */
 			X509V3_CTX ctx;
 			X509V3_set_ctx_test(&ctx);
-			X509V3_set_nconf(&ctx, pConfig);
+			X509V3_set_nconf(&ctx, apConfig->GetConf());
 			
-			if(!X509V3_EXT_add_nconf(pConfig, &ctx, pExtensions, NULL)) 
+			if (!X509V3_EXT_add_nconf(apConfig->GetConf(), &ctx, pExtensions, 
+				NULL)) 
 			{
 				wxString msg;
 				msg.Printf(wxT("Failed to load certificate extensions "
 					"section (%s) specified in OpenSSL configuration file "
-					"(%s)"), pExtensions, opensslConfigFileName.c_str());
+					"(%s)"), pExtensions, apConfig->GetFileName().c_str());
 				ShowSslError(msg);
 				return FALSE;
 			}
@@ -925,10 +704,23 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 			return FALSE;
 		}
 
+		EVP_PKEY* pKey = LoadKey(mKeyFileName, &msg);
+		if (!pKey)
+		{
+			ShowError(msg);
+			return FALSE;
+		}
+
 		BIO* pRequestBio = BIO_new(BIO_s_file());
-		EVP_PKEY* pKey = LoadKey(mKeyFileName);
-		
-		bool isOk = GenerateCertRequestWithKeyAndBio(pConfig, pKey, pRequestBio);
+		if (!pRequestBio)
+		{
+			ShowError(wxT("Failed to create an OpenSSL BIO"));
+			FreeKey(pKey);
+			return FALSE;
+		}
+			
+		bool isOk = GenerateCertRequestWithKeyAndBio(apConfig, pKey, 
+			pRequestBio);
 		
 		FreeKey(pKey);
 		BIO_free(pRequestBio);
@@ -936,8 +728,8 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 		return isOk;
 	}
 	
-	bool GenerateCertRequestWithKeyAndBio(CONF* pConfig, EVP_PKEY* pKey, 
-		BIO* pRequestBio)
+	bool GenerateCertRequestWithKeyAndBio(std::auto_ptr<SslConfig>& rapConfig, 
+		EVP_PKEY* pKey, BIO* pRequestBio)
 	{
 		X509_REQ* pRequest = X509_REQ_new();
 		if (!pRequest)
@@ -946,7 +738,7 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 			return FALSE;
 		}
 		
-		bool isOk = GenerateCertRequestWithObject(pConfig, pRequest, pKey, 
+		bool isOk = GenerateCertRequestWithObject(rapConfig, pRequest, pKey, 
 			pRequestBio);
 		
 		X509_REQ_free(pRequest);
@@ -954,8 +746,8 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 		return isOk;
 	}
 	
-	bool GenerateCertRequestWithObject(CONF* pConfig, X509_REQ* pRequest, 
-		EVP_PKEY* pKey, BIO* pRequestBio)
+	bool GenerateCertRequestWithObject(std::auto_ptr<SslConfig>& rapConfig, 
+		X509_REQ* pRequest, EVP_PKEY* pKey, BIO* pRequestBio)
 	{
 		if (!X509_REQ_set_version(pRequest,0L))
 		{
@@ -1000,23 +792,23 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 		
 		X509V3_CTX ext_ctx;
 		X509V3_set_ctx(&ext_ctx, NULL, NULL, pRequest, NULL, 0);
-		X509V3_set_nconf(&ext_ctx, pConfig);
+		X509V3_set_nconf(&ext_ctx, rapConfig->GetConf());
 		
-		char *pReqExtensions = NCONF_get_string(pConfig, "section", 
-			"req_extensions");
+		char *pReqExtensions = NCONF_get_string(rapConfig->GetConf(), 
+			"section", "req_extensions");
 		if (pReqExtensions)
 		{
 			X509V3_CTX ctx;
 			X509V3_set_ctx_test(&ctx);
-			X509V3_set_nconf(&ctx, pConfig);
+			X509V3_set_nconf(&ctx, rapConfig->GetConf());
 			
-			if (!X509V3_EXT_REQ_add_nconf(pConfig, &ctx, pReqExtensions, 
-				pRequest)) 
+			if (!X509V3_EXT_REQ_add_nconf(rapConfig->GetConf(), &ctx, 
+				pReqExtensions, pRequest)) 
 			{
 				wxString msg;
 				msg.Printf(wxT("Failed to load request extensions "
 					"section (%s) specified in OpenSSL configuration file "
-					"(%s)"), pReqExtensions, opensslConfigFileName.c_str());
+					"(%s)"), pReqExtensions, rapConfig->GetFileName().c_str());
 				ShowSslError(msg);
 				return FALSE;
 			}
@@ -1046,7 +838,8 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 			return FALSE;
 		}
 		
-		char* filename = strdup(GetFileNameString().mb_str(wxConvLibc).data());
+		wxCharBuffer buf = GetFileNameString().mb_str(wxConvLibc);
+		char* filename = strdup(buf.data());
 		result = BIO_write_filename(pRequestBio, filename);
 		free(filename);
 		
@@ -1064,6 +857,210 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 		}
 		
 		return TRUE;
+	}
+};
+
+class CertificatePage : public SetupWizardPage, ConfigChangeListener
+{
+	private:
+	BoundStringCtrl* mpCertFileCtrl;
+	BoundStringCtrl* mpCAFileCtrl;
+	
+	public:
+	CertificatePage(ClientConfig *pConfig,
+		wxWizard* pParent = NULL)
+ 	: SetupWizardPage(pConfig, pParent, wxT(""))
+	{
+		wxFlexGridSizer* pLocationSizer = new wxFlexGridSizer(3, 8, 8);
+		pLocationSizer->AddGrowableCol(1);
+		mpSizer->Add(pLocationSizer, 0, wxGROW | wxTOP, 8);
+
+		wxStaticText* pLabel = new wxStaticText(this, wxID_ANY,
+			wxT("Certificate file:"));
+		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
+		
+		mpCertFileCtrl = new BoundStringCtrl(this, wxID_ANY, 
+			mpConfig->CertificateFile);
+		pLocationSizer->Add(mpCertFileCtrl, 1, 
+			wxALIGN_CENTER_VERTICAL | wxGROW, 0);
+			
+		FileSelButton* pFileSel = new FileSelButton(this, wxID_ANY, 
+			mpCertFileCtrl, wxT("Certificate files (*-cert.pem)|*-cert.pem"));
+		pLocationSizer->Add(pFileSel, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
+				
+		pLabel = new wxStaticText(this, wxID_ANY, wxT("CA file:"));
+		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
+		
+		mpCAFileCtrl = new BoundStringCtrl(this, wxID_ANY, 
+			mpConfig->TrustedCAsFile);
+		pLocationSizer->Add(mpCAFileCtrl, 1, 
+			wxALIGN_CENTER_VERTICAL | wxGROW, 0);
+		
+		pFileSel = new FileSelButton(this, wxID_ANY, mpCAFileCtrl, 
+			wxT("CA files (serverCA.pem)|serverCA.pem"));
+		pLocationSizer->Add(pFileSel, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
+
+		Connect(wxID_ANY,wxEVT_WIZARD_PAGE_CHANGING,
+                wxWizardEventHandler(
+					CertificatePage::OnWizardPageChanging));
+
+		mpConfig->AddListener(this);
+		UpdateText();
+	}
+	
+	~CertificatePage() { mpConfig->RemoveListener(this); }
+
+	void NotifyChange() { UpdateText(); }
+	
+	void UpdateText()
+	{
+		wxString certReqPath;
+		mpConfig->CertRequestFile.GetInto(certReqPath);
+		
+		wxString keyPath;
+		mpConfig->KeysFile.GetInto(keyPath);
+		
+		wxFileName keyPathName(keyPath);
+		
+		wxString text;
+		text.Printf(wxT(
+			"<html><body><h1>Certificate File</h1>"
+			"<p>You need a certificate to connect to the server. "
+			"The certificate will be supplied by the server operator.</p>"
+			"<p>Please follow the operator's instructions to send the "
+			"certificate request file (<strong>%s</strong>) to them.</p>"
+			"<p>They should send you back two files: a "
+			"<strong>certificate</strong> and a <strong>CA</strong> file. "
+			"Save both these files in the same directory as your key files "
+			"(<strong>%s</strong>).</p>"
+			"<p>When you have these files, tell Boxi where to find them "
+			"using the boxes below.</p>"),
+			certReqPath.c_str(), keyPathName.GetPath().c_str());
+		SetText(text);
+	}
+	
+	void OnWizardPageChanging(wxWizardEvent& event)
+	{
+		// always allow moving backwards
+		if (!event.GetDirection())
+			return;
+
+		bool isOk = CheckServerFiles();
+		
+		if (!isOk) 
+		{
+			event.Veto();
+		}
+	}
+	
+	bool CheckServerFiles()
+	{
+		wxString certFile;
+		if (!mpConfig->CertificateFile.GetInto(certFile))
+		{
+			ShowError(wxT("The certificate file is not set"));
+			return FALSE;
+		}
+		
+		if (!wxFileName::FileExists(certFile))
+		{
+			ShowError(wxT("The certificate file does not exist"));
+			return FALSE;
+		}
+		
+		if (!wxFile::Access(certFile, wxFile::read))
+		{
+			ShowError(wxT("The certificate file is not readable"));
+			return FALSE;
+		}
+
+		wxString caFile;
+		if (!mpConfig->TrustedCAsFile.GetInto(caFile))
+		{
+			ShowError(wxT("The CA file is not set"));
+			return FALSE;
+		}
+		
+		if (!wxFileName::FileExists(caFile))
+		{
+			ShowError(wxT("The CA file does not exist"));
+			return FALSE;
+		}
+		
+		if (!wxFile::Access(caFile, wxFile::read))
+		{
+			ShowError(wxT("The CA file is not readable"));
+			return FALSE;
+		}
+
+		wxString msg;
+		if (!mpConfig->CheckCertificateFile(&msg))
+		{
+			ShowError(msg);
+			return FALSE;
+		}
+		
+		return TRUE;
+	}
+};
+
+class CertExistsPage : public SetupWizardPage
+{
+	private:
+	wxRadioButton* mpExistingRadio;
+	wxRadioButton* mpNewRadio;
+	wxWizardPage*  mpCertRequestPage;
+	wxWizardPage*  mpCertFilePage;
+	
+	public:
+	CertExistsPage(ClientConfig *pConfig, wxWizard* pParent = NULL, 
+		CertRequestPage* pCertRequestPage, CertificatePage* pCertFilePage)
+ 	: SetupWizardPage(pConfig, pParent, wxT(
+		"<html><body><h1>Certificate</h1>"
+		"<p>You must have a certificate to tell the server operator who you "
+		"are. The certificate contains your account number and the "
+		"public part of your private key.</p>"
+		"<p>You cannot generate the certificate yourself. You must submit a "
+		"<b>certificate request</b> to the server operator, who will send "
+		"back the certificate.</p>"
+		"<p>If you already have a certificate, you can continue to "
+		"use it unless the server administrator tells you to generate a new "
+		"certificate request, or sends you a new certificate, or you "
+		"change your private key.</p>"
+		"<p>If you want to use an existing certificate, or a new certificate "
+		"which you have already been sent by the server operator, select the "
+		"<b>Existing Certificate</b> option below. Otherwise, select the "
+		"<b>New Certificate Request</b> option.</p>"
+		"</body></html>")),
+		mpCertRequestPage(pCertRequestPage),
+		mpCertFilePage   (pCertFilePage)
+
+	{
+		mpExistingRadio = new wxRadioButton(this, wxID_ANY, 
+			wxT("Existing Certificate"),
+			wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+		mpSizer->Add(mpExistingRadio, 0, wxGROW | wxTOP, 8);
+
+		mpNewRadio = new wxRadioButton(this, wxID_ANY, 
+			wxT("New Certificate Request"),
+			wxDefaultPosition, wxDefaultSize);
+		mpSizer->Add(mpNewRadio, 0, wxGROW | wxTOP, 8);
+	}
+
+	virtual wxWizardPage* GetNext() const
+	{
+		if (mpExistingRadio->GetValue())
+		{
+			return mpCertFilePage;
+		}
+		else if (mpNewRadio->GetValue())
+		{
+			return mpCertRequestPage;
+		}
+		else
+		{
+			return NULL;
+		}
 	}
 };
 
@@ -1196,9 +1193,8 @@ class BackedUpPage : public SetupWizardPage, ConfigChangeListener
 	wxCheckBox* mpBackedUp;
 	
 	public:
-	BackedUpPage(ClientConfig *config,
-		wxWizard* parent = NULL)
- 	: SetupWizardPage(config, parent, wxT(
+	BackedUpPage(ClientConfig *pConfig, wxWizard* pParent)
+ 	: SetupWizardPage(pConfig, pParent, wxT(
 		"<html><body><h1>Back Up Your Keys</h1>"
 		"<p>Your backups will be protected by "
 		"<strong>strong encryption</strong>. "
@@ -1238,344 +1234,6 @@ class BackedUpPage : public SetupWizardPage, ConfigChangeListener
 			event.Veto();
 		}
 	}
-	
-};
-
-class CertificatePage : public SetupWizardPage, ConfigChangeListener
-{
-	private:
-	wxTextCtrl* mpCertFileLoc;
-	wxTextCtrl* mpCAFileLoc;
-	
-	public:
-	CertificatePage(ClientConfig *pConfig,
-		wxWizard* pParent = NULL)
- 	: SetupWizardPage(pConfig, pParent, wxT(""))
-	{
-		wxFlexGridSizer* pLocationSizer = new wxFlexGridSizer(3, 8, 8);
-		pLocationSizer->AddGrowableCol(1);
-		mpSizer->Add(pLocationSizer, 0, wxGROW | wxTOP, 8);
-
-		wxStaticText* pLabel = new wxStaticText(this, wxID_ANY,
-			wxT("Certificate file:"));
-		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
-		
-		wxString certFile;
-		mpConfig->CertificateFile.GetInto(certFile);
-		mpCertFileLoc = new wxTextCtrl(this, wxID_ANY, certFile);
-		pLocationSizer->Add(mpCertFileLoc, 1, 
-			wxALIGN_CENTER_VERTICAL | wxGROW, 0);
-			
-		FileSelButton* pFileSel = new FileSelButton(this, wxID_ANY, 
-			mpCertFileLoc, wxT("Certificate files (*-cert.pem)|*-cert.pem"));
-		pLocationSizer->Add(pFileSel, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
-				
-		pLabel = new wxStaticText(this, wxID_ANY, wxT("CA file:"));
-		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
-		
-		wxString caFile;
-		mpConfig->TrustedCAsFile.GetInto(caFile);
-		mpCAFileLoc = new wxTextCtrl(this, wxID_ANY, caFile);
-		pLocationSizer->Add(mpCAFileLoc, 1, 
-			wxALIGN_CENTER_VERTICAL | wxGROW, 0);
-		
-		pFileSel = new FileSelButton(this, wxID_ANY, mpCAFileLoc, 
-			wxT("CA files (serverCA.pem)|serverCA.pem"));
-		pLocationSizer->Add(pFileSel, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
-
-		Connect(wxID_ANY,wxEVT_WIZARD_PAGE_CHANGING,
-                wxWizardEventHandler(
-					CertificatePage::OnWizardPageChanging));
-
-		mpConfig->AddListener(this);
-		UpdateText();
-	}
-	
-	~CertificatePage() { mpConfig->RemoveListener(this); }
-
-	void NotifyChange() { UpdateText(); }
-	
-	void UpdateText()
-	{
-		wxString certReqPath;
-		mpConfig->CertRequestFile.GetInto(certReqPath);
-		
-		wxString keyPath;
-		mpConfig->KeysFile.GetInto(keyPath);
-		
-		wxFileName keyPathName(keyPath);
-		
-		wxString text;
-		text.Printf(wxT(
-			"<html><body><h1>Certificate File</h1>"
-			"<p>You need a certificate to connect to the server. "
-			"The certificate will be supplied by the server operator.</p>"
-			"<p>Please follow the operator's instructions to send the "
-			"certificate request file (<strong>%s</strong>) to them.</p>"
-			"<p>They should send you back two files: a "
-			"<strong>certificate</strong> and a <strong>CA</strong> file. "
-			"Save both these files in the same directory as your key files "
-			"(<strong>%s</strong>).</p>"
-			"<p>When you have these files, tell Boxi where to find them "
-			"using the boxes below.</p>"),
-			certReqPath.c_str(), keyPathName.GetPath().c_str());
-		SetText(text);
-	}
-	
-	void OnWizardPageChanging(wxWizardEvent& event)
-	{
-		// always allow moving backwards
-		if (!event.GetDirection())
-			return;
-
-		bool isOk = CheckServerFiles();
-		
-		if (isOk) 
-		{
-			mpConfig->CertificateFile.Set(mpCertFileLoc->GetValue());
-			mpConfig->TrustedCAsFile .Set(mpCAFileLoc  ->GetValue());
-		}
-		else
-		{
-			event.Veto();
-		}
-	}
-	
-	bool CheckServerFiles()
-	{
-		wxString certFile = mpCertFileLoc->GetValue();
-		
-		if (!wxFileName::FileExists(certFile))
-		{
-			ShowError(wxT("The certificate file does not exist!"));
-			return FALSE;
-		}
-		
-		if (!wxFile::Access(certFile, wxFile::read))
-		{
-			ShowError(wxT("The certificate file is not readable!"));
-			return FALSE;
-		}
-
-		wxString caFile = mpCAFileLoc->GetValue();
-		
-		if (!wxFileName::FileExists(caFile))
-		{
-			ShowError(wxT("The CA file does not exist!"));
-			return FALSE;
-		}
-		
-		if (!wxFile::Access(caFile, wxFile::read))
-		{
-			ShowError(wxT("The CA file is not readable!"));
-			return FALSE;
-		}
-
-		return CheckCertificate();
-	}
-	
-	bool CheckCertificate()
-	{
-		BIO* pCertBio = BIO_new(BIO_s_file());
-		if (!pCertBio)
-		{
-			ShowSslError(wxT("Failed to create an OpenSSL BIO "
-				"to read the certificate"));
-			return FALSE;
-		}
-		
-		bool isOk = CheckCertWithBio(pCertBio);
-		
-		BIO_free(pCertBio);
-		
-		return isOk;
-	}
-	
-	bool CheckCertWithBio(BIO* pCertBio)
-	{
-		wxCharBuffer buf = mpCertFileLoc->GetValue().mb_str(wxConvLibc);
-		
-		if (BIO_read_filename(pCertBio, buf.data()) <= 0)
-		{
-			ShowSslError(wxT("Failed to set the BIO filename to the "
-				"certificate file"));
-			return FALSE;			
-		}
-		
-		X509* pCert = PEM_read_bio_X509(pCertBio, NULL, NULL, NULL);
-		if (!pCert)
-		{
-			ShowSslError(wxT("Failed to read the certificate file"));
-			return FALSE;			
-		}
-		
-		bool isOk = CheckCertSubject(pCert);
-		
-		X509_free(pCert);
-		
-		return isOk;
-	}
-	
-	bool CheckCertSubject(X509* pCert)
-	{
-		wxString commonNameActual;
-		if (!GetCommonName(X509_get_subject_name(pCert), &commonNameActual))
-		{
-			return FALSE;
-		}
-
-		int accountNumber;
-		if (!mpConfig->AccountNumber.GetInto(accountNumber))
-		{
-			ShowError(wxT("The account number is not configured, "
-				"but it should be!"));
-			return FALSE;
-		}
-		
-		wxString commonNameExpected;
-		commonNameExpected.Printf(wxT("BACKUP-%d"), accountNumber);
-
-		if (!commonNameExpected.IsSameAs(commonNameActual))
-		{
-			wxString msg;
-			msg.Printf(wxT("The certificate request does not match your "
-				"account number. The common name of the certificate request "
-				"should be '%s', but is actually '%s'."),
-				commonNameExpected.c_str(), commonNameActual.c_str());
-			ShowError(msg);
-			return FALSE;
-		}
-
-		wxString keyFileName;
-		if (!mpConfig->PrivateKeyFile.GetInto(keyFileName))
-		{
-			ShowError(wxT("The private key file is not configured, "
-				"but it should be!"));
-			return FALSE;
-		}
-
-		EVP_PKEY* pSubjectPublicKey = X509_get_pubkey(pCert);
-		if (!pSubjectPublicKey)
-		{
-			ShowSslError(wxT("Failed to extract the subject's public key"
-				"from the certificate"));
-			return FALSE;
-		}
-		
-		EVP_PKEY* pMyPublicKey = LoadKey(keyFileName);
-		if (!pMyPublicKey)
-		{
-			EVP_PKEY_free(pSubjectPublicKey);
-			return FALSE;
-		}
-		
-		bool isOk = EnsureSamePublicKeys(pSubjectPublicKey, pMyPublicKey);
-		
-		EVP_PKEY_free(pMyPublicKey);
-		EVP_PKEY_free(pSubjectPublicKey);
-
-		return isOk;
-	}
-	
-	bool EnsureSamePublicKeys(EVP_PKEY* pActualKey, EVP_PKEY* pExpectKey)
-	{	
-		BIO* pActualBio = BIO_new(BIO_s_mem());
-		if (!pActualBio)
-		{
-			ShowSslError(wxT("Failed to allocate BIO for key data"));
-			return FALSE;
-		}
-
-		BIO* pExpectBio = BIO_new(BIO_s_mem());
-		if (!pExpectBio)
-		{
-			ShowSslError(wxT("Failed to allocate BIO for key data"));
-			BIO_free(pActualBio);
-			return FALSE;
-		}
-		
-		bool isOk = EnsureSamePublicKeysWithBios(pActualKey, pExpectKey,
-			pActualBio, pExpectBio);
-		
-		BIO_free(pExpectBio);
-		BIO_free(pActualBio);
-		
-		return isOk;
-	}
-	
-	bool EnsureSamePublicKeysWithBios(EVP_PKEY* pActualKey, 
-		EVP_PKEY* pExpectKey, BIO* pActualBio, BIO* pExpectBio)
-	{
-		if (!PEM_write_bio_PUBKEY(pActualBio, pActualKey))
-		{
-			ShowSslError(wxT("Failed to write public key to memory buffer"));
-			return FALSE;
-		}
-
-		if (!PEM_write_bio_PUBKEY(pExpectBio, pExpectKey))
-		{
-			ShowSslError(wxT("Failed to write public key to memory buffer"));
-			return FALSE;
-		}
-		
-		int actSize = BIO_get_mem_data(pActualBio, NULL);
-		int expSize = BIO_get_mem_data(pExpectBio, NULL);
-		
-		if (expSize != actSize)
-		{
-			ShowError(wxT("The certificate file does not match "
-				"your private key."));
-			return FALSE;
-		}
-
-		unsigned char* pExpBuffer = new unsigned char [expSize];
-		if (!pExpBuffer)
-		{
-			ShowSslError(wxT("Failed to allocate space for private key data"));
-			return FALSE;
-		}
-		
-		unsigned char* pActBuffer = new unsigned char [actSize];
-		if (!pActBuffer)
-		{
-			ShowSslError(wxT("Failed to allocate space for private key data"));
-			delete [] pExpBuffer;
-			return FALSE;
-		}
-			
-		bool isOk = EnsureSamePublicKeysWithBuffers(pActualBio, pExpectBio,
-			pActBuffer, pExpBuffer, actSize);
-		
-		delete [] pActBuffer;
-		delete [] pExpBuffer;
-
-		return isOk;
-	}
-	
-	bool EnsureSamePublicKeysWithBuffers(BIO* pActualBio, BIO* pExpectBio,
-		unsigned char* pActBuffer, unsigned char* pExpBuffer, int size)
-	{
-		if (BIO_read(pActualBio, pActBuffer, size) != size)
-		{
-			ShowSslError(wxT("Failed to read enough key data"));
-			return FALSE;
-		}
-		
-		if (BIO_read(pExpectBio, pExpBuffer, size) != size)
-		{
-			ShowSslError(wxT("Failed to read enough key data"));
-			return FALSE;
-		}
-		
-		if (memcmp(pActBuffer, pExpBuffer, size) != 0)
-		{
-			ShowError(wxT("The certificate file does not match "
-				"your private key."));
-			return FALSE;
-		}
-
-		return TRUE;
-	}
 };
 
 SetupWizard::SetupWizard(ClientConfig *config,
@@ -1593,24 +1251,29 @@ SetupWizard::SetupWizard(ClientConfig *config,
 
 	GetPageAreaSizer()->SetMinSize(500, 400);
 	
-	wxWizardPageSimple* pIntroPage = new IntroPage(config, this);
+	mpIntroPage = new IntroPage(config, this);
 	wxWizardPageSimple* pAccountPage = new AccountPage(config, this);
-	wxWizardPageSimple::Chain(pIntroPage, pAccountPage);
+	wxWizardPageSimple::Chain(mpIntroPage, pAccountPage);
 	
 	wxWizardPageSimple* pPrivateKeyPage = new PrivateKeyPage(config, this);
 	wxWizardPageSimple::Chain(pAccountPage, pPrivateKeyPage);
 	
-	wxWizardPageSimple* pCertRequestPage = new CertRequestPage(config, this);
-	wxWizardPageSimple::Chain(pPrivateKeyPage, pCertRequestPage);	
+	CertRequestPage* pCertRequestPage = new CertRequestPage(config, this);
+
+	CertificatePage* pCertificatePage = new CertificatePage(config, this);
+
+	wxWizardPageSimple* pCertExistsPage = new CertExistsPage(config, this,
+		pCertRequestPage, pCertificatePage);
+		
+	wxWizardPageSimple::Chain(pPrivateKeyPage,  pCertExistsPage);
 	
+	pCertRequestPage->SetPrev(pCertExistsPage);
+	pCertRequestPage->SetNext(pCertificatePage);
+	pCertificatePage->SetPrev(pCertExistsPage);
+
 	wxWizardPageSimple* pCryptoKeyPage = new CryptoKeyPage(config, this);
-	wxWizardPageSimple::Chain(pCertRequestPage, pCryptoKeyPage);
+	wxWizardPageSimple::Chain(pCertificatePage, pCryptoKeyPage);
 	
 	wxWizardPageSimple* pBackedUpPage = new BackedUpPage(config, this);
 	wxWizardPageSimple::Chain(pCryptoKeyPage,  pBackedUpPage);
-
-	wxWizardPageSimple* pCertificatePage = new CertificatePage(config, this);
-	wxWizardPageSimple::Chain(pBackedUpPage, pCertificatePage);
-
-	RunWizard(pIntroPage);
 }

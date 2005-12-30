@@ -29,7 +29,10 @@
 #include "Property.h"
 #include "Location.h"
 
-class ClientConfig : public PropertyChangeListener {
+class ClientConfig : 
+	public PropertyChangeListener, 
+	public LocationChangeListener 
+{
 	private:
 	ClientConfig(const ClientConfig& forbidden);
 
@@ -57,29 +60,43 @@ class ClientConfig : public PropertyChangeListener {
 	bool Save();
 	bool Save(const wxString& rConfigFileName);
 	
-	const std::vector<Location*>& GetLocations() { return mLocations; }
-	void AddLocation    (Location* newEntry);
-	void ReplaceLocation(int index, Location* newValues);
+	const std::vector<Location>& GetLocations() { return mLocations; }
+	void AddLocation    (const Location& rNewLocation);
+	void ReplaceLocation(int index, const Location& rNewLocation);
 	void RemoveLocation (int index);
-	void RemoveLocation (Location* oldLocation);
+	void RemoveLocation (const Location& rOldLocation);
+	Location* GetLocation(const Location& rConstLocation);
 	
-	void AddListener   (ConfigChangeListener* newListener);
-	void RemoveListener(ConfigChangeListener* oldListener);
+	void AddListener   (ConfigChangeListener* pNewListener);
+	void RemoveListener(ConfigChangeListener* pOldListener);
 	void NotifyListeners();
 	
 	// implement PropertyChangeListener
-	void OnPropertyChange(Property* pProp);
+	virtual void OnPropertyChange   (Property*      pProp);
+	// implement LocationChangeListener
+	virtual void OnLocationChange   (Location*      pLocation);
+	virtual void OnExcludeListChange(MyExcludeList* pExcludeList);
 	
 	bool Check(wxString& rMsg);
 	
+	bool CheckAccountNumber  (wxString* pMsgOut);
+	bool CheckStoreHostname  (wxString* pMsgOut);
+	bool CheckPrivateKeyFile (wxString* pMsgOut);
+	bool CheckCertificateFile(wxString* pMsgOut);
+
 	private:
 	wxString mConfigFileName;
 	std::auto_ptr<Configuration> mapConfig;
-	std::vector<Location*> mLocations;
+	std::vector<Location> mLocations;
 	std::vector<ConfigChangeListener*> mListeners;
 	
+	static std::vector<Location> GetConfigurationLocations(
+		const Configuration& conf);
+
+	/*
 	wxString ConvertCygwinPathToWindows(const char *cygPath);
 	wxString ConvertWindowsPathToCygwin(const char *winPath);
+	*/
 };
 
 #endif /* _CLIENTCONFIG_H */

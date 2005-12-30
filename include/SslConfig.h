@@ -1,7 +1,7 @@
 /***************************************************************************
- *            SetupWizardPanel.h
+ *            SslConfig.h
  *
- *  Sun Dec  4 20:39:00 2005
+ *  Wed Dec 28 01:29:03 2005
  *  Copyright  2005  Chris Wilson
  *  anjuta@qwirx.com
  ****************************************************************************/
@@ -15,30 +15,38 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Library General Public License for more details.
+ *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
  
-#ifndef _SETUPWIZARDPANEL_H
-#define _SETUPWIZARDPANEL_H
+#ifndef _SSLCONFIG_H
+#define _SSLCONFIG_H
 
-#include <wx/wx.h>
-#include <wx/wizard.h>
+#include <openssl/conf.h>
+#include <openssl/x509.h>
 
-#include "ClientConfig.h"
-
-class SetupWizard : public wxWizard 
+class SslConfig
 {
-	public:
-	SetupWizard(ClientConfig *config, wxWindow* parent, wxWindowID id = -1);
-	bool Run() { return RunWizard(mpIntroPage); }
-	
 	private:
-	ClientConfig* mpConfig;
-	wxWizardPageSimple* mpIntroPage;
+	CONF* mpConfig;
+	wxString mConfigFileName;
+
+	SslConfig(CONF* pConfig, const wxString& name) 
+	: mpConfig(pConfig), mConfigFileName(name) { }
+	
+	public:
+	~SslConfig() { NCONF_free(mpConfig); }
+	CONF* GetConf() { return mpConfig; }
+	const wxString& GetFileName() { return mConfigFileName; }
+	static std::auto_ptr<SslConfig> Get(wxString* pMsgOut);
 };
 
-#endif /* _SETUPWIZARDPANEL_H */
+bool GetCommonName(X509_NAME* pX509SubjectName, wxString* pTarget, 
+	wxString* pMsgOut);
+EVP_PKEY* LoadKey(const wxString& rKeyFileName, wxString* pMsgOut);
+void FreeKey(EVP_PKEY* pKey);
+
+#endif /* _SSLCONFIG_H */
