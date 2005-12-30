@@ -11,15 +11,15 @@
 
 #include <signal.h>
 
+#include <wx/wx.h>
+#include <wx/notebook.h>
+#include <wx/cmdline.h>
+
 #include "main.h"
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
-
-#include <wx/wx.h>
-#include <wx/notebook.h>
-#include <wx/cmdline.h>
 
 #include "GeneralPanel.h"
 #include "BackupDaemonPanel.h"
@@ -100,9 +100,9 @@ MainFrame::MainFrame(
 		mpClientConfigPanel, mpTopNotebook, ID_Backup_Panel);
 	mpConfig->AddListener(pBackupPanel);
 	pBackupPanel->Hide();
-
+	
 	GeneralPanel* pGeneralPanel = new GeneralPanel(this, 
-		pBackupPanel, mpTopNotebook);
+		pBackupPanel, mpClientConfigPanel, mpConfig, mpTopNotebook);
 		
 	mpTopNotebook->AddPage(pGeneralPanel,        wxT("General"));
 	mpTopNotebook->AddPage(pBackupPanel,         wxT("Backup"));

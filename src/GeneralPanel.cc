@@ -27,14 +27,22 @@
 
 #include "main.h"
 #include "GeneralPanel.h"
+#include "SetupWizard.h"
+#include "ClientInfoPanel.h"
 
 BEGIN_EVENT_TABLE(GeneralPanel, wxPanel)
 EVT_BUTTON(ID_General_Backup_Button, GeneralPanel::OnBackupButtonClick)
+EVT_BUTTON(ID_General_Setup_Wizard_Button, 
+	GeneralPanel::OnSetupWizardButtonClick)
+EVT_BUTTON(ID_General_Setup_Advanced_Button, 
+	GeneralPanel::OnSetupAdvancedButtonClick)
 END_EVENT_TABLE()
 
 GeneralPanel::GeneralPanel(
 	MainFrame* pMainFrame,
 	BackupPanel* pBackupPanel,
+	ClientInfoPanel* pConfigPanel,
+	ClientConfig* pConfig,
 	wxWindow* parent, 
 	wxWindowID id,
 	const wxPoint& pos, 
@@ -43,10 +51,32 @@ GeneralPanel::GeneralPanel(
 	const wxString& name)
 : wxPanel(parent, id, pos, size, style, name),
   mpMainFrame(pMainFrame),
-  mpBackupPanel(pBackupPanel)
+  mpBackupPanel(pBackupPanel),
+  mpConfigPanel(pConfigPanel),
+  mpConfig(pConfig)
 {
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 	SetSizer(pMainSizer);
+
+	/* setup */
+	
+	wxStaticBoxSizer* pSetupBox = new wxStaticBoxSizer(wxHORIZONTAL,
+		this, wxT("Setup"));
+	pMainSizer->Add(pSetupBox, 0, wxGROW | wxALL, 8);
+	
+	wxStaticText* pSetupText = new wxStaticText(this, wxID_ANY, 
+		wxT("Configure Boxi for a backup store provider"));
+	pSetupBox->Add(pSetupText, 1, wxALIGN_CENTER_VERTICAL | wxALL, 8);
+	
+	wxButton* pWizardButton = new wxButton(this, 
+		ID_General_Setup_Wizard_Button, wxT("&Wizard..."));
+	pSetupBox->Add(pWizardButton, 0, 
+		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
+
+	wxButton* pAdvancedButton = new wxButton(this, 
+		ID_General_Setup_Advanced_Button, wxT("&Advanced..."));
+	pSetupBox->Add(pAdvancedButton, 0, 
+		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
 
 	/* backup */
 	
@@ -97,4 +127,15 @@ GeneralPanel::GeneralPanel(
 void GeneralPanel::OnBackupButtonClick(wxCommandEvent& event)
 {
 	mpMainFrame->ShowPanel(mpBackupPanel);
+}
+
+void GeneralPanel::OnSetupWizardButtonClick(wxCommandEvent& event)
+{
+	SetupWizard wizard(mpConfig, this, wxID_ANY);
+	wizard.Run();
+}
+
+void GeneralPanel::OnSetupAdvancedButtonClick(wxCommandEvent& event)
+{
+	mpMainFrame->ShowPanel(mpConfigPanel);
 }

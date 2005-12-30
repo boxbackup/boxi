@@ -41,6 +41,8 @@ class GeneralPanel : public wxPanel
 	GeneralPanel(
 		MainFrame* pMainFrame,
 		BackupPanel* pBackupPanel,
+		ClientInfoPanel* pConfigPanel,
+		ClientConfig* pConfig,
 		wxWindow* parent, wxWindowID id = wxID_ANY,
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
@@ -50,8 +52,12 @@ class GeneralPanel : public wxPanel
 	private:
 	MainFrame*   mpMainFrame;
 	BackupPanel* mpBackupPanel;
+	ClientInfoPanel* mpConfigPanel;
+	ClientConfig* mpConfig;
 	
 	void OnBackupButtonClick(wxCommandEvent& event);
+	void OnSetupWizardButtonClick(wxCommandEvent& event);
+	void OnSetupAdvancedButtonClick(wxCommandEvent& event);
 	
 	DECLARE_EVENT_TABLE()
 };
