@@ -272,12 +272,12 @@ BoundStringCtrl* ParamPanel::AddParam(const wxChar * pLabel,
 	if (FileSel) 
 	{
 		FileSelButton* pButton = new FileSelButton(this, -1, pCtrl, pFileSpec);
-		pMiniSizer->Add(pButton, 0, wxGROW);
+		pMiniSizer->Add(pButton, 0, wxGROW | wxLEFT, 4);
 	}
 	else if (DirSel)
 	{
 		DirSelButton* pButton = new DirSelButton(this, -1, pCtrl);
-		pMiniSizer->Add(pButton, 0, wxGROW);
+		pMiniSizer->Add(pButton, 0, wxGROW | wxLEFT, 4);
 	}
 	
 	return pCtrl;
