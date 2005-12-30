@@ -1,0 +1,466 @@
+=head1 Fast Account for Box (FAB) Protocol
+
+This protocol specifies how a previously unknown client may contact a 
+server over HTTP, register a new account, obtain the account number, and 
+if the server operator has allowed it, activate the account immediately 
+so that it may begin backing up without any intervention from the server 
+operator.
+
+The protocol runs over HTTP. It would typically be implemented by a CGI 
+script on the server side, and an interactive client such as Boxi on the 
+client side. Reference implementations are provided for server and 
+client, written as Perl programs.
+
+=head2 Summary
+
+Principle of operation:
+
+	Client -----------[null request]----------> Server
+	Client <--[initial registration response]-- Server
+	Client -------[registration request]------> Server
+	Client <--[failed registration response]--- Server
+	Client -------[registration request]------> Server
+	Client <--[success registration response]-- Server
+	Client -------[certificate request]-------> Server
+	Client <------[certificate response]------- Server
+
+=head2 Constraints
+
+The protocol is designed to satisfy a number of constraints:
+
+=over
+
+=item *
+Almost Stateless
+
+HTTP is a stateless protocol and requests can fail. Submitting the same 
+request multiple times, if the server is not reconfigured in the mean 
+time, should return the same answer. Sessions are not needed or used by 
+either party.
+
+=item *
+Idempotency
+
+Unless the server operator reconfigures the server between requests:
+
+If the user has already requested an account, and sends another request 
+with the same registration details, they will get the same account 
+number.
+
+If they have already requested a certificate, and send another request 
+with the same certificate request, they will get an equivalent 
+certificate.
+
+=item *
+Server Flexibility
+
+The server operator can instruct the server to request or require a 
+variety of registration details from the client. Basic checking can be 
+done by the server itself, and advanced checks can be done by hand by 
+the operator.
+
+The server provides enough information to the client for the client to 
+know exactly what information is needed to register, and to present that 
+to the user.
+
+=item *
+Server Reconfiguration
+
+The server operator can change the configuration of the server (the 
+details requested from users) without interrupting registrations in 
+progress.
+
+If the reconfiguration causes a registration to fail that would have 
+succeeded before, the client may prompt the user for any additional 
+information required.
+
+=item *
+Security
+
+The client sends information to the server which may be sensitive to 
+either party. The protocol must offer and may require encryption to 
+prevent eavesdropping in transit. 
+
+The client can detect whether encryption will be used before sending the 
+request, and optionally warn the user if sensitive information is being 
+requested without encryption.
+
+The server operator can choose whether to offer service with or without 
+encryption, or both.
+
+If the server allows non-interactive account signup, it may limit the 
+number of accounts offered to particular IP addresses or the rate of new 
+account allocations.
+
+=item *
+Simplicity
+
+The protocol should have a low overhead, minimum unnecessary information 
+should be sent, and minimum duplication of information.
+
+=back
+
+=head2 Basics
+
+The protocol runs over HTTP. The client sends requests to the server, 
+and receives responses in return.
+
+The client sends HTTP POST requests to a fixed URL known as the "server 
+URL", which is obtained in advance, for example from a web page. The 
+client determines whether encryption will be used by examining this URL, 
+to see whether it starts with "http://" or "https://". When using SSL, 
+the client SHOULD check the certificate validity to avoid 
+man-in-the-middle attacks.
+
+All valid responses, even those indicating an error, are sent with the 
+status code 200 OK. Any other status code denotes a server error.
+
+Requests and responses are encoded according to the standard for the 
+MIME type "multipart/form-data", which is used as the Content-Type 
+header in both directions. All strings are sent as UTF8, and may be 
+Base64-encoded if the Content-Disposition header is set appropriately on 
+the MIME part.
+
+Neither side is required to support unusual HTTP features such as gzip 
+encoding or pipelining.
+
+Unencrypted requests must support the use of a proxy cache. Requests and 
+responses are not cachable and responses must contain the header 
+"Cache-Control: Private".
+
+=head2 Null Request
+
+The client initially knows nothing about the details required to 
+register a new account, so it sends a null request. This consists of a 
+POST request with a single parameter, B<version>, whose value is "1".
+
+It expects an B<Initial Registration Response>.
+
+=head2 Initial Registration Response
+
+The server replies with a response consisting of multipart form data. 
+The following parameters are required, and any others are ignored in 
+this version of the protocol:
+
+=over
+
+=item *
+version
+
+If the requested version in the request is "1", the server must reply 
+with version "1" if it supports this version. Otherwise a client which 
+implements only version "1" must abort, report the problem to the 
+user, and not attempt to process any other parameters.
+
+=item *
+desc
+
+A text description of the server. This may give a server name, operator 
+name, contact details, policy on new accounts, or whatever other details 
+the operator sees fit. The format of this parameter is an HTML 4.01 
+strict document, although neither side is required to verify the 
+document. The client should show the document to the user.
+
+=item *
+required
+
+A comma-separated list of information items required by the server, 
+drawn from the list below. No item may appear more than once, or appear 
+in both B<required> and B<requested> lists. The list may be empty.
+
+=over
+
+=item FULLNAME
+
+The user's full personal name
+
+=item COMPANY
+
+The user's company name
+
+=item ADDRESS1
+
+The first line of the user's address
+
+=item ADDRESS2
+
+The second line of the user's address
+
+=item DISTRICT
+
+The user's postal district
+
+=item CITY
+
+The user's postal city or town
+
+=item STATE
+
+The user's administrative district, state or county
+
+=item POSTCODE
+
+The user's postal code
+
+=item COUNTRY
+
+The user's ISO country code (2 characters)
+
+=item PHONE
+
+The user's contact telephone number
+
+=item EMAIL
+
+The user's contact email address
+
+=item NEW_ACCOUNT_PASSWORD
+
+The "new account password" for this server, which allows administrators 
+to sign up their users for new accounts while working offsite.
+
+=item REQUESTED_SIZE
+
+The requested account size in megabytes.
+
+=back
+
+=item *
+requested
+
+A comma-separated list of optional information items requested by the 
+server administrator. The items are drawn from the list above. Optional 
+items are not required to be present, but if they are, the server may 
+check their values and refuse to accept the registration if they are not 
+valid. The list may be empty.
+
+=back
+
+=head2 Registration Request
+
+The client collects the requested information from the user, and sends 
+another request to the server. It includes a parameter for every 
+information item that the user has filled in, including all the required 
+items. The name of the parameter is the same as the name of the item in 
+the list above (e.g. FULLNAME), and the value of the parameter is the 
+value of the item.
+
+The following parameters must also be present:
+
+=over
+
+=item version
+
+The protocol version, must be set to "1".
+
+=item register
+
+Must be set to "1".
+
+=back
+
+The server considers the request, and returns either a B<Failed> or a 
+B<Success Registration Response>.
+
+=head2 Failed Registration Response
+
+In the following circumstances the server SHOULD refuse the 
+registration, and return this response:
+
+=over
+
+=item * 
+are required but not present in the request
+
+=item *
+are requested, present in the request, but not valid according to the 
+server
+
+=item *
+are neither requested nor required, but included in the request
+
+=back
+
+This response MUST include:
+
+=over
+
+=item *
+all the parameters of the B<Initial Registration Response>
+
+=item *
+the B<errors> parameter
+
+=back
+
+This response MUST NOT include:
+
+=over
+
+=item *
+the B<accountno> parameter
+
+=item *
+the B<certfile> parameter
+
+=back
+
+The value of the B<errors> parameter value MUST be a comma-separated 
+list of names of information items that were not accepted. It MUST NOT 
+be empty.
+
+Additional parameters may be included, whose names are the names of the 
+information items listed in the B<errors> parameter value, and whose 
+values are text descriptions of the problem. The client SHOULD show 
+these texts to the user.
+
+=head2 Success Registration Response
+
+If the server does not refuse the registration, it SHOULD send this 
+response.
+
+This response MUST include:
+
+=over
+
+=item *
+all the parameters of the B<Initial Registration Response>
+
+=item *
+the B<accountno> parameter
+
+=item *
+the B<authkey> parameter
+
+=back
+
+This response MUST NOT include:
+
+=over
+
+=item *
+the B<errors> parameter
+
+=item *
+the B<certfile> parameter
+
+=item *
+the B<servercafile> parameter
+
+=back
+
+The value of the B<accountno> parameter is an ASCII-formatted 
+plain integer in base 10, which is the account number on the server that 
+was allocated to the client.
+
+The value of the B<authkey> parameter is an arbitrary string which must 
+be returned to the server in any B<certificate request>.
+
+=head2 Certificate Request
+
+The client should now generate a private RSA key with at least 2048 
+bits, and an X.509 certificate request whose common name is "BACKUP-%d" 
+where %d is the account number. Other fields of the certificate request 
+are ignored.
+
+The following parameters MUST be present in the (HTTP) certificate 
+request sent to the server:
+
+=over
+
+=item version
+
+The protocol version, must be set to "1"
+
+=item accountno
+
+Must be set to the account number sent by the server in the B<success 
+registration response>.
+
+=item authkey
+
+Must be set to the B<authkey> sent by the server in the B<success
+registration response>.
+
+=item certreq
+
+Must be a PEM-encoded X.509 certificate request as described above.
+
+=back
+
+=head2 Failed Certificate Response
+
+If the server does not accept the certificate request, it responds with 
+the following parameters:
+
+=over
+
+=item version
+
+Must be set to "1"
+
+=item errors
+
+A comma-separated list of parameters which were not accepted. In this 
+version, it may only include the following values: B<accountno>, 
+B<authkey> and B<certreq>.
+
+=back
+
+For each parameter of the request which is listed in B<errors>, the 
+server MAY include a parameter in the response with the same name, whose 
+value is a text description of the reason for not accepting the 
+parameter.
+
+The B<certfile>, B<servercafile> and B<pending> parameters MUST NOT be 
+present in the response.
+
+=head2 Success Certificate Response
+
+If the server does accept the certificate request, it responds with the 
+following parameters:
+
+=over
+
+=item version
+
+Must be set to "1"
+
+=item certfile
+
+An X.509 certificate in PEM encoding
+
+=item cafile
+
+An X.509 certificate in PEM encoding
+
+=back
+
+The B<errors> and B<pending> parameters MUST NOT be present.
+
+=head2 Pending Certificate Response
+
+If the server requires manual intervention to set up the account, it may 
+respond with the following parameters:
+
+=over
+
+=item version
+
+Must be set to "1"
+
+=item pending
+
+Must be set to "1"
+
+=item desc
+
+An optional message that the client should display to the user. It might 
+include a problem ticket or account number, contact details for the 
+operator, expected response time, etc.
+
+=back
+
+=head2 Metadata
+
+Last updated on 2005-12-27 by Chris Wilson.
