@@ -1,0 +1,5 @@
+*.png.c
+.deps
+.libs
+Makefile
+Makefile.in
