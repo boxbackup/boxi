@@ -54,6 +54,7 @@ enum {
 	ID_Backup_Panel,
 	ID_Backup_Progress_Panel,
 
+	/*
 	// IDs for the controls that manipulate properties	
 	#define STR_PROP(name)	ID_ClientProp_ ## name,
 	#define STR_PROP_SUBCONF(name, subconf) ID_ClientProp_ ## name,
@@ -64,7 +65,10 @@ enum {
 	#undef INT_PROP
 	#undef STR_PROP
 	#undef STR_PROP_SUBCONF
+	*/
 
+	ID_General_Setup_Wizard_Button,
+	ID_General_Setup_Advanced_Button,
 	ID_General_Backup_Button,
 	ID_General_Restore_Button,
 	ID_General_Compare_Button,
