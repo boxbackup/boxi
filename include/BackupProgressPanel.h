@@ -28,15 +28,9 @@
 #include <wx/wx.h>
 #include <wx/thread.h>
 
-// Box Backup's config.h tries to redefine PACKAGE_NAME, etc.
-#undef PACKAGE_NAME
-#undef PACKAGE_STRING
-#undef PACKAGE_BUGREPORT
-#undef PACKAGE_TARNAME
-#undef PACKAGE_VERSION
+#include "SandBox.h"
 
 #define NDEBUG
-#include "Box.h"
 #include "TLSContext.h"
 #include "BackupClientContext.h"
 #include "BackupClientDirectoryRecord.h"
@@ -44,15 +38,9 @@
 #include "BackupStoreException.h"
 #undef NDEBUG
 
-// now get our old #defines back
-#undef PACKAGE_NAME
-#undef PACKAGE_STRING
-#undef PACKAGE_BUGREPORT
-#undef PACKAGE_TARNAME
-#undef PACKAGE_VERSION
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
+// #ifdef HAVE_CONFIG_H
+// #  include <config.h>
+// #endif
 
 #include "ClientConfig.h"
 #include "ClientConnection.h"

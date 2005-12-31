@@ -36,9 +36,10 @@
 #include <wx/gauge.h>
 #include <wx/dir.h>
 
+#include "SandBox.h"
+
 #define NDEBUG
 #define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
-#include "Box.h"
 #include "BackupClientContext.h"
 #include "BackupClientDirectoryRecord.h"
 #include "BackupClientCryptoKeys.h"

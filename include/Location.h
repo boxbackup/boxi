@@ -30,6 +30,7 @@
 #include <wx/wx.h>
 
 #define NDEBUG
+#include <BoxConfig.h>
 #define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #include "Configuration.h"
 #include "ExcludeList.h"

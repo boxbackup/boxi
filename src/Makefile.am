@@ -9,7 +9,7 @@ INCLUDES = \
 	 -I../boxbackup/lib/common -I../boxbackup/lib/backupclient -I../boxbackup/lib/server -I../include -I../boxbackup/bin/bbackupd -I../boxbackup/lib/crypto -I../boxbackup/lib/win32
 
 AM_CXXFLAGS =\
-	 -DPLATFORM_GCC3\
+	 -DBOXI\
 	-DPLATFORM_$(shell uname -s | tr a-z A-Z) \
 	 -Wall\
 	 -g
@@ -53,7 +53,8 @@ boxi_SOURCES = \
 	GeneralPanel.cc\
 	partialtick16.png.c\
 	Property.cc\
-	SetupWizard.cc
+	SetupWizard.cc\
+	FunctionPanel.cc
 
 boxi_LDFLAGS = 
 

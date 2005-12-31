@@ -33,6 +33,8 @@
 #include <wx/listimpl.cpp>
 #include <wx/datetime.h>
 
+#include "SandBox.h"
+
 #define NDEBUG
 #include "Box.h"
 #include "BackupStoreConstants.h"
