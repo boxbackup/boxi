@@ -24,6 +24,7 @@ boxi_include_DATA = \
 	BackupProgressPanel.h\
 	GeneralPanel.h\
 	SetupWizard.h\
-	SslConfig.h
+	SslConfig.h\
+	FunctionPanel.h
 
 EXTRA_DIST = $(boxi_include_DATA)

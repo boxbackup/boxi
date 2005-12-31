@@ -98,7 +98,8 @@ module.include.files=\
 	BackupProgressPanel.h\
 	GeneralPanel.h\
 	SetupWizard.h\
-	SslConfig.h
+	SslConfig.h\
+	FunctionPanel.h
 
 module.source.name=src
 module.source.type=
@@ -139,7 +140,8 @@ module.source.files=\
 	GeneralPanel.cc\
 	partialtick16.png.c\
 	Property.cc\
-	SetupWizard.cc
+	SetupWizard.cc\
+	FunctionPanel.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=
@@ -175,7 +177,7 @@ compiler.options.libraries=\
 	xml2
 compiler.options.libraries.selected=0 0 0 
 compiler.options.defines=\
-	PLATFORM_GCC3
+	BOXI
 compiler.options.defines.selected=0 0 0 
 compiler.options.warning.buttons=0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 
 compiler.options.optimize.buttons=1 0 0 0 

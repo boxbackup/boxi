@@ -2,7 +2,7 @@
  * Main source code file for Boxi, a graphical user interface for
  * Box Backup (software developed by Ben Summers).
  * 
- * (C) Chris Wilson <boxi_main.cc@qwirx.com>, 2004-05
+ * (C) Chris Wilson <chris-boxisource@qwirx.com>, 2004-06
  * Licensed under the GNU General Public License (GPL) version 2 or later
  *
  * Please note: This product includes software developed by Ben Summers.
@@ -17,9 +17,9 @@
 
 #include "main.h"
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
+// #ifdef HAVE_CONFIG_H
+// #  include <config.h>
+// #endif
 
 #include "GeneralPanel.h"
 #include "BackupDaemonPanel.h"
@@ -96,8 +96,12 @@ MainFrame::MainFrame(
 	pBackupProgressPanel->Hide();
 	
 	BackupPanel *pBackupPanel = new BackupPanel(
-		mpConfig, pBackupProgressPanel, this, mpLocationsPanel, 
-		mpClientConfigPanel, mpTopNotebook, ID_Backup_Panel);
+		mpConfig,
+		mpClientConfigPanel,
+		this,
+		mpTopNotebook,
+		pBackupProgressPanel,
+		mpLocationsPanel);
 	mpConfig->AddListener(pBackupPanel);
 	pBackupPanel->Hide();
 	

@@ -109,6 +109,10 @@ enum {
 	
 	ID_Compare_List,
 	ID_Compare_Button,
+	
+	ID_Function_Source_Button,
+	ID_Function_Dest_Button,
+	ID_Function_Start_Button,
 };
 
 void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor, 
