@@ -52,9 +52,6 @@ class FunctionPanel
 	wxSizer*          mpSourceCtrlSizer;
 	wxButton*         mpSourceEditButton;
 	wxStaticBoxSizer* mpDestBox;
-	wxStaticText*     mpDestLabel;
-	wxSizer*          mpDestCtrlSizer;
-	wxButton*         mpDestEditButton;
 	wxButton*         mpStartButton;
 	
 	void NotifyChange() { Update(); }
