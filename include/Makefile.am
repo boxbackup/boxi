@@ -25,6 +25,8 @@ boxi_include_DATA = \
 	GeneralPanel.h\
 	SetupWizard.h\
 	SslConfig.h\
-	FunctionPanel.h
+	FunctionPanel.h\
+	SandBox.h\
+	RestorePanel.h
 
 EXTRA_DIST = $(boxi_include_DATA)

@@ -108,7 +108,7 @@ MainFrame::MainFrame(
 	GeneralPanel* pGeneralPanel = new GeneralPanel(this, 
 		pBackupPanel, mpClientConfigPanel, mpConfig, mpTopNotebook);
 		
-	mpTopNotebook->AddPage(pGeneralPanel,        wxT("General"));
+	mpTopNotebook->InsertPage(0, pGeneralPanel,  wxT("General"));
 	mpTopNotebook->AddPage(pBackupPanel,         wxT("Backup"));
 	mpTopNotebook->AddPage(pBackupProgressPanel, wxT("Backup Progress"));
 	mpTopNotebook->AddPage(mpLocationsPanel,     wxT("Backup Locations"));
@@ -132,6 +132,7 @@ MainFrame::MainFrame(
 	theTopNotebook->AddPage(theBackupFilesPanel, wxT("Local Files"));
 	*/
 	
+	/*
 	mpRestorePanel = new RestorePanel(
 		mpConfig,
 		mpServerConnection, 
@@ -139,6 +140,7 @@ MainFrame::MainFrame(
 		mpStatusBar, 
 		ID_Restore_Files_Panel);
 	mpTopNotebook->AddPage(mpRestorePanel, wxT("Restore"));
+	*/
 	
 	wxMenu *menuFile = new wxMenu;
 	menuFile->Append(ID_File_New,  wxT("&New...\tCtrl-N"), 
@@ -335,14 +337,20 @@ void MainFrame::OnClose(wxCloseEvent& event) {
 	event.Skip();
 }
 
-void MainFrame::OnViewOld(wxCommandEvent& event) {
+void MainFrame::OnViewOld(wxCommandEvent& event) 
+{
+	/*
 	mpRestorePanel->SetViewOldFlag(
 		mpViewMenu->IsChecked(ID_View_Old));
+	*/
 }
 
-void MainFrame::OnViewDeleted(wxCommandEvent& event) {
+void MainFrame::OnViewDeleted(wxCommandEvent& event) 
+{
+	/*
 	mpRestorePanel->SetViewDeletedFlag(
 		mpViewMenu->IsChecked(ID_View_Deleted));
+	*/
 }
 
 void MainFrame::OnFileDir(wxCommandEvent& event) {
@@ -444,6 +452,11 @@ void MainFrame::UpdateTitle() {
 			mConfigFileName.c_str(), clean ? wxT("") : wxT("*"));
 	}
 	SetTitle(title);
+}
+
+void MainFrame::AddPanel(wxPanel* pPanelToAdd, const wxString& rTitle)
+{
+	mpTopNotebook->AddPage(pPanelToAdd, rTitle);
 }
 
 void MainFrame::ShowPanel(wxPanel* pTargetPanel)

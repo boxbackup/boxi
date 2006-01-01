@@ -29,13 +29,16 @@
 #include "GeneralPanel.h"
 #include "SetupWizard.h"
 #include "ClientInfoPanel.h"
+#include "BackupPanel.h"
+#include "RestorePanel.h"
 
 BEGIN_EVENT_TABLE(GeneralPanel, wxPanel)
-EVT_BUTTON(ID_General_Backup_Button, GeneralPanel::OnBackupButtonClick)
-EVT_BUTTON(ID_General_Setup_Wizard_Button, 
-	GeneralPanel::OnSetupWizardButtonClick)
-EVT_BUTTON(ID_General_Setup_Advanced_Button, 
-	GeneralPanel::OnSetupAdvancedButtonClick)
+	EVT_BUTTON(ID_General_Backup_Button, GeneralPanel::OnBackupButtonClick)
+	EVT_BUTTON(ID_General_Restore_Button, GeneralPanel::OnRestoreButtonClick)
+	EVT_BUTTON(ID_General_Setup_Wizard_Button, 
+		GeneralPanel::OnSetupWizardButtonClick)
+	EVT_BUTTON(ID_General_Setup_Advanced_Button, 
+		GeneralPanel::OnSetupAdvancedButtonClick)
 END_EVENT_TABLE()
 
 GeneralPanel::GeneralPanel(
@@ -43,13 +46,13 @@ GeneralPanel::GeneralPanel(
 	BackupPanel* pBackupPanel,
 	ClientInfoPanel* pConfigPanel,
 	ClientConfig* pConfig,
-	wxWindow* parent, 
+	wxWindow* pParent, 
 	wxWindowID id,
 	const wxPoint& pos, 
 	const wxSize& size,
 	long style, 
 	const wxString& name)
-: wxPanel(parent, id, pos, size, style, name),
+: wxPanel(pParent, id, pos, size, style, name),
   mpMainFrame(pMainFrame),
   mpBackupPanel(pBackupPanel),
   mpConfigPanel(pConfigPanel),
@@ -95,6 +98,14 @@ GeneralPanel::GeneralPanel(
 
 	/* restore */
 	
+	mpRestorePanel = new RestorePanel(
+		mpConfig,
+		mpConfigPanel,
+		pMainFrame,
+		pParent);
+	mpRestorePanel->Hide();
+	pMainFrame->AddPanel(mpRestorePanel, wxT("Restore"));
+
 	wxStaticBoxSizer* pRestoreBox = new wxStaticBoxSizer(wxHORIZONTAL,
 		this, wxT("Restore"));
 	pMainSizer->Add(pRestoreBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
@@ -127,6 +138,11 @@ GeneralPanel::GeneralPanel(
 void GeneralPanel::OnBackupButtonClick(wxCommandEvent& event)
 {
 	mpMainFrame->ShowPanel(mpBackupPanel);
+}
+
+void GeneralPanel::OnRestoreButtonClick(wxCommandEvent& event)
+{
+	mpMainFrame->ShowPanel(mpRestorePanel);
 }
 
 void GeneralPanel::OnSetupWizardButtonClick(wxCommandEvent& event)

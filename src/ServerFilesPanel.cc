@@ -3,7 +3,7 @@
  *
  *  Mon Feb 28 22:45:09 2005
  *  Copyright  2005  Chris Wilson
- *  boxi_ServerFilesPanel.cc@qwirx.com
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -197,21 +197,21 @@ void RestoreTreeCtrl::UpdateStateIcon(
 	}
 }
 
-BEGIN_EVENT_TABLE(RestorePanel, wxPanel)
+BEGIN_EVENT_TABLE(RestoreLocationsPanel, wxPanel)
 	EVT_TREE_ITEM_EXPANDING(ID_Server_File_Tree, 
-		RestorePanel::OnTreeNodeExpand)
+		RestoreLocationsPanel::OnTreeNodeExpand)
 	EVT_TREE_SEL_CHANGING(ID_Server_File_Tree,
-		RestorePanel::OnTreeNodeSelect)
+		RestoreLocationsPanel::OnTreeNodeSelect)
 	EVT_TREE_STATE_IMAGE_CLICK(ID_Server_File_Tree,
-		RestorePanel::OnTreeNodeActivate)
+		RestoreLocationsPanel::OnTreeNodeActivate)
 	EVT_BUTTON(ID_Server_File_RestoreButton, 
-		RestorePanel::OnFileRestore)
+		RestoreLocationsPanel::OnFileRestore)
 	EVT_BUTTON(ID_Server_File_DeleteButton, 
-		RestorePanel::OnFileDelete)
-	EVT_IDLE(RestorePanel::OnIdle)
+		RestoreLocationsPanel::OnFileDelete)
+	EVT_IDLE(RestoreLocationsPanel::OnIdle)
 END_EVENT_TABLE()
 
-RestorePanel::RestorePanel(
+RestoreLocationsPanel::RestoreLocationsPanel(
 	ClientConfig*	config,
 	ServerConnection* pServerConnection,
 	wxWindow*		parent, 
@@ -299,7 +299,7 @@ RestorePanel::RestorePanel(
 	UpdateFileCount();
 }
 
-void RestorePanel::OnTreeNodeExpand(wxTreeEvent& event)
+void RestoreLocationsPanel::OnTreeNodeExpand(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 	RestoreTreeNode *node = 
@@ -308,7 +308,7 @@ void RestorePanel::OnTreeNodeExpand(wxTreeEvent& event)
 		event.Veto();
 }
 
-void RestorePanel::GetUsageInfo() {
+void RestoreLocationsPanel::GetUsageInfo() {
 	if (mpUsage) delete mpUsage;
 	
 	mpTreeCtrl->SetCursor(*wxHOURGLASS_CURSOR);
@@ -322,7 +322,7 @@ void RestorePanel::GetUsageInfo() {
 	}
 }
 
-void RestorePanel::OnTreeNodeSelect(wxTreeEvent& event)
+void RestoreLocationsPanel::OnTreeNodeSelect(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 	RestoreTreeNode *node = 
@@ -374,7 +374,7 @@ void RestorePanel::OnTreeNodeSelect(wxTreeEvent& event)
 	*/
 }
 
-void RestorePanel::OnTreeNodeActivate(wxTreeEvent& event)
+void RestoreLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 
@@ -420,10 +420,10 @@ void RestorePanel::OnTreeNodeActivate(wxTreeEvent& event)
 void RestoreProgressCallback(RestoreState State, 
 	std::string& rFileName, void* userData)
 {
-	((RestorePanel*)userData)->RestoreProgress(State, rFileName);
+	((RestoreLocationsPanel*)userData)->RestoreProgress(State, rFileName);
 }
 
-void RestorePanel::RestoreProgress(RestoreState State, 
+void RestoreLocationsPanel::RestoreProgress(RestoreState State, 
 	std::string& rFileName)
 {
 	mRestoreCounter++;
@@ -434,7 +434,7 @@ void RestorePanel::RestoreProgress(RestoreState State,
 	wxSafeYield();
 }
 
-void RestorePanel::OnFileRestore(wxCommandEvent& event)
+void RestoreLocationsPanel::OnFileRestore(wxCommandEvent& event)
 {
 	wxTreeItemId item = mpTreeCtrl->GetSelection();
 	RestoreTreeNode *node = 
@@ -568,7 +568,7 @@ void RestorePanel::OnFileRestore(wxCommandEvent& event)
 	}
 }
 
-void RestorePanel::OnFileDelete(wxCommandEvent& event)
+void RestoreLocationsPanel::OnFileDelete(wxCommandEvent& event)
 {
 	wxMessageBox(
 		wxT("Not supported yet"), wxT("Boxi Error"), 
@@ -605,13 +605,13 @@ void RestorePanel::OnFileDelete(wxCommandEvent& event)
 	*/
 }
 
-void RestorePanel::SetViewOldFlag(bool NewValue)
+void RestoreLocationsPanel::SetViewOldFlag(bool NewValue)
 {
 	mServerSettings.mViewOldFiles = NewValue;
 	// mpTreeRoot->ShowChildren(NULL);
 }
 
-void RestorePanel::SetViewDeletedFlag(bool NewValue)
+void RestoreLocationsPanel::SetViewDeletedFlag(bool NewValue)
 {
 	mServerSettings.mViewDeletedFiles = NewValue;
 	// mpTreeRoot->ShowChildren(NULL);
@@ -765,7 +765,7 @@ void RestoreTreeNode::UpdateState(bool updateParents)
 	}
 }
 
-void RestorePanel::StartCountingFiles()
+void RestoreLocationsPanel::StartCountingFiles()
 {
 	mCountFilesStack.clear();
 	mCountedFiles = 0;
@@ -781,7 +781,7 @@ void RestorePanel::StartCountingFiles()
 	}
 }
 
-void RestorePanel::OnIdle(wxIdleEvent& event)
+void RestoreLocationsPanel::OnIdle(wxIdleEvent& event)
 {
 	if (mCountFilesStack.size() > 0)
 	{
@@ -825,7 +825,7 @@ void RestorePanel::OnIdle(wxIdleEvent& event)
 	}
 }
 
-void RestorePanel::UpdateFileCount()
+void RestoreLocationsPanel::UpdateFileCount()
 {
 	wxString str;
 	

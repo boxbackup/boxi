@@ -51,8 +51,18 @@ BackupPanel::BackupPanel(
 	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to back up"));
 	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Backup &Destination"));
 
+	mpDestLabel = new wxStaticText(this, wxID_ANY, wxT(""));
+	mpDestBox->Add(mpDestLabel, 0, wxGROW | wxALL, 8);
+
+	mpDestCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
+	mpDestBox->Add(mpDestCtrlSizer, 0, 
+		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+
+	mpDestEditButton = new wxButton(this, ID_Function_Dest_Button, 
+		wxT("&Change Server"));
+	mpDestCtrlSizer->Add(mpDestEditButton, 0, wxGROW, 0);
+
 	mpSourceEditButton->SetLabel(wxT("&Edit List"));
-	mpDestEditButton  ->SetLabel(wxT("&Change Server"));
 	mpStartButton     ->SetLabel(wxT("&Start Backup"));
 	
 	Update();

@@ -34,6 +34,8 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 
+#include "SandBox.h"
+
 #define NDEBUG
 #include "Box.h"
 #include "BackupDaemonConfigVerify.h"

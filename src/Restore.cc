@@ -58,6 +58,8 @@
 #include <limits.h>
 #include <stdio.h>
 
+#include "SandBox.h"
+
 #define NDEBUG
 #include "Box.h"
 #include "BackupClientRestore.h"

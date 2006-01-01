@@ -26,6 +26,8 @@
 
 #include <wx/wx.h>
 
+#include "SandBox.h"
+
 #define NDEBUG
 #include "Box.h"
 #include "BackupClientCryptoKeys.h"

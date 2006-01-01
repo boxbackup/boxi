@@ -69,17 +69,6 @@ FunctionPanel::FunctionPanel(
 		this, wxT(""));
 	mpMainSizer->Add(mpDestBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
-	mpDestLabel = new wxStaticText(this, wxID_ANY, wxT(""));
-	mpDestBox->Add(mpDestLabel, 0, wxGROW | wxALL, 8);
-
-	mpDestCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
-	mpDestBox->Add(mpDestCtrlSizer, 0, 
-		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-
-	mpDestEditButton = new wxButton(this, ID_Function_Dest_Button, 
-		wxT(""));
-	mpDestCtrlSizer->Add(mpDestEditButton, 0, wxGROW, 0);
-
 	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
 	mpMainSizer->Add(pActionCtrlSizer, 0, 
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);

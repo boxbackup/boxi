@@ -55,6 +55,10 @@ class BackupPanel : public FunctionPanel
 	private:
 	BackupProgressPanel*  mpProgressPanel;
 	BackupLocationsPanel* mpBackupLocationsPanel;
+	
+	wxStaticText* mpDestLabel;
+	wxSizer*      mpDestCtrlSizer;
+	wxButton*     mpDestEditButton;
 
 	virtual void Update();
 	virtual void OnClickSourceButton(wxCommandEvent& rEvent);

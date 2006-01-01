@@ -54,7 +54,8 @@ boxi_SOURCES = \
 	partialtick16.png.c\
 	Property.cc\
 	SetupWizard.cc\
-	FunctionPanel.cc
+	FunctionPanel.cc\
+	RestorePanel.cc
 
 boxi_LDFLAGS = 
 

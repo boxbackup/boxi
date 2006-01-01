@@ -43,5 +43,6 @@ src/partialtick16.png.c
 src/Property.cc
 src/SetupWizard.cc
 src/FunctionPanel.cc
+src/RestorePanel.cc
 
 

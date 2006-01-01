@@ -99,7 +99,9 @@ module.include.files=\
 	GeneralPanel.h\
 	SetupWizard.h\
 	SslConfig.h\
-	FunctionPanel.h
+	FunctionPanel.h\
+	SandBox.h\
+	RestorePanel.h
 
 module.source.name=src
 module.source.type=
@@ -141,7 +143,8 @@ module.source.files=\
 	partialtick16.png.c\
 	Property.cc\
 	SetupWizard.cc\
-	FunctionPanel.cc
+	FunctionPanel.cc\
+	RestorePanel.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=

@@ -129,7 +129,6 @@ class ServerConnection;
 class BackupFilesPanel;
 class BackupLocationsPanel;
 class ClientInfoPanel;
-class RestorePanel;
 
 class MainFrame : public wxFrame, public ConfigChangeListener {
 	public:
@@ -139,6 +138,7 @@ class MainFrame : public wxFrame, public ConfigChangeListener {
 		const wxPoint& pos, const wxSize& size, 
 		long style = wxDEFAULT_FRAME_STYLE);
 
+	void AddPanel (wxPanel* pPanel, const wxString& rTitle);
 	void ShowPanel(wxPanel* pPanel);
 	
 	private:
@@ -173,7 +173,6 @@ class MainFrame : public wxFrame, public ConfigChangeListener {
 	BackupFilesPanel*     mpBackupFilesPanel;
 	ClientInfoPanel*      mpClientConfigPanel;
 	BackupLocationsPanel* mpLocationsPanel;
-	RestorePanel*         mpRestorePanel;
 	wxMenu*               mpViewMenu;
 	
 	DECLARE_EVENT_TABLE()

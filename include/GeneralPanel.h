@@ -28,7 +28,8 @@
 #include <wx/wx.h>
 #include <wx/thread.h>
 
-#include "BackupPanel.h"
+class BackupPanel;
+class RestorePanel;
 
 /** 
  * GeneralPanel
@@ -50,12 +51,14 @@ class GeneralPanel : public wxPanel
 		const wxString& name = wxT("General Panel"));
 
 	private:
-	MainFrame*   mpMainFrame;
-	BackupPanel* mpBackupPanel;
+	MainFrame*    mpMainFrame;
+	BackupPanel*  mpBackupPanel;
+	RestorePanel* mpRestorePanel;
 	ClientInfoPanel* mpConfigPanel;
 	ClientConfig* mpConfig;
 	
 	void OnBackupButtonClick(wxCommandEvent& event);
+	void OnRestoreButtonClick(wxCommandEvent& event);
 	void OnSetupWizardButtonClick(wxCommandEvent& event);
 	void OnSetupAdvancedButtonClick(wxCommandEvent& event);
 	

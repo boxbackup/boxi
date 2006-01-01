@@ -236,6 +236,7 @@ class RestoreSpec
 	public:
 	typedef std::vector<RestoreSpecEntry> Vector;
 	typedef Vector::iterator Iterator;
+	typedef Vector::const_iterator ConstIterator;
 		
 	private:
 	Vector mEntries;
@@ -337,9 +338,9 @@ class RestoreTreeNode : public wxTreeItemData {
 	bool _AddChildrenSlow(bool recurse);
 };
 
-class RestorePanel : public wxPanel {
+class RestoreLocationsPanel : public wxPanel {
 	public:
-	RestorePanel(
+	RestoreLocationsPanel(
 		ClientConfig*   config,
 		ServerConnection* pServerConnection,
 		wxWindow* 		parent, 
@@ -348,8 +349,8 @@ class RestorePanel : public wxPanel {
 		const wxPoint& 	pos 	= wxDefaultPosition, 
 		const wxSize& 	size 	= wxDefaultSize,
 		long 			style 	= wxTAB_TRAVERSAL, 
-		const wxString& name 	= wxT("RestorePanel"));
-	~RestorePanel() { delete mpCache; }
+		const wxString& name 	= wxT("RestoreLocationsPanel"));
+	~RestoreLocationsPanel() { delete mpCache; }
 	
 	void RestoreProgress(RestoreState State, std::string& rFileName);
 	int  GetListSortColumn () { return mListSortColumn; }

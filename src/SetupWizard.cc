@@ -2,7 +2,7 @@
  *            SetupWizard.cc
  *
  *  Created 2005-12-24 01:05
- *  Copyright  2005  Chris Wilson <boxi_source@qwirx.com>
+ *  Copyright  2005  Chris Wilson <chris-boxisource@qwirx.com>
  ****************************************************************************/
 
 /*
