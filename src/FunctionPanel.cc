@@ -32,7 +32,6 @@
 
 BEGIN_EVENT_TABLE(FunctionPanel, wxPanel)
 	EVT_BUTTON(ID_Function_Source_Button, FunctionPanel::OnClickSourceButton)
-	EVT_BUTTON(ID_Function_Dest_Button,   FunctionPanel::OnClickDestButton)
 	EVT_BUTTON(ID_Function_Start_Button,  FunctionPanel::OnClickStartButton)
 	EVT_BUTTON(wxID_CANCEL,               FunctionPanel::OnClickCloseButton)
 END_EVENT_TABLE()

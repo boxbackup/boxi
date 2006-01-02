@@ -57,7 +57,6 @@ class FunctionPanel
 	void NotifyChange() { Update(); }
 	virtual void Update() = 0;
 	virtual void OnClickSourceButton(wxCommandEvent& rEvent) = 0;
-	virtual void OnClickDestButton  (wxCommandEvent& rEvent) = 0;
 	virtual void OnClickStartButton (wxCommandEvent& rEvent) = 0;
 	virtual void OnClickCloseButton (wxCommandEvent& rEvent);
 	
