@@ -82,7 +82,6 @@ module.include.name=include
 module.include.type=
 module.include.files=\
 	main.h\
-	ServerFilesPanel.h\
 	Location.h\
 	BackupLocationsPanel.h\
 	ClientConfig.h\
@@ -101,13 +100,13 @@ module.include.files=\
 	SslConfig.h\
 	FunctionPanel.h\
 	SandBox.h\
-	RestorePanel.h
+	RestorePanel.h\
+	RestoreFilesPanel.h
 
 module.source.name=src
 module.source.type=
 module.source.files=\
 	main.cc\
-	ServerFilesPanel.cc\
 	ClientConfig.cc\
 	Location.cc\
 	ClientInfoPanel.cc\
@@ -144,7 +143,8 @@ module.source.files=\
 	Property.cc\
 	SetupWizard.cc\
 	FunctionPanel.cc\
-	RestorePanel.cc
+	RestorePanel.cc\
+	RestoreFilesPanel.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=

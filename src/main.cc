@@ -21,14 +21,19 @@
 // #  include <config.h>
 // #endif
 
+#define NDEBUG
+#include "SSLLib.h"
+#undef NDEBUG
+
 #include "GeneralPanel.h"
 #include "BackupDaemonPanel.h"
-#include "BackupFilesPanel.h"
+// #include "BackupFilesPanel.h"
 #include "BackupLocationsPanel.h"
 #include "ClientInfoPanel.h"
-#include "ServerFilesPanel.h"
+// #include "ServerFilesPanel.h"
 #include "BackupPanel.h"
 #include "BackupProgressPanel.h"
+#include "ServerConnection.h"
 
 bool ViewDeleted = true;
 

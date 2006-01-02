@@ -35,7 +35,7 @@
 
 #include "main.h"
 #include "ClientConfig.h"
-#include "ServerFilesPanel.h"
+#include "RestoreFilesPanel.h"
 #include "StaticImage.h"
 
 ServerFileVersion::ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry)

@@ -1,5 +1,5 @@
 /***************************************************************************
- *            ServerFilesPanel.h
+ *            RestoreFilesPanel.h
  *
  *  Mon Feb 28 22:48:43 2005
  *  Copyright 2005-2006 Chris Wilson

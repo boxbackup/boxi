@@ -8,7 +8,6 @@ boxi_includedir = $(pkgincludedir)
 
 boxi_include_DATA = \
 	main.h\
-	ServerFilesPanel.h\
 	Location.h\
 	BackupLocationsPanel.h\
 	ClientConfig.h\
@@ -27,6 +26,7 @@ boxi_include_DATA = \
 	SslConfig.h\
 	FunctionPanel.h\
 	SandBox.h\
-	RestorePanel.h
+	RestorePanel.h\
+	RestoreFilesPanel.h
 
 EXTRA_DIST = $(boxi_include_DATA)

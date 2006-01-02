@@ -18,7 +18,6 @@ bin_PROGRAMS = boxi
 
 boxi_SOURCES = \
 	main.cc\
-	ServerFilesPanel.cc\
 	ClientConfig.cc\
 	Location.cc\
 	ClientInfoPanel.cc\
@@ -55,7 +54,8 @@ boxi_SOURCES = \
 	Property.cc\
 	SetupWizard.cc\
 	FunctionPanel.cc\
-	RestorePanel.cc
+	RestorePanel.cc\
+	RestoreFilesPanel.cc
 
 boxi_LDFLAGS = 
 

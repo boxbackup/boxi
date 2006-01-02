@@ -6,7 +6,6 @@
 
 # Source files
 src/main.cc
-src/ServerFilesPanel.cc
 src/ClientConfig.cc
 src/Location.cc
 src/ClientInfoPanel.cc
@@ -44,5 +43,6 @@ src/Property.cc
 src/SetupWizard.cc
 src/FunctionPanel.cc
 src/RestorePanel.cc
+src/RestoreFilesPanel.cc
 
 
