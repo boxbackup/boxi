@@ -138,7 +138,6 @@ class MainFrame : public wxFrame, public ConfigChangeListener {
 		const wxPoint& pos, const wxSize& size, 
 		long style = wxDEFAULT_FRAME_STYLE);
 
-	void AddPanel (wxPanel* pPanel, const wxString& rTitle);
 	void ShowPanel(wxPanel* pPanel);
 	
 	private:

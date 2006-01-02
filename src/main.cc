@@ -106,14 +106,11 @@ MainFrame::MainFrame(
 	pBackupPanel->Hide();
 	
 	GeneralPanel* pGeneralPanel = new GeneralPanel(this, 
-		pBackupPanel, mpClientConfigPanel, mpConfig, mpTopNotebook);
+		pBackupPanel, mpClientConfigPanel, mpConfig, mpServerConnection, 
+		mpTopNotebook);
 		
-	mpTopNotebook->InsertPage(0, pGeneralPanel,  wxT("General"));
-	mpTopNotebook->AddPage(pBackupPanel,         wxT("Backup"));
-	mpTopNotebook->AddPage(pBackupProgressPanel, wxT("Backup Progress"));
-	mpTopNotebook->AddPage(mpLocationsPanel,     wxT("Backup Locations"));
-	mpTopNotebook->AddPage(mpClientConfigPanel,  wxT("Server Details"));
-
+	pGeneralPanel->AddToNotebook(mpTopNotebook);
+	
 	/*
 	wxPanel* pBackupDaemonPanel = new BackupDaemonPanel(
 		mpConfig,
@@ -454,10 +451,6 @@ void MainFrame::UpdateTitle() {
 	SetTitle(title);
 }
 
-void MainFrame::AddPanel(wxPanel* pPanelToAdd, const wxString& rTitle)
-{
-	mpTopNotebook->AddPage(pPanelToAdd, rTitle);
-}
 
 void MainFrame::ShowPanel(wxPanel* pTargetPanel)
 {
