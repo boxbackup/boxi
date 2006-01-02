@@ -44,6 +44,7 @@
 
 #include "ClientConfig.h"
 #include "ServerConnection.h"
+#include "FileTree.h"
 
 class ServerSettings {
 	public:
@@ -94,7 +95,8 @@ class ServerCacheNode
 {
 	public:
 	typedef std::vector<ServerCacheNode*> Vector;
-	typedef Vector::iterator Iterator;
+	typedef Vector::iterator       Iterator;
+	typedef Vector::const_iterator ConstIterator;
 
 	private:
 	wxString                  mFileName;
@@ -231,96 +233,9 @@ class RestoreSpec
 	void Remove(const RestoreSpecEntry& rOldEntry);
 };
 
+class RestoreTreeCtrl;
 class RestoreTreeNode;
-
-class RestoreTreeCtrl : public wxTreeCtrl {
-	public:
-	RestoreTreeCtrl(
-		wxWindow* parent, 
-		wxWindowID id, 
-		const wxPoint& pos = wxDefaultPosition, 
-		const wxSize& size = wxDefaultSize, 
-		long style = wxTR_HAS_BUTTONS, 
-		const wxValidator& validator = wxDefaultValidator, 
-		const wxString& name = wxT("RestoreTreeCtrl")
-	);
-	void UpdateStateIcon(RestoreTreeNode* pNode, 
-		bool updateParents, bool updateChildren);
-	void SetRoot(RestoreTreeNode* pRootNode);
 	
-	private:
-	int OnCompareItems(const wxTreeItemId& item1, 
-			const wxTreeItemId& item2);
-
-	wxImageList mImages;
-	int mEmptyImageId;
-	int mCheckedImageId;
-	int mCheckedGreyImageId;
-	int mCrossedImageId;
-	int mCrossedGreyImageId;
-	int mAlwaysImageId;
-	int mAlwaysGreyImageId;
-};
-
-class RestoreTreeNode : public wxTreeItemData {
-	private:
-	wxTreeItemId       mTreeId;
-	ServerCacheNode*   mpCacheNode;
-	RestoreTreeNode*   mpParentNode;
-	ServerSettings*    mpServerSettings;
-	RestoreTreeCtrl*   mpTreeCtrl;
-	const RestoreSpec& mrRestoreSpec;
-	const RestoreSpecEntry* mpMatchingEntry;
-	bool               mIncluded;
-	
-	public:
-	RestoreTreeNode(RestoreTreeCtrl* pTreeCtrl, ServerCacheNode* pCacheNode,
-		ServerSettings* pServerSettings, const RestoreSpec& rRestoreSpec) 
-	: mrRestoreSpec(rRestoreSpec)
-	{ 
-		mpCacheNode      = pCacheNode;
-		mpParentNode     = NULL;
-		mpTreeCtrl       = pTreeCtrl;
-		mpServerSettings = pServerSettings;
-		mpMatchingEntry  = NULL;
-		mIncluded        = FALSE;
-	}
-	RestoreTreeNode(RestoreTreeNode* pParent, ServerCacheNode* pCacheNode)
-	: mrRestoreSpec(pParent->mrRestoreSpec)
-	{ 
-		mpCacheNode      = pCacheNode;
-		mpParentNode     = pParent;
-		mpTreeCtrl       = pParent->mpTreeCtrl;
-		mpServerSettings = pParent->mpServerSettings;
-		mpMatchingEntry  = NULL;
-		mIncluded        = FALSE;
-	}
-
-	// bool ShowChildren(wxListCtrl *targetList);
-
-	wxTreeItemId      GetTreeId()     const { return mTreeId; }
-	RestoreTreeNode*  GetParentNode() const { return mpParentNode; }
-	ServerCacheNode*  GetCacheNode()  const { return mpCacheNode; }
-	const wxString&   GetFileName()   const { return mpCacheNode->GetFileName(); }
-	const wxString&   GetFullPath()   const { return mpCacheNode->GetFullPath(); }
-	const bool IsDirectory() const 
-	{ 
-		return mpCacheNode->GetMostRecent()->IsDirectory();
-	}
-	const bool IsDeleted() const 
-	{ 
-		return mpCacheNode->GetMostRecent()->IsDirectory();
-	}
-	const RestoreSpecEntry* GetMatchingEntry() const { return mpMatchingEntry; }
-	void SetTreeId   (wxTreeItemId id)   { mTreeId = id; }
-	
-	bool AddChildren(bool recurse);
-	void UpdateState(bool updateParents);
-	
-	private:
-	bool _AddChildrenSlow(bool recurse);
-};
-
 class RestoreFilesPanel : public wxPanel {
 	public:
 	RestoreFilesPanel(
@@ -346,7 +261,6 @@ class RestoreFilesPanel : public wxPanel {
 	wxButton*			mpDeleteButton;
 	wxStatusBar*		mpStatusBar;
 	int					mRestoreCounter;
-	wxImageList			mImageList;
 	wxTextCtrl*			mpCountFilesBox;
 	wxTextCtrl*			mpCountBytesBox;
 	int					mListSortColumn;
@@ -361,12 +275,12 @@ class RestoreFilesPanel : public wxPanel {
 	std::vector<ServerCacheNode*> mCountFilesStack;
 	uint64_t            mCountedFiles, mCountedBytes;
 	
-	void OnTreeNodeExpand  (wxTreeEvent& event);
 	void OnTreeNodeSelect  (wxTreeEvent& event);
 	void OnTreeNodeActivate(wxTreeEvent& event);
 	void OnFileRestore     (wxCommandEvent& event);
 	void OnFileDelete      (wxCommandEvent& event);
 	void OnIdle            (wxIdleEvent& event);
+	
 	void GetUsageInfo();
 	void StartCountingFiles();
 	void UpdateFileCount();

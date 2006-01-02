@@ -44,5 +44,6 @@ src/SetupWizard.cc
 src/FunctionPanel.cc
 src/RestorePanel.cc
 src/RestoreFilesPanel.cc
+src/FileTree.cc
 
 

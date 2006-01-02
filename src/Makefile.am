@@ -55,7 +55,8 @@ boxi_SOURCES = \
 	SetupWizard.cc\
 	FunctionPanel.cc\
 	RestorePanel.cc\
-	RestoreFilesPanel.cc
+	RestoreFilesPanel.cc\
+	FileTree.cc
 
 boxi_LDFLAGS = 
 

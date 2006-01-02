@@ -3,7 +3,7 @@
 ## If you don't want it to overwrite it,
 ## 	Please disable it in the Anjuta project configuration
 
-SUBDIRS = po boxbackup include src intl
+SUBDIRS = po boxbackup include src
 
 boxidocdir = ${prefix}/doc/boxi
 boxidoc_DATA = \
@@ -16,6 +16,8 @@ boxidoc_DATA = \
 	TODO
 
 EXTRA_DIST = $(boxidoc_DATA)
+
+
 
 # Copy all the spec files. Of cource, only one is actually used.
 dist-hook:

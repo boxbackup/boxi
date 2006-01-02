@@ -24,11 +24,9 @@
 
 #include <iostream>
 
-#include <wx/artprov.h>
+// #include <wx/artprov.h>
 #include <wx/filename.h>
-#include <wx/gdicmn.h>
-#include <wx/imaglist.h>
-#include <wx/mstream.h>
+// #include <wx/gdicmn.h>
 #include <wx/splitter.h>
 
 #include "BackupClientRestore.h"
@@ -76,46 +74,158 @@ void RestoreSpec::Remove(const RestoreSpecEntry& rOldEntry)
 	}
 }
 
-static int AddImage(
-	const struct StaticImage & rImageData, 
-	wxImageList & rImageList)
+class RestoreTreeNode : public FileNode 
 {
-	wxMemoryInputStream byteStream(rImageData.data, rImageData.size);
-	wxImage img(byteStream, wxBITMAP_TYPE_PNG);
-	return rImageList.Add(img);
+	private:
+	ServerCacheNode*   mpCacheNode;
+	ServerSettings*    mpServerSettings;
+	const RestoreSpec& mrRestoreSpec;
+	const RestoreSpecEntry* mpMatchingEntry;
+	bool               mIncluded;
+	
+	public:
+	RestoreTreeNode
+	(
+		ServerCacheNode* pCacheNode,
+		ServerSettings* pServerSettings, 
+		const RestoreSpec& rRestoreSpec
+	) 
+	:	FileNode        (),
+		mpCacheNode     (pCacheNode),
+		mpServerSettings(pServerSettings),
+		mrRestoreSpec   (rRestoreSpec),
+		mpMatchingEntry (NULL),
+		mIncluded       (FALSE)
+	{ }
+
+	RestoreTreeNode
+	(
+		RestoreTreeNode* pParent, 
+		ServerCacheNode* pCacheNode
+	)
+	:	FileNode(pParent),
+		mpCacheNode     (pCacheNode),
+		mpServerSettings(pParent->mpServerSettings),
+		mrRestoreSpec   (pParent->mrRestoreSpec),
+		mpMatchingEntry (NULL),
+		mIncluded       (FALSE)
+	{ }
+
+	// bool ShowChildren(wxListCtrl *targetList);
+
+	ServerCacheNode* GetCacheNode() const { return mpCacheNode; }
+	
+	virtual const wxString& GetFileName() const 
+	{ return mpCacheNode->GetFileName(); }
+	
+	virtual const wxString& GetFullPath() const 
+	{ return mpCacheNode->GetFullPath(); }
+
+	const bool IsDirectory() const 
+	{ 
+		return mpCacheNode->GetMostRecent()->IsDirectory();
+	}
+	
+	const bool IsDeleted() const 
+	{ 
+		return mpCacheNode->GetMostRecent()->IsDirectory();
+	}
+	
+	const RestoreSpecEntry* GetMatchingEntry() const { return mpMatchingEntry; }
+	
+	bool AddChildren(bool recurse);
+	virtual int UpdateState(FileImageList& rImageList, bool updateParents);
+	
+	private:
+	virtual bool _AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recurse);
+};
+
+int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents) 
+{
+	RestoreTreeNode* pParentNode = (RestoreTreeNode*)GetParentNode();
+	
+	if (updateParents && pParentNode != NULL)
+	{
+		pParentNode->UpdateState(rImageList, TRUE);
+	}
+	
+	// by default, inherit our include/exclude state
+	// from our parent node, if we have one
+	
+	if (pParentNode) 
+	{
+		mpMatchingEntry = pParentNode->mpMatchingEntry;
+		mIncluded       = pParentNode->mIncluded;
+	}
+	else
+	{
+		mpMatchingEntry = NULL;
+		mIncluded       = FALSE;
+	}
+
+	const RestoreSpec::Vector& entries = mrRestoreSpec.GetEntries();
+	for (RestoreSpec::Vector::const_iterator i = entries.begin(); 
+		i != entries.end(); i++)
+	{
+		if (i->GetNode() == mpCacheNode)
+		{
+			mpMatchingEntry = &(*i);
+			mIncluded = i->IsInclude();
+			break;
+		}
+	}
+	
+	int iconId = rImageList.GetEmptyImageId();
+	
+	bool matchesParent = pParentNode && 
+		pParentNode->mpMatchingEntry == mpMatchingEntry;
+	
+	if (!mpMatchingEntry)
+	{
+		// do nothing
+	}
+	else if (mpMatchingEntry->IsInclude())
+	{
+		if (matchesParent)
+		{
+			iconId = rImageList.GetCheckedGreyImageId();
+		}
+		else
+		{
+			iconId = rImageList.GetCheckedImageId();
+		}
+	}
+	else 
+	{
+		if (matchesParent)
+		{
+			iconId = rImageList.GetCrossedGreyImageId();
+		}
+		else
+		{
+			iconId = rImageList.GetCrossedImageId();
+		}
+	}
+
+	return iconId;
 }
 
-RestoreTreeCtrl::RestoreTreeCtrl(
-	wxWindow* parent, 
-	wxWindowID id, 
-	const wxPoint& pos, 
-	const wxSize& size, 
-	long style, 
-	const wxValidator& validator, 
-	const wxString& name
-)
-: wxTreeCtrl(parent, id, pos, size, style, validator, name),
-  mImages(16, 16, true)
+class RestoreTreeCtrl : public FileTree 
 {
-	mEmptyImageId        = AddImage(empty16_png,     mImages);
-	mCheckedImageId      = AddImage(tick16_png,      mImages);
-	mCheckedGreyImageId  = AddImage(tickgrey16_png,  mImages);
-	mCrossedImageId      = AddImage(cross16_png,     mImages);
-	mCrossedGreyImageId  = AddImage(crossgrey16_png, mImages);
-	mAlwaysImageId       = AddImage(plus16_png,      mImages);
-	mAlwaysGreyImageId   = AddImage(plusgrey16_png,  mImages);
+	public:
+	RestoreTreeCtrl
+	(
+		wxWindow* pParent, 
+		wxWindowID id,
+		RestoreTreeNode* pRootNode
+	)
+	:	FileTree(pParent, id, pRootNode, wxT("/ (server root)"))
+	{ }
 
-	SetImageList(&mImages);
-}
-
-void RestoreTreeCtrl::SetRoot(RestoreTreeNode* pRootNode)
-{
-	wxString lRootName = wxT("/ (server root)");
-	wxTreeItemId lRootId = AddRoot(lRootName, -1, -1, pRootNode);
-	pRootNode->SetTreeId(lRootId);
-	SetItemHasChildren(lRootId, TRUE);
-	UpdateStateIcon(pRootNode, false, false);
-}
+	private:
+	virtual int OnCompareItems(const wxTreeItemId& item1, 
+		const wxTreeItemId& item2);
+};
 
 int RestoreTreeCtrl::OnCompareItems(
 	const wxTreeItemId& item1, 
@@ -145,63 +255,7 @@ int RestoreTreeCtrl::OnCompareItems(
 	return name1.CompareTo(name2);
 }
 
-void RestoreTreeCtrl::UpdateStateIcon(
-	RestoreTreeNode* pNode, bool updateParents, bool updateChildren) 
-{
-	if (updateParents && pNode->GetParentNode() != NULL)
-	{
-		UpdateStateIcon(pNode->GetParentNode(), TRUE, FALSE);
-	}
-	
-	pNode->UpdateState(updateParents);
-	RestoreTreeNode* pParent = pNode->GetParentNode();
-	
-	const RestoreSpecEntry* pMyEntry     = pNode->GetMatchingEntry();
-	const RestoreSpecEntry* pParentEntry = NULL;
-	if (pParent)
-		pParentEntry = pParent->GetMatchingEntry();
-
-	int iconId = mEmptyImageId;
-	
-	if (!pMyEntry)
-	{
-		// do nothing
-	}
-	else if (pMyEntry->IsInclude())
-	{
-		if (pParentEntry == pMyEntry)
-			iconId = mCheckedGreyImageId;
-		else
-			iconId = mCheckedImageId;
-	}
-	else 
-	{
-		if (pParentEntry == pMyEntry)
-			iconId = mCrossedGreyImageId;
-		else
-			iconId = mCrossedImageId;
-	}
-
-	SetItemImage(pNode->GetTreeId(), iconId, wxTreeItemIcon_Normal);
-	
-	if (updateChildren)
-	{
-		wxTreeItemId thisId = pNode->GetTreeId();
-		wxTreeItemIdValue cookie;
-		wxTreeItemId childId = GetFirstChild(thisId, cookie);
-		while (childId.IsOk())
-		{
-			RestoreTreeNode* pChildNode = 
-				(RestoreTreeNode*)( GetItemData(childId) );
-			UpdateStateIcon(pChildNode, FALSE, TRUE);
-			childId = GetNextChild(thisId, cookie);
-		}
-	}
-}
-
 BEGIN_EVENT_TABLE(RestoreFilesPanel, wxPanel)
-	EVT_TREE_ITEM_EXPANDING(ID_Server_File_Tree, 
-		RestoreFilesPanel::OnTreeNodeExpand)
 	EVT_TREE_SEL_CHANGING(ID_Server_File_Tree,
 		RestoreFilesPanel::OnTreeNodeSelect)
 	EVT_TREE_ITEM_ACTIVATED(ID_Server_File_Tree,
@@ -219,8 +273,7 @@ RestoreFilesPanel::RestoreFilesPanel(
 	MainFrame*        pMainFrame,
 	wxWindow*         pParent)
 : wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, 
-	wxT("RestoreFilesPanel")),
-  mImageList(16, 16, true)
+	wxT("RestoreFilesPanel"))
 {
 	mpConfig = pConfig;
 	mpStatusBar = pMainFrame->GetStatusBar();
@@ -233,13 +286,11 @@ RestoreFilesPanel::RestoreFilesPanel(
 		ID_Server_Splitter);
 	topSizer->Add(theServerSplitter, 1, wxGROW | wxALL, 8);
 
-	mpTreeCtrl = new RestoreTreeCtrl(theServerSplitter, 
-		ID_Server_File_Tree, wxDefaultPosition, wxDefaultSize, 
-		wxTR_DEFAULT_STYLE | wxNO_BORDER);
-
-	mpTreeRoot = new RestoreTreeNode(mpTreeCtrl, mpCache->GetRoot(), 
+	mpTreeRoot = new RestoreTreeNode(mpCache->GetRoot(), 
 		&mServerSettings, mRestoreSpec);
-	mpTreeCtrl->SetRoot(mpTreeRoot);
+
+	mpTreeCtrl = new RestoreTreeCtrl(theServerSplitter, ID_Server_File_Tree,
+		mpTreeRoot);
 	
 	wxPanel* theRightPanel = new wxPanel(theServerSplitter);
 	wxBoxSizer *theRightPanelSizer = new wxBoxSizer( wxVERTICAL );
@@ -295,15 +346,6 @@ RestoreFilesPanel::RestoreFilesPanel(
 	mCountedFiles = 0;
 	mCountedBytes = 0;
 	UpdateFileCount();
-}
-
-void RestoreFilesPanel::OnTreeNodeExpand(wxTreeEvent& event)
-{
-	wxTreeItemId item = event.GetItem();
-	RestoreTreeNode *node = 
-		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
-	if (!node->AddChildren(true))
-		event.Veto();
 }
 
 void RestoreFilesPanel::GetUsageInfo() {
@@ -384,7 +426,7 @@ void RestoreFilesPanel::OnTreeNodeActivate(wxTreeEvent& event)
 	const RestoreSpecEntry* pEntry = pNode->GetMatchingEntry();
 
 	// does the entry apply specifically to this item?
-	RestoreTreeNode* pParent = pNode->GetParentNode();
+	RestoreTreeNode* pParent = (RestoreTreeNode*)( pNode->GetParentNode() );
 	
 	if (!pParent && pEntry && pEntry->IsInclude())
 	{
@@ -530,7 +572,7 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 			
 			// connection to server is probably dead, so close it now.
 			mpServerConnection->Disconnect();
-			mpTreeCtrl->CollapseAndReset(node->GetTreeId());
+			mpTreeCtrl->CollapseAndReset(node->GetId());
 		} else {
 			msg.Append(wxString(e.what(), wxConvLibc));
 		}
@@ -617,23 +659,6 @@ void RestoreFilesPanel::SetViewDeletedFlag(bool NewValue)
 	// mpTreeRoot->ShowChildren(NULL);
 }
 
-bool RestoreTreeNode::AddChildren(bool recurse) {
-	mpTreeCtrl->SetCursor(*wxHOURGLASS_CURSOR);
-	wxSafeYield();
-	
-	bool result;
-	
-	try {
-		result = _AddChildrenSlow(recurse);
-	} catch (std::exception& e) {
-		mpTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
-		throw(e);
-	}
-	
-	mpTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
-	return result;
-}
-
 int TreeNodeCompare(const RestoreTreeNode **a, const RestoreTreeNode **b)
 {
 	if ( (*a)->IsDirectory() && !(*b)->IsDirectory()) return -1;
@@ -711,79 +736,54 @@ ServerFileVersion* ServerCacheNode::GetMostRecent()
 	return mpMostRecent;
 }
 
-bool RestoreTreeNode::_AddChildrenSlow(bool recursive) 
+bool RestoreTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive) 
 {
 	// delete any existing children of the parent
-	mpTreeCtrl->DeleteChildren(mTreeId);
+	pTreeCtrl->DeleteChildren(GetId());
 	
 	const ServerCacheNode::Vector* pChildren = mpCacheNode->GetChildren();
-	if (!pChildren)
-		return FALSE;
-
-	typedef ServerCacheNode::Vector::const_iterator iterator;
 	
-	for (iterator i = pChildren->begin(); i != pChildren->end(); i++)
+	if (!pChildren)
 	{
-		RestoreTreeNode *pNewNode = new RestoreTreeNode(
-			this, *i);
+		return FALSE;
+	}
 
-		pNewNode->SetTreeId(
-			mpTreeCtrl->AppendItem(this->mTreeId,
-				pNewNode->GetFileName(), -1, -1, pNewNode)
-			);
-		
-		mpTreeCtrl->UpdateStateIcon(pNewNode, false, false);
+	for (ServerCacheNode::ConstIterator i = pChildren->begin(); 
+		i != pChildren->end(); i++)
+	{
+		RestoreTreeNode *pNewNode = new RestoreTreeNode(this, *i);
+
+		wxTreeItemId newId = pTreeCtrl->AppendItem(GetId(),
+				pNewNode->GetFileName(), -1, -1, pNewNode);
+		pNewNode->SetId(newId);
 		
 		if (pNewNode->IsDeleted())
-			mpTreeCtrl->SetItemTextColour(pNewNode->mTreeId, 
+		{
+			pTreeCtrl->SetItemTextColour(newId, 
 				wxTheColourDatabase->Find(wxT("GREY")));
+		}
 			
 		if (pNewNode->IsDirectory())
 		{
-			if (recursive) {
-				bool result = pNewNode->_AddChildrenSlow(false);
+			if (recursive) 
+			{
+				bool result = pNewNode->_AddChildrenSlow(pTreeCtrl, false);
 				if (!result)
+				{
 					return FALSE;
-			} else {
-				mpTreeCtrl->SetItemHasChildren(
-					pNewNode->mTreeId, TRUE);
+				}
+			} 
+			else 
+			{
+				pTreeCtrl->SetItemHasChildren(newId, TRUE);
 			}
 		}
 	}
 
-	// sort the list
-	mpTreeCtrl->SortChildren(this->mTreeId);
+	// sort the kids out
+	pTreeCtrl->SortChildren(GetId());
 	
 	return TRUE;
-}
-
-void RestoreTreeNode::UpdateState(bool updateParents) 
-{
-	if (updateParents && mpParentNode != NULL)
-		mpParentNode->UpdateState(TRUE);
-	
-	// by default, inherit our include/exclude state
-	// from our parent node, if we have one
-	
-	if (mpParentNode) {
-		mpMatchingEntry = mpParentNode->mpMatchingEntry;
-		mIncluded = mpParentNode->mIncluded;
-	} else {
-		mpMatchingEntry = NULL;
-		mIncluded = FALSE;
-	}
-
-	const RestoreSpec::Vector& entries = mrRestoreSpec.GetEntries();
-	for (RestoreSpec::Vector::const_iterator i = entries.begin(); 
-		i != entries.end(); i++)
-	{
-		if (i->GetNode() == mpCacheNode)
-		{
-			mpMatchingEntry = &(*i);
-			mIncluded = i->IsInclude();
-			break;
-		}
-	}
 }
 
 void RestoreFilesPanel::StartCountingFiles()

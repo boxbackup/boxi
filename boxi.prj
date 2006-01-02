@@ -101,7 +101,8 @@ module.include.files=\
 	FunctionPanel.h\
 	SandBox.h\
 	RestorePanel.h\
-	RestoreFilesPanel.h
+	RestoreFilesPanel.h\
+	FileTree.h
 
 module.source.name=src
 module.source.type=
@@ -144,7 +145,8 @@ module.source.files=\
 	SetupWizard.cc\
 	FunctionPanel.cc\
 	RestorePanel.cc\
-	RestoreFilesPanel.cc
+	RestoreFilesPanel.cc\
+	FileTree.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=
