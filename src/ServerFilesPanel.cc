@@ -2,7 +2,7 @@
  *            ServerFilesPanel.cc
  *
  *  Mon Feb 28 22:45:09 2005
- *  Copyright  2005  Chris Wilson
+ *  Copyright 2005-2006 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -42,12 +42,14 @@ ServerFileVersion::ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry)
 { 
 	BackupStoreFilenameClear clear(pDirEntry->GetName());
 
-	mBoxFileId   = pDirEntry->GetObjectID();
-	mFlags       = pDirEntry->GetFlags();
-	mIsDirectory = mFlags & BackupStoreDirectory::Entry::Flags_Dir;
-	mIsDeleted   = mFlags & BackupStoreDirectory::Entry::Flags_Deleted;
-	mSizeInBlocks = 0;
-	mHasAttributes = FALSE;
+	mBoxFileId     = pDirEntry->GetObjectID();
+	mFlags         = pDirEntry->GetFlags();
+	mIsDirectory   = mFlags & BackupStoreDirectory::Entry::Flags_Dir;
+	mIsDeleted     = mFlags & BackupStoreDirectory::Entry::Flags_Deleted;
+	mSizeInBlocks  = pDirEntry->GetSizeInBlocks();
+	mDateTime      = wxDateTime(BoxTimeToSeconds(
+		pDirEntry->GetModificationTime()));
+	// mHasAttributes = FALSE;
 	mCached = FALSE;
 }
 
@@ -197,35 +199,31 @@ void RestoreTreeCtrl::UpdateStateIcon(
 	}
 }
 
-BEGIN_EVENT_TABLE(RestoreLocationsPanel, wxPanel)
+BEGIN_EVENT_TABLE(RestoreFilesPanel, wxPanel)
 	EVT_TREE_ITEM_EXPANDING(ID_Server_File_Tree, 
-		RestoreLocationsPanel::OnTreeNodeExpand)
+		RestoreFilesPanel::OnTreeNodeExpand)
 	EVT_TREE_SEL_CHANGING(ID_Server_File_Tree,
-		RestoreLocationsPanel::OnTreeNodeSelect)
-	EVT_TREE_STATE_IMAGE_CLICK(ID_Server_File_Tree,
-		RestoreLocationsPanel::OnTreeNodeActivate)
+		RestoreFilesPanel::OnTreeNodeSelect)
+	EVT_TREE_ITEM_ACTIVATED(ID_Server_File_Tree,
+		RestoreFilesPanel::OnTreeNodeActivate)
 	EVT_BUTTON(ID_Server_File_RestoreButton, 
-		RestoreLocationsPanel::OnFileRestore)
+		RestoreFilesPanel::OnFileRestore)
 	EVT_BUTTON(ID_Server_File_DeleteButton, 
-		RestoreLocationsPanel::OnFileDelete)
-	EVT_IDLE(RestoreLocationsPanel::OnIdle)
+		RestoreFilesPanel::OnFileDelete)
+	EVT_IDLE(RestoreFilesPanel::OnIdle)
 END_EVENT_TABLE()
 
-RestoreLocationsPanel::RestoreLocationsPanel(
-	ClientConfig*	config,
+RestoreFilesPanel::RestoreFilesPanel(
+	ClientConfig*     pConfig,
 	ServerConnection* pServerConnection,
-	wxWindow*		parent, 
-	wxStatusBar*	pStatusBar,
-	wxWindowID 		id, 
-	const wxPoint& 	pos, 
-	const wxSize& 	size,
-	long 			style, 
-	const wxString& name)
-: wxPanel(parent, id, pos, size, style, name),
+	MainFrame*        pMainFrame,
+	wxWindow*         pParent)
+: wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, 
+	wxT("RestoreFilesPanel")),
   mImageList(16, 16, true)
 {
-	mpConfig = config;
-	mpStatusBar = pStatusBar;
+	mpConfig = pConfig;
+	mpStatusBar = pMainFrame->GetStatusBar();
 	mpServerConnection = pServerConnection;
 	mpCache = new ServerCache(pServerConnection);
 	
@@ -299,7 +297,7 @@ RestoreLocationsPanel::RestoreLocationsPanel(
 	UpdateFileCount();
 }
 
-void RestoreLocationsPanel::OnTreeNodeExpand(wxTreeEvent& event)
+void RestoreFilesPanel::OnTreeNodeExpand(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 	RestoreTreeNode *node = 
@@ -308,7 +306,7 @@ void RestoreLocationsPanel::OnTreeNodeExpand(wxTreeEvent& event)
 		event.Veto();
 }
 
-void RestoreLocationsPanel::GetUsageInfo() {
+void RestoreFilesPanel::GetUsageInfo() {
 	if (mpUsage) delete mpUsage;
 	
 	mpTreeCtrl->SetCursor(*wxHOURGLASS_CURSOR);
@@ -322,7 +320,7 @@ void RestoreLocationsPanel::GetUsageInfo() {
 	}
 }
 
-void RestoreLocationsPanel::OnTreeNodeSelect(wxTreeEvent& event)
+void RestoreFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 	RestoreTreeNode *node = 
@@ -372,9 +370,11 @@ void RestoreLocationsPanel::OnTreeNodeSelect(wxTreeEvent& event)
 		// nothing yet
 	}
 	*/
+	
+	event.Skip();
 }
 
-void RestoreLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
+void RestoreFilesPanel::OnTreeNodeActivate(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 
@@ -420,10 +420,10 @@ void RestoreLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 void RestoreProgressCallback(RestoreState State, 
 	std::string& rFileName, void* userData)
 {
-	((RestoreLocationsPanel*)userData)->RestoreProgress(State, rFileName);
+	((RestoreFilesPanel*)userData)->RestoreProgress(State, rFileName);
 }
 
-void RestoreLocationsPanel::RestoreProgress(RestoreState State, 
+void RestoreFilesPanel::RestoreProgress(RestoreState State, 
 	std::string& rFileName)
 {
 	mRestoreCounter++;
@@ -434,7 +434,7 @@ void RestoreLocationsPanel::RestoreProgress(RestoreState State,
 	wxSafeYield();
 }
 
-void RestoreLocationsPanel::OnFileRestore(wxCommandEvent& event)
+void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 {
 	wxTreeItemId item = mpTreeCtrl->GetSelection();
 	RestoreTreeNode *node = 
@@ -568,7 +568,7 @@ void RestoreLocationsPanel::OnFileRestore(wxCommandEvent& event)
 	}
 }
 
-void RestoreLocationsPanel::OnFileDelete(wxCommandEvent& event)
+void RestoreFilesPanel::OnFileDelete(wxCommandEvent& event)
 {
 	wxMessageBox(
 		wxT("Not supported yet"), wxT("Boxi Error"), 
@@ -605,13 +605,13 @@ void RestoreLocationsPanel::OnFileDelete(wxCommandEvent& event)
 	*/
 }
 
-void RestoreLocationsPanel::SetViewOldFlag(bool NewValue)
+void RestoreFilesPanel::SetViewOldFlag(bool NewValue)
 {
 	mServerSettings.mViewOldFiles = NewValue;
 	// mpTreeRoot->ShowChildren(NULL);
 }
 
-void RestoreLocationsPanel::SetViewDeletedFlag(bool NewValue)
+void RestoreFilesPanel::SetViewDeletedFlag(bool NewValue)
 {
 	mServerSettings.mViewDeletedFiles = NewValue;
 	// mpTreeRoot->ShowChildren(NULL);
@@ -681,13 +681,34 @@ const ServerCacheNode::Vector* ServerCacheNode::GetChildren()
 		if (pChildNode == NULL)
 		{
 			pChildNode = new ServerCacheNode(this, en);
+			lFileTable[name] = pChildNode;
+			mChildren.push_back(pChildNode);
 		}
 		pChildNode->mVersions.push_back(new ServerFileVersion(en));
-		mChildren.push_back(pChildNode);
 	}
 	
 	mCached = TRUE;
 	return &mChildren;
+}
+
+ServerFileVersion* ServerCacheNode::GetMostRecent()
+{
+	wxMutexLocker lock(mMutex);
+	
+	if (mpMostRecent) 
+		return mpMostRecent;
+	
+	for (ServerFileVersion::Vector::const_iterator i = mVersions.begin(); 
+		i != mVersions.end(); i++)
+	{
+		if (mpMostRecent == NULL ||
+			mpMostRecent->GetDateTime().IsEarlierThan((*i)->GetDateTime()))
+		{
+			mpMostRecent = *i;
+		}
+	}
+	
+	return mpMostRecent;
 }
 
 bool RestoreTreeNode::_AddChildrenSlow(bool recursive) 
@@ -765,7 +786,7 @@ void RestoreTreeNode::UpdateState(bool updateParents)
 	}
 }
 
-void RestoreLocationsPanel::StartCountingFiles()
+void RestoreFilesPanel::StartCountingFiles()
 {
 	mCountFilesStack.clear();
 	mCountedFiles = 0;
@@ -781,7 +802,7 @@ void RestoreLocationsPanel::StartCountingFiles()
 	}
 }
 
-void RestoreLocationsPanel::OnIdle(wxIdleEvent& event)
+void RestoreFilesPanel::OnIdle(wxIdleEvent& event)
 {
 	if (mCountFilesStack.size() > 0)
 	{
@@ -825,7 +846,7 @@ void RestoreLocationsPanel::OnIdle(wxIdleEvent& event)
 	}
 }
 
-void RestoreLocationsPanel::UpdateFileCount()
+void RestoreFilesPanel::UpdateFileCount()
 {
 	wxString str;
 	

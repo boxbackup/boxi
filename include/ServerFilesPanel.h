@@ -2,8 +2,8 @@
  *            ServerFilesPanel.h
  *
  *  Mon Feb 28 22:48:43 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -64,7 +64,7 @@ class ServerFileVersion
 	ClientConfig*      mpConfig;
 	int16_t            mFlags;
 	int64_t            mSizeInBlocks;
-	bool               mHasAttributes;
+	// bool            mHasAttributes;
 	wxDateTime         mDateTime;
 	bool               mCached;
 	
@@ -76,7 +76,8 @@ class ServerFileVersion
 		mIsDeleted   = FALSE;
 		mFlags       = 0;
 		mSizeInBlocks = 0;
-		mHasAttributes = FALSE;
+		// mHasAttributes = FALSE;
+		mCached = FALSE;
 	}
 	ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry);
 
@@ -154,25 +155,7 @@ class ServerCacheNode
 	const ServerCacheNode::Vector*   GetChildren();
 	wxMutex&           GetLock() { return mMutex; }
 	
-	ServerFileVersion* GetMostRecent()
-	{
-		wxMutexLocker lock(mMutex);
-		
-		if (mpMostRecent) 
-			return mpMostRecent;
-		
-		for (ServerFileVersion::Vector::const_iterator i = mVersions.begin(); 
-			i != mVersions.end(); i++)
-		{
-			if (mpMostRecent == NULL ||
-				mpMostRecent->GetDateTime().IsEarlierThan((*i)->GetDateTime()))
-			{
-				mpMostRecent = *i;
-			}
-		}
-		
-		return mpMostRecent;
-	}
+	ServerFileVersion* GetMostRecent();
 	
 	private:
 	// Only call these with a lock held!
@@ -338,19 +321,14 @@ class RestoreTreeNode : public wxTreeItemData {
 	bool _AddChildrenSlow(bool recurse);
 };
 
-class RestoreLocationsPanel : public wxPanel {
+class RestoreFilesPanel : public wxPanel {
 	public:
-	RestoreLocationsPanel(
-		ClientConfig*   config,
+	RestoreFilesPanel(
+		ClientConfig*     pConfig,
 		ServerConnection* pServerConnection,
-		wxWindow* 		parent, 
-		wxStatusBar* 	pStatusBar,
-		wxWindowID 		id 		= -1,
-		const wxPoint& 	pos 	= wxDefaultPosition, 
-		const wxSize& 	size 	= wxDefaultSize,
-		long 			style 	= wxTAB_TRAVERSAL, 
-		const wxString& name 	= wxT("RestoreLocationsPanel"));
-	~RestoreLocationsPanel() { delete mpCache; }
+		MainFrame*        pMainFrame,
+		wxWindow*         pParent);
+	~RestoreFilesPanel() { delete mpCache; }
 	
 	void RestoreProgress(RestoreState State, std::string& rFileName);
 	int  GetListSortColumn () { return mListSortColumn; }
