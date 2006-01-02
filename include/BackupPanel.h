@@ -51,10 +51,12 @@ class BackupPanel : public FunctionPanel
 		wxWindow*        pParent,
 		BackupProgressPanel*  pProgressPanel,
 		BackupLocationsPanel* pBackupLocationsPanel);
-
+	
+	void AddToNotebook(wxNotebook* pNotebook);
+	
 	private:
 	BackupProgressPanel*  mpProgressPanel;
-	BackupLocationsPanel* mpBackupLocationsPanel;
+	BackupLocationsPanel* mpLocationsPanel;
 	
 	wxStaticText* mpDestLabel;
 	wxSizer*      mpDestCtrlSizer;

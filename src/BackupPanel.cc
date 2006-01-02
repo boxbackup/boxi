@@ -46,7 +46,7 @@ BackupPanel::BackupPanel(
 :	FunctionPanel(wxT("Backup Panel"), pConfig, pClientConfigPanel, 
 	pMainFrame, pParent),
 	mpProgressPanel(pProgressPanel),
-	mpBackupLocationsPanel(pBackupLocationsPanel)
+	mpLocationsPanel(pBackupLocationsPanel)
 {
 	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to back up"));
 	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Backup &Destination"));
@@ -66,6 +66,13 @@ BackupPanel::BackupPanel(
 	mpStartButton     ->SetLabel(wxT("&Start Backup"));
 	
 	Update();
+}
+
+void BackupPanel::AddToNotebook(wxNotebook* pNotebook)
+{
+	pNotebook->AddPage(this, wxT("Backup"));
+	pNotebook->AddPage(mpLocationsPanel, wxT("Backup Files"));
+	pNotebook->AddPage(mpProgressPanel,  wxT("Backup Progress"));
 }
 
 void BackupPanel::Update()
@@ -103,7 +110,7 @@ void BackupPanel::Update()
 
 void BackupPanel::OnClickSourceButton(wxCommandEvent& rEvent)
 {
-	mpMainFrame->ShowPanel(mpBackupLocationsPanel);
+	mpMainFrame->ShowPanel(mpLocationsPanel);
 }
 
 void BackupPanel::OnClickDestButton(wxCommandEvent& rEvent)
