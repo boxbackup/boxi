@@ -3,7 +3,7 @@
  *
  *  Mon Nov 21, 2005
  *  Copyright  2005  Chris Wilson
- *  Email <boxi_GeneralPanel.h@qwirx.com>
+ *  Email <chris-boxisource@qwirx.com>
  ****************************************************************************/
 
 /*
@@ -44,12 +44,11 @@ class GeneralPanel : public wxPanel
 		BackupPanel* pBackupPanel,
 		ClientInfoPanel* pConfigPanel,
 		ClientConfig* pConfig,
-		wxWindow* parent, wxWindowID id = wxID_ANY,
-		const wxPoint& pos = wxDefaultPosition, 
-		const wxSize& size = wxDefaultSize,
-		long style = wxTAB_TRAVERSAL, 
-		const wxString& name = wxT("General Panel"));
+		ServerConnection* pServerConnection,
+		wxWindow* pParent);
 
+	void AddToNotebook(wxNotebook* pNotebook);
+		
 	private:
 	MainFrame*    mpMainFrame;
 	BackupPanel*  mpBackupPanel;

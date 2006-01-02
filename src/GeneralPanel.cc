@@ -46,13 +46,10 @@ GeneralPanel::GeneralPanel(
 	BackupPanel* pBackupPanel,
 	ClientInfoPanel* pConfigPanel,
 	ClientConfig* pConfig,
-	wxWindow* pParent, 
-	wxWindowID id,
-	const wxPoint& pos, 
-	const wxSize& size,
-	long style, 
-	const wxString& name)
-: wxPanel(pParent, id, pos, size, style, name),
+	ServerConnection* pServerConnection,
+	wxWindow* pParent)
+: wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 
+	wxTAB_TRAVERSAL, wxT("General Panel")),
   mpMainFrame(pMainFrame),
   mpBackupPanel(pBackupPanel),
   mpConfigPanel(pConfigPanel),
@@ -102,9 +99,9 @@ GeneralPanel::GeneralPanel(
 		mpConfig,
 		mpConfigPanel,
 		pMainFrame,
+		pServerConnection,
 		pParent);
 	mpRestorePanel->Hide();
-	pMainFrame->AddPanel(mpRestorePanel, wxT("Restore"));
 
 	wxStaticBoxSizer* pRestoreBox = new wxStaticBoxSizer(wxHORIZONTAL,
 		this, wxT("Restore"));
@@ -133,6 +130,14 @@ GeneralPanel::GeneralPanel(
 		ID_General_Compare_Button, wxT("&Compare"));
 	pCompareBox->Add(pCompareButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
+}
+
+void GeneralPanel::AddToNotebook(wxNotebook* pNotebook)
+{
+	pNotebook->AddPage(this,           wxT("General"));
+	pNotebook->AddPage(mpConfigPanel,  wxT("Configuration"));
+	pNotebook->AddPage(mpBackupPanel,  wxT("Backup"));
+	mpRestorePanel->AddToNotebook(pNotebook);
 }
 
 void GeneralPanel::OnBackupButtonClick(wxCommandEvent& event)
