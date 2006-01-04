@@ -35,6 +35,7 @@ class FileImageList : public wxImageList
 {
 	private:
 	int mEmptyImageId;
+	int mPartialImageId;
 	int mCheckedImageId;
 	int mCheckedGreyImageId;
 	int mCrossedImageId;
@@ -54,6 +55,7 @@ class FileImageList : public wxImageList
 	:	wxImageList(16, 16, true)
 	{
 		mEmptyImageId        = AddImage(empty16_png);
+		mPartialImageId      = AddImage(partialtick16_png);
 		mCheckedImageId      = AddImage(tick16_png);
 		mCheckedGreyImageId  = AddImage(tickgrey16_png);
 		mCrossedImageId      = AddImage(cross16_png);
@@ -63,6 +65,7 @@ class FileImageList : public wxImageList
 	}
 
 	int GetEmptyImageId()       { return mEmptyImageId;       }
+	int GetPartialImageId()     { return mPartialImageId;     }
 	int GetCheckedImageId()     { return mCheckedImageId;     }
 	int GetCheckedGreyImageId() { return mCheckedGreyImageId; }
 	int GetCrossedImageId()     { return mCrossedImageId;     }
