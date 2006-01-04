@@ -127,7 +127,7 @@ class ServerCacheNode
 	{ 
 		mFileName    = GetDecryptedName(pDirEntry);
 		mFullPath.Printf(wxT("%s/%s"), 
-			pParent->GetFileName().c_str(), 
+			pParent->GetFullPath().c_str(), 
 			mFileName.c_str());
 		mpParentNode = pParent;
 		mpMostRecent = NULL;
