@@ -41,19 +41,21 @@ BEGIN_EVENT_TABLE(GeneralPanel, wxPanel)
 		GeneralPanel::OnSetupAdvancedButtonClick)
 END_EVENT_TABLE()
 
-GeneralPanel::GeneralPanel(
+GeneralPanel::GeneralPanel
+(
 	MainFrame* pMainFrame,
 	BackupPanel* pBackupPanel,
 	ClientInfoPanel* pConfigPanel,
 	ClientConfig* pConfig,
 	ServerConnection* pServerConnection,
-	wxWindow* pParent)
-: wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 
-	wxTAB_TRAVERSAL, wxT("General Panel")),
-  mpMainFrame(pMainFrame),
-  mpBackupPanel(pBackupPanel),
-  mpConfigPanel(pConfigPanel),
-  mpConfig(pConfig)
+	wxWindow* pParent
+)
+:	wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 
+		wxTAB_TRAVERSAL, wxT("General Panel")),
+	mpMainFrame(pMainFrame),
+	mpBackupPanel(pBackupPanel),
+	mpConfigPanel(pConfigPanel),
+	mpConfig(pConfig)
 {
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 	SetSizer(pMainSizer);
@@ -136,7 +138,7 @@ void GeneralPanel::AddToNotebook(wxNotebook* pNotebook)
 {
 	pNotebook->AddPage(this,           wxT("General"));
 	pNotebook->AddPage(mpConfigPanel,  wxT("Configuration"));
-	pNotebook->AddPage(mpBackupPanel,  wxT("Backup"));
+	mpBackupPanel ->AddToNotebook(pNotebook);
 	mpRestorePanel->AddToNotebook(pNotebook);
 }
 
