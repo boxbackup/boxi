@@ -68,7 +68,7 @@ MainFrame::MainFrame(
 	const wxString& rBoxiExecutablePath,
 	const wxPoint& pos, const wxSize& size, long style)
 	: wxFrame(NULL, -1, wxT("Boxi"), pos, size, style)
-{
+{	
 	// Initialise global SSL system configuration/state
 	SSLLib::Initialise();
 
