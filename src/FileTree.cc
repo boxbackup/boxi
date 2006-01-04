@@ -65,25 +65,25 @@ FileTree::FileTree
 
 void FileTree::UpdateStateIcon(FileNode* pNode, bool updateParents, 
 	bool updateChildren) 
-{
+{	
+	int iconId = pNode->UpdateState(mImages, updateParents);
+	SetItemImage(pNode->GetId(), iconId, wxTreeItemIcon_Normal);
+
 	if (updateParents && pNode->GetParentNode() != NULL)
 	{
 		UpdateStateIcon(pNode->GetParentNode(), TRUE, FALSE);
 	}
 	
-	int iconId = pNode->UpdateState(mImages, updateParents);
-	SetItemImage(pNode->GetId(), iconId, wxTreeItemIcon_Normal);
-	
 	if (updateChildren)
 	{
 		wxTreeItemId thisId = pNode->GetId();
 		wxTreeItemIdValue cookie;
-		wxTreeItemId childId = GetFirstChild(thisId, cookie);
-		while (childId.IsOk())
+		
+		for (wxTreeItemId childId = GetFirstChild(thisId, cookie);
+			childId.IsOk(); childId = GetNextChild(thisId, cookie))
 		{
-			FileNode* pChildNode = (FileNode*)( GetItemData(childId) );
+			FileNode* pChildNode = (FileNode*)GetItemData(childId);
 			UpdateStateIcon(pChildNode, FALSE, TRUE);
-			childId = GetNextChild(thisId, cookie);
 		}
 	}
 }
@@ -97,7 +97,7 @@ void FileTree::OnTreeNodeExpand(wxTreeEvent& event)
 	wxTreeItemId item = event.GetItem();
 	FileNode *pNode = (FileNode *)GetItemData(item);
 	
-	if (pNode->AddChildren(this, TRUE))
+	if (pNode->AddChildren(this, FALSE))
 	{
 		UpdateStateIcon(pNode, FALSE, TRUE);
 	}
