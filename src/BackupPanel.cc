@@ -2,8 +2,8 @@
  *            BackupPanel.cc
  *
  *  Mon Apr  4 20:36:25 2005
- *  Copyright  2005  Chris Wilson
- *  Email <boxi_BackupPanel.cc@qwirx.com>
+ *  Copyright 2005-2006 Chris Wilson
+ *  Email <chris-boxisource@qwirx.com>
  ****************************************************************************/
 
 /*
@@ -35,16 +35,17 @@
 #include "BackupLocationsPanel.h"
 #include "ClientInfoPanel.h"
 
-BackupPanel::BackupPanel(
+BackupPanel::BackupPanel
+(
 	ClientConfig*    pConfig,
 	ClientInfoPanel* pClientConfigPanel,
 	MainFrame*       pMainFrame,
 	wxWindow*        pParent,
 	BackupProgressPanel*  pProgressPanel,
 	BackupLocationsPanel* pBackupLocationsPanel
-	)
+)
 :	FunctionPanel(wxT("Backup Panel"), pConfig, pClientConfigPanel, 
-	pMainFrame, pParent),
+		pMainFrame, pParent),
 	mpProgressPanel(pProgressPanel),
 	mpLocationsPanel(pBackupLocationsPanel)
 {
