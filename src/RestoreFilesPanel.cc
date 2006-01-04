@@ -140,6 +140,56 @@ class RestoreTreeNode : public FileNode
 	virtual bool _AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recurse);
 };
 
+bool RestoreTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive) 
+{
+	// delete any existing children of the parent
+	pTreeCtrl->DeleteChildren(GetId());
+	
+	const ServerCacheNode::Vector* pChildren = mpCacheNode->GetChildren();
+	
+	if (!pChildren)
+	{
+		return FALSE;
+	}
+
+	for (ServerCacheNode::ConstIterator i = pChildren->begin(); 
+		i != pChildren->end(); i++)
+	{
+		RestoreTreeNode *pNewNode = new RestoreTreeNode(this, *i);
+
+		wxTreeItemId newId = pTreeCtrl->AppendItem(GetId(),
+				pNewNode->GetFileName(), -1, -1, pNewNode);
+		pNewNode->SetId(newId);
+		
+		if (pNewNode->IsDeleted())
+		{
+			pTreeCtrl->SetItemTextColour(newId, 
+				wxTheColourDatabase->Find(wxT("GREY")));
+		}
+			
+		if (pNewNode->IsDirectory())
+		{
+			if (recursive) 
+			{
+				bool result = pNewNode->_AddChildrenSlow(pTreeCtrl, false);
+				if (!result)
+				{
+					return FALSE;
+				}
+			} 
+			else 
+			{
+				pTreeCtrl->SetItemHasChildren(newId, TRUE);
+			}
+		}
+	}
+
+	// sort the kids out
+	pTreeCtrl->SortChildren(GetId());
+	
+	return TRUE;
+}
+
 int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents) 
 {
 	RestoreTreeNode* pParentNode = (RestoreTreeNode*)GetParentNode();
@@ -182,7 +232,22 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 	
 	if (!mpMatchingEntry)
 	{
-		// do nothing
+		// this node is not included, but if it contains one that is,
+		// we should show a partial icon instead of an empty one
+
+		wxString thisNodePathWithSlash = GetFullPath() + wxT("/");
+		
+		for (RestoreSpec::Vector::const_iterator i = entries.begin(); 
+			i != entries.end(); i++)
+		{
+			wxString entryPath = i->GetNode()->GetFullPath();
+			if (entryPath.StartsWith(thisNodePathWithSlash) &&
+				i->IsInclude())
+			{
+				iconId = rImageList.GetPartialImageId();
+				break;
+			}
+		}
 	}
 	else if (mpMatchingEntry->IsInclude())
 	{
@@ -419,9 +484,7 @@ void RestoreFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 void RestoreFilesPanel::OnTreeNodeActivate(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
-
-	RestoreTreeNode *pNode = 
-		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
+	RestoreTreeNode *pNode = (RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
 	
 	const RestoreSpecEntry* pEntry = pNode->GetMatchingEntry();
 
@@ -455,7 +518,7 @@ void RestoreFilesPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		mRestoreSpec.Add(newEntry);
 	}
 	
-	mpTreeCtrl->UpdateStateIcon(pNode, FALSE, TRUE);
+	mpTreeCtrl->UpdateStateIcon(pNode, TRUE, TRUE);
 	StartCountingFiles();
 }
 
@@ -659,12 +722,14 @@ void RestoreFilesPanel::SetViewDeletedFlag(bool NewValue)
 	// mpTreeRoot->ShowChildren(NULL);
 }
 
+/*
 int TreeNodeCompare(const RestoreTreeNode **a, const RestoreTreeNode **b)
 {
 	if ( (*a)->IsDirectory() && !(*b)->IsDirectory()) return -1;
 	if (!(*a)->IsDirectory() &&  (*b)->IsDirectory()) return  1;
     return((*a)->GetFileName().CompareTo((*b)->GetFileName()));
 }
+*/
 
 const ServerCacheNode::Vector* ServerCacheNode::GetChildren()
 {
@@ -734,56 +799,6 @@ ServerFileVersion* ServerCacheNode::GetMostRecent()
 	}
 	
 	return mpMostRecent;
-}
-
-bool RestoreTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive) 
-{
-	// delete any existing children of the parent
-	pTreeCtrl->DeleteChildren(GetId());
-	
-	const ServerCacheNode::Vector* pChildren = mpCacheNode->GetChildren();
-	
-	if (!pChildren)
-	{
-		return FALSE;
-	}
-
-	for (ServerCacheNode::ConstIterator i = pChildren->begin(); 
-		i != pChildren->end(); i++)
-	{
-		RestoreTreeNode *pNewNode = new RestoreTreeNode(this, *i);
-
-		wxTreeItemId newId = pTreeCtrl->AppendItem(GetId(),
-				pNewNode->GetFileName(), -1, -1, pNewNode);
-		pNewNode->SetId(newId);
-		
-		if (pNewNode->IsDeleted())
-		{
-			pTreeCtrl->SetItemTextColour(newId, 
-				wxTheColourDatabase->Find(wxT("GREY")));
-		}
-			
-		if (pNewNode->IsDirectory())
-		{
-			if (recursive) 
-			{
-				bool result = pNewNode->_AddChildrenSlow(pTreeCtrl, false);
-				if (!result)
-				{
-					return FALSE;
-				}
-			} 
-			else 
-			{
-				pTreeCtrl->SetItemHasChildren(newId, TRUE);
-			}
-		}
-	}
-
-	// sort the kids out
-	pTreeCtrl->SortChildren(GetId());
-	
-	return TRUE;
 }
 
 void RestoreFilesPanel::StartCountingFiles()
