@@ -126,11 +126,10 @@ class ConfigChangeListener {
 
 class ClientConfig;
 class ServerConnection;
-class BackupFilesPanel;
-class BackupLocationsPanel;
 class ClientInfoPanel;
 
-class MainFrame : public wxFrame, public ConfigChangeListener {
+class MainFrame : public wxFrame, public ConfigChangeListener 
+{
 	public:
 	MainFrame(
 		const wxString* pConfigFileName,
@@ -163,16 +162,14 @@ class MainFrame : public wxFrame, public ConfigChangeListener {
 	void NotifyChange();
 	void UpdateTitle();
 	
-	wxStatusBar*        mpStatusBar;
-	wxString            mConfigFileName;
-	ClientConfig*       mpConfig;
-	ServerConnection*   mpServerConnection;
+	wxStatusBar*      mpStatusBar;
+	wxString          mConfigFileName;
+	ClientConfig*     mpConfig;
+	ServerConnection* mpServerConnection;
 	
-	wxNotebook*           mpTopNotebook;
-	BackupFilesPanel*     mpBackupFilesPanel;
-	ClientInfoPanel*      mpClientConfigPanel;
-	BackupLocationsPanel* mpLocationsPanel;
-	wxMenu*               mpViewMenu;
+	wxNotebook*       mpTopNotebook;
+	ClientInfoPanel*  mpClientConfigPanel;
+	wxMenu*           mpViewMenu;
 	
 	DECLARE_EVENT_TABLE()
 };	

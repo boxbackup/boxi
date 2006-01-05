@@ -83,12 +83,6 @@ MainFrame::MainFrame(
 	
 	mpTopNotebook = new wxNotebook(this, ID_Top_Notebook);
 
-	mpLocationsPanel = new BackupLocationsPanel(
-		mpConfig,
-		mpTopNotebook, 
-		ID_Client_Panel);
-	mpLocationsPanel->Hide();
-
 	mpClientConfigPanel = new ClientInfoPanel(
 		mpConfig,
 		mpTopNotebook, 
@@ -105,8 +99,7 @@ MainFrame::MainFrame(
 		mpClientConfigPanel,
 		this,
 		mpTopNotebook,
-		pBackupProgressPanel,
-		mpLocationsPanel);
+		pBackupProgressPanel);
 	mpConfig->AddListener(pBackupPanel);
 	pBackupPanel->Hide();
 	
