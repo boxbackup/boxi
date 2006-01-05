@@ -2,8 +2,8 @@
  *            BackupLocationsPanel.cc
  *
  *  Tue Mar  1 00:26:30 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -30,23 +30,67 @@
 #include <wx/treectrl.h>
 
 #include "BackupLocationsPanel.h"
-#include "StaticImage.h"
+#include "FileTree.h"
 
-void BackupTreeNode::AddChildren() {
-	mpTreeCtrl->SetCursor(*wxHOURGLASS_CURSOR);
-	wxSafeYield();
+class BackupTreeNode : public FileNode 
+{
+	private:
+	wxString        mFileName;
+	wxString        mFullPath;
+	bool            mIsDirectory;
+	Location*       mpLocation;
+	const MyExcludeEntry* mpExcludedBy;
+	const MyExcludeEntry* mpIncludedBy;
+	ClientConfig*   mpConfig;
+	ExcludedState   mExcludedState;
 	
-	try {
-		_AddChildrenSlow(false);
-	} catch (std::exception& e) {
-		mpTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
-		throw(e);
+	public:
+	int             mIconId;
+	
+	BackupTreeNode(ClientConfig* pConfig, const wxString& path)
+	: FileNode()
+	{ 
+		mFullPath    = path;
+		mFileName    = wxFileName(path).GetFullName();
+		mIsDirectory = wxFileName::DirExists(mFullPath);
+		mpLocation   = NULL;
+		mpExcludedBy = NULL;
+		mpIncludedBy = NULL;
+		mpConfig     = pConfig;
+		mIconId      = -1;
+		mExcludedState = EST_UNKNOWN;
+	}
+
+	BackupTreeNode(BackupTreeNode* pParent, const wxString& path) 
+	: FileNode(pParent)
+	{ 
+		mFullPath    = path;
+		mFileName    = wxFileName(path).GetFullName();
+		mIsDirectory = wxFileName::DirExists(mFullPath);
+		mpLocation   = pParent->GetLocation();
+		mpExcludedBy = pParent->GetExcludedBy();
+		mpIncludedBy = pParent->GetIncludedBy();
+		mpConfig     = pParent->GetConfig();
+		mIconId      = -1;
+		mExcludedState = EST_UNKNOWN;
 	}
 	
-	mpTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
-}
+	virtual const wxString& GetFileName()   const { return mFileName; }
+	virtual const wxString& GetFullPath()   const { return mFullPath; }
+	bool                    IsDirectory()   const { return mIsDirectory; }
+	Location*               GetLocation()   const { return mpLocation; }
+	ClientConfig*           GetConfig()     const { return mpConfig; }
+	const MyExcludeEntry*   GetExcludedBy() const { return mpExcludedBy; }
+	const MyExcludeEntry*   GetIncludedBy() const { return mpIncludedBy; }
 
-void BackupTreeNode::_AddChildrenSlow(bool recursive) 
+	void SetDirectory(bool value = true) { mIsDirectory = value; }
+	virtual int UpdateState(FileImageList& rImageList, bool updateParents);
+
+	private:
+	virtual bool _AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recurse);
+};
+
+bool BackupTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive) 
 {
 	wxDir dir(mFullPath);
 	
@@ -55,162 +99,83 @@ void BackupTreeNode::_AddChildrenSlow(bool recursive)
         // wxDir would already show an error message explaining the 
 		// exact reason of the failure, and the user can always click [+]
 		// another time :-)
-        return;
+        return FALSE;
     }
 
 	// delete any existing children of the parent
-	mpTreeCtrl->DeleteChildren(mTreeId);
+	pTreeCtrl->DeleteChildren(GetId());
 	
 	wxString theCurrentFileName;
 	
-	bool cont = dir.GetFirst(&theCurrentFileName);
-	while ( cont )
+	bool doContinue = dir.GetFirst(&theCurrentFileName);
+	while (doContinue)
 	{
 		wxFileName fileNameObject = wxFileName(mFullPath, theCurrentFileName);
 
 		// add to the tree
-		BackupTreeNode *pNewNode = new BackupTreeNode(
-			this, fileNameObject.GetFullPath()
-		);
-		pNewNode->SetTreeId(
-			mpTreeCtrl->AppendItem(this->mTreeId,
-				theCurrentFileName, -1, -1, pNewNode)
-			);
-		mpTreeCtrl->UpdateExcludedStateIcon(pNewNode, false, false);
+		BackupTreeNode *pNewNode = new BackupTreeNode(this,
+			fileNameObject.GetFullPath());
 		
+		wxTreeItemId newId = pTreeCtrl->AppendItem(GetId(),
+			theCurrentFileName, -1, -1, pNewNode);
+		
+		pNewNode->SetId(newId);
+
 		if (pNewNode->IsDirectory())
 		{
-			if (recursive) {
-				pNewNode->_AddChildrenSlow(false);
-			} else {
-				mpTreeCtrl->SetItemHasChildren(pNewNode->GetTreeId(), TRUE);
+			if (recursive) 
+			{
+				if (!pNewNode->_AddChildrenSlow(pTreeCtrl, FALSE))
+				{
+					return FALSE;
+				}
+			} 
+			else 
+			{
+				pTreeCtrl->SetItemHasChildren(pNewNode->GetId(), TRUE);
 			}
 		}
 
-		cont = dir.GetNext(&theCurrentFileName);
+		doContinue = dir.GetNext(&theCurrentFileName);
     }
 	
-	mpTreeCtrl->SortChildren(this->mTreeId);
+	// sort out the kids
+	pTreeCtrl->SortChildren(GetId());
+	
+	return TRUE;
 }
 
-void BackupTreeCtrl::UpdateExcludedStateIcon(
-	BackupTreeNode* pNode, bool updateParents, bool updateChildren) 
+int BackupTreeNode::UpdateState(FileImageList& rImageList, bool updateParents) 
 {
-	wxLogDebug(wxT("Updating icon for: %s"), pNode->GetFullPath().c_str());
+	BackupTreeNode* pParentNode = (BackupTreeNode*)GetParentNode();
 	
-	int iconId = mEmptyImageId;
-	
-	pNode->UpdateExcludedState(FALSE);
-	BackupTreeNode* pParent = pNode->GetParentNode();
-
-	if (updateParents && pNode->GetParentNode() != NULL)
+	if (updateParents && pParentNode != NULL)
 	{
-		UpdateExcludedStateIcon(pNode->GetParentNode(), TRUE, FALSE);
+		pParentNode->UpdateState(rImageList, TRUE);
 	}
-		
-	if (pNode->GetIncludedBy() != NULL)
-	{
-		if (pParent && pNode->GetIncludedBy() == pParent->GetIncludedBy())
-			iconId = mAlwaysGreyImageId;
-		else
-			iconId = mAlwaysImageId;
-	}
-	else if (pNode->GetExcludedBy() != NULL)
-	{
-		if (pParent && pNode->GetExcludedBy() == pParent->GetExcludedBy())
-			iconId = mCrossedGreyImageId;
-		else
-			iconId = mCrossedImageId;
-	}
-	else if (pNode->GetLocation() != NULL)
-	{
-		if (pParent && pNode->GetLocation() == pParent->GetLocation())
-			iconId = mCheckedGreyImageId;
-		else
-			iconId = mCheckedImageId;
-	}
-	else
-	{
-		// this node is not included in any location, but we need to
-		// check whether our path is a prefix to any configured location,
-		// to decide whether to display a blank or a partially included icon.
-		wxString thisNodePath = pNode->GetFullPath();
-		
-		const std::vector<Location>& rLocations = 
-			pNode->GetConfig()->GetLocations();
-	
-		for (std::vector<Location>::const_iterator pLoc = rLocations.begin();
-			pLoc != rLocations.end(); pLoc++)
-		{
-			const wxString& rLocationPath = pLoc->GetPath();
-			if (rLocationPath.StartsWith(thisNodePath))
-			{
-				iconId = mPartialImageId;
-				break;
-			}
-		}
-	}
-	
-	int oldIconId = pNode->mIconId;
-	if (iconId != oldIconId)
-	{
-		/*
-		wxLogDebug(wxT("%s: icon changed from %d to %d"), 
-			pNode->GetFullPath().c_str(), oldIconId, iconId);
-		*/
-		SetItemImage(pNode->GetTreeId(), iconId, wxTreeItemIcon_Normal);
-		pNode->mIconId = iconId;
-	}
-	/*
-	else
-	{
-		wxLogDebug(wxT("%s: icon stayed as %d"), 
-			pNode->GetFullPath().c_str(), iconId);
-	}
-	*/
-	
-	if (updateChildren)
-	{
-		wxTreeItemId thisId = pNode->GetTreeId();
-		wxTreeItemIdValue cookie;
-		
-		for (wxTreeItemId childId = GetFirstChild(thisId, cookie);
-			childId.IsOk(); childId = GetNextChild(thisId, cookie))
-		{
-			BackupTreeNode* pChildNode = 
-				(BackupTreeNode*)( GetItemData(childId) );
-			UpdateExcludedStateIcon(pChildNode, FALSE, TRUE);
-		}
-	}
-}
-
-void BackupTreeNode::UpdateExcludedState(bool updateParents) 
-{
-	if (updateParents && mpParentNode != NULL)
-		mpParentNode->UpdateExcludedState(TRUE);
 	
 	// by default, inherit our include/exclude state
 	// from our parent node, if we have one
 	ExcludedState ParentState = EST_UNKNOWN;
 	
-	if (mpParentNode) 
+	if (pParentNode) 
 	{
-		mpLocation   = mpParentNode->mpLocation;
-		mpExcludedBy = mpParentNode->mpExcludedBy;
-		mpIncludedBy = mpParentNode->mpIncludedBy;
-		ParentState  = mpParentNode->mExcludedState;
+		mpLocation   = pParentNode->mpLocation;
+		mpExcludedBy = pParentNode->mpExcludedBy;
+		mpIncludedBy = pParentNode->mpIncludedBy;
+		ParentState  = pParentNode->mExcludedState;
 	} 
 	else 
 	{
-		mpLocation    = NULL;
-		mpExcludedBy  = NULL;
-		mpIncludedBy  = NULL;
+		mpLocation   = NULL;
+		mpExcludedBy = NULL;
+		mpIncludedBy = NULL;
 	}
 		
-	const std::vector<Location>& rLocations = 
-		mpConfig->GetLocations();
+	const std::vector<Location>& rLocations = mpConfig->GetLocations();
 
-	if (!mpLocation) {
+	if (!mpLocation) 
+	{
 		// determine whether or not this node's path
 		// is inside a backup location.
 	
@@ -227,16 +192,9 @@ void BackupTreeNode::UpdateExcludedState(bool updateParents)
 				break;
 			}
 		}
-		
-		// if this node doesn't belong to a location, then by definition
-		// our parent node doesn't have one either, so the inherited
-		// values are fine, leave them alone.
-		
-		if (!mpLocation)
-			return;
 	}
 	
-	if (!(mFullPath.StartsWith(mpLocation->GetPath().c_str())))
+	if (mpLocation && !(mFullPath.StartsWith(mpLocation->GetPath())))
 	{
 		wxMessageBox(
 			wxT("Full path does not start with location path!"),
@@ -247,72 +205,127 @@ void BackupTreeNode::UpdateExcludedState(bool updateParents)
 	wxLogDebug(wxT("Checking %s against exclude list for %s"),
 		mFullPath.c_str(), mpLocation->GetPath().c_str());
 	*/
-	
-	mExcludedState = mpLocation->GetExcludedState(mFullPath, mIsDirectory,
-		&mpExcludedBy, &mpIncludedBy, ParentState);
-}
+		
+	// if this node doesn't belong to a location, then by definition
+	// our parent node doesn't have one either, so the inherited
+	// values are fine, leave them alone.
 
-static int AddImage(
-	const struct StaticImage & rImageData, 
-	wxImageList & rImageList)
-{
-	wxMemoryInputStream byteStream(rImageData.data, rImageData.size);
-	wxImage img(byteStream, wxBITMAP_TYPE_PNG);
-	return rImageList.Add(img);
-}
-
-BackupTreeCtrl::BackupTreeCtrl(
-	ClientConfig* pConfig,
-	wxWindow* parent, 
-	wxWindowID id, 
-	const wxPoint& pos, 
-	const wxSize& size, 
-	long style, 
-	const wxValidator& validator, 
-	const wxString& name
-)
-: wxTreeCtrl(parent, id, pos, size, style, validator, name),
-  mImages(16, 16, true)
-{
-	wxTreeItemId lRootId;
-	
+	if (mpLocation)
 	{
-		wxString lFullPath;
-		
-		#ifdef __CYGWIN__
-		lFullPath = wxT("c:\\");
-		#else
-		lFullPath = wxT("/");
-		#endif
-		
-		mpRootNode = new BackupTreeNode(this, pConfig, lFullPath);
-
-		wxString lRootName;
-		lRootName.Printf(wxT("%s (local root)"), lFullPath.c_str());
-	
-		lRootId = AddRoot(lRootName, -1, -1, mpRootNode);
-		mpRootNode->SetTreeId(lRootId);
-		SetItemHasChildren(lRootId, TRUE);
+		mExcludedState = mpLocation->GetExcludedState(mFullPath, mIsDirectory,
+			&mpExcludedBy, &mpIncludedBy, ParentState);
 	}
 
-	mEmptyImageId        = AddImage(empty16_png,       mImages);
-	mPartialImageId      = AddImage(partialtick16_png, mImages);
-	mCheckedImageId      = AddImage(tick16_png,        mImages);
-	mCheckedGreyImageId  = AddImage(tickgrey16_png,    mImages);
-	mCrossedImageId      = AddImage(cross16_png,       mImages);
-	mCrossedGreyImageId  = AddImage(crossgrey16_png,   mImages);
-	mAlwaysImageId       = AddImage(plus16_png,        mImages);
-	mAlwaysGreyImageId   = AddImage(plusgrey16_png,    mImages);
-
-	SetImageList(&mImages);
+	int iconId = rImageList.GetEmptyImageId();
 	
-	// No need to UpdateExcludedStateIcon here: BackupLocationsPanel 
-	// constructor calls NotifyChange which does this anyway.
+	if (mpIncludedBy != NULL)
+	{
+		if (pParentNode && mpIncludedBy == pParentNode->mpIncludedBy)
+		{
+			iconId = rImageList.GetAlwaysGreyImageId();
+		}
+		else
+		{
+			iconId = rImageList.GetAlwaysImageId();
+		}
+	}
+	else if (mpExcludedBy != NULL)
+	{
+		if (pParentNode && mpExcludedBy == pParentNode->mpExcludedBy)
+		{
+			iconId = rImageList.GetCrossedGreyImageId();
+		}
+		else
+		{
+			iconId = rImageList.GetCrossedImageId();
+		}
+	}
+	else if (mpLocation != NULL)
+	{
+		if (pParentNode && mpLocation == pParentNode->mpLocation)
+		{
+			iconId = rImageList.GetCheckedGreyImageId();
+		}
+		else
+		{
+			iconId = rImageList.GetCheckedImageId();
+		}
+	}
+	else
+	{
+		// this node is not included in any location, but we need to
+		// check whether our path is a prefix to any configured location,
+		// to decide whether to display a blank or a partially included icon.
+		
+		const std::vector<Location>& rLocations = mpConfig->GetLocations();
+		wxFileName thisNodePath(mFullPath);
+		
+		for (std::vector<Location>::const_iterator pLoc = rLocations.begin();
+			pLoc != rLocations.end(); pLoc++)
+		{
+			wxFileName locPath(pLoc->GetPath(), wxT(""));
+			
+			while(1)
+			{
+				if (locPath.GetDirCount() == 0)
+				{
+					break;
+				}
+				locPath.RemoveLastDir();
+				
+				wxString fn1 = locPath.GetFullPath();
+				wxString fn2 = thisNodePath.GetFullPath();
+				
+				while (fn1.Length() > 1 && 
+					wxFileName::IsPathSeparator(fn1.GetChar(fn1.Length() - 1)))
+				{
+					fn1.Truncate(fn1.Length() - 1);
+				}
+
+				while (fn2.Length() > 1 && 
+					wxFileName::IsPathSeparator(fn2.GetChar(fn2.Length() - 1)))
+				{
+					fn2.Truncate(fn2.Length() - 1);
+				}
+				
+				bool match = fn1.IsSameAs(fn2);
+				
+				if (match)
+				{
+					iconId = rImageList.GetPartialImageId();
+					break;
+				}
+			}
+		}
+	}
+
+	return iconId;
 }
 
-int BackupTreeCtrl::OnCompareItems(
+class BackupTreeCtrl : public FileTree
+{
+	public:
+	BackupTreeCtrl
+	(
+		ClientConfig* pConfig,
+		wxWindow* pParent, 
+		wxWindowID id,
+		BackupTreeNode* pRootNode,
+		const wxString& rRootLabel
+	)
+	: FileTree(pParent, id, pRootNode, rRootLabel)
+	{ }
+	
+	private:
+	virtual int OnCompareItems(const wxTreeItemId& item1, 
+		const wxTreeItemId& item2);
+};
+
+int BackupTreeCtrl::OnCompareItems
+(
 	const wxTreeItemId& item1, 
-	const wxTreeItemId& item2)
+	const wxTreeItemId& item2
+)
 {
 	BackupTreeNode *pNode1 = (BackupTreeNode*)GetItemData(item1);
 	BackupTreeNode *pNode2 = (BackupTreeNode*)GetItemData(item2);
@@ -332,8 +345,8 @@ int BackupTreeCtrl::OnCompareItems(
 		}
 	}
 	
-	wxString name1 = pNode1->GetFileName().GetFullPath();
-	wxString name2 = pNode2->GetFileName().GetFullPath();
+	wxString name1 = pNode1->GetFullPath();
+	wxString name2 = pNode2->GetFullPath();
 	
 	return name1.CompareTo(name2);
 }
@@ -1012,22 +1025,18 @@ void ExclusionsPanel::SelectExclusion(const MyExcludeEntry& rEntry)
 }
 
 BEGIN_EVENT_TABLE(BackupLocationsPanel, wxPanel)
-	EVT_TREE_ITEM_EXPANDING(ID_Backup_Locations_Tree, 
-		BackupLocationsPanel::OnTreeNodeExpand)
-	EVT_TREE_ITEM_COLLAPSING(ID_Backup_Locations_Tree, 
-		BackupLocationsPanel::OnTreeNodeCollapse)
 	EVT_TREE_ITEM_ACTIVATED(ID_Backup_Locations_Tree, 
 		BackupLocationsPanel::OnTreeNodeActivate)
 	EVT_BUTTON(wxID_CANCEL, BackupLocationsPanel::OnClickCloseButton)
 END_EVENT_TABLE()
 
-BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
+BackupLocationsPanel::BackupLocationsPanel(ClientConfig *pConfig,
 	wxWindow* parent, wxWindowID id,
 	const wxPoint& pos, const wxSize& size,
 	long style, const wxString& name)
 	: wxPanel(parent, id, pos, size, style, name)
 {
-	mpConfig = config;
+	mpConfig = pConfig;
 	mpConfig->AddListener(this);
 
 	wxBoxSizer* pTopSizer = new wxBoxSizer(wxVERTICAL);
@@ -1041,11 +1050,17 @@ BackupLocationsPanel::BackupLocationsPanel(ClientConfig *config,
 	
 	wxBoxSizer* pBasicPanelSizer = new wxBoxSizer(wxVERTICAL);
 	pBasicPanel->SetSizer(pBasicPanelSizer);
+
+#if defined CYGWIN || defined WIN32
+	mpRootNode = new BackupTreeNode(pConfig, wxT("c:\\"));
+	wxString rootLabel = wxT("My Computer");
+#else
+	mpRootNode = new BackupTreeNode(pConfig, wxT("/"));
+	wxString rootLabel = wxT("/ (local root)");
+#endif
 	
 	mpTree = new BackupTreeCtrl(mpConfig, pBasicPanel, 
-		ID_Backup_Locations_Tree, 
-		wxDefaultPosition, wxDefaultSize, 
-		wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER);
+		ID_Backup_Locations_Tree, mpRootNode, rootLabel);
 	pBasicPanelSizer->Add(mpTree, 1, wxGROW | wxALL, 8);
 	
 	wxPanel* pLocationsPanel = new LocationsPanel(pNotebook, mpConfig);
@@ -1417,7 +1432,7 @@ void BackupLocationsPanel::NotifyChange()
 
 void BackupLocationsPanel::UpdateTreeOnConfigChange()
 {
-	mpTree->UpdateExcludedStateIcon(mpTree->GetRootNode(), FALSE, TRUE);
+	mpTree->UpdateStateIcon(mpRootNode, FALSE, TRUE);
 }
 
 /*
@@ -1429,24 +1444,27 @@ void BackupLocationsPanel::UpdateAdvancedTabOnConfigChange()
 }
 */
 
+/*
 void BackupLocationsPanel::OnTreeNodeExpand(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
-	BackupTreeNode *node = 
-		(BackupTreeNode *)(mpTree->GetItemData(item));
-	node->AddChildren();
-	mpTree->UpdateExcludedStateIcon(node, false, false);
+	BackupTreeNode *pNode = (BackupTreeNode *)(mpTree->GetItemData(item));
+	pNode->AddChildren(mpTree, FALSE);
+	mpTree->UpdateStateIcon(pNode, FALSE, FALSE);
 }
+*/
 
+/*
 void BackupLocationsPanel::OnTreeNodeCollapse(wxTreeEvent& event)
 {
 
 }
+*/
 
 void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 {
-	BackupTreeNode* pTreeNode = 
-		(BackupTreeNode*)( mpTree->GetItemData(event.GetItem()) );
+	wxTreeItemId item = event.GetItem();
+	BackupTreeNode* pTreeNode = (BackupTreeNode *)(mpTree->GetItemData(item));
 
 	Location*       pLocation   = pTreeNode->GetLocation();
 	const MyExcludeEntry* pExcludedBy = pTreeNode->GetExcludedBy();
@@ -1464,12 +1482,11 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 	
 	if (pIncludedBy != NULL)
 	{
-		// Tricky case. User wants to remove the AlwaysInclude
-		// from this item. Unless the item is itself the subject
-		// of the AlwaysInclude directive, we can't easily
-		// remove it without affecting other items. The best we 
-		// can do is to warn the user, ask them whether to
-		// remove it.
+		// Tricky case. User wants to exclude an AlwaysIncluded item.
+		// We can't override it with anything, and unless this item is 
+		// the only match of the AlwaysInclude directive, we can't 
+		// remove it without affecting other items. The best we can do is 
+		// to warn the user, ask them whether to remove it.
 
 		bool doDelete = FALSE;
 		bool warnUser = TRUE;
@@ -1478,7 +1495,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		{
 			wxFileName fn(wxString(
 				pIncludedBy->GetValue().c_str(), wxConvLibc));
-			if (fn.SameAs(pTreeNode->GetFileName()))
+			if (fn.SameAs(pTreeNode->GetFullPath()))
 			{
 				doDelete = TRUE;
 				warnUser = FALSE;
@@ -1510,20 +1527,24 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			
 			if (pIncludedBy->GetMatch() != EM_EXACT)
 			{
-				for (BackupTreeNode* pParentNode = pTreeNode->GetParentNode();
+				for (BackupTreeNode* pParentNode = 
+						(BackupTreeNode*)( pTreeNode->GetParentNode() );
 					pParentNode != NULL && 
 					pParentNode->GetLocation() == pLocation;
-					pParentNode = pParentNode->GetParentNode())
+					pParentNode = 
+						(BackupTreeNode*)( pParentNode->GetParentNode()) )
 				{
 					pUpdateFrom = pParentNode;
 				}
 			}
 			else
 			{
-				for (BackupTreeNode* pParentNode = pTreeNode->GetParentNode();
+				for (BackupTreeNode* pParentNode = 
+						(BackupTreeNode*)( pTreeNode->GetParentNode() );
 					pParentNode != NULL && 
 					pParentNode->GetExcludedBy() == pExcludedBy;
-					pParentNode = pParentNode->GetParentNode())
+					pParentNode = 
+						(BackupTreeNode*)( pParentNode->GetParentNode()) )
 				{
 					pUpdateFrom = pParentNode;
 				}
@@ -1550,7 +1571,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		{
 			wxFileName fn(wxString(
 				pExcludedBy->GetValue().c_str(), wxConvLibc));
-			if (fn.SameAs(pTreeNode->GetFileName()))
+			if (fn.SameAs(pTreeNode->GetFullPath()))
 			{
 				updateChildren = TRUE;
 				if (pList)
@@ -1584,7 +1605,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		bool handled = FALSE;
 
 		wxFileName fn(pLocation->GetPath());
-		if (fn.SameAs(pTreeNode->GetFileName()))
+		if (fn.SameAs(pTreeNode->GetFullPath()))
 		{
 			wxString msg;
 			msg.Printf(wxT(
@@ -1599,7 +1620,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			if (result == wxYES)
 			{
 				mpConfig->RemoveLocation(*pLocation);
-				pUpdateFrom = pTreeNode;
+				pUpdateFrom = mpRootNode;
 				updateChildren = TRUE;
 			}
 			handled = TRUE;
@@ -1651,19 +1672,19 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				
 			// generate a new filename, and try again
 			newLocName.Printf(wxT("%s_%d"), 
-				path.GetName().c_str(), counter);
+				path.GetName().c_str(), counter++);
 		}
 		
 		Location newLoc(newLocName, pTreeNode->GetFullPath(), mpConfig);
 		mpConfig->AddLocation(newLoc);
-		pUpdateFrom = pTreeNode;
+		pUpdateFrom = mpRootNode;
 		updateChildren = TRUE;
 	}
 	
 	mpConfig->AddListener(this);
 	
 	if (pUpdateFrom)
-		mpTree->UpdateExcludedStateIcon(pUpdateFrom, FALSE, updateChildren);
+		mpTree->UpdateStateIcon(pUpdateFrom, FALSE, updateChildren);
 	
 	// doesn't work? - FIXME
 	// event.Veto();

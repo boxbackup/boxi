@@ -33,107 +33,7 @@
 #include "ClientConfig.h"
 
 class BackupTreeNode;
-
-class BackupTreeCtrl : public wxTreeCtrl {
-	public:
-	BackupTreeCtrl(
-		ClientConfig* pConfig,
-		wxWindow* parent, 
-		wxWindowID id, 
-		const wxPoint& pos = wxDefaultPosition, 
-		const wxSize& size = wxDefaultSize, 
-		long style = wxTR_HAS_BUTTONS, 
-		const wxValidator& validator = wxDefaultValidator, 
-		const wxString& name = wxT("BackupTreeCtrl")
-	);
-	void UpdateExcludedStateIcon(BackupTreeNode* pNode, 
-		bool updateParents, bool updateChildren);
-	BackupTreeNode* GetRootNode() { return mpRootNode; }
-	
-	private:
-	int OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& item2);
-
-	BackupTreeNode *mpRootNode;
-
-	wxImageList mImages;
-	int mEmptyImageId;
-	int mPartialImageId;
-	int mCheckedImageId;
-	int mCheckedGreyImageId;
-	int mCrossedImageId;
-	int mCrossedGreyImageId;
-	int mAlwaysImageId;
-	int mAlwaysGreyImageId;
-
-};
-
-class BackupTreeNode : public wxTreeItemData {
-	private:
-	wxTreeItemId    mTreeId;
-	wxFileName      mFileName;
-	wxString        mFullPath;
-	BackupTreeNode* mpParentNode;
-	BackupTreeCtrl* mpTreeCtrl;
-	bool            mIsDirectory;
-	Location*       mpLocation;
-	const MyExcludeEntry* mpExcludedBy;
-	const MyExcludeEntry* mpIncludedBy;
-	ClientConfig*   mpConfig;
-	ExcludedState   mExcludedState;
-	
-	public:
-	int             mIconId;
-	
-	BackupTreeNode(BackupTreeCtrl* pTreeCtrl, ClientConfig* pConfig, 
-		const wxString& path
-	) { 
-		mpParentNode = NULL;
-		mpTreeCtrl   = pTreeCtrl;
-		mFullPath    = path;
-		mFileName    = wxFileName(path);
-		mIsDirectory = wxFileName::DirExists(mFullPath);
-		mpLocation   = NULL;
-		mpExcludedBy = NULL;
-		mpIncludedBy = NULL;
-		mpConfig     = pConfig;
-		mIconId      = -1;
-		mExcludedState = EST_UNKNOWN;
-	}
-	BackupTreeNode(BackupTreeNode* pParent, const wxString& path) { 
-		mpParentNode = pParent;
-		mpTreeCtrl   = pParent->GetTreeCtrl(); 
-		mFullPath    = path;
-		mFileName    = wxFileName(path);
-		mIsDirectory = wxFileName::DirExists(mFullPath);
-		mpLocation   = pParent->GetLocation();
-		mpExcludedBy = pParent->GetExcludedBy();
-		mpIncludedBy = pParent->GetIncludedBy();
-		mpConfig     = pParent->GetConfig();
-		mIconId      = -1;
-		mExcludedState = EST_UNKNOWN;
-	}
-	
-	wxTreeItemId      GetTreeId()   { return mTreeId; }
-	const wxFileName& GetFileName() { return mFileName; }
-	const wxString&   GetFullPath() { return mFullPath; }
-	bool IsDirectory() { return mIsDirectory; }
-	void SetTreeId   (wxTreeItemId id)   { mTreeId = id; }
-	void SetDirectory(bool value = true) { mIsDirectory = value; }
-
-	void AddChildren();
-	void UpdateExcludedState(bool updateParents);
-	BackupTreeNode* GetParentNode() { return mpParentNode; }
-	Location*       GetLocation()   { return mpLocation; }
-	ClientConfig*   GetConfig()     { return mpConfig; }
-
-	const MyExcludeEntry* GetExcludedBy() { return mpExcludedBy; }
-	const MyExcludeEntry* GetIncludedBy() { return mpIncludedBy; }
-
-	private:
-	BackupTreeCtrl* GetTreeCtrl() { return mpTreeCtrl; }
-	void _AddChildrenSlow(bool recurse);
-};
-
+class BackupTreeCtrl;
 class LocationsPanel;
 
 class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
@@ -148,6 +48,7 @@ class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
 	private:
 	ClientConfig*   mpConfig;
 	BackupTreeCtrl* mpTree;
+	BackupTreeNode* mpRootNode;
 	// LocationsPanel* mpLocationsPanel;
 	/*
 	wxListBox*      mpLocationPanelLocList;
@@ -175,8 +76,8 @@ class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
 
 	void OnClickCloseButton    (wxCommandEvent& rEvent);
 	
-	void OnTreeNodeExpand      (wxTreeEvent&    rEvent);
-	void OnTreeNodeCollapse    (wxTreeEvent&    rEvent);
+	// void OnTreeNodeExpand   (wxTreeEvent&    rEvent);
+	// void OnTreeNodeCollapse (wxTreeEvent&    rEvent);
 	void OnTreeNodeActivate    (wxTreeEvent&    rEvent);
 
 	void NotifyChange(); // ConfigChangeListener interface
