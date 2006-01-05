@@ -52,8 +52,9 @@ FileTree::FileTree
 	FileNode* pRootNode,
 	const wxString& rRootLabel
 )
-: wxTreeCtrl(pParent, id, wxDefaultPosition, wxDefaultSize, 
-	wxTR_DEFAULT_STYLE | wxTR_HAS_BUTTONS, wxDefaultValidator, wxT("FileTree"))
+:	wxTreeCtrl(pParent, id, wxDefaultPosition, wxDefaultSize, 
+		wxTR_DEFAULT_STYLE | wxTR_HAS_BUTTONS | wxSUNKEN_BORDER, 
+		wxDefaultValidator, wxT("FileTree"))
 {
 	SetImageList(&mImages);
 
