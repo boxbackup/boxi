@@ -126,9 +126,16 @@ class ServerCacheNode
 		BackupStoreDirectory::Entry* pDirEntry)
 	{ 
 		mFileName    = GetDecryptedName(pDirEntry);
-		mFullPath.Printf(wxT("%s/%s"), 
-			pParent->GetFullPath().c_str(), 
-			mFileName.c_str());
+		if (pParent->IsRoot())
+		{
+			mFullPath.Printf(wxT("/%s"), mFileName.c_str());
+		}
+		else
+		{
+			mFullPath.Printf(wxT("%s/%s"), 
+				pParent->GetFullPath().c_str(), 
+				mFileName.c_str());
+		}
 		mpParentNode = pParent;
 		mpMostRecent = NULL;
 		mCached      = FALSE;
@@ -147,9 +154,8 @@ class ServerCacheNode
 		return name;
 	}
 		
-	bool               IsRoot()           const { 
-		return mFileName.CompareTo(wxT("")); 
-	}
+	bool IsRoot() const { return (mpParentNode == NULL); }
+	
 	const wxString&    GetFileName()      const { return mFileName; }
 	const wxString&    GetFullPath()      const { return mFullPath; }
 	ServerCacheNode*   GetParent()        const { return mpParentNode; }
@@ -233,31 +239,47 @@ class RestoreSpec
 	void Remove(const RestoreSpecEntry& rOldEntry);
 };
 
+class RestoreSpecChangeListener
+{
+	public:
+	virtual void OnRestoreSpecChange() = 0;
+	virtual ~RestoreSpecChangeListener() { }
+};
+
 class RestoreTreeCtrl;
 class RestoreTreeNode;
 	
-class RestoreFilesPanel : public wxPanel {
+class RestoreFilesPanel : public wxPanel 
+{
 	public:
-	RestoreFilesPanel(
+	RestoreFilesPanel
+	(
 		ClientConfig*     pConfig,
 		ServerConnection* pServerConnection,
 		MainFrame*        pMainFrame,
-		wxWindow*         pParent);
+		wxWindow*         pParent,
+		RestoreSpecChangeListener* pListener,
+		wxPanel*          pPanelToShowOnClose
+	);
 	~RestoreFilesPanel() { delete mpCache; }
 	
 	void RestoreProgress(RestoreState State, std::string& rFileName);
+	/*
 	int  GetListSortColumn () { return mListSortColumn; }
 	bool GetListSortReverse() { return mListSortReverse; }
+	*/
 	bool GetViewOldFlag    () { return mServerSettings.mViewOldFiles; }
 	bool GetViewDeletedFlag() { return mServerSettings.mViewDeletedFiles; }
 	void SetViewOldFlag    (bool NewValue);
 	void SetViewDeletedFlag(bool NewValue);
 	// void RefreshItem(RestoreTreeNode* pItem);
+	const RestoreSpec& GetRestoreSpec() { return mRestoreSpec; }
 	
 	private:
 	ClientConfig*		mpConfig;
 	RestoreTreeCtrl*    mpTreeCtrl;
 	// wxListView*		theServerFileList;
+	/*
 	wxButton*			mpDeleteButton;
 	wxStatusBar*		mpStatusBar;
 	int					mRestoreCounter;
@@ -265,6 +287,7 @@ class RestoreFilesPanel : public wxPanel {
 	wxTextCtrl*			mpCountBytesBox;
 	int					mListSortColumn;
 	bool		  		mListSortReverse;
+	*/
 	RestoreTreeNode* 	mpTreeRoot;
 	RestoreTreeNode* 	mpGlobalSelection;
 	ServerSettings		mServerSettings;
@@ -272,11 +295,17 @@ class RestoreFilesPanel : public wxPanel {
 	BackupProtocolClientAccountUsage* mpUsage;
 	ServerCache*        mpCache;
 	RestoreSpec         mRestoreSpec;
+	MainFrame*          mpMainFrame;
+	wxPanel*            mpPanelToShowOnClose;
+	RestoreSpecChangeListener* mpListener;
+	/*
 	std::vector<ServerCacheNode*> mCountFilesStack;
 	uint64_t            mCountedFiles, mCountedBytes;
-	
+	*/
 	void OnTreeNodeSelect  (wxTreeEvent& event);
 	void OnTreeNodeActivate(wxTreeEvent& event);
+	void OnCloseButtonClick(wxCommandEvent& rEvent);
+	/*
 	void OnFileRestore     (wxCommandEvent& event);
 	void OnFileDelete      (wxCommandEvent& event);
 	void OnIdle            (wxIdleEvent& event);
@@ -284,7 +313,8 @@ class RestoreFilesPanel : public wxPanel {
 	void GetUsageInfo();
 	void StartCountingFiles();
 	void UpdateFileCount();
-
+	*/
+	
 	DECLARE_EVENT_TABLE()
 };
 

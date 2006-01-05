@@ -325,38 +325,56 @@ BEGIN_EVENT_TABLE(RestoreFilesPanel, wxPanel)
 		RestoreFilesPanel::OnTreeNodeSelect)
 	EVT_TREE_ITEM_ACTIVATED(ID_Server_File_Tree,
 		RestoreFilesPanel::OnTreeNodeActivate)
+	EVT_BUTTON(wxID_CANCEL, RestoreFilesPanel::OnCloseButtonClick)
+/*
 	EVT_BUTTON(ID_Server_File_RestoreButton, 
 		RestoreFilesPanel::OnFileRestore)
 	EVT_BUTTON(ID_Server_File_DeleteButton, 
 		RestoreFilesPanel::OnFileDelete)
 	EVT_IDLE(RestoreFilesPanel::OnIdle)
+*/
 END_EVENT_TABLE()
 
-RestoreFilesPanel::RestoreFilesPanel(
+RestoreFilesPanel::RestoreFilesPanel
+(
 	ClientConfig*     pConfig,
 	ServerConnection* pServerConnection,
 	MainFrame*        pMainFrame,
-	wxWindow*         pParent)
-: wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, 
-	wxT("RestoreFilesPanel"))
+	wxWindow*         pParent,
+	RestoreSpecChangeListener* pListener,
+	wxPanel*          pPanelToShowOnClose
+)
+:	wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 
+		wxTAB_TRAVERSAL, wxT("RestoreFilesPanel")),
+	mpMainFrame(pMainFrame),
+	mpPanelToShowOnClose(pPanelToShowOnClose),
+	mpListener(pListener)
 {
 	mpConfig = pConfig;
-	mpStatusBar = pMainFrame->GetStatusBar();
+	// mpStatusBar = pMainFrame->GetStatusBar();
 	mpServerConnection = pServerConnection;
 	mpCache = new ServerCache(pServerConnection);
 	
 	wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
-	
+	SetSizer(topSizer);
+
+	/*	
 	wxSplitterWindow *theServerSplitter = new wxSplitterWindow(this, 
 		ID_Server_Splitter);
 	topSizer->Add(theServerSplitter, 1, wxGROW | wxALL, 8);
-
+	*/
+	
 	mpTreeRoot = new RestoreTreeNode(mpCache->GetRoot(), 
 		&mServerSettings, mRestoreSpec);
 
+	mpTreeCtrl = new RestoreTreeCtrl(this, ID_Server_File_Tree,
+		mpTreeRoot);
+	topSizer->Add(mpTreeCtrl, 1, wxGROW | wxALL, 8);
+	
+	/*
 	mpTreeCtrl = new RestoreTreeCtrl(theServerSplitter, ID_Server_File_Tree,
 		mpTreeRoot);
-	
+
 	wxPanel* theRightPanel = new wxPanel(theServerSplitter);
 	wxBoxSizer *theRightPanelSizer = new wxBoxSizer( wxVERTICAL );
 	
@@ -401,18 +419,26 @@ RestoreFilesPanel::RestoreFilesPanel(
 	theServerSplitter->SetMinimumPaneSize(100);
 	theServerSplitter->SplitVertically(mpTreeCtrl,
 		theRightPanel);
+	*/
 	
-	SetSizer( topSizer );
-	topSizer->SetSizeHints( this );
+	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
+	topSizer->Add(pActionCtrlSizer, 0, 
+		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+
+	wxButton* pCloseButton = new wxButton(this, wxID_CANCEL, wxT("Close"));
+	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
 	
 	mServerSettings.mViewOldFiles     = FALSE;
 	mServerSettings.mViewDeletedFiles = FALSE;
 
+	/*
 	mCountedFiles = 0;
 	mCountedBytes = 0;
 	UpdateFileCount();
+	*/
 }
 
+/*
 void RestoreFilesPanel::GetUsageInfo() {
 	if (mpUsage) delete mpUsage;
 	
@@ -426,13 +452,17 @@ void RestoreFilesPanel::GetUsageInfo() {
 		// already logged by GetAccountUsage
 	}
 }
+*/
 
 void RestoreFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
+
+	/*
 	RestoreTreeNode *node = 
 		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
-
+	*/
+	
 	wxPoint lClickPosition = event.GetPoint();
 	wxString msg;
 	msg.Printf(wxT("Click at %d,%d"), lClickPosition.x, lClickPosition.y);
@@ -455,9 +485,13 @@ void RestoreFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 		wxLogDebug(msg);
 	}
 	
-	if (!(node->IsDirectory())) {
+	/*
+	if (!(node->IsDirectory())) 
+	{
 		mpDeleteButton->Enable(FALSE);
-	} else {
+	} 
+	else 
+	{
 		mpDeleteButton->Enable(TRUE);
 		if (node->IsDeleted()) {
 			mpDeleteButton->SetLabel(wxT("Undelete"));
@@ -465,8 +499,7 @@ void RestoreFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 			mpDeleteButton->SetLabel(wxT("Delete"));
 		}
 	}
-	
-	/*
+
 	if (!mpUsage) GetUsageInfo();
 	
 	if (node->IsDirectory()) {
@@ -519,9 +552,11 @@ void RestoreFilesPanel::OnTreeNodeActivate(wxTreeEvent& event)
 	}
 	
 	mpTreeCtrl->UpdateStateIcon(pNode, TRUE, TRUE);
-	StartCountingFiles();
+	mpListener->OnRestoreSpecChange();
+	// StartCountingFiles();
 }
 
+/*
 void RestoreProgressCallback(RestoreState State, 
 	std::string& rFileName, void* userData)
 {
@@ -610,10 +645,11 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 				pVersion->GetBoxFileId(), 
 				destFileBuf.data(), 
 				&RestoreProgressCallback,
-				this, /* user data for callback function */
-				false /* restore deleted */, 
-				false /* don't undelete after restore! */, 
-				false /* resume? */);
+				this,  // user data for callback function
+				false, // restore deleted
+				false, // don't undelete after restore!
+				false, // resume?
+				);
 		} else {
 			
 			mpServerConnection->GetFile(
@@ -678,7 +714,8 @@ void RestoreFilesPanel::OnFileDelete(wxCommandEvent& event)
 	wxMessageBox(
 		wxT("Not supported yet"), wxT("Boxi Error"), 
 		wxOK | wxICON_ERROR, this);
-	/*
+	return;
+	
 	wxTreeItemId item = mpTreeCtrl->GetSelection();
 	RestoreTreeNode *node = 
 		(RestoreTreeNode *)(mpTreeCtrl->GetItemData(item));
@@ -707,8 +744,8 @@ void RestoreFilesPanel::OnFileDelete(wxCommandEvent& event)
 			*wxTheColourDatabase->FindColour("GREY"));
 		mpDeleteButton->SetLabel("Undelete");
 	}
-	*/
 }
+*/
 
 void RestoreFilesPanel::SetViewOldFlag(bool NewValue)
 {
@@ -801,6 +838,7 @@ ServerFileVersion* ServerCacheNode::GetMostRecent()
 	return mpMostRecent;
 }
 
+/*
 void RestoreFilesPanel::StartCountingFiles()
 {
 	mCountFilesStack.clear();
@@ -872,4 +910,11 @@ void RestoreFilesPanel::UpdateFileCount()
 	str.Printf(wxT("%lld"), mCountedBytes);
 	if (str.CompareTo(mpCountBytesBox->GetValue()) != 0)
 		mpCountBytesBox->SetValue(str);
+}
+*/
+
+void RestoreFilesPanel::OnCloseButtonClick(wxCommandEvent& rEvent)
+{
+	Hide();
+	mpMainFrame->ShowPanel(mpPanelToShowOnClose);
 }
