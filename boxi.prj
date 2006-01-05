@@ -74,8 +74,8 @@ preferences.indent.opening=0
 preferences.autoformat.disable=0
 preferences.indent.automatic=1
 preferences.use.tabs=1
-preferences.indent.size=4
-preferences.tabsize=4
+preferences.indent.size=8
+preferences.tabsize=8
 preferences.indent.closing=0
 
 module.include.name=include
