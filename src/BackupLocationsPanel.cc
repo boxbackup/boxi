@@ -1030,11 +1030,21 @@ BEGIN_EVENT_TABLE(BackupLocationsPanel, wxPanel)
 	EVT_BUTTON(wxID_CANCEL, BackupLocationsPanel::OnClickCloseButton)
 END_EVENT_TABLE()
 
-BackupLocationsPanel::BackupLocationsPanel(ClientConfig *pConfig,
-	wxWindow* parent, wxWindowID id,
-	const wxPoint& pos, const wxSize& size,
-	long style, const wxString& name)
-	: wxPanel(parent, id, pos, size, style, name)
+BackupLocationsPanel::BackupLocationsPanel
+(
+	ClientConfig* pConfig,
+	wxWindow* pParent, 
+	MainFrame* pMainFrame,
+	wxPanel* pPanelToShowOnClose,
+	wxWindowID id,
+	const wxPoint& pos, 
+	const wxSize& size,
+	long style, 
+	const wxString& name
+)
+:	wxPanel(pParent, id, pos, size, style, name),
+	mpMainFrame(pMainFrame),
+	mpPanelToShowOnClose(pPanelToShowOnClose)
 {
 	mpConfig = pConfig;
 	mpConfig->AddListener(this);
@@ -1693,4 +1703,5 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 void BackupLocationsPanel::OnClickCloseButton(wxCommandEvent& rEvent)
 {
 	Hide();
+	mpMainFrame->ShowPanel(mpPanelToShowOnClose);
 }

@@ -2,8 +2,8 @@
  *            BackupLocationsPanel.h
  *
  *  Tue Mar  1 00:26:35 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -36,19 +36,29 @@ class BackupTreeNode;
 class BackupTreeCtrl;
 class LocationsPanel;
 
-class BackupLocationsPanel : public wxPanel, public ConfigChangeListener {
+class BackupLocationsPanel : public wxPanel, public ConfigChangeListener 
+{
 	public:
-	BackupLocationsPanel(ClientConfig *config,
-		wxWindow* parent, wxWindowID id = -1,
+	BackupLocationsPanel
+	(
+		ClientConfig* pConfig,
+		wxWindow*     pParent, 
+		MainFrame*    pMainFrame,
+		wxPanel*      pPanelToShowOnClose,
+		wxWindowID id = -1,
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
 		long style = wxTAB_TRAVERSAL, 
-		const wxString& name = wxT("BackupLocationsPanel"));
+		const wxString& name = wxT("BackupLocationsPanel")
+	);
 	
 	private:
 	ClientConfig*   mpConfig;
 	BackupTreeCtrl* mpTree;
 	BackupTreeNode* mpRootNode;
+	MainFrame*      mpMainFrame;
+	wxPanel*        mpPanelToShowOnClose;
+	
 	// LocationsPanel* mpLocationsPanel;
 	/*
 	wxListBox*      mpLocationPanelLocList;
