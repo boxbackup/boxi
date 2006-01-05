@@ -83,7 +83,7 @@ RestorePanel::RestorePanel(
 	mpStartButton     ->SetLabel(wxT("Start &Restore"));
 	
 	mpLocationsPanel = new RestoreFilesPanel(pConfig, 
-		pServerConnection, pMainFrame, pParent);
+		pServerConnection, pMainFrame, pParent, this, this);
 	mpLocationsPanel->Hide();
 
 	Update();
@@ -92,11 +92,18 @@ RestorePanel::RestorePanel(
 	mpConfig->AddListener(this);
 }
 
+void RestorePanel::OnRestoreSpecChange()
+{
+	Update();
+}
+
 void RestorePanel::Update()
 {
 	mpSourceList->Clear();
 	
-	const RestoreSpec::Vector rEntries = mRestoreSpec.GetEntries();
+	const RestoreSpec::Vector rEntries = 
+		mpLocationsPanel->GetRestoreSpec().GetEntries();
+	
 	for (RestoreSpec::ConstIterator pEntry = rEntries.begin();
 		pEntry != rEntries.end(); pEntry++)
 	{

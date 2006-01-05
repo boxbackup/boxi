@@ -43,7 +43,7 @@ class DirSelButton;
  * Allows the user to configure and start an interactive backup
  */
 
-class RestorePanel : public FunctionPanel 
+class RestorePanel : public FunctionPanel, RestoreSpecChangeListener
 {
 	public:
 	RestorePanel(
@@ -55,18 +55,18 @@ class RestorePanel : public FunctionPanel
 		);
 	
 	void AddToNotebook(wxNotebook* pNotebook);
+	virtual void OnRestoreSpecChange();
 	
 	private:
 	// BackupProgressPanel*  mpProgressPanel;
 	RestoreFilesPanel* mpLocationsPanel;
-	RestoreSpec mRestoreSpec;
 	wxRadioButton* mpOldLocRadio;
 	wxRadioButton* mpNewLocRadio;
 	wxTextCtrl*    mpNewLocText;
 	DirSelButton*  mpNewLocButton;
 	wxCheckBox*    mpOverwriteCheck;
 	wxCheckBox*    mpRestoreDirsCheck;
-	
+
 	virtual void Update();
 	virtual void OnClickSourceButton(wxCommandEvent& rEvent);
 	virtual void OnClickStartButton (wxCommandEvent& rEvent);
