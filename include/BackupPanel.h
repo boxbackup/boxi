@@ -2,8 +2,8 @@
  *            BackupPanel.h
  *
  *  Mon Apr  4 20:35:39 2005
- *  Copyright  2005  Chris Wilson
- *  Email <boxi_BackupPanel.h@qwirx.com>
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -44,13 +44,14 @@ class BackupProgressPanel;
 class BackupPanel : public FunctionPanel 
 {
 	public:
-	BackupPanel(
+	BackupPanel
+	(
 		ClientConfig*    pConfig,
 		ClientInfoPanel* pClientConfigPanel,
 		MainFrame*       pMainFrame,
 		wxWindow*        pParent,
-		BackupProgressPanel*  pProgressPanel,
-		BackupLocationsPanel* pBackupLocationsPanel);
+		BackupProgressPanel* pProgressPanel
+	);
 	
 	void AddToNotebook(wxNotebook* pNotebook);
 	

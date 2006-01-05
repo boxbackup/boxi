@@ -41,14 +41,16 @@ BackupPanel::BackupPanel
 	ClientInfoPanel* pClientConfigPanel,
 	MainFrame*       pMainFrame,
 	wxWindow*        pParent,
-	BackupProgressPanel*  pProgressPanel,
-	BackupLocationsPanel* pBackupLocationsPanel
+	BackupProgressPanel* pProgressPanel
 )
 :	FunctionPanel(wxT("Backup Panel"), pConfig, pClientConfigPanel, 
 		pMainFrame, pParent),
-	mpProgressPanel(pProgressPanel),
-	mpLocationsPanel(pBackupLocationsPanel)
+	mpProgressPanel(pProgressPanel)
 {
+	mpLocationsPanel = new BackupLocationsPanel(pConfig, pParent, 
+		mpMainFrame, this, ID_Client_Panel);
+	mpLocationsPanel->Hide();
+
 	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to back up"));
 	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Backup &Destination"));
 
