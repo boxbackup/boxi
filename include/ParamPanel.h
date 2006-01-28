@@ -2,8 +2,8 @@
  *            ParamPanel.h
  *
  *  Sun May 15 15:19:21 2005
- *  Copyright  2005  Chris Wilson
- *  Email <boxi_ParamPanel.h@qwirx.com>
+ *  Copyright 20052006 Chris Wilson
+ *  Email <chris-boxisource@qwirx.com>
  ****************************************************************************/
 
 /*
@@ -154,6 +154,7 @@ class FileSelButton : public wxBitmapButton
 	private:
 	wxTextCtrl* mpTextCtrl;
 	wxString mFileSpec;
+	wxString mFileExtDefault;
 	wxString mFileSelectDialogTitle;
 	bool mFileMustExist;
 	
@@ -161,10 +162,12 @@ class FileSelButton : public wxBitmapButton
 	FileSelButton(wxWindow* pParent, wxWindowID id, 
 		wxTextCtrl* pTextCtrl,
 		const wxString& rFileSpec,
+		const wxString& rFileExtDefault,
 		const wxString& rFileSelectDialogTitle = wxT("Set Property"))
 	: wxBitmapButton(),
 	  mpTextCtrl(pTextCtrl),
 	  mFileSpec(rFileSpec),
+	  mFileExtDefault(rFileExtDefault),
 	  mFileSelectDialogTitle(rFileSelectDialogTitle),
 	  mFileMustExist(TRUE)
 	{
@@ -212,7 +215,8 @@ class ParamPanel : public wxPanel {
 		const wxString& name = wxT("ParamPanel"));
 	
 	BoundStringCtrl* AddParam(const wxChar * pLabel, StringProperty& rProp, 
-		int ID,	bool FileSel, bool DirSel, const wxChar* rFileSpec);
+		int ID,	bool FileSel, bool DirSel, const wxChar* pFileSpec,
+		const wxChar* pFileExtDefault);
 	BoundIntCtrl*    AddParam(const wxChar * pLabel, IntProperty&    rProp, 
 		const char *format, int ID);
 	BoundBoolCtrl*   AddParam(const wxChar * pLabel, BoolProperty&   rProp, 

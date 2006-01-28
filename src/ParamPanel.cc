@@ -2,8 +2,8 @@
  *            ParamPanel.cc
  *
  *  Sun May 15 15:18:40 2005
- *  Copyright  2005  Chris Wilson
- *  Email <boxi_ParamPanel.cc@qwirx.com>
+ *  Copyright 2005-2006 Chris Wilson
+ *  Email <chris-boxisource@qwirx.com>
  ****************************************************************************/
 
 /*
@@ -253,7 +253,7 @@ ParamPanel::ParamPanel(
 
 BoundStringCtrl* ParamPanel::AddParam(const wxChar * pLabel, 
 	StringProperty& rProp, int ID, bool FileSel, bool DirSel, 
-	const wxChar* pFileSpec)
+	const wxChar* pFileSpec, const wxChar* pFileExtDefault)
 {
 	mpSizer->Add(
 		new wxStaticText(this, -1, wxString(pLabel, wxConvLibc), 
@@ -271,7 +271,8 @@ BoundStringCtrl* ParamPanel::AddParam(const wxChar * pLabel,
 
 	if (FileSel) 
 	{
-		FileSelButton* pButton = new FileSelButton(this, -1, pCtrl, pFileSpec);
+		FileSelButton* pButton = new FileSelButton(this, -1, pCtrl, 
+			pFileSpec, pFileExtDefault);
 		pMiniSizer->Add(pButton, 0, wxGROW | wxLEFT, 4);
 	}
 	else if (DirSel)
