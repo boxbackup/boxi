@@ -56,7 +56,9 @@ boxi_SOURCES = \
 	FunctionPanel.cc\
 	RestorePanel.cc\
 	RestoreFilesPanel.cc\
-	FileTree.cc
+	FileTree.cc\
+	MainFrame.cc\
+	TestFrame.cc
 
 boxi_LDFLAGS = 
 

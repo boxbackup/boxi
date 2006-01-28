@@ -102,7 +102,9 @@ module.include.files=\
 	SandBox.h\
 	RestorePanel.h\
 	RestoreFilesPanel.h\
-	FileTree.h
+	FileTree.h\
+	MainFrame.h\
+	TestFrame.h
 
 module.source.name=src
 module.source.type=
@@ -146,7 +148,9 @@ module.source.files=\
 	FunctionPanel.cc\
 	RestorePanel.cc\
 	RestoreFilesPanel.cc\
-	FileTree.cc
+	FileTree.cc\
+	MainFrame.cc\
+	TestFrame.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=

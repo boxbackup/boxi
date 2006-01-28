@@ -28,6 +28,8 @@ boxi_include_DATA = \
 	SandBox.h\
 	RestorePanel.h\
 	RestoreFilesPanel.h\
-	FileTree.h
+	FileTree.h\
+	MainFrame.h\
+	TestFrame.h
 
 EXTRA_DIST = $(boxi_include_DATA)
