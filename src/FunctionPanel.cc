@@ -2,7 +2,7 @@
  *            FunctionPanel.cc
  *
  *  Fri Dec 30 15:38:52 2005
- *  Copyright  2005  Chris Wilson
+ *  Copyright 2005-2006 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
