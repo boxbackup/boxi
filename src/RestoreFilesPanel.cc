@@ -32,7 +32,9 @@
 #include "BackupClientRestore.h"
 
 #include "main.h"
+
 #include "ClientConfig.h"
+#include "MainFrame.h"
 #include "RestoreFilesPanel.h"
 #include "StaticImage.h"
 

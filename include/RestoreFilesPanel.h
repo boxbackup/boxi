@@ -246,6 +246,7 @@ class RestoreSpecChangeListener
 	virtual ~RestoreSpecChangeListener() { }
 };
 
+class MainFrame;
 class RestoreTreeCtrl;
 class RestoreTreeNode;
 	

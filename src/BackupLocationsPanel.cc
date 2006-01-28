@@ -31,6 +31,7 @@
 
 #include "BackupLocationsPanel.h"
 #include "FileTree.h"
+#include "MainFrame.h"
 
 class BackupTreeNode : public FileNode 
 {

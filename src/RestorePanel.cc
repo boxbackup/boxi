@@ -30,11 +30,13 @@
 #include <wx/button.h>
 
 #include "main.h"
-#include "RestorePanel.h"
-#include "BackupProgressPanel.h"
+
 #include "BackupLocationsPanel.h"
+#include "BackupProgressPanel.h"
 #include "ClientInfoPanel.h"
+#include "MainFrame.h"
 #include "ParamPanel.h"
+#include "RestorePanel.h"
 
 BEGIN_EVENT_TABLE(RestorePanel, FunctionPanel)
 	EVT_RADIOBUTTON(wxID_ANY, RestorePanel::OnRadioButtonClick)

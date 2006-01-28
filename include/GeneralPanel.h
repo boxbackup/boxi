@@ -26,10 +26,13 @@
 #define _GENERAL_PANEL_H
 
 #include <wx/wx.h>
-#include <wx/thread.h>
 
 class BackupPanel;
+class ClientConfig;
+class ClientInfoPanel;
+class MainFrame;
 class RestorePanel;
+class ServerConnection;
 
 /** 
  * GeneralPanel
@@ -39,13 +42,15 @@ class RestorePanel;
 class GeneralPanel : public wxPanel
 {
 	public:
-	GeneralPanel(
+	GeneralPanel
+	(
 		MainFrame* pMainFrame,
 		BackupPanel* pBackupPanel,
 		ClientInfoPanel* pConfigPanel,
 		ClientConfig* pConfig,
 		ServerConnection* pServerConnection,
-		wxWindow* pParent);
+		wxWindow* pParent
+	);
 
 	void AddToNotebook(wxNotebook* pNotebook);
 		
