@@ -2,8 +2,8 @@
  *            ClientConfig.h
  *
  *  Mon Feb 28 22:52:06 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -25,9 +25,19 @@
 #ifndef _CLIENTCONFIG_H
 #define _CLIENTCONFIG_H
 
+#include "Configuration.h"
+
 #include "main.h"
 #include "Property.h"
 #include "Location.h"
+#include "Location.h"
+
+class ConfigChangeListener 
+{
+	public:
+	virtual ~ConfigChangeListener() { }
+	virtual void NotifyChange() { }
+};
 
 class ClientConfig : 
 	public PropertyChangeListener, 
@@ -42,6 +52,9 @@ class ClientConfig :
 	virtual ~ClientConfig() { }
 	
 	const wxString& GetConfigFileName() { return mConfigFileName; }
+
+	// unsaved property
+	StringProperty CertRequestFile;
 	
 	#define STR_PROP(name) StringProperty name;
 	#define STR_PROP_SUBCONF(name, conf) StringProperty name;
@@ -52,7 +65,7 @@ class ClientConfig :
 	#undef INT_PROP
 	#undef STR_PROP_SUBCONF
 	#undef STR_PROP
-
+	
 	void SetClean();
 	bool IsClean();
 
