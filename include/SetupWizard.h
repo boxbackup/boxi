@@ -2,8 +2,8 @@
  *            SetupWizardPanel.h
  *
  *  Sun Dec  4 20:39:00 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -30,11 +30,25 @@
 
 #include "ClientConfig.h"
 
+typedef enum
+{
+	BWP_INTRO = 1,
+	BWP_ACCOUNT,
+	BWP_PRIVATE_KEY,
+	BWP_CERT_REQUEST,
+	BWP_CERTIFICATE,
+	BWP_CERT_EXISTS,
+	BWP_CRYPTO_KEY,
+	BWP_BACKED_UP,
+}
+SetupWizardPage_id_t;
+
 class SetupWizard : public wxWizard 
 {
 	public:
-	SetupWizard(ClientConfig *config, wxWindow* parent, wxWindowID id = -1);
+	SetupWizard(ClientConfig *config, wxWindow* parent);
 	bool Run() { return RunWizard(mpIntroPage); }
+	SetupWizardPage_id_t GetCurrentPageId();
 	
 	private:
 	ClientConfig* mpConfig;
