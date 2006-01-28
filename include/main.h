@@ -2,8 +2,8 @@
  *            main.h
  *
  *  Sun Feb 27 21:27:17 2005
- *  Copyright 2004-05  Chris Wilson
- *  boxi_main.h@qwirx.com
+ *  Copyright 2004-06 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -39,7 +39,10 @@
 #include "Property.h"
 
 enum {
-	ID_File_New = wxID_HIGHEST + 1,
+	ID_Main_Frame = wxID_HIGHEST + 1,
+	ID_Test_Frame,
+
+	ID_File_New,
 	ID_File_Open,
 	ID_File_Save,
 	ID_File_SaveAs,
@@ -53,19 +56,6 @@ enum {
 	ID_Client_Panel,
 	ID_Backup_Panel,
 	ID_Backup_Progress_Panel,
-
-	/*
-	// IDs for the controls that manipulate properties	
-	#define STR_PROP(name)	ID_ClientProp_ ## name,
-	#define STR_PROP_SUBCONF(name, subconf) ID_ClientProp_ ## name,
-	#define INT_PROP(name)  ID_ClientProp_ ## name,
-	#define BOOL_PROP(name) ID_ClientProp_ ## name,
-	ALL_PROPS
-	#undef BOOL_PROP
-	#undef INT_PROP
-	#undef STR_PROP
-	#undef STR_PROP_SUBCONF
-	*/
 
 	ID_General_Setup_Wizard_Button,
 	ID_General_Setup_Advanced_Button,
@@ -113,65 +103,16 @@ enum {
 	ID_Function_Source_Button,
 	ID_Function_Dest_Button,
 	ID_Function_Start_Button,
+	
+	ID_Setup_Wizard_Frame,
+	ID_Setup_Wizard_Store_Hostname_Ctrl,
+	ID_Setup_Wizard_Account_Number_Ctrl,
+	ID_Setup_Wizard_New_File_Radio,
+	ID_Setup_Wizard_Existing_File_Radio,
+	ID_Setup_Wizard_File_Name_Text,
 };
 
 void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor, 
 	bool growToFit, wxSizer *sizer);
-
-class ConfigChangeListener {
-	public:
-	virtual ~ConfigChangeListener() { }
-	virtual void NotifyChange() { }
-};
-
-class ClientConfig;
-class ServerConnection;
-class ClientInfoPanel;
-
-class MainFrame : public wxFrame, public ConfigChangeListener 
-{
-	public:
-	MainFrame(
-		const wxString* pConfigFileName,
-		const wxString& rBoxiExecutablePath,
-		const wxPoint& pos, const wxSize& size, 
-		long style = wxDEFAULT_FRAME_STYLE);
-
-	void ShowPanel(wxPanel* pPanel);
-	
-	private:
-	void OnFileNew	  (wxCommandEvent& event);
-	void OnFileOpen	  (wxCommandEvent& event);
-	void OnFileSave	  (wxCommandEvent& event);
-	void OnFileSaveAs (wxCommandEvent& event);
-	void OnFileQuit	  (wxCommandEvent& event);
-	void OnFileDir	  (wxCommandEvent& event);
-	void OnViewOld    (wxCommandEvent& event);
-	void OnViewDeleted(wxCommandEvent& event);
-	void OnHelpAbout  (wxCommandEvent& event);
-	void OnSize		  (wxSizeEvent&	   event);
-	void OnClose      (wxCloseEvent&   event);
-
-	void DoFileOpen   (const wxString& path);
-	void DoFileNew    ();
-	void DoFileSave   ();
-	void DoFileSaveAs ();
-	void DoFileSaveAs2();
-	
-	// implement ConfigChangeListener
-	void NotifyChange();
-	void UpdateTitle();
-	
-	wxStatusBar*      mpStatusBar;
-	wxString          mConfigFileName;
-	ClientConfig*     mpConfig;
-	ServerConnection* mpServerConnection;
-	
-	wxNotebook*       mpTopNotebook;
-	ClientInfoPanel*  mpClientConfigPanel;
-	wxMenu*           mpViewMenu;
-	
-	DECLARE_EVENT_TABLE()
-};	
 
 #endif /* _MAIN_H */
