@@ -2,8 +2,8 @@
  *            GeneralPanel.cc
  *
  *  Mon Apr  4 20:36:25 2005
- *  Copyright  2005  Chris Wilson
- *  Email <boxi_GeneralPanel.cc@qwirx.com>
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -26,11 +26,13 @@
  */
 
 #include "main.h"
-#include "GeneralPanel.h"
-#include "SetupWizard.h"
-#include "ClientInfoPanel.h"
+
 #include "BackupPanel.h"
+#include "ClientInfoPanel.h"
+#include "GeneralPanel.h"
+#include "MainFrame.h"
 #include "RestorePanel.h"
+#include "SetupWizard.h"
 
 BEGIN_EVENT_TABLE(GeneralPanel, wxPanel)
 	EVT_BUTTON(ID_General_Backup_Button, GeneralPanel::OnBackupButtonClick)
@@ -154,8 +156,12 @@ void GeneralPanel::OnRestoreButtonClick(wxCommandEvent& event)
 
 void GeneralPanel::OnSetupWizardButtonClick(wxCommandEvent& event)
 {
-	SetupWizard wizard(mpConfig, this, wxID_ANY);
-	wizard.Run();
+	// SetupWizard wizard(mpConfig, this);
+	// wizard.Run();
+	SetupWizard* pWizard = new SetupWizard(mpConfig, this);
+	pWizard->Run();
+	pWizard->Destroy();
+	// delete pWizard;
 }
 
 void GeneralPanel::OnSetupAdvancedButtonClick(wxCommandEvent& event)
