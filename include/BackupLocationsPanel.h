@@ -34,7 +34,9 @@
 
 class BackupTreeNode;
 class BackupTreeCtrl;
+class ClientConfig;
 class LocationsPanel;
+class MainFrame;
 
 class BackupLocationsPanel : public wxPanel, public ConfigChangeListener 
 {
