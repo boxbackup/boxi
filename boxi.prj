@@ -193,7 +193,7 @@ compiler.options.optimize.buttons=1 0 0 0
 compiler.options.other.buttons=1 0 
 compiler.options.other.c.flags=-DPLATFORM_$(shell uname -s | tr a-z A-Z) 
 compiler.options.other.l.flags=
-compiler.options.other.l.libs=../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o -lcrypto -lssl -lz
+compiler.options.other.l.libs=../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o -lz
 
 project.src.paths=/home/chris/project/boxi/boxbackup-0.09-orig/release/lib/common/common.a \
 /home/chris/project/boxi/boxbackup-0.09-orig/release/lib/backupclient/backupclient.a
