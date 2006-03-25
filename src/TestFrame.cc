@@ -39,7 +39,7 @@ DEFINE_EVENT_TYPE (TEST_FINISHED_EVENT)
 
 bool TestFrame::mTestsInProgress = FALSE;
 
-class TestCase : private wxThread
+class TestCase : private wxThread // , public wxEvtHandler
 {
 	private:
 	TestFrame* mpTestFrame;
@@ -48,17 +48,19 @@ class TestCase : private wxThread
 	virtual void RunTest() = 0;
 
 	protected:
+	MainFrame*  OpenMainFrame();
+	wxTextCtrl* GetTextCtrl  (wxWindow* pWindow);
+	TestFrame*  GetTestFrame () { return mpTestFrame; }
 	bool WaitForMain();
-	MainFrame* OpenMainFrame();
 	void CloseWindow(wxWindow* pWindow);
 	void ClickButton(wxWindow* pWindow);
 	void ClickRadio (wxWindow* pWindow);
-	wxTextCtrl* GetTextCtrl(wxWindow* pWindow);
-	TestFrame*  GetTestFrame() { return mpTestFrame; }
 	
 	public:
 	TestCase(TestFrame* pTestFrame) 
 	: wxThread(wxTHREAD_DETACHED), mpTestFrame(pTestFrame) { }
+	virtual ~TestCase() { }
+
 	void Start()
 	{
 		assert(Create() == wxTHREAD_NO_ERROR);
@@ -126,6 +128,7 @@ void TestCase::ClickButton(wxWindow* pWindow)
 	wxCommandEvent click(wxEVT_COMMAND_BUTTON_CLICKED, pButton->GetId());
 	click.SetEventObject(pButton);
 	pButton->AddPendingEvent(click);
+
 	assert(WaitForMain());
 }
 
@@ -308,6 +311,10 @@ class TestCanRunThroughSetupWizardCreatingEverything : public TestCase
 		assert(wxRemoveFile(existingfile.GetFullPath()));
 		assert(tempdir.Rmdir());
 
+		MessageBoxSetResponse(BM_SETUP_WIZARD_FILE_NOT_FOUND, wxOK);
+		ClickButton(pForwardButton);
+		assert(pWizard->GetCurrentPageId() == BWP_PRIVATE_KEY);
+
 		CloseWindow(pWizard);
 		
 		MessageBoxSetResponse(BM_MAIN_FRAME_CONFIG_CHANGED_ASK_TO_SAVE,
@@ -330,17 +337,13 @@ END_EVENT_TABLE()
 TestFrame::TestFrame(const wxString PathToExecutable)
 :	wxFrame(NULL, wxID_ANY, wxT("Boxi (test mode)")),
 	mPathToExecutable(PathToExecutable),
-	mTestThreadIsWaiting(FALSE),
+	mTestThreadIsWaiting(false),
 	mMainThreadIsIdle(mMutex),
 	mpMainFrame(NULL)
 {
 	mTests.push_back(new TestCanOpenAndCloseMainWindow(this));
 	mTests.push_back(new TestCanOpenAndCloseSetupWizard(this));
 	mTests.push_back(new TestCanRunThroughSetupWizardCreatingEverything(this));
-
-	mipCurrentTest = mTests.begin();
-	mTestsInProgress = TRUE;
-	(*mipCurrentTest)->Start();
 }
 
 void TestFrame::OnIdle(wxIdleEvent& rEvent)
@@ -350,8 +353,34 @@ void TestFrame::OnIdle(wxIdleEvent& rEvent)
 	if (mTestThreadIsWaiting)
 	{
 		mMainThreadIsIdle.Signal();
-		mTestThreadIsWaiting = FALSE;
+		return;
 	}
+	
+	if (mTestsInProgress)
+	{
+		return;
+	}
+	
+	mTestsInProgress = true;
+	mipCurrentTest = mTests.begin();
+	(*mipCurrentTest)->Start();
+}
+
+void TestFrame::WaitForIdle()
+{
+	wxMutexLocker lock(mMutex);
+	
+	assert(!mTestThreadIsWaiting);
+	mTestThreadIsWaiting = TRUE;
+
+	// Disabled temporarily - may cause lockups with 
+	// wxProgressDialog calling wxYield()?
+	// ::wxWakeUpIdle();
+
+	mMainThreadIsIdle.Wait();
+	
+	assert(mTestThreadIsWaiting);
+	mTestThreadIsWaiting = FALSE;
 }
 
 class CreateWindowCommandData : wxClientData
@@ -430,18 +459,8 @@ void TestThread::Entry2()
 }
 */
 
-void TestFrame::WaitForIdle()
-{
-	wxMutexLocker lock(mMutex);
-	assert(!mTestThreadIsWaiting);
-	
-	mTestThreadIsWaiting = TRUE;
-	::wxWakeUpIdle();
-	mMainThreadIsIdle.Wait();
-}
-
-static int expMessageId   = 0;
-static int expMessageResp = -1;
+static message_t expMessageId   = BM_UNKNOWN;
+static int       expMessageResp = -1;
 
 int MessageBoxHarness
 (
@@ -467,7 +486,7 @@ int MessageBoxHarness
 	assert (messageId == expMessageId);
 	int response = expMessageResp;
 	
-	expMessageId = 0;
+	expMessageId   = BM_UNKNOWN;
 	expMessageResp = -1;
 	
 	return response;
