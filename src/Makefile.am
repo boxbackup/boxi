@@ -64,5 +64,5 @@ boxi_LDFLAGS =
 
 boxi_LDADD =  \
 	$(WX_LIBS)\
-	../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o -lcrypto -lssl -lz
+	../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o -lz
 
