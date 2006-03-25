@@ -72,32 +72,36 @@ class SetupWizardPage : public wxWizardPageSimple
 		mpText->SetPage(rNewText);
 	}
 
-	void ShowError(const wxString& rErrorMsg, message_t MessageId)
+	void ShowError   (const wxString& rErrorMsg, message_t MessageId);
+	void ShowSslError(const wxString& rMsgBase,  message_t MessageId);
+};
+
+void SetupWizardPage::ShowError(const wxString& rErrorMsg, message_t MessageId)
+{
+	MessageBoxHarness(MessageId, rErrorMsg, 
+		wxT("Boxi Error"), wxICON_ERROR | wxOK, this);
+}
+
+void SetupWizardPage::ShowSslError(const wxString& rMsgBase, 
+	message_t MessageId)
+{
+	unsigned long err = ERR_get_error();
+	wxString sslErrorMsg(ERR_error_string(err, NULL), wxConvLibc);
+	
+	wxString msg = rMsgBase;
+	
+	const char* reason = ERR_reason_error_string(err);
+	if (reason != NULL)
 	{
-		MessageBoxHarness(MessageId, rErrorMsg, 
-			wxT("Boxi Error"), wxICON_ERROR | wxOK, this);
+		msg.Append(wxT(": "));
+		msg.Append(wxString(reason, wxConvLibc));
 	}
 	
-	void ShowSslError(const wxString& msgBase, message_t MessageId)
-	{
-		unsigned long err = ERR_get_error();
-		wxString sslErrorMsg(ERR_error_string(err, NULL), wxConvLibc);
-		
-		wxString msg = msgBase;
-		
-		const char* reason = ERR_reason_error_string(err);
-		if (reason != NULL)
-		{
-			msg.Append(wxT(": "));
-			msg.Append(wxString(reason, wxConvLibc));
-		}
-		
-		msg.Append(wxT("\n\nThe full error code is: "));
-		msg.Append(wxString(ERR_error_string(err, NULL), wxConvLibc));
-		
-		ShowError(msg, MessageId);
-	}	
-};
+	msg.Append(wxT("\n\nThe full error code is: "));
+	msg.Append(wxString(ERR_error_string(err, NULL), wxConvLibc));
+	
+	ShowError(msg, MessageId);
+}	
 
 class IntroPage : public SetupWizardPage
 {
@@ -194,12 +198,13 @@ class AccountPage : public SetupWizardPage
 
 static int numChecked = 0;
 
-static void MySslProgressCallback(int p, int n, void* cbinfo)
+void MySslProgressCallback(int p, int n, void* cbinfo)
 {
 	wxProgressDialog* pProgress = (wxProgressDialog *)cbinfo;
 	wxString msg;
 	msg.Printf(wxT("Generating your new private key (2048 bits).\n"
-			"This may take a minute.\n\n(%d potential primes checked)"),
+			"This may take a minute.\n\n"
+			"(%d potential primes checked)"),
 			++numChecked);
 	pProgress->Update(0, msg);
 }
@@ -216,52 +221,7 @@ class FileSavingPage : public SetupWizardPage
 	public:
 	FileSavingPage(ClientConfig *pConfig, wxWizard* pParent, 
 		const wxString& rDescriptionText, const wxString& rFileDesc,
-		const wxString& rFileNamePattern, StringProperty& rProperty)
- 	: SetupWizardPage(pConfig, pParent, rDescriptionText),
-	  mrProperty(rProperty)
-	{
-		wxString label;
-		label.Printf(wxT("Existing %s"), rFileDesc.c_str());
-		mpExistingRadio = new wxRadioButton(this, 
-			ID_Setup_Wizard_Existing_File_Radio, label,
-			wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-		mpSizer->Add(mpExistingRadio, 0, wxGROW | wxTOP, 8);
-
-		label.Printf(wxT("New %s"), rFileDesc.c_str());
-		mpNewRadio = new wxRadioButton(this, 
-			ID_Setup_Wizard_New_File_Radio, label, 
-			wxDefaultPosition, wxDefaultSize);
-		mpSizer->Add(mpNewRadio, 0, wxGROW | wxTOP, 8);
-		
-		wxSizer* pLocationSizer = new wxBoxSizer(wxHORIZONTAL);
-		mpSizer->Add(pLocationSizer, 0, wxGROW | wxTOP, 8);
-		
-		label.Printf(wxT("%s file location:"), rFileDesc.c_str());
-		wxStaticText* pLabel = new wxStaticText(this, wxID_ANY, label);
-		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
-		
-		mpBoundCtrl = new BoundStringCtrl(this, 
-			ID_Setup_Wizard_File_Name_Text, rProperty);
-		pLocationSizer->Add(mpBoundCtrl, 1, 
-			wxALIGN_CENTER_VERTICAL | wxLEFT, 8);
-		
-		wxString fileSpec;
-		fileSpec.Printf(wxT("%s (%s)|%s"), rFileDesc.c_str(), 
-			rFileNamePattern.c_str(), rFileNamePattern.c_str());
-			
-		wxString openDialogTitle;
-		openDialogTitle.Printf(wxT("Open %s File"), rFileDesc.c_str());
-		
-		mpFileSelButton = new FileSelButton(this, wxID_ANY, 
-			mpBoundCtrl, fileSpec, rFileNamePattern, 
-			openDialogTitle);
-		pLocationSizer->Add(mpFileSelButton, 0, wxGROW | wxLEFT, 8);
-		
-		Connect(wxID_ANY, wxEVT_WIZARD_PAGE_CHANGING,
-			wxWizardEventHandler(FileSavingPage::OnWizardPageChanging));
-
-		rProperty.GetInto(mFileNameString);
-	}
+		const wxString& rFileNamePattern, StringProperty& rProperty);
 	
 	const wxString&   GetFileNameString() { return mFileNameString; }
 	const wxFileName& GetFileName()       { return mFileName; }
@@ -276,113 +236,13 @@ class FileSavingPage : public SetupWizardPage
 	wxString   mFileNameString;
 	wxFileName mFileName;
 	
-	void OnWizardPageChanging(wxWizardEvent& event)
-	{
-		// always allow moving backwards
-		if (!event.GetDirection())
-			return;
+	void OnWizardPageChanging(wxWizardEvent& event);
 
-		bool isOk = FALSE;
-		
-		if (!mrProperty.GetInto(mFileNameString))
-		{
-			ShowError(wxT("You must specify a location for the file!"),
-				BM_SETUP_WIZARD_NO_FILE_NAME);
-		}
-		else if (wxFileName::DirExists(mFileNameString))
-		{
-			ShowError(wxT("The specified file is a directory."),
-				BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
-		}
-		else
-		{
-			mFileName = wxFileName(mFileNameString);
-			
-			if (mpNewRadio->GetValue())
-			{
-				isOk = CreateNewFile() && CheckExistingFile();
-			}
-			else
-			{
-				isOk = CheckExistingFile();
-			}
-		}
-		
-		if (!isOk) 
-		{
-			event.Veto();
-		}
-	}
-	
-	bool CheckExistingFile()
-	{	
-		if (!wxFileName::FileExists(mFileNameString))
-		{
-			ShowError(wxT("The specified file was not found."),
-				BM_SETUP_WIZARD_FILE_NOT_FOUND);
-			return FALSE;
-		}
-	
-		if (!wxFile::Access(mFileNameString, wxFile::read))
-		{
-			ShowError(wxT("The specified file is not readable."),
-				BM_SETUP_WIZARD_FILE_NOT_READABLE);
-			return FALSE;
-		}
-		
-		return CheckExistingFileImpl();
-	}
-	
+	bool CheckExistingFile();
 	virtual bool CheckExistingFileImpl() = 0;
 		
-	bool CreateNewFile()
-	{	
-		if (wxFileName::FileExists(mFileNameString))
-		{
-			if (! wxFile::Access(mFileNameString, wxFile::write))
-			{
-				ShowError(wxT("The specified file is not writable."),
-					BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
-				return FALSE;
-			}
-
-			int result = MessageBoxHarness(
-				BM_SETUP_WIZARD_FILE_OVERWRITE,
-				wxT(
-				"The specified file already exists!\n"
-				"\n"
-				"If you overwrite an important file, "
-				"you may lose access to the server and your backups. "
-				"Are you REALLY SURE you want to overwrite it?\n"
-				"\n"
-				"This operation CANNOT be undone!"), 
-				wxT("Boxi Warning"), wxICON_WARNING | wxYES_NO, this);
-			
-			if (result != wxYES)
-			{
-				return FALSE;
-			}			
-		}
-		else if (!wxFileName::DirExists(mFileName.GetPath()))
-		{
-			ShowError(wxT("The directory where you want to create the "
-				"file does not exist, so the file cannot be created."),
-				BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
-			return FALSE;
-		}
-		else // does not exist yet
-		{
-			if (! wxFile::Access(mFileName.GetPath(), wxFile::write))
-			{
-				ShowError(wxT("The directory where you want to create the "
-					"file is read-only, so the file cannot be created."),
-					BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
-				return FALSE;
-			}
-		}
-		
-		return CreateNewFileImpl();
-	}
+	bool CreateNewFile();
+	virtual bool CreateNewFileImpl() = 0;
 	
 	void OnRadioButtonClick(wxCommandEvent& rEvent)
 	{
@@ -395,11 +255,164 @@ class FileSavingPage : public SetupWizardPage
 			mpFileSelButton->SetFileMustExist(TRUE);
 		}
 	}
-	
-	virtual bool CreateNewFileImpl() = 0;
-	
+		
 	DECLARE_EVENT_TABLE()
 };
+
+FileSavingPage::FileSavingPage(ClientConfig *pConfig, wxWizard* pParent, 
+	const wxString& rDescriptionText, const wxString& rFileDesc,
+	const wxString& rFileNamePattern, StringProperty& rProperty)
+: SetupWizardPage(pConfig, pParent, rDescriptionText),
+  mrProperty(rProperty)
+{
+	wxString label;
+	label.Printf(wxT("Existing %s"), rFileDesc.c_str());
+	mpExistingRadio = new wxRadioButton(this, 
+		ID_Setup_Wizard_Existing_File_Radio, label,
+		wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	mpSizer->Add(mpExistingRadio, 0, wxGROW | wxTOP, 8);
+
+	label.Printf(wxT("New %s"), rFileDesc.c_str());
+	mpNewRadio = new wxRadioButton(this, 
+		ID_Setup_Wizard_New_File_Radio, label, 
+		wxDefaultPosition, wxDefaultSize);
+	mpSizer->Add(mpNewRadio, 0, wxGROW | wxTOP, 8);
+	
+	wxSizer* pLocationSizer = new wxBoxSizer(wxHORIZONTAL);
+	mpSizer->Add(pLocationSizer, 0, wxGROW | wxTOP, 8);
+	
+	label.Printf(wxT("%s file location:"), rFileDesc.c_str());
+	wxStaticText* pLabel = new wxStaticText(this, wxID_ANY, label);
+	pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
+	
+	mpBoundCtrl = new BoundStringCtrl(this, 
+		ID_Setup_Wizard_File_Name_Text, rProperty);
+	pLocationSizer->Add(mpBoundCtrl, 1, 
+		wxALIGN_CENTER_VERTICAL | wxLEFT, 8);
+	
+	wxString fileSpec;
+	fileSpec.Printf(wxT("%s (%s)|%s"), rFileDesc.c_str(), 
+		rFileNamePattern.c_str(), rFileNamePattern.c_str());
+		
+	wxString openDialogTitle;
+	openDialogTitle.Printf(wxT("Open %s File"), rFileDesc.c_str());
+	
+	mpFileSelButton = new FileSelButton(this, wxID_ANY, 
+		mpBoundCtrl, fileSpec, rFileNamePattern, 
+		openDialogTitle);
+	pLocationSizer->Add(mpFileSelButton, 0, wxGROW | wxLEFT, 8);
+	
+	Connect(wxID_ANY, wxEVT_WIZARD_PAGE_CHANGING,
+		wxWizardEventHandler(FileSavingPage::OnWizardPageChanging));
+
+	rProperty.GetInto(mFileNameString);
+}
+
+void FileSavingPage::OnWizardPageChanging(wxWizardEvent& event)
+{
+	// always allow moving backwards
+	if (!event.GetDirection())
+		return;
+
+	bool isOk = FALSE;
+	
+	if (!mrProperty.GetInto(mFileNameString))
+	{
+		ShowError(wxT("You must specify a location for the file!"),
+			BM_SETUP_WIZARD_NO_FILE_NAME);
+	}
+	else if (wxFileName::DirExists(mFileNameString))
+	{
+		ShowError(wxT("The specified file is a directory."),
+			BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
+	}
+	else
+	{
+		mFileName = wxFileName(mFileNameString);
+		
+		if (mpNewRadio->GetValue())
+		{
+			isOk = CreateNewFile() && CheckExistingFile();
+		}
+		else
+		{
+			isOk = CheckExistingFile();
+		}
+	}
+	
+	if (!isOk) 
+	{
+		event.Veto();
+	}
+}
+
+bool FileSavingPage::CheckExistingFile()
+{	
+	if (!wxFileName::FileExists(mFileNameString))
+	{
+		ShowError(wxT("The specified file was not found."),
+			BM_SETUP_WIZARD_FILE_NOT_FOUND);
+		return FALSE;
+	}
+
+	if (!wxFile::Access(mFileNameString, wxFile::read))
+	{
+		ShowError(wxT("The specified file is not readable."),
+			BM_SETUP_WIZARD_FILE_NOT_READABLE);
+		return FALSE;
+	}
+	
+	return CheckExistingFileImpl();
+}
+
+bool FileSavingPage::CreateNewFile()
+{	
+	if (wxFileName::FileExists(mFileNameString))
+	{
+		if (! wxFile::Access(mFileNameString, wxFile::write))
+		{
+			ShowError(wxT("The specified file is not writable."),
+				BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
+			return FALSE;
+		}
+
+		int result = MessageBoxHarness(
+			BM_SETUP_WIZARD_FILE_OVERWRITE,
+			wxT(
+			"The specified file already exists!\n"
+			"\n"
+			"If you overwrite an important file, "
+			"you may lose access to the server and your backups. "
+			"Are you REALLY SURE you want to overwrite it?\n"
+			"\n"
+			"This operation CANNOT be undone!"), 
+			wxT("Boxi Warning"), wxICON_WARNING | wxYES_NO, this);
+		
+		if (result != wxYES)
+		{
+			return FALSE;
+		}			
+	}
+	else if (!wxFileName::DirExists(mFileName.GetPath()))
+	{
+		ShowError(wxT("The directory where you want to create the "
+			"file does not exist, so the file cannot be created."),
+			BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
+		return FALSE;
+	}
+	else // does not exist yet
+	{
+		if (! wxFile::Access(mFileName.GetPath(), wxFile::write))
+		{
+			ShowError(wxT("The directory where you want to create the "
+				"file is read-only, so the file cannot be created."),
+				BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
+			return FALSE;
+		}
+	}
+	
+	return CreateNewFileImpl();
+}
 
 BEGIN_EVENT_TABLE(FileSavingPage, wxWizardPageSimple)
 	EVT_RADIOBUTTON(ID_Setup_Wizard_New_File_Radio, 
@@ -520,36 +533,32 @@ class PrivateKeyPage : public FileSavingPage
 			return FALSE;
 		}
 
-		/*		
-		BN_GENCB sslProgressCallbackInfo;
-		BN_GENCB_set(&sslProgressCallbackInfo, MySslProgressCallback, NULL);
-		*/
-		
 		wxProgressDialog progress(wxT("Boxi: Generating Private Key"),
 			wxT("Generating your new private key (2048 bits).\n"
 			"This may take a minute.\n\n(0 potential primes checked)"), 2, this, 
 			wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
 		numChecked = 0;
 		
-		RSA* pRSA2 = RSA_generate_key(2048, 0x10001, MySslProgressCallback, 
-			&progress);
+		RSA* pRSA2 = RSA_generate_key(2048, 0x10001, 
+			MySslProgressCallback, &progress);
+		
 		if (!pRSA2)
 		{
 			ShowSslError(wxT("Failed to generate an RSA key"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
-		
+
 		progress.Hide();
 		
-		if (!PEM_write_bio_RSAPrivateKey(pKeyOutBio, pRSA2, NULL, NULL, 0,
-                NULL, NULL))
+		if (!PEM_write_bio_RSAPrivateKey(pKeyOutBio, pRSA2, NULL, 
+			NULL, 0, NULL, NULL))
 		{
 			ShowSslError(wxT("Failed to write the key "
 				"to the specified file"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
-		}			
+		}
 		
 		return TRUE;
 	}
@@ -986,7 +995,9 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 			wxALIGN_CENTER_VERTICAL | wxGROW, 0);
 			
 		FileSelButton* pFileSel = new FileSelButton(this, wxID_ANY, 
-			mpCertFileCtrl, wxT("Certificate files (*-cert.pem)|*-cert.pem"));
+			mpCertFileCtrl, 
+			wxT("Certificate files (*-cert.pem)|*-cert.pem"),
+			wxT("-cert.pem"));
 		pLocationSizer->Add(pFileSel, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
 				
 		pLabel = new wxStaticText(this, wxID_ANY, wxT("CA file:"));
@@ -998,7 +1009,8 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 			wxALIGN_CENTER_VERTICAL | wxGROW, 0);
 		
 		pFileSel = new FileSelButton(this, wxID_ANY, mpCAFileCtrl, 
-			wxT("CA files (serverCA.pem)|serverCA.pem"));
+			wxT("CA files (serverCA.pem)|serverCA.pem"),
+			wxT("serverCA.pem"));
 		pLocationSizer->Add(pFileSel, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
 
 		Connect(wxID_ANY,wxEVT_WIZARD_PAGE_CHANGING,
