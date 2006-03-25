@@ -60,13 +60,32 @@ AM_PATH_WXCONFIG(2.3.2, wxWin=1)
 
 
 dnl Checks for libraries.
-AX_CHECK_BDB_V1
+
+## Check for zlib
+AC_CHECK_LIB([z], [zlibVersion],, [AC_MSG_ERROR([[cannot find zlib]])])
+
+## Check for Berkely DB. Restrict to certain versions
+AX_PATH_BDB(, [
+  LIBS="$BDB_LIBS $LIBS"
+  LDFLAGS="$BDB_LDFLAGS $LDFLAGS"
+  CPPFLAGS="$CPPFLAGS $BDB_CPPFLAGS"
+
+  AX_COMPARE_VERSION([$BDB_VERSION],[ge],[4.1],,
+    [AX_COMPARE_VERSION([$BDB_VERSION],[lt],[2],,
+      [AC_MSG_ERROR([[only Berkely DB versions 1.x or at least 4.1 are currently supported]])]
+      )]
+  )
+  AX_SPLIT_VERSION([BDB_VERSION], [$BDB_VERSION])
+])
+
+# Check for OpenSSL
+AX_CHECK_SSL(, [AC_MSG_ERROR([[OpenSSL is not installed but is required]])])
 
 # extract boxbackup in release build
 if ! (
 	cd boxbackup || exit 1
-	# PATCH IN RELEASE
-	./configure || exit 1
+	./bootstrap || exit 1 # PATCH IN RELEASE
+	./configure $ax_check_ssl_headers $ax_check_ssl_lib || exit 1
 	mv Makefile Makefile.in || exit 1
 ); then
 	echo "Failed to configure Box Backup, aborting!"
