@@ -215,8 +215,9 @@ class ParamPanel : public wxPanel {
 		const wxString& name = wxT("ParamPanel"));
 	
 	BoundStringCtrl* AddParam(const wxChar * pLabel, StringProperty& rProp, 
-		int ID,	bool FileSel, bool DirSel, const wxChar* pFileSpec,
-		const wxChar* pFileExtDefault);
+		int ID,	bool FileSel, bool DirSel, 
+		const wxChar* pFileSpec = NULL,
+		const wxChar* pFileExtDefault = NULL);
 	BoundIntCtrl*    AddParam(const wxChar * pLabel, IntProperty&    rProp, 
 		const char *format, int ID);
 	BoundBoolCtrl*   AddParam(const wxChar * pLabel, BoolProperty&   rProp, 
