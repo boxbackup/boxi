@@ -102,7 +102,7 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 
 	mpStoreHostnameCtrl = pBasicPanel->AddParam(
 		wxT("Store Host:"), pConfig->StoreHostname, 
-		wxID_ANY, FALSE, FALSE, NULL);
+		wxID_ANY, FALSE, FALSE);
 
 	mpAccountNumberCtrl = pBasicPanel->AddParam(
 		wxT("Account Number:"), pConfig->AccountNumber, 
@@ -112,31 +112,35 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 		wxT("Keys File:"), pConfig->KeysFile, 
 		wxID_ANY, TRUE, FALSE, 
 		wxT("Encryption key files (*-FileEncKeys.raw)|"
-			"*-FileEncKeys.raw"));
+			"*-FileEncKeys.raw"), wxT("-FileEncKeys.raw"));
 		
 	mpCertificateFileCtrl = pBasicPanel->AddParam(
 		wxT("Certificate File:"), pConfig->CertificateFile, 
 		wxID_ANY, TRUE, FALSE,
-		wxT("Certificate files (*-cert.pem)|*-cert.pem"));
+		wxT("Certificate files (*-cert.pem)|*-cert.pem"),
+		wxT("-cert.pem"));
 
 	mpPrivateKeyFileCtrl = pBasicPanel->AddParam(
 		wxT("Private Key File:"), pConfig->PrivateKeyFile, 
 		wxID_ANY, TRUE, FALSE,
-		wxT("Private key files (*-key.pem)|*-key.pem"));
+		wxT("Private key files (*-key.pem)|*-key.pem"),
+		wxT("-key.pem"));
 
 	mpTrustedCAsFileCtrl = pBasicPanel->AddParam(
 		wxT("Trusted CAs File:"), pConfig->TrustedCAsFile, 
 		wxID_ANY, TRUE, FALSE,
-		wxT("Server CA certificate (serverCA.pem)|serverCA.pem"));
+		wxT("Server CA certificate (serverCA.pem)|serverCA.pem"),
+		wxT("serverCA.pem"));
 
 	mpDataDirectoryCtrl = pBasicPanel->AddParam(
 		wxT("Data Directory:"), pConfig->DataDirectory, 
-		wxID_ANY, FALSE, TRUE, NULL);
+		wxID_ANY, FALSE, TRUE);
 
 	mpCommandSocketCtrl = pBasicPanel->AddParam(
 		wxT("Command Socket:"), pConfig->CommandSocket, 
 		wxID_ANY, TRUE, FALSE, 
-		wxT("Command socket (bbackupd.sock)|bbackupd.sock"));
+		wxT("Command socket (bbackupd.sock)|bbackupd.sock"),
+		wxT("bbackupd.sock"));
 
 	mpExtendedLoggingCtrl = pBasicPanel->AddParam(
 		wxT("Extended Logging:"), pConfig->ExtendedLogging, 
@@ -181,7 +185,8 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 
 	mpPidFileCtrl = pAdvancedPanel->AddParam(wxT("Process ID File:"), 
 		pConfig->PidFile, wxID_ANY, TRUE, FALSE,
-		wxString(wxT("Client PID files (bbackupd.pid)|bbackupd.pid")));
+		wxT("Client PID files (bbackupd.pid)|bbackupd.pid"),
+		wxT("bbackupd.pid"));
 	
 	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
 	pTabSizer->Add(pActionCtrlSizer, 0, 
