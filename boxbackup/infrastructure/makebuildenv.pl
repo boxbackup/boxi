@@ -38,6 +38,13 @@ unless(-d 'local')
 # flags about the environment
 my %env_flags;
 
+my $windows_include_path = "-I../../lib/win32 ";
+if ($target_os ne "mingw32" && $target_os ne "winnt")
+{
+	$windows_include_path = "";
+	$env_flags{'IGNORE_lib/win32'} = 1;
+}
+
 # print "Flag: $_\n" for(keys %env_flags);
 
 # seed autogen code
@@ -51,6 +58,7 @@ while(<FINDAUTOGEN>)
 	my $dir = $1;
 	open FL,$file or die "Can't open $_ for reading";
 	my %vars;
+	$vars{PERL} = "/usr/bin/perl";
 	my $do_cmds = 0;
 	while(<FL>)
 	{
@@ -343,8 +351,8 @@ for my $mod (@modules, $implicit_dep)
 {
 	opendir DIR,$mod;
 	for my $h (grep /\.h\Z/i, readdir DIR)
-	{	
-		next if /\A\._/;	# Temp Mac OS Resource hack
+	{
+		next if $h =~ /\A\./;		# Ignore Mac resource forks, autosaves, etc
 
 		open FL,"$mod/$h" or die "can't open $mod/$h";
 		my $f;
@@ -447,7 +455,7 @@ __E
 	
 
 	# make include path
-	my $include_paths = "-I../../lib/win32 " .
+	my $include_paths = $windows_include_path .
 		join(' ',map {'-I../../'.$_} @all_deps_for_module);
 
 	# is target a library?
@@ -490,6 +498,7 @@ __E
 CXX = g++
 AR = ar
 RANLIB = ranlib
+PERL = "/usr/bin/perl"
 .ifdef RELEASE
 CXXFLAGS = -DNDEBUG $release_flags -Wall $include_paths $extra_platform_defines -DBOX_VERSION="\\"$product_version\\""
 OUTBASE = ../../release

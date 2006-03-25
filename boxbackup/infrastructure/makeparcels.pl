@@ -4,13 +4,6 @@ use strict;
 use lib 'infrastructure';
 use BoxPlatform;
 
-my $os_suffix = '';
-if($build_os eq 'OpenBSD')
-{
-	$os_suffix = `uname -r`;
-	$os_suffix =~ tr/0-9//cd;
-}
-
 my @parcels;
 my %parcel_contents;
 
@@ -47,9 +40,10 @@ open PARCELS,"parcels.txt" or die "Can't open parcels file";
 				{
 					last if m'\AEND-ONLY';
 				}
-				next;
 			}
+			next;
 		}
+		next if (m'\AEND-ONLY');
 		
 		# new parcel, or a new parcel definition?
 		if(m/\A\s+(.+)\Z/)
@@ -86,17 +80,12 @@ __E
 
 print MAKE "all:\t",join(' ',map {parcel_target($_)} @parcels),"\n\n";
 
-print MAKE "clean-parcels:\n";
+print MAKE "clean:\n";
 for my $parcel (@parcels)
 {
 	print MAKE "\trm -rf ",parcel_dir($parcel),"\n";
 	print MAKE "\trm -f ",parcel_target($parcel),"\n";
 }
-
-print MAKE "\n";
-print MAKE "clean:\tclean-parcels\n";
-print MAKE "\tfind . -name '*.o' | xargs -r rm\n";
-print MAKE "\tfind . -name '*.a' | xargs -r rm\n";
 print MAKE "\n";
 
 print MAKE "test:\trelease/common/test\n\nrelease/common/test:\n\t./runtest.pl ALL release\n\n";
@@ -105,56 +94,47 @@ my $release_flag = BoxPlatform::make_flag('RELEASE');
 
 for my $parcel (@parcels)
 {
- 	my @parcel_deps;
- 
- 	for (@{$parcel_contents{$parcel}})
- 	{
- 		my ($type,$name) = split /\s+/;
- 		if($type eq 'bin')
- 		{
- 			push @parcel_deps, $name.$platform_exe_ext;
- 			print MAKE "$name:\n" .
- 				"\t(cd bin/$name; $make_command $release_flag)\n\n";
- 		}
- 		elsif ($type eq 'script')
- 		{
- 			push @parcel_deps, $name;
- 		}
- 	}
- 
 	my $target = parcel_target($parcel);
-	print MAKE $target,": @parcel_deps\n";
-  		
-	my $dir = parcel_dir($parcel);
-	print MAKE "\tmkdir -p $dir\n";
+	print MAKE $target,":\n";
 	
-	open SCRIPT,">parcels/scripts/install-$parcel" 
-		or die "Can't open installer script for $parcel for writing";
-
+	my $dir = parcel_dir($parcel);
+	print MAKE "\ttest -d $dir || mkdir $dir\n";
+	
+	open SCRIPT,">parcels/scripts/install-$parcel" or die "Can't open installer script for $parcel for writing";
 	print SCRIPT "#!/bin/sh\n\n";
 	
 	for(@{$parcel_contents{$parcel}})
 	{
 		my ($type,$name) = split /\s+/;
+		my $optional = '';
+
+		if ($type eq 'optional')
+		{
+			($optional,$type,$name) = split /\s+/;
+		}
 		
 		if($type eq 'bin')
 		{
 			my $exeext = $platform_exe_ext;
 			print MAKE "\t(cd bin/$name; \$(MAKE) $release_flag)\n";
 			print MAKE "\tcp release/bin/$name/$name$exeext $dir\n";
-			$name .= $exeext; # for install
 		}
 		elsif ($type eq 'script')
 		{
-			print MAKE "\tcp $name $dir\n";
+			if ($optional)
+			{
+				print MAKE "\ttest -r $name && cp $name $dir\n";
+			}
+			else
+			{
+				print MAKE "\tcp $name $dir\n";
+			}
+			# remove path from script name
+			$name =~ m~/([^/]+)\Z~;
+			$name = $1;
 		}
 
-		# remove path from file name, for install
-		$name =~ m~/([^/]+)\Z~;
-		$name = $1;
-
-		print SCRIPT "install $name ".
-			"\$DESTDIR\${PREFIX:-$install_into_dir}\n";
+		print SCRIPT "install $name $install_into_dir\n";
 	}
 	
 	close SCRIPT;
@@ -168,7 +148,7 @@ for my $parcel (@parcels)
 	print MAKE "\n";
 	
 	print MAKE "install-$parcel:\n";
-	print MAKE "\t(cd $dir; ./install-$parcel \$(DESTDIR))\n\n";
+	print MAKE "\t(cd $dir; ./install-$parcel)\n\n";
 }
 
 print MAKE <<__E;
@@ -196,7 +176,7 @@ close INSTALLMSG;
 
 sub parcel_root
 {
-	$product_name.'-'.$product_version.'-'.$_[0].'-'.$build_os.$os_suffix
+	$product_name.'-'.$product_version.'-'.$_[0].'-'.$target_os
 }
 
 sub parcel_dir
