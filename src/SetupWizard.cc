@@ -367,6 +367,14 @@ bool FileSavingPage::CheckExistingFile()
 
 bool FileSavingPage::CreateNewFile()
 {	
+	if (!wxFileName::DirExists(mFileName.GetPath()))
+	{
+		ShowError(wxT("The directory where you want to create the "
+			"file does not exist, so the file cannot be created."),
+			BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
+		return FALSE;
+	}
+	
 	if (wxFileName::FileExists(mFileNameString))
 	{
 		if (! wxFile::Access(mFileNameString, wxFile::write))
@@ -392,13 +400,6 @@ bool FileSavingPage::CreateNewFile()
 		{
 			return FALSE;
 		}			
-	}
-	else if (!wxFileName::DirExists(mFileName.GetPath()))
-	{
-		ShowError(wxT("The directory where you want to create the "
-			"file does not exist, so the file cannot be created."),
-			BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
-		return FALSE;
 	}
 	else // does not exist yet
 	{
@@ -535,7 +536,8 @@ class PrivateKeyPage : public FileSavingPage
 
 		wxProgressDialog progress(wxT("Boxi: Generating Private Key"),
 			wxT("Generating your new private key (2048 bits).\n"
-			"This may take a minute.\n\n(0 potential primes checked)"), 2, this, 
+			"This may take a minute.\n\n"
+			"(0 potential primes checked)"), 2, this, 
 			wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
 		numChecked = 0;
 		
@@ -1157,12 +1159,14 @@ class CertExistsPage : public SetupWizardPage
 		mpCertFilePage   (pCertFilePage)
 
 	{
-		mpExistingRadio = new wxRadioButton(this, wxID_ANY, 
+		mpExistingRadio = new wxRadioButton(this, 
+			ID_Setup_Wizard_Existing_File_Radio, 
 			wxT("Existing Certificate"),
 			wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
 		mpSizer->Add(mpExistingRadio, 0, wxGROW | wxTOP, 8);
 
-		mpNewRadio = new wxRadioButton(this, wxID_ANY, 
+		mpNewRadio = new wxRadioButton(this, 
+			ID_Setup_Wizard_New_File_Radio, 
 			wxT("New Certificate Request"),
 			wxDefaultPosition, wxDefaultSize);
 		mpSizer->Add(mpNewRadio, 0, wxGROW | wxTOP, 8);
@@ -1414,3 +1418,19 @@ SetupWizardPage_id_t SetupWizard::GetCurrentPageId()
 	SetupWizardPage* pPage = (SetupWizardPage*)GetCurrentPage();
 	return pPage->GetPageId();
 }
+
+/*
+void SetupWizard::RunModeless()
+{
+	wxCHECK_MSG( mpIntroPage, false, wxT("can't run empty wizard") );
+	
+	// This cannot be done sooner, because user can change layout options
+	// up to this moment
+	FinishLayout();
+	
+	// can't return false here because there is no old page
+	(void)ShowPage(mpIntroPage, true / * forward * /);
+
+	return Show() == wxID_OK;
+}
+*/
