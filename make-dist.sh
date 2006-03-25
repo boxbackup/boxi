@@ -26,7 +26,7 @@ diff -Nru --exclude=CVS boxbackup-0.09 boxbackup > boxbackup.patch \
 && abort "Failed to diff between BoxBackup 0.09 and CVS version"
 
 perl -i -pe '
-	s|# PATCH IN RELEASE|patch -p1 < ../boxbackup.patch|;
+	s|.*# PATCH IN RELEASE|patch -p1 < ../boxbackup.patch|;
 	s|# extract boxbackup in release build|rm -rf boxbackup\ntar xzvf boxbackup-0.09.tgz\nmv boxbackup-0.09 boxbackup|;
 ' configure.in || abort "Failed to patch configure.in"
 
