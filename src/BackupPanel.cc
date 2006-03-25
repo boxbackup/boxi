@@ -34,6 +34,7 @@
 #include "BackupProgressPanel.h"
 #include "BackupLocationsPanel.h"
 #include "ClientInfoPanel.h"
+#include "MainFrame.h"
 
 BackupPanel::BackupPanel
 (
