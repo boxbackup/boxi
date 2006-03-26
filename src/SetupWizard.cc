@@ -225,11 +225,16 @@ class FileSavingPage : public SetupWizardPage
 	
 	const wxString&   GetFileNameString() { return mFileNameString; }
 	const wxFileName& GetFileName()       { return mFileName; }
+
+	// Conveniently set the file name to a string value.
+	// This is only called when setting up default values,
+	// so it resets the dirty flag to false afterwards.
 	void SetFileName(const wxString& rFileName)
 	{
 		mFileNameString = rFileName;
 		mFileName = wxFileName(rFileName);
 		mpBoundCtrl->SetValue(rFileName);
+		mTextValueIsDirty = false;
 	}
 	
 	private:
@@ -255,15 +260,32 @@ class FileSavingPage : public SetupWizardPage
 			mpFileSelButton->SetFileMustExist(TRUE);
 		}
 	}
-		
+
+	bool mTextValueIsDirty;
+
+	virtual void OnTextBoxChange(wxCommandEvent& rEvent) 
+	{
+		mTextValueIsDirty = true;
+	}
+	
 	DECLARE_EVENT_TABLE()
 };
+
+BEGIN_EVENT_TABLE(FileSavingPage, wxWizardPageSimple)
+	EVT_RADIOBUTTON(ID_Setup_Wizard_New_File_Radio, 
+		FileSavingPage::OnRadioButtonClick)
+	EVT_RADIOBUTTON(ID_Setup_Wizard_Existing_File_Radio, 
+		FileSavingPage::OnRadioButtonClick)
+	EVT_TEXT(ID_Setup_Wizard_File_Name_Text,
+		FileSavingPage::OnTextBoxChange)
+END_EVENT_TABLE()
 
 FileSavingPage::FileSavingPage(ClientConfig *pConfig, wxWizard* pParent, 
 	const wxString& rDescriptionText, const wxString& rFileDesc,
 	const wxString& rFileNamePattern, StringProperty& rProperty)
 : SetupWizardPage(pConfig, pParent, rDescriptionText),
-  mrProperty(rProperty)
+  mrProperty(rProperty),
+  mTextValueIsDirty(false)
 {
 	wxString label;
 	label.Printf(wxT("Existing %s"), rFileDesc.c_str());
@@ -312,7 +334,18 @@ void FileSavingPage::OnWizardPageChanging(wxWizardEvent& event)
 {
 	// always allow moving backwards
 	if (!event.GetDirection())
+	{
+		// If the text value is not dirty, erase the associated 
+		// property. This allows us to insert a calculated value
+		// when the panel is shown, reset the dirty flag, and if
+		// the user doesn't touch it, but goes back instead, we 
+		// can remove it and unset the property.
+		if (!mTextValueIsDirty)
+		{
+			mrProperty.Clear();
+		}
 		return;
+	}
 
 	bool isOk = FALSE;
 	
@@ -414,13 +447,6 @@ bool FileSavingPage::CreateNewFile()
 	
 	return CreateNewFileImpl();
 }
-
-BEGIN_EVENT_TABLE(FileSavingPage, wxWizardPageSimple)
-	EVT_RADIOBUTTON(ID_Setup_Wizard_New_File_Radio, 
-		FileSavingPage::OnRadioButtonClick)
-	EVT_RADIOBUTTON(ID_Setup_Wizard_Existing_File_Radio, 
-		FileSavingPage::OnRadioButtonClick)
-END_EVENT_TABLE()
 
 class PrivateKeyPage : public FileSavingPage
 {
@@ -568,7 +594,7 @@ class PrivateKeyPage : public FileSavingPage
 	virtual SetupWizardPage_id_t GetPageId() { return BWP_PRIVATE_KEY; }
 };
 
-class CertRequestPage : public FileSavingPage, ConfigChangeListener
+class CertRequestPage : public FileSavingPage
 {
 	private:
 	wxString mKeyFileName;
@@ -589,31 +615,37 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 		"and tell Boxi where the new file should be stored.</p>"
 		"</body></html>"),
 		wxT("Certificate Request"), wxT("*-csr.pem"), pConfig->CertRequestFile)
+	{ }
+	
+	~CertRequestPage() { }
+	
+	virtual bool TransferDataToWindow()
 	{
-		mpConfig->AddListener(this);
-		SetDefaultValues();
+		bool result = this->FileSavingPage::TransferDataToWindow();
+		SetDefaultValues(true);
+		return result;
 	}
-	
-	~CertRequestPage() { mpConfig->RemoveListener(this); }
-	
+
 	void SetDefaultValues()
 	{
-		mpConfig->AccountNumber.GetInto(mAccountNumber);
-		
-		if (mpConfig->CertRequestFile.IsConfigured())
+		if (!mpConfig->AccountNumber.GetInto(mAccountNumber))
 		{
+			ShowError(wxT("The account number "
+				"is not set, but it should be!"),
+				BM_SETUP_WIZARD_ACCOUNT_NUMBER_NOT_SET);
 			return;
 		}
-		
-		if (!mpConfig->PrivateKeyFile.IsConfigured())
+			
+		// don't override a previously defined CertRequestFile
+		if (mpConfig->CertRequestFile.IsConfigured())
 		{
 			return;
 		}
 		
 		if (!mpConfig->PrivateKeyFile.GetInto(mKeyFileName))
 		{
-			ShowError(wxT("The private key filename is not set, "
-				"but it should be!"),
+			ShowError(wxT("The private key filename "
+				"is not set, but it should be!"),
 				BM_SETUP_WIZARD_PRIVATE_KEY_FILE_NOT_SET);
 			return;
 		}
@@ -631,11 +663,6 @@ class CertRequestPage : public FileSavingPage, ConfigChangeListener
 		reqFileName.Printf(wxT("%s-csr.pem"), baseName.c_str());
 		
 		SetFileName(reqFileName);
-	}
-	
-	void NotifyChange() 
-	{
-		SetDefaultValues();
 	}
 	
 	bool CheckExistingFileImpl()
