@@ -270,6 +270,8 @@ void TestCanRunThroughSetupWizardCreatingEverything::RunTest()
 	assert(pWizard->GetCurrentPageId() == BWP_INTRO);
 	
 	wxWindow* pForwardButton = pWizard->FindWindow(wxID_FORWARD);
+	wxWindow* pBackButton    = pWizard->FindWindow(wxID_BACKWARD);
+
 	ClickButtonWaitEvent(pForwardButton);
 	assert(pWizard->GetCurrentPageId() == BWP_ACCOUNT);
 	
@@ -295,6 +297,9 @@ void TestCanRunThroughSetupWizardCreatingEverything::RunTest()
 	assert(!pConfig->StoreHostname.IsConfigured());
 	
 	pStoreHost->SetValue(wxT("no-such-host"));
+	// calling SetValue should configure the property by itself
+	assert(pConfig->StoreHostname.IsConfigured());
+	
 	MessageBoxSetResponse(BM_SETUP_WIZARD_BAD_STORE_HOST, wxOK);
 	ClickButtonWaitEvent(pForwardButton);
 	MessageBoxCheckFired();
@@ -332,7 +337,19 @@ void TestCanRunThroughSetupWizardCreatingEverything::RunTest()
 	int AccountNumber;
 	assert(pConfig->AccountNumber.GetInto(AccountNumber));
 	assert(AccountNumber == 1);
+
+	wxFileName configTestDir;
+	configTestDir.AssignTempFileName(wxT("boxi-configTestDir-"));
+	assert(wxRemoveFile(configTestDir.GetFullPath()));
+	assert(configTestDir.Mkdir(wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
 	
+	wxFileName tempdir;
+	tempdir.AssignTempFileName(wxT("boxi-tempdir-"));
+	assert(wxRemoveFile(tempdir.GetFullPath()));
+	
+	wxFileName privateKeyFileName(configTestDir.GetFullPath(), 
+		wxT("1-key.pem"));
+
 	{
 		assert(pWizard->GetCurrentPageId() == BWP_PRIVATE_KEY);
 
@@ -343,15 +360,11 @@ void TestCanRunThroughSetupWizardCreatingEverything::RunTest()
 		MessageBoxCheckFired();
 		assert(pWizard->GetCurrentPageId() == BWP_PRIVATE_KEY);
 		
-		wxFileName tempdir;
-		tempdir.AssignTempFileName(wxT("boxi-tempdir-"));
-		assert(wxRemoveFile(tempdir.GetFullPath()));
-		
 		wxTextCtrl* pFileName = GetTextCtrl(
 			pWizard->GetCurrentPage(),
 			ID_Setup_Wizard_File_Name_Text);
 		assert(pFileName->GetValue().IsSameAs(wxEmptyString));
-	
+
 		wxFileName nonexistantfile(tempdir.GetFullPath(), 
 			wxT("nonexistant"));
 		pFileName->SetValue(nonexistantfile.GetFullPath());
@@ -426,7 +439,6 @@ void TestCanRunThroughSetupWizardCreatingEverything::RunTest()
 
 		// go back, select "existing", choose a nonexistant file,
 		// expect BM_SETUP_WIZARD_FILE_NOT_FOUND
-		wxWindow* pBackButton = pWizard->FindWindow(wxID_BACKWARD);
 		ClickButtonWaitEvent(pBackButton);
 		assert(pWizard->GetCurrentPageId() == BWP_PRIVATE_KEY);
 		ClickRadioWaitIdle(pWizard->GetCurrentPage()->FindWindow(
@@ -469,17 +481,20 @@ void TestCanRunThroughSetupWizardCreatingEverything::RunTest()
 		MessageBoxCheckFired();
 		assert(pWizard->GetCurrentPageId() == BWP_PRIVATE_KEY);
 		
-		// delete that file, set the filename back to the
-		// key file we just created, expect that the certificate
-		// checks out okay, and we move on to the next page
-		assert(wxRemoveFile(anotherfilename));
-		pFileName->SetValue(existingpath);
+		// delete that file, move the private key file to the 
+		// configTestDir, set the filename to that new location,
+		// expect that Boxi can read the key file and we move on
+		// to the next page
+		assert(::wxRemoveFile(anotherfilename));
+		assert(::wxRenameFile(existingpath, 
+			privateKeyFileName.GetFullPath()));
+		pFileName->SetValue(privateKeyFileName.GetFullPath());
 		ClickButtonWaitEvent(pForwardButton);
 		assert(pWizard->GetCurrentPageId() == BWP_CERT_EXISTS);
 		
 		// was the configuration updated?
 		assert(pConfig->PrivateKeyFile.GetInto(keyfile));
-		assert(keyfile.IsSameAs(existingpath));
+		assert(keyfile.IsSameAs(privateKeyFileName.GetFullPath()));
 	}
 
 	{
@@ -492,17 +507,88 @@ void TestCanRunThroughSetupWizardCreatingEverything::RunTest()
 		assert(pWizard->GetCurrentPageId() == BWP_CERT_REQUEST);
 	}
 
-	/*
+	wxFileName certRequestFileName(configTestDir.GetFullPath(), 
+		wxT("1-csr.pem"));
+
 	{
 		assert(pWizard->GetCurrentPageId() == BWP_CERT_REQUEST);
 
 		// ask for a new certificate request to be generated
 		ClickRadioWaitIdle(pWizard->GetCurrentPage()->FindWindow(
 			ID_Setup_Wizard_New_File_Radio));
+		wxString tmp;
+		assert(pConfig->CertRequestFile.IsConfigured());
+		assert(pConfig->CertRequestFile.GetInto(tmp));
+		assert(tmp.IsSameAs(certRequestFileName.GetFullPath()));
+		
+		// go back, and check that the property is unconfigured for us
+		assert(pWizard->GetCurrentPageId() == BWP_CERT_REQUEST);
+		ClickButtonWaitEvent(pBackButton);
+		assert(pWizard->GetCurrentPageId() == BWP_CERT_EXISTS);
+		assert(!pConfig->CertRequestFile.IsConfigured());
+		
+		// set the certificate file manually, 
+		// check that it is not overwritten.
+		wxFileName dummyName(tempdir.GetFullPath(), wxT("nosuchfile"));
+		pConfig->CertRequestFile.Set(dummyName.GetFullPath());
+		assert(pConfig->CertRequestFile.IsConfigured());
+		assert(pConfig->CertRequestFile.GetInto(tmp));
+		assert(tmp.IsSameAs(dummyName.GetFullPath()));
+		
+		assert(pWizard->GetCurrentPageId() == BWP_CERT_EXISTS);
 		ClickButtonWaitEvent(pForwardButton);
 		assert(pWizard->GetCurrentPageId() == BWP_CERT_REQUEST);
+		assert(pConfig->CertRequestFile.GetInto(tmp));
+		assert(tmp.IsSameAs(dummyName.GetFullPath()));
+
+		// clear the value again, check that the property is 
+		// unconfigured
+		wxTextCtrl* pText = GetTextCtrl(pWizard->GetCurrentPage(), 
+			ID_Setup_Wizard_File_Name_Text);
+		assert(pText);
+		pText->SetValue(wxEmptyString);
+		assert(!pConfig->CertRequestFile.IsConfigured());
+		
+		// go back, forward again, check that the default 
+		// value is inserted
+		assert(pWizard->GetCurrentPageId() == BWP_CERT_REQUEST);
+		ClickButtonWaitEvent(pBackButton);
+		assert(pWizard->GetCurrentPageId() == BWP_CERT_EXISTS);
+		ClickButtonWaitEvent(pForwardButton);
+		assert(pWizard->GetCurrentPageId() == BWP_CERT_REQUEST);
+		assert(pConfig->CertRequestFile.IsConfigured());
+		assert(pConfig->CertRequestFile.GetInto(tmp));
+		assert(tmp.IsSameAs(certRequestFileName.GetFullPath()));
+		
+		// go forward, check that the file is created
+		assert(!certRequestFileName.FileExists());
+		assert(pWizard->GetCurrentPageId() == BWP_CERT_REQUEST);
+		ClickButtonWaitEvent(pForwardButton);
+		assert(pWizard->GetCurrentPageId() == BWP_CERTIFICATE);
+		assert(certRequestFileName.FileExists());
+		
+		// go back, choose "existing cert request", check that
+		// our newly generated request is accepted.
+		assert(pWizard->GetCurrentPageId() == BWP_CERTIFICATE);
+		ClickButtonWaitEvent(pBackButton);
+		assert(pWizard->GetCurrentPageId() == BWP_CERT_EXISTS);
+		ClickButtonWaitEvent(pForwardButton);
+		assert(pWizard->GetCurrentPageId() == BWP_CERT_REQUEST);
+		ClickRadioWaitIdle(pWizard->GetCurrentPage()->FindWindow(
+			ID_Setup_Wizard_Existing_File_Radio));
+		assert(pConfig->CertRequestFile.IsConfigured());
+		assert(pConfig->CertRequestFile.GetInto(tmp));
+		assert(tmp.IsSameAs(certRequestFileName.GetFullPath()));
+		ClickButtonWaitEvent(pForwardButton);
+		assert(pWizard->GetCurrentPageId() == BWP_CERTIFICATE);
+		
+		/*
+		MessageBoxSetResponse(BM_SETUP_WIZARD_NO_FILE_NAME, wxOK);
+		ClickButtonWaitEvent(pForwardButton);
+		MessageBoxCheckFired();
+		assert(pWizard->GetCurrentPageId() == BWP_CERT_REQUEST);
+		*/
 	}
-	*/
 
 	CloseWindowWaitClosed(pWizard);
 	
