@@ -104,7 +104,8 @@ module.include.files=\
 	RestoreFilesPanel.h\
 	FileTree.h\
 	MainFrame.h\
-	TestFrame.h
+	TestFrame.h\
+	WxGuiTestHelper.h
 
 module.source.name=src
 module.source.type=
@@ -150,7 +151,8 @@ module.source.files=\
 	RestoreFilesPanel.cc\
 	FileTree.cc\
 	MainFrame.cc\
-	TestFrame.cc
+	TestFrame.cc\
+	WxGuiTestHelper.cpp
 
 module.pixmap.name=pixmaps
 module.pixmap.type=
