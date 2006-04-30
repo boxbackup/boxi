@@ -30,6 +30,7 @@ boxi_include_DATA = \
 	RestoreFilesPanel.h\
 	FileTree.h\
 	MainFrame.h\
-	TestFrame.h
+	TestFrame.h\
+	WxGuiTestHelper.h
 
 EXTRA_DIST = $(boxi_include_DATA)
