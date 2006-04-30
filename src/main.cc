@@ -7,6 +7,9 @@
  *
  * Please note: This product includes software developed by Ben Summers.
  * The above attribution must not be removed or modified!
+ *
+ * Portions copied from swWxGuiTesting by Reinhold Fureder.
+ * Used under the wxWidgets source license.
  */
 
 #include <signal.h>
@@ -14,9 +17,19 @@
 #include <wx/wx.h>
 #include <wx/cmdline.h>
 
+#include <cppunit/BriefTestProgressListener.h>
+#include <cppunit/CompilerOutputter.h>
+#include <cppunit/TestResult.h>
+#include <cppunit/TestResultCollector.h>
+#include <cppunit/TestRunner.h>
+#include <cppunit/extensions/TestSetUp.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/ui/text/TestRunner.h>
+
 #include "main.h"
 #include "TestFrame.h"
 #include "MainFrame.h"
+#include "WxGuiTestHelper.h"
 
 // #ifdef HAVE_CONFIG_H
 // #  include <config.h>
@@ -59,13 +72,55 @@ static wxCmdLineEntryDesc theCmdLineParams[] =
 	{ wxCMD_LINE_NONE },
 };
 
-class BoxiApp : public wxApp
-{
-  	public:
-	virtual bool OnInit();
-};
+int    g_argc = 0;
+char** g_argv = NULL;
 
-IMPLEMENT_APP(BoxiApp)
+// IMPLEMENT_APP(BoxiApp)
+IMPLEMENT_APP_NO_MAIN(BoxiApp)
+
+BEGIN_EVENT_TABLE(BoxiApp, wxApp)
+    EVT_IDLE(BoxiApp::OnIdle)
+END_EVENT_TABLE()
+
+int main(int argc, char **argv)
+{
+	if (argc >= 2 && strcmp(argv[1], "-t") == 0)
+	{
+		g_argc = argc;
+		g_argv = argv;
+		
+		CppUnit::TestResult controller;
+		
+		CppUnit::TestResultCollector result;
+		controller.addListener(&result);
+		
+		CppUnit::BriefTestProgressListener progress;
+		controller.addListener(&progress);
+		
+		CppUnit::Test *suite = CppUnit::TestFactoryRegistry
+			::getRegistry().makeTest();
+		
+		CppUnit::TestRunner runner;
+		runner.addTest(suite);
+		
+		/*
+		runner.setOutputter(new CppUnit::CompilerOutputter(
+			&runner.result(), std::cerr));
+		*/
+		
+		CppUnit::CompilerOutputter outputter(&result, std::cerr);
+		
+		runner.run(controller, "");
+		
+		outputter.write();
+		
+		return result.wasSuccessful() ? 0 : 1;
+	}
+	else
+	{
+		return ::wxEntry(argc, argv);
+	}
+}
 
 void sigpipe_handler(int signum) {
 	signal(SIGPIPE, sigpipe_handler);
@@ -97,12 +152,17 @@ bool BoxiApp::OnInit()
 
 	signal(SIGPIPE, sigpipe_handler);	
 
+	/*
 	if (cmdParser.Found(wxT("t")))
 	{
 		TestFrame* pTestFrame = new TestFrame(wxString(argv[0]));
 		pTestFrame->Show(TRUE);
 	}
 	else
+	{
+	*/
+	
+	if (!cmdParser.Found(wxT("t")))
 	{
 		wxFrame *frame = new MainFrame 
 		(
@@ -113,5 +173,48 @@ bool BoxiApp::OnInit()
 		frame->Show(TRUE);
 	}
 	
+	/*
+	}
+	*/
+	
   	return TRUE;
+}
+
+int BoxiApp::OnRun()
+{
+	// see the comment in wxApp::wxApp(): if the initial value 
+	// hasn't been changed, use the default Yes from now on.
+	if (m_exitOnFrameDelete == Later) 
+	{
+		m_exitOnFrameDelete = Yes;
+	}
+
+	if (mpTestRunner)
+	{
+		mpTestRunner->RunAsDecorator();
+		
+		if (wxTheApp->GetTopWindow()) 
+		{
+			wxTheApp->GetTopWindow()->Close();
+		}
+		
+		// Finally process all pending events:
+		WxGuiTestHelper::SetUseExitMainLoopOnIdleFlag(false);
+	}
+	
+	// should do this, but it hangs on exit for no good reason
+	// return wxTheApp->MainLoop();
+	
+	return 0;
+}
+
+void BoxiApp::OnIdle(wxIdleEvent& rEvent)
+{
+	this->wxApp::OnIdle(rEvent);
+	
+	if (WxGuiTestHelper::GetUseExitMainLoopOnIdleFlag () &&
+		WxGuiTestHelper::GetExitMainLoopOnIdleFlag ()) 
+	{
+		wxTheApp->ExitMainLoop ();
+	}
 }
