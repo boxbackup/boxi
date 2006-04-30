@@ -443,7 +443,7 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	// clean configuration
 	Load(rConfigFileName);
 	
-	return TRUE;
+	return true;
 }
 
 void ClientConfig::SetClean() 
@@ -463,7 +463,7 @@ void ClientConfig::SetClean()
 
 bool ClientConfig::IsClean() 
 {
-	#define PROP(name) if (!name.IsClean()) return FALSE;
+	#define PROP(name) if (!name.IsClean()) return false;
 	#define STR_PROP(name) PROP(name)
 	#define STR_PROP_SUBCONF(name, conf) PROP(name)
 	#define INT_PROP(name) PROP(name)
@@ -484,7 +484,7 @@ bool ClientConfig::IsClean()
 	
 	if (oldLocs.size() != mLocations.size())
 	{
-		return FALSE;
+		return false;
 	}
 	
 	for (size_t i = 0; i < mLocations.size(); i++) 
@@ -493,11 +493,11 @@ bool ClientConfig::IsClean()
 		Location pNew = mLocations[i];
 		if (!pNew.IsSameAs(pOld))
 		{
-			return FALSE;
+			return false;
 		}
 	}
 	
-	return TRUE;
+	return true;
 }
 
 void ClientConfig::OnPropertyChange(Property* pProp)
@@ -518,28 +518,28 @@ void ClientConfig::OnExcludeListChange(MyExcludeList* pExcludeList)
 bool PropSet(StringProperty& rProp, wxString& msg, const char* desc)
 {
 	if (rProp.Get())
-		return TRUE;
+		return true;
 	wxString desc2(desc, wxConvLibc);
 	msg.Printf(wxT("The %s is not set"), desc2.c_str());
-	return FALSE;
+	return false;
 }
 
 bool PropSet(IntProperty& rProp, wxString& msg, const char* desc)
 {
 	if (rProp.Get())
-		return TRUE;
+		return true;
 	wxString desc2(desc, wxConvLibc);
 	msg.Printf(wxT("The %s is not set"), desc2.c_str());
-	return FALSE;
+	return false;
 }
 
 bool PropSet(BoolProperty& rProp, wxString& msg, const char* desc)
 {
 	if (rProp.Get())
-		return TRUE;
+		return true;
 	wxString desc2(desc, wxConvLibc);
 	msg.Printf(wxT("The %s is not set"), desc2.c_str());
-	return FALSE;
+	return false;
 }
 
 bool PropPath(StringProperty& rProp, wxString& msg, bool dir, const char *desc)
@@ -555,13 +555,13 @@ bool PropPath(StringProperty& rProp, wxString& msg, bool dir, const char *desc)
 		{
 			msg.Printf(wxT("The %s is not a directory (%s)"),
 				desc2.c_str(), path2.c_str());
-			return FALSE;
+			return false;
 		}
 		if (!wxFileName::DirExists(path2))
 		{
 			msg.Printf(wxT("The %s does not exist (%s)"),
 				desc2.c_str(), path2.c_str());
-			return FALSE;
+			return false;
 		}
 	} 
 	else 
@@ -570,17 +570,17 @@ bool PropPath(StringProperty& rProp, wxString& msg, bool dir, const char *desc)
 		{
 			msg.Printf(wxT("The %s is not a file (%s)"),
 				desc2.c_str(), path2.c_str());
-			return FALSE;
+			return false;
 		}
 		if (!wxFileName::FileExists(path2))
 		{
 			msg.Printf(wxT("The %s does not exist (%s)"),
 				desc2.c_str(), path2.c_str());
-			return FALSE;
+			return false;
 		}
 	}
 	
-	return TRUE;
+	return true;
 }
 
 bool PropWritable(StringProperty& rProp, wxString& msg, const char *desc)
@@ -592,10 +592,10 @@ bool PropWritable(StringProperty& rProp, wxString& msg, const char *desc)
 	if (wxFileName::FileExists(path2))
 	{
 		if (wxFile::Access(path2, wxFile::write))
-			return TRUE;
+			return true;
 		msg.Printf(wxT("The %s cannot be written (%s)"), 
 			desc, path1.c_str());
-		return FALSE;
+		return false;
 	}
 	else
 	{
@@ -608,77 +608,83 @@ bool PropWritable(StringProperty& rProp, wxString& msg, const char *desc)
 				wxT("The %s parent directory "
 				"does not exist (%s)"),
 				desc, parentPath.c_str());
-			return FALSE;
+			return false;
 		}
 		if (wxFile::Access(parentPath, wxFile::write))
-			return TRUE;
+			return true;
 		msg.Printf(wxT("The %s parent directory "
 				"cannot be written (%s)"), 
 			desc, parentPath.c_str());
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }	
 
 bool ClientConfig::Check(wxString& rMsg)
 {
 	if (!PropSet(StoreHostname,    rMsg, "Store Host"))
-		return FALSE;
+		return false;
 	if (!PropSet(AccountNumber,    rMsg, "Account Number"))
-		return FALSE;
-	if (!PropPath(KeysFile,        rMsg, FALSE, "Keys File"))
-		return FALSE;
-	if (!PropPath(CertificateFile, rMsg, FALSE, "Certificate File"))
-		return FALSE;
-	if (!PropPath(PrivateKeyFile,  rMsg, FALSE, "Private Key File"))
-		return FALSE;
-	if (!PropPath(TrustedCAsFile,  rMsg, FALSE, "Trusted CAs File"))
-		return FALSE;
-	if (!PropPath(DataDirectory,   rMsg, TRUE, "Data Directory"))
-		return FALSE;
+		return false;
+	if (!PropPath(KeysFile,        rMsg, false, "Keys File"))
+		return false;
+	if (!PropPath(CertificateFile, rMsg, false, "Certificate File"))
+		return false;
+	if (!PropPath(PrivateKeyFile,  rMsg, false, "Private Key File"))
+		return false;
+	if (!PropPath(TrustedCAsFile,  rMsg, false, "Trusted CAs File"))
+		return false;
+	if (!PropPath(DataDirectory,   rMsg, true, "Data Directory"))
+		return false;
 	if (PropSet(NotifyScript, rMsg, ""))
 	{
-		if (!PropPath(NotifyScript, rMsg, FALSE, "Notify Script"))
-			return FALSE;
+		if (!PropPath(NotifyScript, rMsg, false, "Notify Script"))
+			return false;
 	}
 	if (!PropSet(UpdateStoreInterval, rMsg, "Update Store Interval"))
-		return FALSE;
+		return false;
 	if (!PropSet(MinimumFileAge, rMsg, "Minimum File Age"))
-		return FALSE;
+		return false;
 	if (!PropSet(MaxUploadWait, rMsg, "Maximum Upload Wait"))
-		return FALSE;
+		return false;
 	if (!PropSet(FileTrackingSizeThreshold, rMsg, 
 		"File Tracking Size Threshold"))
-		return FALSE;
+		return false;
 	if (!PropSet(DiffingUploadSizeThreshold, rMsg, 
 		"Diffing Upload Size Threshold"))
-		return FALSE;
+		return false;
 	if (!PropSet(MaximumDiffingTime, rMsg, "Maximum Diffing Time"))
-		return FALSE;
+		return false;
 	if (!PropSet(MaxUploadWait, rMsg, "Maximum Upload Wait"))
-		return FALSE;
+		return false;
 	if (PropSet(SyncAllowScript, rMsg, ""))
 	{
-		if (!PropPath(SyncAllowScript, rMsg, FALSE, 
+		if (!PropPath(SyncAllowScript, rMsg, false, 
 			"Sync Allow Script"))
-			return FALSE;
+			return false;
 	}
 	if (!PropWritable(CommandSocket, rMsg, "Command Socket"))
-		return FALSE;
+		return false;
 	if (!PropWritable(PidFile, rMsg, "Process ID File"))
-		return FALSE;
+		return false;
 
 	if (!CheckAccountNumber(&rMsg))
-		return FALSE;
+		return false;
 	if (!CheckStoreHostname(&rMsg))
-		return FALSE;
+		return false;
 	if (!CheckPrivateKeyFile(&rMsg))
-		return FALSE;
+		return false;
 	if (!CheckCertificateFile(&rMsg))
-		return FALSE;
+		return false;
+	if (!CheckTrustedCAsFile(&rMsg))
+		return false;
+	if (!CheckCertificateAndTrustedCAsPublicKeys(&rMsg))
+		return false;
+	if (!CheckCryptoKeysFile(&rMsg))
+		return false;
 	
-	return TRUE;
+	return true;
 }
 
 bool ClientConfig::CheckAccountNumber(wxString* pMsgOut)
@@ -688,22 +694,22 @@ bool ClientConfig::CheckAccountNumber(wxString* pMsgOut)
 	if (! AccountNumber.GetInto(account))
 	{
 		*pMsgOut = wxT("The account number is empty or not valid");
-		return FALSE;
+		return false;
 	}
 	
 	if (account <= 0)
 	{
 		*pMsgOut = wxT("The account number is zero or negative");
-		return FALSE;
+		return false;
 	}
 	
 	if (account > 0x7FFFFFFF)
 	{
 		*pMsgOut = wxT("The account number is too large");
-		return FALSE;
+		return false;
 	}
 	
-	return TRUE;
+	return true;
 }
 
 bool ClientConfig::CheckStoreHostname(wxString* pMsgOut)
@@ -712,18 +718,35 @@ bool ClientConfig::CheckStoreHostname(wxString* pMsgOut)
 	if (!StoreHostname.GetInto(hostname))
 	{
 		*pMsgOut = wxT("The store hostname is not configured");
-		return FALSE;
+		return false;
 	}
 	
 	wxIPV4address addr;
 	if (!addr.Hostname(hostname))
 	{
 		*pMsgOut = wxT("The store hostname is not valid");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
+
+wxString FormatSslError(const wxString& rMsgBase)
+{
+	unsigned long err = ERR_get_error();
+	wxString sslErrorMsg(ERR_error_string(err, NULL), wxConvLibc);
+	
+	wxString msg = rMsgBase;
+	
+	const char* reason = ERR_reason_error_string(err);
+	if (reason != NULL)
+	{
+		msg.Append(wxT(": "));
+		msg.Append(wxString(reason, wxConvLibc));
+	}
+	
+	return msg;
+}	
 
 bool CheckExistingKeyWithBio(const wxString& rKeyFileName, BIO* pKeyBio, 
 	wxString* pMsgOut);
@@ -733,15 +756,15 @@ bool ClientConfig::CheckPrivateKeyFile(wxString* pMsgOut)
 	wxString name;
 	if (!PrivateKeyFile.GetInto(name))
 	{
-		*pMsgOut = wxT("The private key filename is not configured");
-		return FALSE;
+		*pMsgOut = _("The private key filename is not configured");
+		return false;
 	}
 	
 	BIO* pKeyBio = BIO_new(BIO_s_file());
 	if (pKeyBio == NULL)
 	{
-		*pMsgOut = wxT("Failed to create an OpenSSL BIO");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to create an OpenSSL BIO"));
+		return false;
 	}
 	
 	bool isOk = CheckExistingKeyWithBio(name, pKeyBio, pMsgOut);
@@ -760,8 +783,8 @@ bool CheckExistingKeyWithBio(const wxString& rKeyFileName, BIO* pKeyBio,
 	wxCharBuffer buf = rKeyFileName.mb_str(wxConvLibc);
 	if (BIO_read_filename(pKeyBio, buf.data()) <= 0)
 	{
-		*pMsgOut = wxT("Failed to read key file");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to read key file"));
+		return false;
 	}
 	
 	char *pName = NULL, *pHeader = NULL;
@@ -775,8 +798,8 @@ bool CheckExistingKeyWithBio(const wxString& rKeyFileName, BIO* pKeyBio,
 			if (ERR_GET_REASON(ERR_peek_error()) == PEM_R_NO_START_LINE)
 			{
 				// ERR_add_error_data(2, "Expecting: ", PEM_STRING_EVP_PKEY);
-				*pMsgOut = wxT("Failed to read key file");
-				return FALSE;
+				*pMsgOut = FormatSslError(_("Failed to read key file"));
+				return false;
 			}
 		}
 		
@@ -804,18 +827,197 @@ bool CheckExistingKeyWithData(char* pName, char* pHeader,
 	
 	if (!PEM_get_EVP_CIPHER_INFO(pHeader, &cipher))
 	{
-		*pMsgOut = wxT("Failed to decipher key file");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to decipher key file"));
+		return false;
 	}
 	
 	if (cipher.cipher != NULL)
 	{
 		*pMsgOut = wxT("This private key is protected with a passphrase. "
 			"It cannot be used with Box Backup.");
-		return FALSE;
+		return false;
 	}
 	
-	return TRUE;
+	return true;
+}
+
+static wxString gVerifyError;
+
+static int VerifyCertificateCallback(int ok, X509_STORE_CTX *pContext)
+{
+	if (ok) return ok;
+	
+	wxString errorMessage;
+	
+	if (pContext->current_cert)
+	{
+		char buf[256];
+		X509_NAME_oneline(
+			X509_get_subject_name(pContext->current_cert), 
+			buf, sizeof(buf));
+		errorMessage = wxString(buf, wxConvLibc);
+		errorMessage.Append(_(": "));
+	}	
+	
+	errorMessage.Append(wxString(
+		X509_verify_cert_error_string(pContext->error), wxConvLibc));
+	
+	gVerifyError = errorMessage;
+	return ok;
+}
+
+template<typename T, void free_T(T*)>
+class AutoFree
+{
+	private:
+	T* mpT;
+	
+	public:
+	AutoFree ()      : mpT(NULL) { }
+	AutoFree (T* pT) : mpT(pT) { }
+	~AutoFree() { if (mpT) free_T(mpT); }
+	T* get()    { return mpT;  }
+
+	AutoFree (AutoFree& rSource)
+	{
+		mpT = rSource.mpT;
+		rSource.mpT = NULL;
+	}		
+
+	AutoFree operator=(AutoFree& rSource) 
+	{ 
+		if (mpT) free_T(mpT);
+		mpT = rSource.mpT;
+		rSource.mpT = NULL;
+	}
+	
+	class ref
+	{
+		private:
+		AutoFree<T, free_T>& mrRef;
+		public:
+		ref(AutoFree<T, free_T>& rRef) : mrRef(rRef) { }
+		friend class AutoFree<T, free_T>;
+	};
+	
+	AutoFree(ref rRef)
+	{
+		mpT = rRef.mrRef.mpT;
+		rRef.mrRef.mpT = NULL;
+	}
+	
+	operator ref() { return ref(*this); }
+};
+
+static AutoFree<X509, X509_free> LoadCertificate(wxString rCertificateFileName,
+	wxString* pMsgOut)
+{
+	AutoFree<X509, X509_free> error(NULL);
+	
+	AutoFree<BIO, &BIO_free_all> apCertBio(BIO_new(BIO_s_file()));
+	if (!apCertBio.get())
+	{
+		*pMsgOut = FormatSslError(_("Failed to create an OpenSSL BIO"));
+		return error;
+	}
+	
+	if (BIO_read_filename(apCertBio.get(), 
+		rCertificateFileName.mb_str(wxConvLibc).data()) <= 0)
+	{
+		wxString msg;
+		msg.Printf(_("Failed to set the certificate file name (%s)"),
+			rCertificateFileName.c_str());
+		*pMsgOut = FormatSslError(msg);
+		return error;
+	}
+	
+	AutoFree<X509, X509_free> apCertToVerify(
+		PEM_read_bio_X509_AUX(apCertBio.get(), NULL, NULL, NULL));
+	if (!apCertToVerify.get())
+	{
+		wxString msg;
+		msg.Printf(_("Failed to read the certificate file (%s)"),
+			rCertificateFileName.c_str());
+		*pMsgOut = FormatSslError(msg);
+		return error;
+	}
+	
+	return apCertToVerify;
+}
+
+static bool VerifyCertificate
+(
+	const wxString& rCertificateFileName, 
+	const wxString& rIssuerCertFileName, 
+	wxString* pMsgOut
+)
+{
+	AutoFree<X509_STORE, X509_STORE_free> apStore(X509_STORE_new());
+	
+	if (!apStore.get())
+	{
+		*pMsgOut = FormatSslError(
+			_("Failed to create an OpenSSL certificate store"));
+		return false;
+	}
+	
+	X509_STORE_set_verify_cb_func(apStore.get(), VerifyCertificateCallback);
+	
+	X509_LOOKUP* pLookup = X509_STORE_add_lookup(apStore.get(), 
+		X509_LOOKUP_file());
+	if (!pLookup)
+	{
+		*pMsgOut = FormatSslError(
+			_("Failed to create an OpenSSL certificate lookup"));
+		return false;
+	}
+	
+	if (!X509_LOOKUP_load_file(pLookup, 
+		rIssuerCertFileName.mb_str(wxConvLibc).data(), 
+		X509_FILETYPE_PEM))
+	{
+		wxString msg;
+		msg.Printf(_("Failed to load the expected issuer's "
+			"certificate file (%s)"), rIssuerCertFileName.c_str());
+		*pMsgOut = FormatSslError(msg);
+		return false;
+	}
+	
+	AutoFree<X509, X509_free> apCertToVerify = 
+		LoadCertificate(rCertificateFileName, pMsgOut);
+	
+	if (!apCertToVerify.get())
+	{
+		return false;
+	}
+	
+	AutoFree<X509_STORE_CTX, X509_STORE_CTX_free> apContext(
+		X509_STORE_CTX_new());
+	if (!apContext.get())
+	{
+		*pMsgOut = FormatSslError(_("Failed to create an OpenSSL "
+			"X.509 context"));
+		return false;
+	}
+	
+	if (!X509_STORE_CTX_init(apContext.get(), apStore.get(), 
+		apCertToVerify.get(), NULL))
+	{
+		*pMsgOut = FormatSslError(_("Failed to initialise the OpenSSL "
+			"X.509 context"));
+		return false;
+	}
+	
+	if (!X509_verify_cert(apContext.get()))
+	{
+		wxString msg;
+		msg.Printf(_("Certificate problem: %s (%s)"),
+			gVerifyError.c_str(), rCertificateFileName.c_str());
+		*pMsgOut = msg;
+		return false;
+	}
+
+	return true;
 }
 
 bool CheckCertWithBio(const wxString& rCertFileName, 
@@ -827,32 +1029,32 @@ bool ClientConfig::CheckCertificateFile(wxString* pMsgOut)
 	wxString certFileName;
 	if (!CertificateFile.GetInto(certFileName))
 	{
-		*pMsgOut = wxT("The certificate file name is not configured");
-		return  FALSE;
+		*pMsgOut =_("The certificate file name is not configured");
+		return  false;
 	}
 	
 	int accountNumber;
 	if (!AccountNumber.GetInto(accountNumber))
 	{
-		*pMsgOut = wxT("The account number is not configured, "
+		*pMsgOut = _("The account number is not configured, "
 			"but it should be!");
-		return FALSE;
+		return false;
 	}
 
 	wxString keyFileName;
 	if (!PrivateKeyFile.GetInto(keyFileName))
 	{
-		*pMsgOut = wxT("The private key file is not configured, "
+		*pMsgOut = _("The private key file is not configured, "
 			"but it should be!");
-		return FALSE;
+		return false;
 	}
 	
 	BIO* pCertBio = BIO_new(BIO_s_file());
 	if (!pCertBio)
 	{
-		*pMsgOut = wxT("Failed to create an OpenSSL BIO "
-			"to read the certificate");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to create an OpenSSL BIO "
+			"to read the certificate"));
+		return false;
 	}
 	
 	bool isOk = CheckCertWithBio(certFileName, keyFileName, 
@@ -873,16 +1075,16 @@ bool CheckCertWithBio(const wxString& rCertFileName,
 	wxCharBuffer buf = rCertFileName.mb_str(wxConvLibc);
 	if (BIO_read_filename(pCertBio, buf.data()) <= 0)
 	{
-		*pMsgOut = wxT("Failed to set the BIO filename to the "
-			"certificate file");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to set the BIO filename to the "
+			"certificate file"));
+		return false;
 	}
 	
 	X509* pCert = PEM_read_bio_X509(pCertBio, NULL, NULL, NULL);
 	if (!pCert)
 	{
-		*pMsgOut = wxT("Failed to read the certificate file");
-		return FALSE;			
+		*pMsgOut = FormatSslError(_("Failed to read the certificate file"));
+		return false;			
 	}
 	
 	bool isOk = CheckCertSubject(rPrivateKeyFileName, accountNumber, 
@@ -902,7 +1104,7 @@ bool CheckCertSubject(const wxString& rPrivateKeyFileName, int accountNumber,
 	wxString commonNameActual;
 	if (!GetCommonName(X509_get_subject_name(pCert), &commonNameActual, pMsgOut))
 	{
-		return FALSE;
+		return false;
 	}
 
 	wxString commonNameExpected;
@@ -916,22 +1118,22 @@ bool CheckCertSubject(const wxString& rPrivateKeyFileName, int accountNumber,
 			"should be '%s', but is actually '%s'."),
 			commonNameExpected.c_str(), commonNameActual.c_str());
 		*pMsgOut = msg;
-		return FALSE;
+		return false;
 	}
 
 	EVP_PKEY* pSubjectPublicKey = X509_get_pubkey(pCert);
 	if (!pSubjectPublicKey)
 	{
-		*pMsgOut = wxT("Failed to extract the subject's public key"
-			"from the certificate");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to extract the subject's public key"
+			"from the certificate"));
+		return false;
 	}
 	
 	EVP_PKEY* pMyPublicKey = LoadKey(rPrivateKeyFileName, pMsgOut);
 	if (!pMyPublicKey)
 	{
 		EVP_PKEY_free(pSubjectPublicKey);
-		return FALSE;
+		return false;
 	}
 	
 	bool isOk = EnsureSamePublicKeys(pSubjectPublicKey, pMyPublicKey, pMsgOut);
@@ -951,16 +1153,16 @@ bool EnsureSamePublicKeys(EVP_PKEY* pActualKey, EVP_PKEY* pExpectKey,
 	BIO* pActualBio = BIO_new(BIO_s_mem());
 	if (!pActualBio)
 	{
-		*pMsgOut = wxT("Failed to allocate BIO for key data");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to allocate BIO for key data"));
+		return false;
 	}
 
 	BIO* pExpectBio = BIO_new(BIO_s_mem());
 	if (!pExpectBio)
 	{
-		*pMsgOut = wxT("Failed to allocate BIO for key data");
+		*pMsgOut = FormatSslError(_("Failed to allocate BIO for key data"));
 		BIO_free(pActualBio);
-		return FALSE;
+		return false;
 	}
 	
 	bool isOk = EnsureSamePublicKeysWithBios(pActualKey, pExpectKey,
@@ -981,14 +1183,14 @@ bool EnsureSamePublicKeysWithBios(EVP_PKEY* pActualKey,
 {
 	if (!PEM_write_bio_PUBKEY(pActualBio, pActualKey))
 	{
-		*pMsgOut = wxT("Failed to write public key to memory buffer");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to write public key to memory buffer"));
+		return false;
 	}
 
 	if (!PEM_write_bio_PUBKEY(pExpectBio, pExpectKey))
 	{
-		*pMsgOut = wxT("Failed to write public key to memory buffer");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to write public key to memory buffer"));
+		return false;
 	}
 	
 	int actSize = BIO_get_mem_data(pActualBio, NULL);
@@ -998,14 +1200,14 @@ bool EnsureSamePublicKeysWithBios(EVP_PKEY* pActualKey,
 	{
 		*pMsgOut = wxT("The certificate file does not match "
 			"your private key.");
-		return FALSE;
+		return false;
 	}
 
 	unsigned char* pExpBuffer = new unsigned char [expSize];
 	if (!pExpBuffer)
 	{
 		*pMsgOut = wxT("Failed to allocate space for private key data");
-		return FALSE;
+		return false;
 	}
 	
 	unsigned char* pActBuffer = new unsigned char [actSize];
@@ -1013,7 +1215,7 @@ bool EnsureSamePublicKeysWithBios(EVP_PKEY* pActualKey,
 	{
 		*pMsgOut = wxT("Failed to allocate space for private key data");
 		delete [] pExpBuffer;
-		return FALSE;
+		return false;
 	}
 		
 	bool isOk = EnsureSamePublicKeysWithBuffers(pActualBio, pExpectBio,
@@ -1031,23 +1233,85 @@ bool EnsureSamePublicKeysWithBuffers(BIO* pActualBio, BIO* pExpectBio,
 {
 	if (BIO_read(pActualBio, pActBuffer, size) != size)
 	{
-		*pMsgOut = wxT("Failed to read enough key data");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to read enough key data"));
+		return false;
 	}
 	
 	if (BIO_read(pExpectBio, pExpBuffer, size) != size)
 	{
-		*pMsgOut = wxT("Failed to read enough key data");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to read enough key data"));
+		return false;
 	}
 	
 	if (memcmp(pActBuffer, pExpBuffer, size) != 0)
 	{
 		*pMsgOut = wxT("The certificate file does not match your private key.");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
+}
+
+bool ClientConfig::CheckTrustedCAsFile(wxString* pMsgOut)
+{
+	wxString certFileName;
+	if (!TrustedCAsFile.GetInto(certFileName))
+	{
+		*pMsgOut = _("The Trusted CAs file is not configured");
+		return false;
+	}
+	
+	return VerifyCertificate(certFileName, certFileName, pMsgOut);
+}
+
+bool ClientConfig::CheckCertificateAndTrustedCAsPublicKeys(wxString* pMsgOut)
+{
+	wxString certFile;
+	if (!CertificateFile.GetInto(certFile))
+	{
+		*pMsgOut = _("The Certificate File is not configured");
+		return false;
+	}
+	
+	AutoFree<X509, X509_free> apLocalCert = 
+		LoadCertificate(certFile, pMsgOut);
+	if (!apLocalCert.get()) return false;
+
+	wxString caFile;
+	if (!TrustedCAsFile.GetInto(caFile))
+	{
+		*pMsgOut = _("The Trusted CAs File is not configured");
+		return false;
+	}
+	
+	AutoFree<X509, X509_free> apTrustedCaCert = 
+		LoadCertificate(caFile, pMsgOut);
+	if (!apTrustedCaCert.get()) return false;
+	
+	AutoFree<EVP_PKEY, EVP_PKEY_free> apLocalKey(
+		X509_get_pubkey(apLocalCert.get()));
+	if (!apLocalKey.get())
+	{
+		*pMsgOut = FormatSslError(_("Failed to get public key"));
+		return false;
+	}
+
+	AutoFree<EVP_PKEY, EVP_PKEY_free> apTrustedKey(
+		X509_get_pubkey(apTrustedCaCert.get()));
+	if (!apTrustedKey.get())
+	{
+		*pMsgOut = FormatSslError(_("Failed to get public key"));
+		return false;
+	}
+
+	if (!X509_verify(apLocalCert.get(), apTrustedKey.get()))
+	{
+		*pMsgOut = _("Our certificate and the Trusted CA's certificate "
+			"do not match");
+		return false;
+	}
+	
+	return true;
 }
 
 std::auto_ptr<SslConfig> SslConfig::Get(wxString* pMsgOut)
@@ -1062,7 +1326,7 @@ std::auto_ptr<SslConfig> SslConfig::Get(wxString* pMsgOut)
 	CONF* pConfig = NCONF_new(NULL);
 	if (!pConfig)
 	{
-		*pMsgOut = wxT("Failed to create an OpenSSL configuration object");
+		*pMsgOut = FormatSslError(_("Failed to create an OpenSSL configuration object"));
 		return result;
 	}
 	
@@ -1075,10 +1339,10 @@ std::auto_ptr<SslConfig> SslConfig::Get(wxString* pMsgOut)
 	if (!NCONF_load(pConfig, buf.data(), &errline))
 	{
 		wxString msg;
-		msg.Printf(wxT("Failed to initialise OpenSSL. Perhaps the "
-			"configuration file could not be found or read? (%s)"),
+		msg.Printf(_("Failed to initialise OpenSSL. Perhaps the "
+			"configuration file could not be found or read? %s"),
 			configFileName.c_str());
-		*pMsgOut = msg;
+		*pMsgOut = FormatSslError(msg);
 		return empty;
 	}
 
@@ -1086,7 +1350,7 @@ std::auto_ptr<SslConfig> SslConfig::Get(wxString* pMsgOut)
 	
 	if (CONF_modules_load(pConfig, NULL, 0) <= 0)
 	{
-		*pMsgOut = wxT("Failed to configure OpenSSL");
+		*pMsgOut = FormatSslError(_("Failed to configure OpenSSL"));
 		return empty;
 	}
 
@@ -1099,9 +1363,9 @@ bool GetCommonName(X509_NAME* pX509SubjectName, wxString* pTarget,
 	int commonNameNid = OBJ_txt2nid("commonName");
 	if (commonNameNid == NID_undef)
 	{
-		*pMsgOut = wxT("Failed to find NID of "
-			"X.509 CommonName attribute");
-		return FALSE;
+		*pMsgOut = FormatSslError(_("Failed to find NID of "
+			"X.509 CommonName attribute"));
+		return false;
 	}
 	
 	char commonNameBuf[256];
@@ -1113,7 +1377,7 @@ bool GetCommonName(X509_NAME* pX509SubjectName, wxString* pTarget,
 	// X509_NAME_free(pX509SubjectName);
 	
 	*pTarget = wxString(commonNameBuf, wxConvLibc);
-	return TRUE;
+	return true;
 }
 
 EVP_PKEY* LoadKey(const wxString& rKeyFileName, wxString* pMsgOut)
@@ -1121,8 +1385,8 @@ EVP_PKEY* LoadKey(const wxString& rKeyFileName, wxString* pMsgOut)
 	BIO *pKeyBio = BIO_new(BIO_s_file());
 	if (!pKeyBio)
 	{
-		*pMsgOut = wxT("Failed to create an OpenSSL BIO "
-			"to read the private key");
+		*pMsgOut = FormatSslError(_("Failed to create an OpenSSL BIO "
+			"to read the private key"));
 		return NULL;
 	}
 	
@@ -1130,9 +1394,9 @@ EVP_PKEY* LoadKey(const wxString& rKeyFileName, wxString* pMsgOut)
 		rKeyFileName.mb_str(wxConvLibc).data()) <= 0)
 	{
 		wxString msg;
-		msg.Printf(wxT("Failed to read the private key file (%s)"),
+		msg.Printf(_("Failed to read the private key file (%s)"),
 			rKeyFileName.c_str());
-		*pMsgOut = msg;
+		*pMsgOut = FormatSslError(msg);
 		BIO_free(pKeyBio);
 		return NULL;
 	}
@@ -1143,9 +1407,9 @@ EVP_PKEY* LoadKey(const wxString& rKeyFileName, wxString* pMsgOut)
 	if (!pKey)
 	{
 		wxString msg;
-		msg.Printf(wxT("Failed to read the private key (%s)"),
+		msg.Printf(_("Failed to read the private key (%s)"),
 			rKeyFileName.c_str());
-		*pMsgOut = msg;
+		*pMsgOut = FormatSslError(msg);
 		return NULL;
 	}
 	
@@ -1155,4 +1419,43 @@ EVP_PKEY* LoadKey(const wxString& rKeyFileName, wxString* pMsgOut)
 void FreeKey(EVP_PKEY* pKey)
 {
 	EVP_PKEY_free(pKey);
+}
+
+bool ClientConfig::CheckCryptoKeysFile(wxString* pMsgOut)
+{
+	wxString keysFileString;
+	if (!KeysFile.GetInto(keysFileString))
+	{
+		*pMsgOut = _("The Keys File is not configured");
+		return false;
+	}
+	
+	if (wxFileName::DirExists(keysFileString))
+	{
+		*pMsgOut = _("The Keys File is a directory.");
+		return false;
+	}
+
+	if (!wxFileName::FileExists(keysFileString))
+	{
+		*pMsgOut = _("The Keys File was not found.");
+		return false;
+	}
+
+	if (!wxFile::Access(keysFileString, wxFile::read))
+	{
+		*pMsgOut = _("The Keys File is not readable.");
+		return false;
+	}
+
+	wxFile keysFile(keysFileString);
+	if (keysFile.Length() != 1024)
+	{
+		*pMsgOut = _("The specified encryption key file "
+			"is not valid (should be 1024 bytes long)");
+		return false;
+	}
+
+	return true;
+
 }
