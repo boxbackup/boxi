@@ -96,7 +96,10 @@ class ClientConfig :
 	bool CheckStoreHostname  (wxString* pMsgOut);
 	bool CheckPrivateKeyFile (wxString* pMsgOut);
 	bool CheckCertificateFile(wxString* pMsgOut);
-
+	bool CheckTrustedCAsFile (wxString* pMsgOut);
+	bool CheckCertificateAndTrustedCAsPublicKeys(wxString* pMsgOut);
+	bool CheckCryptoKeysFile (wxString* pMsgOut);
+	
 	private:
 	wxString mConfigFileName;
 	std::auto_ptr<Configuration> mapConfig;
