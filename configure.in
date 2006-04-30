@@ -81,6 +81,9 @@ AX_PATH_BDB(, [
 # Check for OpenSSL
 AX_CHECK_SSL(, [AC_MSG_ERROR([[OpenSSL is not installed but is required]])])
 
+AM_PATH_CPPUNIT(1.10.0,,[AC_MSG_ERROR([[CppUnit 1.10 or higher is required]])])
+LIBS="$LIBS $CPPUNIT_LIBS"
+
 # extract boxbackup in release build
 if ! (
 	cd boxbackup || exit 1
@@ -91,8 +94,6 @@ if ! (
 	echo "Failed to configure Box Backup, aborting!"
 	exit 1
 fi
-
-
 
 dnl Set PACKAGE_LOCALE_DIR in config.h.
 if test "x${prefix}" = "xNONE"; then
