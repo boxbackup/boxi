@@ -58,7 +58,8 @@ boxi_SOURCES = \
 	RestoreFilesPanel.cc\
 	FileTree.cc\
 	MainFrame.cc\
-	TestFrame.cc
+	TestFrame.cc\
+	WxGuiTestHelper.cpp
 
 boxi_LDFLAGS = 
 
