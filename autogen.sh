@@ -2,13 +2,14 @@
 # Run this to generate all the initial makefiles, etc.
 
 srcdir=`dirname $0`
+srcdir=`cd $srcdir && pwd`
 PKG_NAME="the package."
 
 DIE=0
 
 mkdir -p boxbackup
 touch boxbackup/Makefile.in
-ACLOCAL_FLAGS="-I boxbackup/infrastructure/m4"
+ACLOCAL_FLAGS="-I $srcdir/boxbackup/infrastructure/m4"
 
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
   echo
