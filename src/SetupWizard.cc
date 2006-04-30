@@ -39,6 +39,7 @@
 #include "SetupWizard.h"
 #include "SslConfig.h"
 #include "TestFrame.h"
+#include "WxGuiTestHelper.h"
 
 class SetupWizardPage : public wxWizardPageSimple
 {
@@ -198,15 +199,19 @@ class AccountPage : public SetupWizardPage
 
 static int numChecked = 0;
 
-void MySslProgressCallback(int p, int n, void* cbinfo)
+static wxString MySslProgressCallbackMessage(int n)
 {
-	wxProgressDialog* pProgress = (wxProgressDialog *)cbinfo;
 	wxString msg;
 	msg.Printf(wxT("Generating your new private key (2048 bits).\n"
 			"This may take a minute.\n\n"
-			"(%d potential primes checked)"),
-			++numChecked);
-	pProgress->Update(0, msg);
+			"(%d potential primes checked)"), n);
+	return msg;
+}
+
+static void MySslProgressCallback(int p, int n, void* cbinfo)
+{
+	wxProgressDialog* pProgress = (wxProgressDialog *)cbinfo;
+	pProgress->Update(0, MySslProgressCallbackMessage(++numChecked));
 }
 
 class FileSavingPage : public SetupWizardPage
@@ -503,6 +508,16 @@ class PrivateKeyPage : public FileSavingPage
 		
 		RSA_free(pRSA);
 		BN_free(pBigNum);
+
+		if (isOk)
+		{
+			wxString msg;
+			if (!mpConfig->CheckPrivateKeyFile(&msg))
+			{
+				ShowError(msg, BM_SETUP_WIZARD_BAD_PRIVATE_KEY);
+				return FALSE;
+			}
+		}
 		
 		return isOk;
 	}
@@ -561,9 +576,7 @@ class PrivateKeyPage : public FileSavingPage
 		}
 
 		wxProgressDialog progress(wxT("Boxi: Generating Private Key"),
-			wxT("Generating your new private key (2048 bits).\n"
-			"This may take a minute.\n\n"
-			"(0 potential primes checked)"), 2, this, 
+			MySslProgressCallbackMessage(0), 2, this, 
 			wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
 		numChecked = 0;
 		
@@ -622,7 +635,7 @@ class CertRequestPage : public FileSavingPage
 	virtual bool TransferDataToWindow()
 	{
 		bool result = this->FileSavingPage::TransferDataToWindow();
-		SetDefaultValues(true);
+		SetDefaultValues();
 		return result;
 	}
 
@@ -1119,6 +1132,13 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 			return FALSE;
 		}
 
+		wxString msg;
+		if (!mpConfig->CheckCertificateFile(&msg))
+		{
+			ShowError(msg, BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
+			return FALSE;
+		}
+		
 		wxString caFile;
 		if (!mpConfig->TrustedCAsFile.GetInto(caFile))
 		{
@@ -1141,14 +1161,19 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 			return FALSE;
 		}
 
-		wxString msg;
-		if (!mpConfig->CheckCertificateFile(&msg))
+		if (!mpConfig->CheckTrustedCAsFile(&msg))
 		{
 			ShowError(msg, BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
 			return FALSE;
 		}
+
+		if (!mpConfig->CheckCertificateAndTrustedCAsPublicKeys(&msg))
+		{
+			ShowError(msg, BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
+			return false;
+		}
 		
-		return TRUE;
+		return true;
 	}
 	
 	virtual SetupWizardPage_id_t GetPageId() { return BWP_CERTIFICATE; }
@@ -1218,7 +1243,7 @@ class CertExistsPage : public SetupWizardPage
 	virtual SetupWizardPage_id_t GetPageId() { return BWP_CERT_EXISTS; }
 };
 
-class CryptoKeyPage : public FileSavingPage, ConfigChangeListener
+class CryptoKeyPage : public FileSavingPage
 {
 	public:
 	CryptoKeyPage(ClientConfig *pConfig, wxWizard* pParent)
@@ -1240,13 +1265,15 @@ class CryptoKeyPage : public FileSavingPage, ConfigChangeListener
 		"</body></html>"),
 		wxT("Encryption Key"), wxT("*-FileEncKeys.raw"), 
 		pConfig->KeysFile)
+	{ }
+	
+	virtual bool TransferDataToWindow()
 	{
-		mpConfig->AddListener(this);
+		bool result = this->FileSavingPage::TransferDataToWindow();
 		SetDefaultValues();
+		return result;
 	}
-	
-	~CryptoKeyPage() { mpConfig->RemoveListener(this); }
-	
+
 	void SetDefaultValues()
 	{
 		if (mpConfig->KeysFile.IsConfigured())
@@ -1274,24 +1301,19 @@ class CryptoKeyPage : public FileSavingPage, ConfigChangeListener
 		encFileName.Printf(wxT("%s-FileEncKeys.raw"), baseName.c_str());
 		SetFileName(encFileName);
 	}
-	
-	void NotifyChange() 
-	{
-		SetDefaultValues();
-	}
 
 	bool CheckExistingFileImpl()
 	{
-		wxFile keysFile(GetFileName().GetFullPath());
-		if (keysFile.Length() != 1024)
+		wxString msg;
+		bool isOk = mpConfig->CheckCryptoKeysFile(&msg);
+		
+		if (!isOk)
 		{
-			ShowError(wxT("The specified encryption key file "
-				"is not valid (should be 1024 bytes long)"),
+			ShowError(msg, 
 				BM_SETUP_WIZARD_ENCRYPTION_KEY_FILE_NOT_VALID);
-			return FALSE;
 		}
 
-		return TRUE;
+		return isOk;
 	}
 
 	bool CreateNewFileImpl()
@@ -1370,7 +1392,8 @@ class BackedUpPage : public SetupWizardPage, ConfigChangeListener
 		"<p><strong>Please back up your keys NOW!</strong></p>"		
 		"</body></html>"))
 	{
-		mpBackedUp = new wxCheckBox(this, wxID_ANY, 
+		mpBackedUp = new wxCheckBox(this, 
+			ID_Setup_Wizard_Backed_Up_Checkbox, 
 			wxT("I have backed up my keys in two locations."));
 		mpSizer->Add(mpBackedUp, 0, wxGROW | wxTOP, 8);
 
@@ -1446,18 +1469,16 @@ SetupWizardPage_id_t SetupWizard::GetCurrentPageId()
 	return pPage->GetPageId();
 }
 
-/*
-void SetupWizard::RunModeless()
+void SetupWizard::RunWizardMaybeModeless()
 {
-	wxCHECK_MSG( mpIntroPage, false, wxT("can't run empty wizard") );
+	wxASSERT(mpIntroPage);
 	
 	// This cannot be done sooner, because user can change layout options
 	// up to this moment
 	FinishLayout();
 	
 	// can't return false here because there is no old page
-	(void)ShowPage(mpIntroPage, true / * forward * /);
+	(void)ShowPage(mpIntroPage, true /* forward */);
 
-	return Show() == wxID_OK;
+	WxGuiTestHelper::ShowModal(this);
 }
-*/
