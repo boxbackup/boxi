@@ -32,12 +32,6 @@
 
 #define BOXI_VERSION "0.1.1"
 
-// Define these four macros (STR_PROP, STR_PROP_SUBCONF, INT_PROP and BOOL_PROP)
-// and then use the ALL_PROPS macro, to insert code for every configuration 
-// property known (all those listed below).
-
-#include "Property.h"
-
 enum {
 	ID_Main_Frame = wxID_HIGHEST + 1,
 	ID_Test_Frame,
@@ -110,9 +104,43 @@ enum {
 	ID_Setup_Wizard_New_File_Radio,
 	ID_Setup_Wizard_Existing_File_Radio,
 	ID_Setup_Wizard_File_Name_Text,
+	ID_Setup_Wizard_Certificate_File_Name_Text,
+	ID_Setup_Wizard_CA_File_Name_Text,
+	ID_Setup_Wizard_Backed_Up_Checkbox,
 };
 
 void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor, 
 	bool growToFit, wxSizer *sizer);
+
+class TestSetUpDecorator;
+
+class BoxiApp : public wxApp
+{
+  	public:
+	// constructor
+	BoxiApp::BoxiApp() : wxApp(), mpTestRunner(NULL) { }
+	
+	// called by wx, not strictly event handlers as they are
+	// not installed in the event handler table.
+	virtual bool OnInit();
+	virtual int  OnRun ();
+	
+	// event handlers
+	void OnIdle(wxIdleEvent& rEvent);
+	
+	// cppunit testing interface
+	void SetTestRunner(TestSetUpDecorator* pTestRunner)
+	{
+		mpTestRunner = pTestRunner;
+	}
+	
+	private:
+	TestSetUpDecorator* mpTestRunner;
+	
+	DECLARE_EVENT_TABLE()
+};
+
+extern int     g_argc;
+extern char ** g_argv;
 
 #endif /* _MAIN_H */
