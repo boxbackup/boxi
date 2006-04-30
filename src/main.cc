@@ -188,6 +188,9 @@ int BoxiApp::OnRun()
 	{
 		m_exitOnFrameDelete = Yes;
 	}
+	
+	WxGuiTestHelper::SetUseExitMainLoopOnIdleFlag(false);
+	WxGuiTestHelper::SetExitMainLoopOnIdleFlag(false);
 
 	if (mpTestRunner)
 	{
@@ -203,9 +206,9 @@ int BoxiApp::OnRun()
 	}
 	
 	// should do this, but it hangs on exit for no good reason
-	// return wxTheApp->MainLoop();
+	return wxTheApp->MainLoop();
 	
-	return 0;
+	// return 0;
 }
 
 void BoxiApp::OnIdle(wxIdleEvent& rEvent)
