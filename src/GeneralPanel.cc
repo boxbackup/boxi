@@ -41,6 +41,7 @@ BEGIN_EVENT_TABLE(GeneralPanel, wxPanel)
 		GeneralPanel::OnSetupWizardButtonClick)
 	EVT_BUTTON(ID_General_Setup_Advanced_Button, 
 		GeneralPanel::OnSetupAdvancedButtonClick)
+	EVT_IDLE(GeneralPanel::OnIdle)
 END_EVENT_TABLE()
 
 GeneralPanel::GeneralPanel
@@ -134,6 +135,8 @@ GeneralPanel::GeneralPanel
 		ID_General_Compare_Button, wxT("&Compare"));
 	pCompareBox->Add(pCompareButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
+		
+	mpWizard = NULL;
 }
 
 void GeneralPanel::AddToNotebook(wxNotebook* pNotebook)
@@ -154,13 +157,24 @@ void GeneralPanel::OnRestoreButtonClick(wxCommandEvent& event)
 	mpMainFrame->ShowPanel(mpRestorePanel);
 }
 
+void GeneralPanel::OnIdle(wxIdleEvent& event)
+{
+	if (mpWizard)
+	{
+		if (mpWizard->IsShown())
+			return;
+		mpWizard->Destroy();
+		mpWizard = NULL;
+	}
+}
+
 void GeneralPanel::OnSetupWizardButtonClick(wxCommandEvent& event)
 {
 	// SetupWizard wizard(mpConfig, this);
 	// wizard.Run();
-	SetupWizard* pWizard = new SetupWizard(mpConfig, this);
-	pWizard->Run();
-	pWizard->Destroy();
+	mpWizard = new SetupWizard(mpConfig, this);
+	mpWizard->RunWizardMaybeModeless();
+	// pWizard->Destroy();
 	// delete pWizard;
 }
 
