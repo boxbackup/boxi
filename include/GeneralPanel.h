@@ -33,6 +33,7 @@ class ClientInfoPanel;
 class MainFrame;
 class RestorePanel;
 class ServerConnection;
+class SetupWizard;
 
 /** 
  * GeneralPanel
@@ -60,11 +61,13 @@ class GeneralPanel : public wxPanel
 	RestorePanel* mpRestorePanel;
 	ClientInfoPanel* mpConfigPanel;
 	ClientConfig* mpConfig;
+	SetupWizard*  mpWizard;
 	
 	void OnBackupButtonClick(wxCommandEvent& event);
 	void OnRestoreButtonClick(wxCommandEvent& event);
 	void OnSetupWizardButtonClick(wxCommandEvent& event);
 	void OnSetupAdvancedButtonClick(wxCommandEvent& event);
+	void OnIdle(wxIdleEvent& event);
 	
 	DECLARE_EVENT_TABLE()
 };
