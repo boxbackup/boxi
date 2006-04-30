@@ -144,7 +144,10 @@ libncurses-devel (version 5, for boxbackup)
 gcc, g++ and libstdc++-devel
 
 =item *
-wxWindows (version 2.6.0 or 2.4.2, with development libraries)
+wxWindows (version 2.6.x or 2.4.2, with development libraries)
+
+=item *
+CppUnit (version 1.10.2, with development libraries)
 
 =back
 
