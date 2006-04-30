@@ -122,6 +122,7 @@ IntProperty::IntProperty(
 	const char * pKeyName, PropertyChangeListener* pListener) 
 : Property(pKeyName, pListener) 
 {
+	this->mValue = 0;
 	this->mConfigured = FALSE;
 	SetClean();
 }
