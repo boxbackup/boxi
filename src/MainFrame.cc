@@ -300,7 +300,8 @@ void MainFrame::OnClose(wxCloseEvent& event)
 			wxT("The configuration file has not been saved.\n"
 			"Do you want to save your changes?"),
 			wxT("Boxi Warning"), 
-			wxYES_NO | wxCANCEL | wxICON_QUESTION
+			wxYES_NO | wxCANCEL | wxICON_QUESTION,
+			this
 		);
 		
 		if (result == wxCANCEL)
