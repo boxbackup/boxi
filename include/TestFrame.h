@@ -27,8 +27,9 @@
 
 #include <wx/wx.h>
 
-class MainFrame;
+#include <cppunit/extensions/TestSetUp.h>
 
+class MainFrame;
 class TestCase;
 
 class TestFrame : public wxFrame
@@ -36,8 +37,9 @@ class TestFrame : public wxFrame
 	public:
 	TestFrame(const wxString PathToExecutable);
 	void WaitForIdle();
+	void WaitForEvent(wxCommandEvent& rEvent);
 	void TestThreadFinished();
-	// wxMutex& GetTestMutex()  { return mMutex; }
+	wxMutex&   GetEventMutex()  { return mMutex; }
 	MainFrame* GetMainFrame()   { return mpMainFrame; }
 	static bool IsTestsInProgress() 
 	{ 
@@ -50,6 +52,7 @@ class TestFrame : public wxFrame
 	static bool    mTestsInProgress;
 	bool           mTestThreadIsWaiting;
 	wxCondition    mMainThreadIsIdle;
+	wxCondition    mEventHandlerFinished;
 	MainFrame*     mpMainFrame;
 	
 	typedef std::vector<TestCase*> tTestList;
@@ -59,6 +62,8 @@ class TestFrame : public wxFrame
 	void OnIdle(wxIdleEvent& rEvent);
 	void OnCreateWindowCommand(wxCommandEvent& rEvent);
 	void OnTestFinishedEvent  (wxCommandEvent& rEvent);
+	void MainDoClickButton    (wxCommandEvent& rEvent);
+	void MainDoClickRadio     (wxCommandEvent& rEvent);
 	
 	DECLARE_EVENT_TABLE()
 };
@@ -98,11 +103,19 @@ int MessageBoxHarness
 (
 	message_t messageId,
 	const wxString& message,
-	const wxString& caption = wxMessageBoxCaptionStr,
-	long style = wxOK | wxCENTRE,
-	wxWindow *parent = NULL
+	const wxString& caption,
+	long style,
+	wxWindow *parent
 );
 
 void MessageBoxSetResponse(message_t messageId, int response);
+
+class TestSetUpDecorator : public CppUnit::TestSetUp
+{
+	public:
+	TestSetUpDecorator(CppUnit::Test *pTest) : TestSetUp(pTest) { }
+	virtual void RunAsDecorator() = 0;
+	virtual ~TestSetUpDecorator() { }
+};
 
 #endif /* _TESTFRAME_H */
