@@ -49,7 +49,7 @@ class SetupWizard : public wxWizard
 	SetupWizard(ClientConfig *config, wxWindow* parent);
 	bool Run() { return RunWizard(mpIntroPage); }
 	SetupWizardPage_id_t GetCurrentPageId();
-	// void RunModeless();
+	virtual void RunWizardMaybeModeless();
 	
 	private:
 	ClientConfig* mpConfig;
