@@ -31,6 +31,8 @@ boxi_include_DATA = \
 	FileTree.h\
 	MainFrame.h\
 	TestFrame.h\
-	WxGuiTestHelper.h
+	WxGuiTestHelper.h\
+	swWxGuiTestEventSimulationHelper.h\
+	BoxiApp.h
 
 EXTRA_DIST = $(boxi_include_DATA)

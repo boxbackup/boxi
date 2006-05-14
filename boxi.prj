@@ -105,7 +105,9 @@ module.include.files=\
 	FileTree.h\
 	MainFrame.h\
 	TestFrame.h\
-	WxGuiTestHelper.h
+	WxGuiTestHelper.h\
+	swWxGuiTestEventSimulationHelper.h\
+	BoxiApp.h
 
 module.source.name=src
 module.source.type=
@@ -152,7 +154,11 @@ module.source.files=\
 	FileTree.cc\
 	MainFrame.cc\
 	TestFrame.cc\
-	WxGuiTestHelper.cpp
+	WxGuiTestHelper.cpp\
+	swWxGuiTestEventSimulationHelper.cpp\
+	TestConfig.cc\
+	TestWizard.cc\
+	TestBackup.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=

@@ -48,5 +48,9 @@ src/FileTree.cc
 src/MainFrame.cc
 src/TestFrame.cc
 src/WxGuiTestHelper.cpp
+src/swWxGuiTestEventSimulationHelper.cpp
+src/TestConfig.cc
+src/TestWizard.cc
+src/TestBackup.cc
 
 

@@ -59,7 +59,11 @@ boxi_SOURCES = \
 	FileTree.cc\
 	MainFrame.cc\
 	TestFrame.cc\
-	WxGuiTestHelper.cpp
+	WxGuiTestHelper.cpp\
+	swWxGuiTestEventSimulationHelper.cpp\
+	TestConfig.cc\
+	TestWizard.cc\
+	TestBackup.cc
 
 boxi_LDFLAGS = 
 
