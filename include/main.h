@@ -2,7 +2,7 @@
  *            main.h
  *
  *  Sun Feb 27 21:27:17 2005
- *  Copyright 2004-06 Chris Wilson
+ *  Copyright 2005-2006 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -28,7 +28,7 @@
 // #include <stdlib.h>
 // #include "dmalloc.h"
 
-#include <wx/wx.h>
+#include <wx/panel.h>
 
 #define BOXI_VERSION "0.1.1"
 
@@ -49,6 +49,8 @@ enum {
 	ID_Restore_Files_Panel,
 	ID_Client_Panel,
 	ID_Backup_Panel,
+	ID_Restore_Panel,
+	ID_Compare_Panel,
 	ID_Backup_Progress_Panel,
 
 	ID_General_Setup_Wizard_Button,
@@ -109,36 +111,44 @@ enum {
 	ID_Setup_Wizard_Backed_Up_Checkbox,
 };
 
+typedef enum
+{
+	BM_UNKNOWN = 0,
+	BM_SETUP_WIZARD_BAD_ACCOUNT_NO,
+	BM_SETUP_WIZARD_BAD_STORE_HOST,
+	BM_SETUP_WIZARD_NO_FILE_NAME,
+	BM_SETUP_WIZARD_FILE_NOT_FOUND,
+	BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY,
+	BM_SETUP_WIZARD_FILE_NOT_READABLE,
+	BM_SETUP_WIZARD_FILE_OVERWRITE,
+	BM_SETUP_WIZARD_FILE_NOT_WRITABLE,
+	BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND,
+	BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE,
+	BM_SETUP_WIZARD_BAD_PRIVATE_KEY,
+	BM_SETUP_WIZARD_OPENSSL_ERROR,
+	BM_SETUP_WIZARD_RANDOM_WARNING,
+	BM_SETUP_WIZARD_ACCOUNT_NUMBER_NOT_SET,
+	BM_SETUP_WIZARD_PRIVATE_KEY_FILE_NOT_SET,
+	BM_SETUP_WIZARD_ERROR_LOADING_PRIVATE_KEY,
+	BM_SETUP_WIZARD_ERROR_READING_COMMON_NAME,
+	BM_SETUP_WIZARD_WRONG_COMMON_NAME,
+	BM_SETUP_WIZARD_FAILED_VERIFY_SIGNATURE,
+	BM_SETUP_WIZARD_ERROR_LOADING_OPENSSL_CONFIG,
+	BM_SETUP_WIZARD_ERROR_SETTING_STRING_MASK,
+	BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR,
+	BM_SETUP_WIZARD_ENCRYPTION_KEY_FILE_NOT_VALID,
+	BM_SETUP_WIZARD_MUST_CHECK_THE_BOX_KEYS_BACKED_UP,
+	BM_SETUP_WIZARD_DIR_CREATE,
+	BM_SETUP_WIZARD_DIR_CREATE_FAILED,
+	BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS,
+	BM_MAIN_FRAME_CONFIG_CHANGED_ASK_TO_SAVE,
+	BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
+	BM_MAIN_FRAME_CONFIG_LOAD_FAILED,
+} 
+message_t;
+
 void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor, 
 	bool growToFit, wxSizer *sizer);
-
-class TestSetUpDecorator;
-
-class BoxiApp : public wxApp
-{
-  	public:
-	// constructor
-	BoxiApp::BoxiApp() : wxApp(), mpTestRunner(NULL) { }
-	
-	// called by wx, not strictly event handlers as they are
-	// not installed in the event handler table.
-	virtual bool OnInit();
-	virtual int  OnRun ();
-	
-	// event handlers
-	void OnIdle(wxIdleEvent& rEvent);
-	
-	// cppunit testing interface
-	void SetTestRunner(TestSetUpDecorator* pTestRunner)
-	{
-		mpTestRunner = pTestRunner;
-	}
-	
-	private:
-	TestSetUpDecorator* mpTestRunner;
-	
-	DECLARE_EVENT_TABLE()
-};
 
 extern int     g_argc;
 extern char ** g_argv;
