@@ -63,7 +63,11 @@ class MainFrame : public wxFrame, public ConfigChangeListener
 	void OnSize       (wxSizeEvent&	   event);
 	void OnClose      (wxCloseEvent&   event);
 
+	public:
+	// don't want to expose this, but need to unit test it.
 	void DoFileOpen   (const wxString& path);
+	
+	private:
 	void DoFileNew    ();
 	void DoFileSave   ();
 	void DoFileSaveAs ();
@@ -74,7 +78,7 @@ class MainFrame : public wxFrame, public ConfigChangeListener
 	void UpdateTitle();
 	
 	wxStatusBar*      mpStatusBar;
-	wxString          mConfigFileName;
+	// wxString       mConfigFileName;
 	ClientConfig*     mpConfig;
 	ServerConnection* mpServerConnection;
 	wxNotebook*       mpTopNotebook;

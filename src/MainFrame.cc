@@ -169,7 +169,7 @@ void MainFrame::OnFileNew(wxCommandEvent& event)
 
 void MainFrame::DoFileNew() 
 {
-	mConfigFileName = wxT("");
+	mpConfig->Reset();
 	UpdateTitle();
 }
 
@@ -179,46 +179,52 @@ static const wxChar *FILETYPES = wxT(
 	"All files|*.*"
 	);
 
-void MainFrame::OnFileOpen(wxCommandEvent& event) {
-	wxFileDialog *openFileDialog = new wxFileDialog(
+void MainFrame::OnFileOpen(wxCommandEvent& event) 
+{
+	wxFileDialog* pOpenFileDialog = new wxFileDialog(
 		this, wxT("Open file"), wxT(""), wxT("bbackupd.conf"), 
 		FILETYPES, wxOPEN | wxFILE_MUST_EXIST, 
 		wxDefaultPosition);
 
-	if (openFileDialog->ShowModal() != wxID_OK)
+	if (wxGetApp().ShowFileDialog(*pOpenFileDialog) != wxID_OK)
 		return;
 
-	DoFileOpen(openFileDialog->GetPath());
+	DoFileOpen(pOpenFileDialog->GetPath());
 }
 
 void MainFrame::DoFileOpen(const wxString& path)
 {
 	mpConfig->RemoveListener(this);
 	
-	try {
+	try 
+	{
 		mpConfig->Load(path);
-	} catch (BoxException &e) {
+	} 
+	catch (BoxException &e) 
+	{
 		mpConfig->AddListener(this);
 		wxString str;
-		str.Printf(wxT("Failed to load configuration file (%s)"), 
+		str.Printf(wxT("Failed to load configuration file (%s):\n\n"), 
 			path.c_str());
-		wxMessageBox(str, wxT("Boxi Error"), 
-			wxOK | wxICON_ERROR, NULL);
+		str.Append(wxString(e.what(), wxConvLibc));
+		wxGetApp().ShowMessageBox(BM_MAIN_FRAME_CONFIG_LOAD_FAILED,
+			str, wxT("Boxi Error"), wxOK | wxICON_ERROR, NULL);
 		return;
-	} catch (wxString* e) {
+	} 
+	catch (wxString* e) 
+	{
 		mpConfig->AddListener(this);
 		wxString str;
 		str.Printf(
 			wxT("Failed to load configuration file (%s):\n\n%s"), 
 			path.c_str(), e->c_str());
-		wxMessageBox(str, wxT("Boxi Error"), 
-			wxOK | wxICON_ERROR, NULL);
+		wxGetApp().ShowMessageBox(BM_MAIN_FRAME_CONFIG_LOAD_FAILED,
+			str, wxT("Boxi Error"), wxOK | wxICON_ERROR, NULL);
 		return;
 	}		
 	
 	mpClientConfigPanel->Reload();
 
-	mConfigFileName = path;
 	UpdateTitle();
 	mpConfig->AddListener(this);
 }
@@ -236,16 +242,17 @@ void MainFrame::DoFileSave()
 	wxString msg;
 	if (!(mpConfig->Check(msg)))
 	{
-		int result = wxMessageBox(
+		int result = wxGetApp().ShowMessageBox(
+			BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
 			wxT("The configuration file has errors.\n"
 			"Are you sure you want to save it?"),
-			wxT("Boxi Warning"), wxYES_NO | wxICON_QUESTION);
+			wxT("Boxi Warning"), wxYES_NO | wxICON_QUESTION, this);
 		
 		if (result == wxNO)
 			return;
 	}
 
-	if (mConfigFileName.Length() == 0) 
+	if (mpConfig->GetFileName().Length() == 0) 
 	{
 		DoFileSaveAs2();
 	}
@@ -260,10 +267,11 @@ void MainFrame::DoFileSaveAs()
 	wxString msg;
 	if (!(mpConfig->Check(msg)))
 	{
-		int result = wxMessageBox(
+		int result = wxGetApp().ShowMessageBox(
+			BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
 			wxT("The configuration file has errors.\n"
 			"Are you sure you want to save it?"),
-			wxT("Boxi Warning"), wxYES_NO | wxICON_QUESTION);
+			wxT("Boxi Warning"), wxYES_NO | wxICON_QUESTION, this);
 		
 		if (result == wxNO)
 			return;
@@ -274,16 +282,15 @@ void MainFrame::DoFileSaveAs()
 
 void MainFrame::DoFileSaveAs2() 
 {
-	wxFileDialog *saveFileDialog = new wxFileDialog(
+	wxFileDialog saveFileDialog(
 		this, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
 		FILETYPES, wxSAVE | wxOVERWRITE_PROMPT, 
 		wxDefaultPosition);
 
-	if (saveFileDialog->ShowModal() != wxID_OK)
+	if (wxGetApp().ShowFileDialog(saveFileDialog) != wxID_OK)
 		return;
 
-	mConfigFileName = saveFileDialog->GetPath();
-	mpConfig->Save(mConfigFileName);
+	mpConfig->Save(saveFileDialog.GetPath());
 }
 
 void MainFrame::OnFileQuit(wxCommandEvent& event) {
@@ -294,7 +301,7 @@ void MainFrame::OnClose(wxCloseEvent& event)
 {
 	if (event.CanVeto() && !(mpConfig->IsClean()))
 	{
-		int result = MessageBoxHarness
+		int result = wxGetApp().ShowMessageBox
 		(
 			BM_MAIN_FRAME_CONFIG_CHANGED_ASK_TO_SAVE,
 			wxT("The configuration file has not been saved.\n"
@@ -379,13 +386,13 @@ void MainFrame::UpdateTitle()
 	wxString title;
 	wxString filename;
 	
-	if (mConfigFileName.Length() == 0) 
+	if (mpConfig->GetFileName().Length() == 0) 
 	{
 		filename = wxT("[untitled]");
 	}
 	else
 	{
-		filename = mConfigFileName;
+		filename = mpConfig->GetFileName();
 	}
 	
 	bool clean = mpConfig->IsClean();
