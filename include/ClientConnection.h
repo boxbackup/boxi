@@ -27,8 +27,9 @@
 
 #include <iostream>
 
-#include <wx/thread.h>
 #include <wx/process.h>
+#include <wx/log.h>
+#include <wx/thread.h>
 
 #define NDEBUG
 #include "Socket.h"

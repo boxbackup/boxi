@@ -520,7 +520,7 @@ ClientConnection::Error ClientConnection::DoStartClient() {
 	}
 
 	wxChar * path = wxStrdup(ClientPath);
-	wxChar * config = wxStrdup(mpConfig->GetConfigFileName());
+	wxChar * config = wxStrdup(mpConfig->GetFileName());
 	wxChar * argv[] = { path, config, NULL };
 
 	{
