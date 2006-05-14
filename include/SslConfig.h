@@ -2,8 +2,8 @@
  *            SslConfig.h
  *
  *  Wed Dec 28 01:29:03 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
