@@ -79,7 +79,7 @@ class SetupWizardPage : public wxWizardPageSimple
 
 void SetupWizardPage::ShowError(const wxString& rErrorMsg, message_t MessageId)
 {
-	MessageBoxHarness(MessageId, rErrorMsg, 
+	wxGetApp().ShowMessageBox(MessageId, rErrorMsg, 
 		wxT("Boxi Error"), wxICON_ERROR | wxOK, this);
 }
 
@@ -422,7 +422,7 @@ bool FileSavingPage::CreateNewFile()
 			return FALSE;
 		}
 
-		int result = MessageBoxHarness(
+		int result = wxGetApp().ShowMessageBox(
 			BM_SETUP_WIZARD_FILE_OVERWRITE,
 			wxT(
 			"The specified file already exists!\n"
@@ -555,7 +555,7 @@ class PrivateKeyPage : public FileSavingPage
 
 		if (!RAND_status())
 		{
-			int result = MessageBoxHarness(
+			int result = wxGetApp().ShowMessageBox(
 				BM_SETUP_WIZARD_RANDOM_WARNING,
 				wxT("Your system is not configured with a "
 				"random number generator. It may be possible "
@@ -1167,12 +1167,6 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 			return FALSE;
 		}
 
-		if (!mpConfig->CheckCertificateAndTrustedCAsPublicKeys(&msg))
-		{
-			ShowError(msg, BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
-			return false;
-		}
-		
 		return true;
 	}
 	
@@ -1421,6 +1415,252 @@ class BackedUpPage : public SetupWizardPage, ConfigChangeListener
 	virtual SetupWizardPage_id_t GetPageId() { return BWP_BACKED_UP; }
 };
 
+class DataDirectoryPage : public SetupWizardPage
+{
+	private:
+	BoundStringCtrl* mpDataDirCtrl;
+	
+	public:
+	DataDirectoryPage
+	(
+		ClientConfig *pConfig,
+		wxWizard* pParent = NULL
+	)
+ 	: SetupWizardPage(pConfig, pParent, wxT(
+		"<html><body><h1>Data Directory</h1>"
+		"<p>You must choose a directory where Box Backup and Boxi "
+		"can keep temporary files with information about their state, "
+		"and the files that are being backed up. This directory "
+		"must not be accessible to any other user.</p>"
+		"<p>The default is <code>/var/bbackupd</code> which is "
+		"suitable for running Box Backup and Boxi as the "
+		"<strong>root</strong> user, but not as a normal user. "
+		"Normal users should create a directory in their home "
+		"directory, for example <code>~/.boxbackup</code>.</p>"
+		"</body></html>"))
+	{
+		wxFlexGridSizer* pLocationSizer = new wxFlexGridSizer(3, 8, 8);
+		pLocationSizer->AddGrowableCol(1);
+		mpSizer->Add(pLocationSizer, 0, wxGROW | wxTOP, 8);
+
+		wxStaticText* pLabel = new wxStaticText(this, wxID_ANY,
+			wxT("Data directory:"));
+		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
+		
+		mpDataDirCtrl = new BoundStringCtrl(this, wxID_ANY, 
+			mpConfig->DataDirectory);
+		pLocationSizer->Add(mpDataDirCtrl, 1, 
+			wxALIGN_CENTER_VERTICAL | wxGROW, 0);
+			
+		DirSelButton* pDirSel = new DirSelButton(this, wxID_ANY, 
+			mpDataDirCtrl);
+		pLocationSizer->Add(pDirSel, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
+
+		Connect
+		(
+			wxID_ANY,
+			wxEVT_WIZARD_PAGE_CHANGING,
+                	wxWizardEventHandler
+			(
+				DataDirectoryPage::OnWizardPageChanging
+			)
+		);
+	}
+	
+	virtual ~DataDirectoryPage() { }
+
+	void OnWizardPageChanging(wxWizardEvent& event)
+	{
+		// always allow moving backwards
+		if (!event.GetDirection())
+			return;
+
+		bool isOk = CheckDataDirectory();
+		
+		if (isOk) 
+		{
+			wxString dataDirName;
+			wxASSERT(mpConfig->DataDirectory.GetInto(dataDirName));
+			wxFileName socket (dataDirName, wxT("bbackupd.sock"));
+			wxFileName pidfile(dataDirName, wxT("bbackupd.pid"));
+			mpConfig->CommandSocket.Set(socket.GetFullPath());
+			mpConfig->PidFile      .Set(pidfile.GetFullPath());
+		}
+		else
+		{
+			event.Veto();
+		}
+	}
+	
+	bool CheckDataDirectory()
+	{
+		wxString dataDirName;
+		if (!mpConfig->DataDirectory.GetInto(dataDirName))
+		{
+			ShowError(wxT("The data directory is not set"),
+				BM_SETUP_WIZARD_NO_FILE_NAME);
+			return false;
+		}
+		wxFileName dataDir(dataDirName);
+		
+		if (dataDir.FileExists())
+		{
+			ShowError(wxT("The specified data directory already "
+				"exists as a file"),
+				BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
+			return false;
+		}
+
+		if (dataDir.DirExists() && 
+			! wxFile::Access(dataDirName, wxFile::read))
+		{
+			ShowError(wxT("The specified data directory already "
+				"exists and is not readable. Please make "
+				"it readable and writable, or choose another one."),
+				BM_SETUP_WIZARD_FILE_NOT_READABLE);
+			return false;
+		}
+
+		if (dataDir.DirExists() && 
+			! wxFile::Access(dataDirName, wxFile::write))
+		{
+			ShowError(wxT("The specified data directory already "
+				"exists and is not writable. Please make "
+				"it writable, or choose another one."),
+				BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
+			return false;
+		}
+
+		wxFileName parent(dataDir.GetPath());
+		
+		if (dataDir.DirExists())
+		{
+			struct stat st;
+			wxCharBuffer buf = dataDirName.mb_str(wxConvLibc);
+
+			if (stat(buf.data(), &st) != 0 ||
+				(st.st_mode & 0700) != 0700)
+			{
+				wxString err(strerror(errno), wxConvLibc);
+				wxString msg;
+				msg.Printf(wxT("The specified data directory "
+					"(%s) is not accessible (%s)"), 
+					dataDirName.c_str(), err.c_str());
+				ShowError(msg, BM_SETUP_WIZARD_FILE_NOT_READABLE);
+				return false;
+			}
+	
+			if (st.st_mode & 0077)
+			{
+				wxString msg;
+				msg.Printf(wxT("The specified data directory "
+					"already exists, and is accessible to other "
+					"users. This is dangerous and not allowed.\n\n"
+					"Please remove all permissions for other users "
+					"to access the data directory, or choose a "
+					"different one"),
+					parent.GetFullPath().c_str());
+				ShowError(msg, BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
+				return false;
+			}
+		}
+		
+		if (dataDir.DirExists())
+		{
+			return true;
+		}
+
+		if (!parent.DirExists())
+		{
+			wxString msg;
+			msg.Printf(wxT("The specified data directory "
+				"does not exist, and cannot be created, "
+				"because the parent directory (%s) "
+				"does not exist"),
+				parent.GetFullPath().c_str());
+			ShowError(msg, BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
+			return false;
+		}
+
+		bool parentAccessible = true;
+		
+		if (!wxFile::Access(parent.GetFullPath(), wxFile::read))
+			parentAccessible = false;
+		
+		if (!wxFile::Access(parent.GetFullPath(), wxFile::write))
+			parentAccessible = false;
+		
+		{
+			struct stat st;
+			wxCharBuffer buf = parent.GetFullPath().mb_str(wxConvLibc);
+
+			if (stat(buf.data(), &st) != 0 ||
+				(st.st_mode & 0700) != 0700)
+			{
+				parentAccessible = false;
+			}
+		}
+
+		if (!parentAccessible)
+		{
+			wxString msg;
+			msg.Printf(wxT("The specified data directory "
+				"does not exist, and cannot be created, "
+				"because you do not have permission to write "
+				"to the parent directory (%s)"),
+				parent.GetFullPath().c_str());
+			ShowError(msg, BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
+			return false;
+		}
+
+		{
+			struct stat st;
+			wxCharBuffer buf = dataDirName.mb_str(wxConvLibc);
+
+			if (stat(buf.data(), &st) != 0 ||
+				(st.st_mode & 0700) != 0700)
+			{
+				wxString err(strerror(errno), wxConvLibc);
+				wxString msg;
+				msg.Printf(wxT("The specified data directory "
+					"(%s) is not accessible (%s)"), 
+					dataDirName.c_str(), err.c_str());
+				ShowError(msg, BM_SETUP_WIZARD_FILE_NOT_READABLE);
+				return false;
+			}
+	
+			if (st.st_mode & 0077)
+			{
+				wxString msg;
+				msg.Printf(wxT("The specified data directory "
+					"already exists, and is accessible to other "
+					"users. This is dangerous and not allowed.\n\n"
+					"Please remove all permissions for other users "
+					"to access the data directory, or choose a "
+					"different one"),
+					parent.GetFullPath().c_str());
+				ShowError(msg, BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
+				return false;
+			}
+		}
+		
+		{
+			wxLogNull disableLogging;
+			if (!wxMkdir(dataDir.GetFullPath(), 0700))
+			{
+				ShowError(wxT("The specified data directory "
+					"does not exist, and could not be created"),
+					BM_SETUP_WIZARD_DIR_CREATE_FAILED);
+				return false;
+			}
+		}
+		
+		return true;		
+	}
+	
+	virtual SetupWizardPage_id_t GetPageId() { return BWP_DATA_DIR; }
+};
+
 SetupWizard::SetupWizard(ClientConfig *config, wxWindow* parent)
 : wxWizard(parent, ID_Setup_Wizard_Frame, wxT("Boxi Setup Wizard"), 
 	wxNullBitmap, wxDefaultPosition, 
@@ -1460,7 +1700,10 @@ SetupWizard::SetupWizard(ClientConfig *config, wxWindow* parent)
 	wxWizardPageSimple::Chain(pCertificatePage, pCryptoKeyPage);
 	
 	wxWizardPageSimple* pBackedUpPage = new BackedUpPage(config, this);
-	wxWizardPageSimple::Chain(pCryptoKeyPage,  pBackedUpPage);
+	wxWizardPageSimple::Chain(pCryptoKeyPage, pBackedUpPage);
+
+	wxWizardPageSimple* pDataDirPage = new DataDirectoryPage(config, this);
+	wxWizardPageSimple::Chain(pBackedUpPage, pDataDirPage);
 }
 
 SetupWizardPage_id_t SetupWizard::GetCurrentPageId()

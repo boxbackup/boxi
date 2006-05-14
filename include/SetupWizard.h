@@ -40,6 +40,7 @@ typedef enum
 	BWP_CERTIFICATE,
 	BWP_CRYPTO_KEY,
 	BWP_BACKED_UP,
+	BWP_DATA_DIR,
 }
 SetupWizardPage_id_t;
 
