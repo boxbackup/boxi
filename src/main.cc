@@ -1,21 +1,40 @@
-/*
- * Main source code file for Boxi, a graphical user interface for
- * Box Backup (software developed by Ben Summers).
- * 
- * (C) Chris Wilson <chris-boxisource@qwirx.com>, 2004-06
- * Licensed under the GNU General Public License (GPL) version 2 or later
+/***************************************************************************
+ *            main.cc
  *
- * Please note: This product includes software developed by Ben Summers.
- * The above attribution must not be removed or modified!
+ *  Main source code file for Boxi, a graphical user interface for
+ *  Box Backup (software developed by Ben Summers).
+ *
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  * Portions copied from swWxGuiTesting by Reinhold Fureder.
  * Used under the wxWidgets source license.
+ *
+ * Please note: This product includes software developed by Ben Summers.
+ * The above attribution must not be removed or modified!
  */
 
 #include <signal.h>
 
 #include <wx/wx.h>
 #include <wx/cmdline.h>
+#include <wx/filename.h>
 
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/CompilerOutputter.h>
@@ -138,16 +157,15 @@ bool BoxiApp::OnInit()
 	
 	if (result != 0)
 	{
-		return FALSE;
+		return false;
 	}
 	
-	bool haveConfigFileArg = FALSE;
-	wxString ConfigFileName;
+	mHaveConfigFile = false;
 	
 	if (cmdParser.GetParamCount() == 1) 
 	{
-		haveConfigFileArg = TRUE;
-		ConfigFileName = cmdParser.GetParam();
+		mHaveConfigFile = true;
+		mConfigFileName = cmdParser.GetParam();
 	}
 
 	signal(SIGPIPE, sigpipe_handler);	
@@ -162,11 +180,15 @@ bool BoxiApp::OnInit()
 	{
 	*/
 	
-	if (!cmdParser.Found(wxT("t")))
+	if (cmdParser.Found(wxT("t")))
+	{
+		mTesting = true;
+	}
+	else
 	{
 		wxFrame *frame = new MainFrame 
 		(
-			haveConfigFileArg ? &ConfigFileName : NULL,
+			mHaveConfigFile ? &mConfigFileName : NULL,
 			wxString(argv[0]),
 			wxPoint(50, 50), wxSize(600, 500)
 		);
@@ -206,9 +228,12 @@ int BoxiApp::OnRun()
 	}
 	
 	// should do this, but it hangs on exit for no good reason
-	return wxTheApp->MainLoop();
+	if (!mpTestRunner)
+	{
+		return wxTheApp->MainLoop();
+	}
 	
-	// return 0;
+	return 0;
 }
 
 void BoxiApp::OnIdle(wxIdleEvent& rEvent)
@@ -220,4 +245,63 @@ void BoxiApp::OnIdle(wxIdleEvent& rEvent)
 	{
 		wxTheApp->ExitMainLoop ();
 	}
+}
+
+int BoxiApp::ShowFileDialog(wxFileDialog& rDialog)
+{
+	if (!mTesting)
+	{
+		return rDialog.ShowModal();
+	}
+	
+	wxASSERT(mExpectingFileDialog);
+	mExpectingFileDialog = false;
+	rDialog.SetPath(mExpectedFileDialogResult);
+	rDialog.SetFilename(wxFileName(mExpectedFileDialogResult).GetFullName());
+
+	return wxID_OK;
+}
+
+void BoxiApp::ExpectFileDialog(const wxString& rPathToReturn)
+{
+	wxASSERT(mTesting);
+	wxASSERT(!mExpectingFileDialog);
+	mExpectingFileDialog = true;
+	mExpectedFileDialogResult = rPathToReturn;
+}
+
+int BoxiApp::ShowMessageBox
+(
+	message_t messageId,
+	const wxString& message,
+	const wxString& caption,
+	long style,
+	wxWindow *parent
+)
+{
+	if (!mTesting)
+	{
+		return wxMessageBox(message, caption, style, parent);
+	}
+	
+	if (mExpectedMessageId != messageId)
+	{
+		CPPUNIT_ASSERT(mExpectedMessageId == messageId);
+	}
+	
+	mExpectedMessageId = BM_UNKNOWN;
+
+	int response = mExpectedMessageResponse;
+	mExpectedMessageResponse = -1;
+
+	return response;
+}
+
+void BoxiApp::ExpectMessageBox(message_t messageId, int response, 
+	const CppUnit::SourceLine& rLine)
+{
+	CPPUNIT_ASSERT_MESSAGE_AT("There is already an expected message ID",
+		mExpectedMessageId == 0, rLine);
+	mExpectedMessageId       = messageId;
+	mExpectedMessageResponse = response;
 }
