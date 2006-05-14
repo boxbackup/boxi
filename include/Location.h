@@ -25,16 +25,15 @@
 #ifndef _LOCATION_H
 #define _LOCATION_H
 
-#include <regex.h>
-
-#include <wx/wx.h>
+// #include <regex.h>
+// #include <wx/wx.h>
 
 #define NDEBUG
 #include <BoxConfig.h>
-#define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
+// #define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #include "Configuration.h"
 #include "ExcludeList.h"
-#undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
+// #undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #undef NDEBUG
 
 enum ExcludeSense {
