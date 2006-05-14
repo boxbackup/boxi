@@ -50,7 +50,7 @@ RestorePanel::RestorePanel(
 	wxWindow*         pParent
 	)
 :	FunctionPanel(wxT("Restore Panel"), pConfig, pClientConfigPanel, 
-		pMainFrame, pParent)
+		pMainFrame, pParent, ID_Restore_Panel)
 {
 	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to restore"));
 	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Restore &Destination"));
