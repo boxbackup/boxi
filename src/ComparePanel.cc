@@ -2,8 +2,8 @@
  *            ComparePanel.cc
  *
  *  Tue Mar  1 00:24:16 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
