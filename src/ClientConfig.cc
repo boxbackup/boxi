@@ -47,18 +47,20 @@
 
 #define INIT_PROP(name, value) name(#name, value, this)
 #define INIT_PROP_EMPTY(name)  name(#name, this)
+
 #define INIT_PROPS_DEFAULTS \
 	INIT_PROP_EMPTY(CertRequestFile), \
+	INIT_PROP_EMPTY(StoreHostname), \
 	INIT_PROP_EMPTY(CertificateFile), \
 	INIT_PROP_EMPTY(PrivateKeyFile), \
-	INIT_PROP(DataDirectory,   "/var/bbackupd"), \
-	INIT_PROP(NotifyScript,    "/etc/box/bbackupd/NotifySysadmin.sh"), \
-	INIT_PROP(TrustedCAsFile,  "/etc/box/bbackupd/serverCA.pem"), \
 	INIT_PROP_EMPTY(KeysFile), \
-	INIT_PROP_EMPTY(StoreHostname), \
-	INIT_PROP(SyncAllowScript, ""), \
-	INIT_PROP(CommandSocket,   "/var/run/bbackupd.sock"), \
-	INIT_PROP(PidFile,         "/var/run/bbackupd.pid"), \
+	INIT_PROP_EMPTY(DataDirectory), \
+	INIT_PROP_EMPTY(NotifyScript), \
+	INIT_PROP_EMPTY(TrustedCAsFile), \
+	INIT_PROP_EMPTY(SyncAllowScript), \
+	INIT_PROP_EMPTY(CommandSocket), \
+	INIT_PROP_EMPTY(PidFile), \
+	INIT_PROP_EMPTY(StoreObjectInfoFile), \
 	INIT_PROP_EMPTY(AccountNumber), \
 	INIT_PROP(UpdateStoreInterval, 3600), \
 	INIT_PROP(MinimumFileAge,  21600), \
@@ -67,8 +69,10 @@
 	INIT_PROP(DiffingUploadSizeThreshold, 8192), \
 	INIT_PROP(MaximumDiffingTime, 20), \
 	INIT_PROP(MaxFileTimeInFuture, 0), \
-	INIT_PROP(ExtendedLogging, true)
-	
+	INIT_PROP_EMPTY(KeepAliveTime), \
+	INIT_PROP(ExtendedLogging, false), \
+	INIT_PROP(AutomaticBackup, true)
+
 ClientConfig::ClientConfig()
 : INIT_PROPS_DEFAULTS
 {
@@ -80,6 +84,7 @@ ClientConfig::ClientConfig(const wxString& rConfigFileName)
 {
 	Load(rConfigFileName);
 }
+
 #undef INIT_PROPS_DEFAULTS
 #undef INIT_PROP_EMPTY
 #undef INIT_PROP
@@ -117,11 +122,8 @@ void ClientConfig::Load(const wxString& rConfigFileName)
 	std::string errs;
 
 	wxCharBuffer buf = rConfigFileName.mb_str(wxConvLibc);	
-	mapConfig = Configuration::LoadAndVerify(buf.data(),
-		&BackupDaemonConfigVerify, errs);
+	mapConfig = Configuration::LoadAndVerify(buf.data(), NULL, errs);
 		
-	this->mConfigFileName = rConfigFileName;
-	
 	if (mapConfig.get() == 0 || !errs.empty())
 	{
 		wxString *exception = new wxString();
@@ -131,26 +133,23 @@ void ClientConfig::Load(const wxString& rConfigFileName)
 		throw exception;
 	}
 
-	#ifdef __CYGWIN__
-	#define DIR_PROP(name) \
-		name.Set(ConvertCygwinPathToWindows( \
-			mapConfig->GetKeyValue(#name)));
-	#define DIR_PROP_SUBCONF(name, subconf) \
-		name.Set(ConvertCygwinPathToWindows( \
-			mapConfig->GetSubConfiguration(#subconf)->GetKeyValue(#name)));
-	#else /* ! __CYGWIN__ */
+	this->mConfigFileName = rConfigFileName;
+	
 	#define DIR_PROP(name) \
 		name.SetFrom(mapConfig.get());
 	#define DIR_PROP_SUBCONF(name, subconf) \
-		name.SetFrom(&(mapConfig->GetSubConfiguration(#subconf)));
-	#endif /* __CYGWIN__ */
-	
+		if (mapConfig->SubConfigurationExists(#subconf)) \
+		{ name.SetFrom(&(mapConfig->GetSubConfiguration(#subconf))); } \
+		else { name.Clear(); }
 	#define STR_PROP(name) \
 		name.SetFrom(mapConfig.get());
 	#define INT_PROP(name) \
 		name.SetFrom(mapConfig.get());
 	#define BOOL_PROP(name) \
 		name.SetFrom(mapConfig.get());
+
+	STR_PROP(StoreHostname)
+	INT_PROP(AccountNumber)
 
 	DIR_PROP(CertificateFile)
 	DIR_PROP(PrivateKeyFile)
@@ -160,16 +159,20 @@ void ClientConfig::Load(const wxString& rConfigFileName)
 	DIR_PROP(KeysFile)
 	DIR_PROP(SyncAllowScript)
 	DIR_PROP(CommandSocket)
+	DIR_PROP(StoreObjectInfoFile)
 	DIR_PROP_SUBCONF(PidFile, Server)
-	STR_PROP(StoreHostname)
-	INT_PROP(AccountNumber)
+	
 	INT_PROP(UpdateStoreInterval)
 	INT_PROP(MinimumFileAge)
 	INT_PROP(MaxUploadWait)
 	INT_PROP(FileTrackingSizeThreshold)
 	INT_PROP(DiffingUploadSizeThreshold)
 	INT_PROP(MaximumDiffingTime)
+	INT_PROP(MaxFileTimeInFuture)
+	INT_PROP(KeepAliveTime)
+	
 	BOOL_PROP(ExtendedLogging)
+	BOOL_PROP(AutomaticBackup)
 	
 	#undef BOOL_PROP
 	#undef INT_PROP
@@ -385,21 +388,28 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	
 	WRITE_STR_PROP(StoreHostname)
 	WRITE_INT_PROP_FMT(AccountNumber, "0x%x")
+
 	WRITE_DIR_PROP(KeysFile)
 	WRITE_DIR_PROP(CertificateFile)
 	WRITE_DIR_PROP(PrivateKeyFile)
 	WRITE_DIR_PROP(TrustedCAsFile)
 	WRITE_DIR_PROP(DataDirectory)
 	WRITE_DIR_PROP(NotifyScript)
+	WRITE_DIR_PROP(SyncAllowScript)
+	WRITE_DIR_PROP(CommandSocket)
+	WRITE_DIR_PROP(StoreObjectInfoFile)
+
 	WRITE_INT_PROP(UpdateStoreInterval)
 	WRITE_INT_PROP(MinimumFileAge)
 	WRITE_INT_PROP(MaxUploadWait)
 	WRITE_INT_PROP(FileTrackingSizeThreshold)
 	WRITE_INT_PROP(DiffingUploadSizeThreshold)
 	WRITE_INT_PROP(MaximumDiffingTime)
+	WRITE_INT_PROP(MaxFileTimeInFuture)
+	WRITE_INT_PROP(KeepAliveTime)
+
 	WRITE_BOOL_PROP(ExtendedLogging)
-	WRITE_DIR_PROP(SyncAllowScript)
-	WRITE_DIR_PROP(CommandSocket)
+	WRITE_BOOL_PROP(AutomaticBackup)
 
 	#undef WRITE_STR_PROP
 	#undef WRITE_INT_PROP
@@ -444,6 +454,25 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	Load(rConfigFileName);
 	
 	return true;
+}
+
+void ClientConfig::Reset()
+{
+	#define STR_PROP(name) name.Reset();
+	#define STR_PROP_SUBCONF(name, conf) name.Reset();
+	#define INT_PROP(name) name.Reset();
+	#define BOOL_PROP(name) name.Reset();
+	ALL_PROPS
+	#undef BOOL_PROP
+	#undef INT_PROP
+	#undef STR_PROP_SUBCONF
+	#undef STR_PROP
+	
+	CertRequestFile.Reset();
+	
+	mConfigFileName = wxT("");
+	mapConfig.reset();
+	mLocations.clear();
 }
 
 void ClientConfig::SetClean() 
@@ -588,13 +617,14 @@ bool PropWritable(StringProperty& rProp, wxString& msg, const char *desc)
 	std::string path1;
 	rProp.GetInto(path1);
 	wxString path2(path1.c_str(), wxConvLibc);
+	wxString desc2(desc, wxConvLibc);
 	
 	if (wxFileName::FileExists(path2))
 	{
 		if (wxFile::Access(path2, wxFile::write))
 			return true;
 		msg.Printf(wxT("The %s cannot be written (%s)"), 
-			desc, path1.c_str());
+			desc2.c_str(), path1.c_str());
 		return false;
 	}
 	else
@@ -607,14 +637,14 @@ bool PropWritable(StringProperty& rProp, wxString& msg, const char *desc)
 			msg.Printf(
 				wxT("The %s parent directory "
 				"does not exist (%s)"),
-				desc, parentPath.c_str());
+				desc2.c_str(), parentPath.c_str());
 			return false;
 		}
 		if (wxFile::Access(parentPath, wxFile::write))
 			return true;
 		msg.Printf(wxT("The %s parent directory "
 				"cannot be written (%s)"), 
-			desc, parentPath.c_str());
+			desc2.c_str(), parentPath.c_str());
 		return false;
 	}
 
@@ -654,7 +684,7 @@ bool ClientConfig::Check(wxString& rMsg)
 	if (!PropSet(DiffingUploadSizeThreshold, rMsg, 
 		"Diffing Upload Size Threshold"))
 		return false;
-	if (!PropSet(MaximumDiffingTime, rMsg, "Maximum Diffing Time"))
+	if (!PropSet(MaxUploadWait, rMsg, "Maximum Upload Wait"))
 		return false;
 	if (!PropSet(MaxUploadWait, rMsg, "Maximum Upload Wait"))
 		return false;
@@ -664,8 +694,17 @@ bool ClientConfig::Check(wxString& rMsg)
 			"Sync Allow Script"))
 			return false;
 	}
-	if (!PropWritable(CommandSocket, rMsg, "Command Socket"))
-		return false;
+	if (PropSet(StoreObjectInfoFile, rMsg, ""))
+	{
+		if (!PropPath(StoreObjectInfoFile, rMsg, false, 
+			"Store Object Info File"))
+			return false;
+	}
+	if (PropSet(CommandSocket, rMsg, ""))
+	{
+		if (!PropWritable(CommandSocket, rMsg, "Command Socket"))
+			return false;
+	}
 	if (!PropWritable(PidFile, rMsg, "Process ID File"))
 		return false;
 
@@ -678,8 +717,6 @@ bool ClientConfig::Check(wxString& rMsg)
 	if (!CheckCertificateFile(&rMsg))
 		return false;
 	if (!CheckTrustedCAsFile(&rMsg))
-		return false;
-	if (!CheckCertificateAndTrustedCAsPublicKeys(&rMsg))
 		return false;
 	if (!CheckCryptoKeysFile(&rMsg))
 		return false;
@@ -1264,6 +1301,7 @@ bool ClientConfig::CheckTrustedCAsFile(wxString* pMsgOut)
 	return VerifyCertificate(certFileName, certFileName, pMsgOut);
 }
 
+/*
 bool ClientConfig::CheckCertificateAndTrustedCAsPublicKeys(wxString* pMsgOut)
 {
 	wxString certFile;
@@ -1313,6 +1351,7 @@ bool ClientConfig::CheckCertificateAndTrustedCAsPublicKeys(wxString* pMsgOut)
 	
 	return true;
 }
+*/
 
 std::auto_ptr<SslConfig> SslConfig::Get(wxString* pMsgOut)
 {

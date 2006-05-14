@@ -30,7 +30,6 @@
 #include "main.h"
 #include "Property.h"
 #include "Location.h"
-#include "Location.h"
 
 class ConfigChangeListener 
 {
@@ -45,13 +44,16 @@ class ClientConfig :
 {
 	private:
 	ClientConfig(const ClientConfig& forbidden);
+	ClientConfig operator=(const ClientConfig& forbidden);
 
 	public:
 	ClientConfig();
 	ClientConfig(const wxString& configFileName);
 	virtual ~ClientConfig() { }
 	
-	const wxString& GetConfigFileName() { return mConfigFileName; }
+	const wxString& GetFileName() { return mConfigFileName; }
+	void SetFileName(const wxString& rFilename) 
+	{ mConfigFileName = rFilename; }
 
 	// unsaved property
 	StringProperty CertRequestFile;
@@ -72,7 +74,8 @@ class ClientConfig :
 	void Load(const wxString& rConfigFileName);
 	bool Save();
 	bool Save(const wxString& rConfigFileName);
-	
+	void Reset();
+
 	const std::vector<Location>& GetLocations() { return mLocations; }
 	void AddLocation    (const Location& rNewLocation);
 	void ReplaceLocation(int index, const Location& rNewLocation);
@@ -97,7 +100,6 @@ class ClientConfig :
 	bool CheckPrivateKeyFile (wxString* pMsgOut);
 	bool CheckCertificateFile(wxString* pMsgOut);
 	bool CheckTrustedCAsFile (wxString* pMsgOut);
-	bool CheckCertificateAndTrustedCAsPublicKeys(wxString* pMsgOut);
 	bool CheckCryptoKeysFile (wxString* pMsgOut);
 	
 	private:
