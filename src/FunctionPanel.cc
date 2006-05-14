@@ -41,8 +41,9 @@ FunctionPanel::FunctionPanel(
 		ClientConfig*    pConfig,
 		ClientInfoPanel* pClientConfigPanel,
 		MainFrame*       pMainFrame,
-		wxWindow*        pParent)
-: wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 
+		wxWindow*        pParent,
+		wxWindowID       WindowId)
+: wxPanel(pParent, WindowId, wxDefaultPosition, wxDefaultSize, 
 	wxTAB_TRAVERSAL, rName),
   mpConfig(pConfig),
   mpClientConfigPanel(pClientConfigPanel),

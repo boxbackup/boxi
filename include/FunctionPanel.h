@@ -40,7 +40,8 @@ class FunctionPanel
 		ClientConfig*    pConfig,
 		ClientInfoPanel* pClientConfigPanel,
 		MainFrame*       pMainFrame,
-		wxWindow*        pParent);
+		wxWindow*        pParent,
+		wxWindowID       WindowId);
 
 	protected:
 	ClientConfig*     mpConfig;
