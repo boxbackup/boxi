@@ -25,9 +25,20 @@
 #ifndef _TESTFRAME_H
 #define _TESTFRAME_H
 
-#include <wx/wx.h>
+#include <vector>
 
+// #include <wx/wx.h>
+
+#include <cppunit/Asserter.h>
+#include <cppunit/TestCase.h>
 #include <cppunit/extensions/TestSetUp.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
+
+#include "main.h"
+#include "BoxiApp.h"
+#include "ClientConfig.h"
+#include "WxGuiTestHelper.h"
+#include "swWxGuiTestEventSimulationHelper.h"
 
 class MainFrame;
 class TestCase;
@@ -68,54 +79,95 @@ class TestFrame : public wxFrame
 	DECLARE_EVENT_TABLE()
 };
 
-typedef enum
-{
-	BM_UNKNOWN = 0,
-	BM_SETUP_WIZARD_BAD_ACCOUNT_NO,
-	BM_SETUP_WIZARD_BAD_STORE_HOST,
-	BM_SETUP_WIZARD_NO_FILE_NAME,
-	BM_SETUP_WIZARD_FILE_NOT_FOUND,
-	BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY,
-	BM_SETUP_WIZARD_FILE_NOT_READABLE,
-	BM_SETUP_WIZARD_FILE_OVERWRITE,
-	BM_SETUP_WIZARD_FILE_NOT_WRITABLE,
-	BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND,
-	BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE,
-	BM_SETUP_WIZARD_BAD_PRIVATE_KEY,
-	BM_SETUP_WIZARD_OPENSSL_ERROR,
-	BM_SETUP_WIZARD_RANDOM_WARNING,
-	BM_SETUP_WIZARD_ACCOUNT_NUMBER_NOT_SET,
-	BM_SETUP_WIZARD_PRIVATE_KEY_FILE_NOT_SET,
-	BM_SETUP_WIZARD_ERROR_LOADING_PRIVATE_KEY,
-	BM_SETUP_WIZARD_ERROR_READING_COMMON_NAME,
-	BM_SETUP_WIZARD_WRONG_COMMON_NAME,
-	BM_SETUP_WIZARD_FAILED_VERIFY_SIGNATURE,
-	BM_SETUP_WIZARD_ERROR_LOADING_OPENSSL_CONFIG,
-	BM_SETUP_WIZARD_ERROR_SETTING_STRING_MASK,
-	BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR,
-	BM_SETUP_WIZARD_ENCRYPTION_KEY_FILE_NOT_VALID,
-	BM_SETUP_WIZARD_MUST_CHECK_THE_BOX_KEYS_BACKED_UP,
-	BM_MAIN_FRAME_CONFIG_CHANGED_ASK_TO_SAVE,
-} 
-message_t;
-
-int MessageBoxHarness
-(
-	message_t messageId,
-	const wxString& message,
-	const wxString& caption,
-	long style,
-	wxWindow *parent
-);
-
-void MessageBoxSetResponse(message_t messageId, int response);
-
 class TestSetUpDecorator : public CppUnit::TestSetUp
 {
 	public:
 	TestSetUpDecorator(CppUnit::Test *pTest) : TestSetUp(pTest) { }
 	virtual void RunAsDecorator() = 0;
 	virtual ~TestSetUpDecorator() { }
+};
+
+#define CPPUNIT_ASSERT_AT(condition, line) \
+	CppUnit::Asserter::failIf(!(condition), \
+		CppUnit::Message("assertion failed", "Expression: " #condition), \
+		line);
+
+#define CPPUNIT_ASSERT_MESSAGE_AT(message, condition, line) \
+	CppUnit::Asserter::failIf(!condition, \
+		CppUnit::Message(message, "Expression: " #condition), \
+		(line));
+
+#define CPPUNIT_ASSERT_EQUAL_AT(expected, actual, line)          \
+  ( CPPUNIT_NS::assertEquals( (expected),              \
+                              (actual),                \
+                              (line),    \
+                              "" ) )
+
+#define MessageBoxSetResponse(messageId, response) \
+	wxGetApp().ExpectMessageBox(messageId, response, CPPUNIT_SOURCELINE())
+
+#define MessageBoxCheckFired() CPPUNIT_ASSERT(wxGetApp().ShowedMessageBox())
+
+class GuiTestBase : public CppUnit::TestCase
+{
+	public: 
+	GuiTestBase() : CppUnit::TestCase("GuiTestBase") { }
+	virtual ~GuiTestBase() { }
+	virtual void RunTest() = 0;
+		
+	protected:
+	void ClickButtonWaitIdle  (wxWindow* pWindow);
+	void ClickButtonWaitEvent (wxWindowID ParentID, wxWindowID ButtonID);
+	void ClickButtonWaitEvent (wxWindowID ButtonID);
+	void ClickRadioWaitEvent  (wxWindow* pButton);
+	void CloseWindow          (wxWindow* pWindow);
+	void CloseWindowWaitClosed(wxWindow* pWindow);
+	void ClickMenuItem(int id, wxWindow *frame)
+	{
+		WxGuiTestEventSimulationHelper::SelectMenuItem(id, frame);
+	}
+	
+	MainFrame* GetMainFrame();
+	wxWindow*  FindWindow(wxWindowID id) 
+	{ 
+		return wxWindow::FindWindowById(id); 
+	}
+	wxTextCtrl* GetTextCtrl  (wxWindow* pWindow, wxWindowID id);
+	
+	private:
+	wxCommandEvent GetButtonClickEvent(wxWindow* pWindow);
+
+	public:	
+	void tearDown()
+	{
+		wxGetApp().ResetMessageBox();
+		
+		for (size_t i = 0; i < wxTopLevelWindows.GetCount(); i++)
+		{
+			wxWindow* pOpenWindow = 
+				wxTopLevelWindows.Item(i)->GetData();
+			CloseWindow(pOpenWindow);
+		}
+		
+		while (wxTopLevelWindows.GetCount() > 0)
+		{
+			CPPUNIT_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
+		}
+	}	
+};
+
+class TestWithConfig : public GuiTestBase
+{
+	protected:
+	ClientConfig* mpConfig;
+	
+	public:
+	TestWithConfig() : mpConfig(NULL) { }
+	virtual void tearDown()
+	{
+		if (mpConfig) mpConfig->Reset();
+		this->GuiTestBase::tearDown();
+	}
 };
 
 #endif /* _TESTFRAME_H */
