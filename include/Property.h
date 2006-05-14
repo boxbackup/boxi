@@ -31,16 +31,17 @@
 #include "Configuration.h"
 
 #define STR_PROPS \
+STR_PROP(StoreHostname) \
 STR_PROP(CertificateFile) \
 STR_PROP(PrivateKeyFile) \
+STR_PROP(KeysFile) \
 STR_PROP(DataDirectory) \
 STR_PROP(NotifyScript) \
 STR_PROP(TrustedCAsFile) \
-STR_PROP(KeysFile) \
-STR_PROP(StoreHostname) \
 STR_PROP(SyncAllowScript) \
 STR_PROP(CommandSocket) \
-STR_PROP_SUBCONF(PidFile, Server)
+STR_PROP_SUBCONF(PidFile, Server) \
+STR_PROP(StoreObjectInfoFile)
 
 #define INT_PROPS \
 INT_PROP(AccountNumber) \
@@ -50,10 +51,12 @@ INT_PROP(MaxUploadWait) \
 INT_PROP(FileTrackingSizeThreshold) \
 INT_PROP(DiffingUploadSizeThreshold) \
 INT_PROP(MaximumDiffingTime) \
-INT_PROP(MaxFileTimeInFuture)
+INT_PROP(MaxFileTimeInFuture) \
+INT_PROP(KeepAliveTime)
 	
 #define BOOL_PROPS \
-BOOL_PROP(ExtendedLogging)
+BOOL_PROP(ExtendedLogging) \
+BOOL_PROP(AutomaticBackup)
 
 #define ALL_PROPS STR_PROPS INT_PROPS BOOL_PROPS
 
@@ -77,6 +80,7 @@ class Property {
 	virtual void SetFrom(const Configuration* pConf) = 0;
 	virtual void SetClean() = 0;
 	virtual bool IsClean () = 0;
+	virtual void Reset   () = 0;
 	const std::string& GetKeyName() { return mKeyName; }
 };
 
@@ -90,15 +94,18 @@ class BoolProperty : public Property
 	
 	void SetFrom(const Configuration* pConf);
 	const bool* Get();
-	void Set(bool newValue) ;
+	void Set(bool newValue);
 	void Clear();
+	void Reset();
 	bool GetInto(bool& dest);
 	void SetClean();
 	bool IsClean();
+	bool Is(bool expectedValue) 
+	{ return mConfigured && mValue == expectedValue; }
 
 	private:
-	bool mValue, mOriginalValue;
-	bool mConfigured, mWasConfigured;
+	bool mValue, mOriginalValue, mDefaultValue;
+	bool mConfigured, mWasConfigured, mDefaultConfigured;
 };
 
 class IntProperty : public Property 
@@ -115,16 +122,19 @@ class IntProperty : public Property
 	void Set(int newValue);
 	bool SetFromString(const wxString& rSource);
 	void Clear();
+	void Reset();
 	bool GetInto(wxString& rDest);
 	bool GetInto(std::string& rDest);
 	bool GetInto(int& dest);
 	void SetClean();
 	bool IsClean();
 	bool IsConfigured() { return mConfigured; }
+	bool Is(int expectedValue)
+	{ return mConfigured && mValue == expectedValue; }
 	
 	private:
-	int mValue, mOriginalValue;
-	bool mConfigured, mWasConfigured;
+	int mValue, mOriginalValue, mDefaultValue;
+	bool mConfigured, mWasConfigured, mDefaultConfigured;
 };
 
 class StringProperty : public Property 
@@ -142,15 +152,18 @@ class StringProperty : public Property
 	void Set(const std::string& rNewValue);
 	void Set(const char *       pNewValue);
 	void Clear();
+	void Reset();
 	bool GetInto(std::string& rDest);
 	bool GetInto(wxString&    rDest);
 	void SetClean();
 	bool IsClean();
 	bool IsConfigured() { return mConfigured; }
+	bool Is(const wxString& expectedValue)
+	{ return mConfigured && expectedValue.IsSameAs(wxString(mValue.c_str(), wxConvLibc)); }
 	
 	private:
-	std::string mValue, mOriginalValue;
-	bool mConfigured, mWasConfigured;
+	std::string mValue, mOriginalValue, mDefaultValue;
+	bool mConfigured, mWasConfigured, mDefaultConfigured;
 };	
 
 #endif /* _PROPERTY_H */

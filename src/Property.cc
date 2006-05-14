@@ -39,6 +39,10 @@ BoolProperty::BoolProperty(
 {
 	mValue = value;
 	mConfigured = TRUE;
+	
+	mDefaultValue = mValue;
+	mDefaultConfigured = mConfigured;
+	
 	SetClean();
 }
 	
@@ -48,6 +52,9 @@ BoolProperty::BoolProperty(
 : Property(pKeyName, pListener) 
 {
 	SetFrom(pConf);
+
+	mDefaultValue = mValue;
+	mDefaultConfigured = mConfigured;
 }
 
 void BoolProperty::SetFrom(const Configuration* pConf) 
@@ -81,6 +88,13 @@ void BoolProperty::Clear()
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
+void BoolProperty::Reset()
+{
+	mValue = mDefaultValue;
+	mConfigured = mDefaultConfigured;
+	SetClean();
+}
+
 bool BoolProperty::GetInto(bool& dest) 
 { 
 	if (mConfigured) 
@@ -93,6 +107,7 @@ void BoolProperty::SetClean()
 	mWasConfigured = mConfigured; 
 	mOriginalValue = mValue; 
 }
+
 bool BoolProperty::IsClean()  { 
 	if (mConfigured != mWasConfigured) return FALSE;
 	if (!mConfigured) return TRUE;
@@ -104,8 +119,12 @@ IntProperty::IntProperty(
 	PropertyChangeListener* pListener) 
 : Property(pKeyName, pListener) 
 {
-	this->mValue = value;
-	this->mConfigured = TRUE;
+	mValue = value;
+	mConfigured = TRUE;
+	
+	mDefaultValue = mValue;
+	mDefaultConfigured = mConfigured;
+	
 	SetClean();
 }
 
@@ -116,6 +135,9 @@ IntProperty::IntProperty(
 : Property(pKeyName, pListener)
 {
 	SetFrom(pConf);
+
+	mDefaultValue = mValue;
+	mDefaultConfigured = mConfigured;
 }
 
 IntProperty::IntProperty(
@@ -124,6 +146,10 @@ IntProperty::IntProperty(
 {
 	this->mValue = 0;
 	this->mConfigured = FALSE;
+
+	mDefaultValue = mValue;
+	mDefaultConfigured = mConfigured;
+
 	SetClean();
 }
 
@@ -184,6 +210,13 @@ void IntProperty::Clear()
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
+void IntProperty::Reset()
+{
+	mValue = mDefaultValue;
+	mConfigured = mDefaultConfigured;
+	SetClean();
+}
+
 bool IntProperty::GetInto(wxString& rDest) 
 { 
 	if (!mConfigured) return FALSE;
@@ -228,10 +261,15 @@ StringProperty::StringProperty(
 : Property(pKeyName, pListener) 
 {
 	this->mValue = value;
+
 	if (value.length() > 0)
 		this->mConfigured = TRUE;
 	else
 		this->mConfigured = FALSE;
+
+	mDefaultValue = mValue;
+	mDefaultConfigured = mConfigured;
+
 	SetClean();
 }
 
@@ -242,6 +280,9 @@ StringProperty::StringProperty(
 : Property(pKeyName, pListener) 
 {
 	SetFrom(pConf);
+
+	mDefaultValue = mValue;
+	mDefaultConfigured = mConfigured;
 }
 
 StringProperty::StringProperty(
@@ -249,7 +290,11 @@ StringProperty::StringProperty(
 : Property(pKeyName, pListener) 
 {
 	this->mConfigured = FALSE;
+
 	SetClean();
+
+	mDefaultValue = mValue;
+	mDefaultConfigured = mConfigured;
 }
 
 void StringProperty::SetFrom(const Configuration* pConf)	
@@ -299,6 +344,13 @@ void StringProperty::Clear()
 	bool changed = (mConfigured == TRUE);
 	mConfigured = FALSE;
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
+}
+
+void StringProperty::Reset()
+{
+	mValue = mDefaultValue;
+	mConfigured = mDefaultConfigured;
+	SetClean();
 }
 
 bool StringProperty::GetInto(std::string& rDest) 
