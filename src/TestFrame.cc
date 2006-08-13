@@ -25,7 +25,8 @@
  *  Tim Hudson (tjh@cryptsoft.com), under their source redistribution license.
  */
 
-#include <wx/thread.h>
+// #include <wx/thread.h>
+#include <wx/treectrl.h>
 
 #include <cppunit/SourceLine.h>
 #include <cppunit/TestCaller.h>
@@ -36,6 +37,9 @@
 #include "SetupWizard.h"
 #include "SslConfig.h"
 #include "TestFrame.h"
+#include "TestBackup.h"
+#include "TestConfig.h"
+#include "TestWizard.h"
 
 DECLARE_EVENT_TYPE(CREATE_WINDOW_COMMAND, -1)
 DECLARE_EVENT_TYPE(TEST_FINISHED_EVENT,   -1)
@@ -56,6 +60,7 @@ class SafeWindowWrapper
 	void AddPendingEvent(wxEvent& rEvent) { mpWindow->AddPendingEvent(rEvent); }
 };
 
+/*
 class TestCase : private wxThread
 {
 	private:
@@ -229,7 +234,6 @@ class TestCanOpenAndCloseSetupWizard : public TestCase
 	: TestCase(pTestFrame) { }
 };
 
-/*
 class TestCanRunThroughSetupWizardCreatingEverything : public TestCase
 {
 	public:
@@ -239,7 +243,6 @@ class TestCanRunThroughSetupWizardCreatingEverything : public TestCase
 	protected:
 	virtual void RunTest();	
 };
-*/
 
 BEGIN_EVENT_TABLE(TestFrame, wxFrame)
 	EVT_IDLE (TestFrame::OnIdle)
@@ -384,6 +387,7 @@ void TestFrame::MainDoClickRadio(wxCommandEvent& rEvent)
 	wxMutexLocker lock(mMutex);
 	mEventHandlerFinished.Signal();
 }
+*/
 
 /*
 void TestThread::Entry2()
@@ -482,14 +486,33 @@ class GuiTestSuite : public CppUnit::TestFixture
 	GuiTestSuite() { }
 	static CppUnit::Test *suite()
 	{
-		CPPUNIT_NS::TestSuite *suiteOfTests = new CPPUNIT_NS::TestSuite ();
+		CPPUNIT_NS::TestSuite *suite = new CPPUNIT_NS::TestSuite ();
 	
 		// Add all tests of specially named registry WxGuiTest
+		/*
 		CPPUNIT_NS::Test *wxGuiTestSuite = CppUnit::TestFactoryRegistry
 			::getRegistry("WxGuiTest").makeTest ();
-		suiteOfTests->addTest(wxGuiTestSuite);
+		suite->addTest(wxGuiTestSuite);
+		*/
+
+		#define ADD_TEST(name) \
+		suite->addTest \
+		( \
+			new CppUnit::TestCaller<name> \
+			( \
+                       		#name, \
+                       		&name::RunTest \
+			) \
+		)
+		
+		ADD_TEST(TestBackup);
+		// ADD_TEST(TestOpenWizard);
+		// ADD_TEST(TestWizard);
+		// ADD_TEST(TestConfig);
+		
+		#undef ADD_TEST
 	
-		GuiStarter *starter = new GuiStarter(suiteOfTests);
+		GuiStarter *starter = new GuiStarter(suite);
 		return starter;
 	}
 };
@@ -586,6 +609,45 @@ void GuiTestBase::CloseWindowWaitClosed(wxWindow* pWindow)
 	}
 	
 	CPPUNIT_ASSERT(!pWindow);	
+}
+
+void GuiTestBase::ActivateTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem)
+{
+	assert(pTree);
+	assert(rItem.IsOk());
+
+	wxTreeEvent click(wxEVT_COMMAND_TREE_ITEM_ACTIVATED, 
+		pTree->GetId());
+	click.SetEventObject(pTree);
+	click.SetItem(rItem);
+	
+	pTree->ProcessEvent(click);
+}
+
+void GuiTestBase::ExpandTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem)
+{
+	assert(pTree);
+	assert(rItem.IsOk());
+
+	wxTreeEvent click(wxEVT_COMMAND_TREE_ITEM_ACTIVATED, 
+		pTree->GetId());
+	click.SetEventObject(pTree);
+	click.SetItem(rItem);
+	
+	pTree->ProcessEvent(click);
+}
+
+void GuiTestBase::CollapseTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem)
+{
+	assert(pTree);
+	assert(rItem.IsOk());
+
+	wxTreeEvent click(wxEVT_COMMAND_TREE_ITEM_ACTIVATED, 
+		pTree->GetId());
+	click.SetEventObject(pTree);
+	click.SetItem(rItem);
+	
+	pTree->ProcessEvent(click);
 }
 
 MainFrame* GuiTestBase::GetMainFrame()

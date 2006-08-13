@@ -126,6 +126,9 @@ class GuiTestBase : public CppUnit::TestCase
 	{
 		WxGuiTestEventSimulationHelper::SelectMenuItem(id, frame);
 	}
+	void ActivateTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem);
+	void ExpandTreeItemWaitEvent  (wxTreeCtrl* pTree, wxTreeItemId& rItem);
+	void CollapseTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem);
 	
 	MainFrame* GetMainFrame();
 	wxWindow*  FindWindow(wxWindowID id) 
