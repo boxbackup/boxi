@@ -24,6 +24,10 @@
 
 #include <wx/notebook.h>
 
+#define TLS_CLASS_IMPLEMENTATION_CPP
+#include "ServerConnection.h"
+#undef TLS_CLASS_IMPLEMENTATION_CPP
+
 #include "BackupDaemonPanel.h"
 #include "BackupLocationsPanel.h"
 #include "BackupPanel.h"
@@ -31,7 +35,6 @@
 #include "ClientInfoPanel.h"
 #include "GeneralPanel.h"
 #include "MainFrame.h"
-#include "ServerConnection.h"
 #include "TestFrame.h"
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
