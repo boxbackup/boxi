@@ -32,6 +32,7 @@
 #include "BackupLocationsPanel.h"
 #include "FileTree.h"
 #include "MainFrame.h"
+#include "BoxiApp.h"
 
 class BackupTreeNode : public FileNode 
 {
@@ -724,7 +725,7 @@ ExclusionsPanel::ExclusionsPanel(wxWindow* pParent, ClientConfig *pConfig)
 	mpTopSizer->Insert(0, pLocationListBox, 0, 
 		wxGROW | wxTOP | wxLEFT | wxRIGHT, 8);
 	
-	mpLocationList = new wxChoice(this, ID_Backup_LocationsList);
+	mpLocationList = new wxChoice(this, ID_BackupLoc_ExcludeLocList);
 	pLocationListBox->Add(mpLocationList, 0, wxGROW | wxALL, 8);
 	
 	mpListBoxSizer   ->GetStaticBox()->SetLabel(wxT("&Exclusions"));
@@ -1625,8 +1626,10 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				"and remove its configuration?"),
 				fn.GetFullPath().c_str());
 
-			int result = wxMessageBox(msg, wxT("Boxi Warning"), 
-				wxYES_NO | wxICON_EXCLAMATION);
+			int result = wxGetApp().ShowMessageBox(
+				BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, msg, 
+				wxT("Boxi Warning"), 
+				wxYES_NO | wxICON_EXCLAMATION, this);
 
 			if (result == wxYES)
 			{
@@ -1660,7 +1663,13 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 	{
 		// outside of any existing location. create a new one.
 		wxFileName path(pTreeNode->GetFileName());
+		
 		wxString newLocName = path.GetName();
+		if (newLocName.IsSameAs(wxEmptyString))
+		{
+			newLocName = _("root");
+		}
+		
 		const std::vector<Location>& rLocs = mpConfig->GetLocations();
 		bool foundUnique = FALSE;
 		int counter = 1;
