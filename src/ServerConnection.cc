@@ -2,8 +2,8 @@
  *            ServerConnection.cc
  *
  *  Mon Mar 28 20:56:20 2005
- *  Copyright  2005 Chris Wilson
- *  Email <boxi_ServerConnection.c@qwirx.com>
+ *  Copyright 2005-2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -37,7 +37,11 @@
 #include "BoxPortsAndFiles.h"
 #undef NDEBUG
 
+#define TLS_CLASS_IMPLEMENTATION_CPP
 #include "ServerConnection.h"
+#undef TLS_CLASS_IMPLEMENTATION_CPP
+
+#include "BoxiApp.h"
 
 ServerConnection::ServerConnection(ClientConfig* pConfig)
 {
@@ -53,7 +57,8 @@ ServerConnection::~ServerConnection()
 	if (mIsConnected) Disconnect();
 }
 
-void ServerConnection::HandleException(const wxString& when, BoxException& e)
+void ServerConnection::HandleException(message_t code, const wxString& when, 
+	BoxException& e)
 {
 	wxString msg(when);
 	msg.append(wxT(": "));
@@ -69,9 +74,10 @@ void ServerConnection::HandleException(const wxString& when, BoxException& e)
 		msg.Append(wxString(e.what(), wxConvLibc));
 	}
 	
-	wxMessageBox(msg, wxT("Boxi Error"), wxOK | wxICON_ERROR, NULL);
+	wxGetApp().ShowMessageBox(code, msg, wxT("Boxi Error"), 
+		wxOK | wxICON_ERROR, NULL);
 
-	if (e.GetType()    == ConnectionException::ExceptionType &&
+	if (e.GetType() == ConnectionException::ExceptionType &&
 		e.GetSubType() == ConnectionException::TLSReadFailed) 
 	{
 		Disconnect();
@@ -90,7 +96,7 @@ bool ServerConnection::Connect(bool Writable)
 		result = Connect2(Writable);
 	} catch (BoxException &e) {
 		wxString msg(wxT("Error connecting to server"));
-		HandleException(msg, e);
+		HandleException(BM_SERVER_CONNECTION_CONNECT_FAILED, msg, e);
 		return FALSE;
 	}
 
@@ -258,7 +264,7 @@ bool ServerConnection::GetFile(
 	{
 		wxString msg(wxT("Error retrieving file from server: "));
 		msg.Append(wxString(destFileName, wxConvLibc));
-		HandleException(msg, e);
+		HandleException(BM_SERVER_CONNECTION_RETRIEVE_FAILED, msg, e);
 		return FALSE;
 	}	
 }
@@ -288,7 +294,8 @@ bool ServerConnection::ListDirectory(
 	} 
 	catch (BoxException& e) 
 	{
-		HandleException(wxT("Error listing directory on server"), e);
+		HandleException(BM_SERVER_CONNECTION_LIST_FAILED,
+			wxT("Error listing directory on server"), e);
 		return FALSE;
 	}
 }
@@ -296,12 +303,15 @@ bool ServerConnection::ListDirectory(
 BackupProtocolClientAccountUsage* ServerConnection::GetAccountUsage() {
 	if (!Connect(FALSE)) return FALSE;
 
-	try {
+	try 
+	{
 		std::auto_ptr<BackupProtocolClientAccountUsage> Usage =
 			mpConnection->QueryGetAccountUsage();
 		return new BackupProtocolClientAccountUsage(*Usage);
-	} catch (BoxException &e) {
-		HandleException(
+	} 
+	catch (BoxException &e) 
+	{
+		HandleException(BM_SERVER_CONNECTION_GET_ACCT_FAILED,
 			wxT("Error getting account information from server"), 
 			e);
 		return NULL;
@@ -311,11 +321,15 @@ BackupProtocolClientAccountUsage* ServerConnection::GetAccountUsage() {
 bool ServerConnection::UndeleteDirectory(int64_t theDirectoryId) {
 	if (!Connect(TRUE)) return FALSE;
 
-	try {
+	try 
+	{
 		mpConnection->QueryUndeleteDirectory(theDirectoryId);
 		return TRUE;
-	} catch (BoxException &e) {
-		HandleException(wxT("Error undeleting directory on server"), e);
+	} 
+	catch (BoxException &e) 
+	{
+		HandleException(BM_SERVER_CONNECTION_UNDELETE_FAILED,
+			wxT("Error undeleting directory on server"), e);
 		return FALSE;
 	}
 }
@@ -323,20 +337,27 @@ bool ServerConnection::UndeleteDirectory(int64_t theDirectoryId) {
 bool ServerConnection::DeleteDirectory(int64_t theDirectoryId) {
 	if (!Connect(TRUE)) return FALSE;
 
-	try {
+	try 
+	{
 		mpConnection->QueryDeleteDirectory(theDirectoryId);
 		return TRUE;
-	} catch (BoxException &e) {
-		HandleException(wxT("Error deleting directory on server"), e);
+	} 
+	catch (BoxException &e) 
+	{
+		HandleException(BM_SERVER_CONNECTION_DELETE_FAILED,
+			wxT("Error deleting directory on server"), e);
 		return FALSE;
 	}
 }
 
 static wxCharBuffer buf;
 
-const char * ServerConnection::ErrorString(int type, int subtype) {
-	if (type == 1000) {
-		switch (subtype) {
+const char * ServerConnection::ErrorString(int type, int subtype) 
+{
+	if (type == 1000) 
+	{
+		switch (subtype) 
+		{
 		case BackupProtocolClientError::Err_WrongVersion:
 			return "Wrong version";
 		case BackupProtocolClientError::Err_NotInRightProtocolPhase:	
@@ -374,7 +395,9 @@ const char * ServerConnection::ErrorString(int type, int subtype) {
 			buf = mErrorMessage.mb_str(wxConvLibc);
 			return buf.data();
 		}
-	} else {
+	} 
+	else 
+	{
 		mErrorMessage.Printf(wxT("Unknown error: %d/%d"), 
 			type, subtype);
 		buf = mErrorMessage.mb_str(wxConvLibc);
