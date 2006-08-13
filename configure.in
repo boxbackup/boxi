@@ -84,6 +84,9 @@ AX_CHECK_SSL(, [AC_MSG_ERROR([[OpenSSL is not installed but is required]])])
 AM_PATH_CPPUNIT(1.10.0,,[AC_MSG_ERROR([[CppUnit 1.10 or higher is required]])])
 LIBS="$LIBS $CPPUNIT_LIBS"
 
+# Box Backup dependencies
+AC_CHECK_DECLS([INFTIM],,, [[#include <poll.h>]])
+
 # extract boxbackup in release build
 if ! (
 	cd boxbackup || exit 1
