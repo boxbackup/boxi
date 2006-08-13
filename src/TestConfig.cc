@@ -30,15 +30,7 @@
 
 #include "ClientConfig.h"
 #include "MainFrame.h"
-#include "TestFrame.h"
-
-class TestConfig : public TestWithConfig
-{
-	public:
-	TestConfig() { }
-	virtual void RunTest();
-	static CppUnit::Test *suite();
-};
+#include "TestConfig.h"
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(TestConfig, "WxGuiTest");
 
