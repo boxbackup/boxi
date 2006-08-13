@@ -126,7 +126,7 @@ done
 
 if test x$NOCONFIGURE = x; then
   echo Running $srcdir/configure $conf_flags "$@" ...
-  $srcdir/configure $conf_flags "$@" \
+  CXXFLAGS="-g -O0" $srcdir/configure $conf_flags "$@" \
   && echo Now type \`make\' to compile $PKG_NAME
 else
   echo Skipping configure process.
