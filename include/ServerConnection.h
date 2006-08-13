@@ -2,8 +2,8 @@
  *            ServerConnection.h
  *
  *  Mon Mar 28 20:51:58 2005
- *  Copyright 2005 Chris Wilson
- *  Email <boxi_ServerConnection.h@qwirx.com>
+ *  Copyright 2005-2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -24,6 +24,11 @@
  
 #ifndef _SERVERCONNECTION_H
 #define _SERVERCONNECTION_H
+
+#ifdef TLS_CLASS_IMPLEMENTATION_CPP
+#include <openssl/bio.h>
+#include <openssl/ssl.h>
+#endif // TLS_CLASS_IMPLEMENTATION_CPP
 
 #define NDEBUG
 #include "SSLLib.h"
@@ -80,7 +85,8 @@ class ServerConnection {
 
 	private:
 	wxString mErrorMessage;
-	void HandleException(const wxString& when, BoxException& e);
+	void HandleException(message_t code, const wxString& when, 
+		BoxException& e);
 
 	public:
 	const char * ErrorString() 
