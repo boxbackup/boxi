@@ -14,6 +14,7 @@
 #include "BoxPortsAndFiles.h"
 #include "BackupConstants.h"
 #include "IOStreamGetLine.h"
+#include "BackupContext.h"
 
 class BackupStoreAccounts;
 class BackupStoreAccountDatabase;
@@ -27,7 +28,8 @@ class HousekeepStoreAccount;
 //		Created: 2003/08/20
 //
 // --------------------------------------------------------------------------
-class BackupStoreDaemon : public ServerTLS<BOX_PORT_BBSTORED>
+class BackupStoreDaemon : public ServerTLS<BOX_PORT_BBSTORED>,
+	HousekeepingInterface
 {
 	friend class HousekeepStoreAccount;
 
@@ -38,10 +40,16 @@ private:
 	BackupStoreDaemon(const BackupStoreDaemon &rToCopy);
 public:
 
-	// For BackupContext to comminicate with housekeeping process
-	void SendMessageToHousekeepingProcess(const void *Msg, int MsgLen)
+	// For BackupContext to communicate with housekeeping process
+	virtual void SendMessageToHousekeepingProcess(const void *Msg, int MsgLen)
 	{
 		mInterProcessCommsSocket.Write(Msg, MsgLen);
+	}
+
+	// make this inherited protected method public	
+	bool LoadConfigurationFile(const std::string& rFilename)
+	{
+		return Daemon::LoadConfigurationFile(rFilename);
 	}
 
 protected:
@@ -76,4 +84,3 @@ private:
 
 
 #endif // BACKUPSTOREDAEMON__H
-

@@ -51,7 +51,7 @@
 //		Created: 2003/08/20
 //
 // --------------------------------------------------------------------------
-BackupContext::BackupContext(int32_t ClientID, BackupStoreDaemon &rDaemon)
+BackupContext::BackupContext(int32_t ClientID, HousekeepingInterface &rDaemon)
 	: mClientID(ClientID),
 	  mrDaemon(rDaemon),
 	  mProtocolPhase(Phase_START),
@@ -1646,5 +1646,3 @@ const BackupStoreInfo &BackupContext::GetBackupStoreInfo() const
 	
 	return *(mpStoreInfo.get());
 }
-
-
