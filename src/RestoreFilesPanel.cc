@@ -1,9 +1,9 @@
 /***************************************************************************
- *            ServerFilesPanel.cc
+ *            RestoreFilesPanel.cc
  *
  *  Mon Feb 28 22:45:09 2005
  *  Copyright 2005-2006 Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -777,9 +777,6 @@ const ServerCacheNode::Vector* ServerCacheNode::GetChildren()
 	
 	FreeChildren();
 	
-	int16_t lExcludeFlags = 
-		BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING;
-
 	ServerFileVersion* pMostRecent = GetMostRecent();
 	if (!pMostRecent)
 	{
@@ -788,6 +785,8 @@ const ServerCacheNode::Vector* ServerCacheNode::GetChildren()
 	}
 	
 	BackupStoreDirectory dir;
+	int16_t lExcludeFlags = 
+		BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING;
 	
 	if (!(mpServerConnection->ListDirectory(
 		pMostRecent->GetBoxFileId(), lExcludeFlags, dir))) 
