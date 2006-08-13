@@ -105,17 +105,16 @@ L<http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz?download>
 
 L<http://prdownloads.sourceforge.net/boxi/boxi-0_0_7.zip?download>
 
-=item Latest source code from CVS
+=item Latest source code from Subversion
 
 The latest source code is experimental, a work in progress, and not guaranteed
 to compile or run on any system. Your mileage may vary. You can get it from
-Sourceforge's CVS server:
+Sourceforge's Subversion server:
 
- cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/boxi login 
- 
- cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/boxi co -P boxi
+ svn co https://svn.sourceforge.net/svnroot/boxi/trunk/boxi
 
-L<http://sourceforge.net/cvs/?group_id=135105>
+See L<http://sourceforge.net/svn/?group_id=135105> for more details about
+Subversion, or to browse the repository online.
 
 =back
 
