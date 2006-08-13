@@ -107,7 +107,8 @@ module.include.files=\
 	TestFrame.h\
 	WxGuiTestHelper.h\
 	swWxGuiTestEventSimulationHelper.h\
-	BoxiApp.h
+	BoxiApp.h\
+	TestBackup.h
 
 module.source.name=src
 module.source.type=
@@ -186,7 +187,10 @@ compiler.options.include.paths=\
 	../include\
 	../boxbackup/bin/bbackupd\
 	../boxbackup/lib/crypto\
-	../boxbackup/lib/win32
+	../boxbackup/lib/win32\
+	../boxbackup/bin/bbstored\
+	../boxbackup/lib/backupstore\
+	../boxbackup/lib/raidfile
 compiler.options.library.paths=
 compiler.options.libraries=\
 	ssl\
@@ -201,7 +205,7 @@ compiler.options.optimize.buttons=1 0 0 0
 compiler.options.other.buttons=1 0 
 compiler.options.other.c.flags=-DPLATFORM_$(shell uname -s | tr a-z A-Z) 
 compiler.options.other.l.flags=
-compiler.options.other.l.libs=../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o -lz
+compiler.options.other.l.libs= ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o ../boxbackup/release/bin/bbstored/BBStoreDHousekeeping.o ../boxbackup/release/bin/bbstored/HousekeepStoreAccount.o ../boxbackup/release/bin/bbstored/BackupContext.o ../boxbackup/release/bin/bbstored/BackupCommands.o ../boxbackup/release/bin/bbstored/autogen_BackupProtocolServer.o ../boxbackup/release/bin/bbstored/BackupStoreDaemon.o ../boxbackup/release/lib/backupstore/backupstore.a ../boxbackup/release/lib/raidfile/raidfile.a ../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a -lz
 
 project.src.paths=/home/chris/project/boxi/boxbackup-0.09-orig/release/lib/common/common.a \
 /home/chris/project/boxi/boxbackup-0.09-orig/release/lib/backupclient/backupclient.a
