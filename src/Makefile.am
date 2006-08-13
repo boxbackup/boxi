@@ -6,7 +6,7 @@
 
 INCLUDES = \
 	$(WX_CXXFLAGS)\
-	 -I../boxbackup/lib/common -I../boxbackup/lib/backupclient -I../boxbackup/lib/server -I../include -I../boxbackup/bin/bbackupd -I../boxbackup/lib/crypto -I../boxbackup/lib/win32
+	 -I../boxbackup/lib/common -I../boxbackup/lib/backupclient -I../boxbackup/lib/server -I../include -I../boxbackup/bin/bbackupd -I../boxbackup/lib/crypto -I../boxbackup/lib/win32 -I../boxbackup/bin/bbstored -I../boxbackup/lib/backupstore -I../boxbackup/lib/raidfile
 
 AM_CXXFLAGS =\
 	 -DBOXI\
@@ -69,5 +69,5 @@ boxi_LDFLAGS =
 
 boxi_LDADD =  \
 	$(WX_LIBS)\
-	../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o -lz
+	 ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o ../boxbackup/release/bin/bbstored/BBStoreDHousekeeping.o ../boxbackup/release/bin/bbstored/HousekeepStoreAccount.o ../boxbackup/release/bin/bbstored/BackupContext.o ../boxbackup/release/bin/bbstored/BackupCommands.o ../boxbackup/release/bin/bbstored/autogen_BackupProtocolServer.o ../boxbackup/release/bin/bbstored/BackupStoreDaemon.o ../boxbackup/release/lib/backupstore/backupstore.a ../boxbackup/release/lib/raidfile/raidfile.a ../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a -lz
 
