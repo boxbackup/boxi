@@ -112,6 +112,10 @@ public:
 		}
 	}
 	
+protected:
+	virtual void NotifyListenerIsReady() { }
+	
+public:
 	virtual void Run2(bool &rChildExit)
 	{
 		try
@@ -198,6 +202,8 @@ public:
 					connectionWait.Add(psocket);
 				}
 			}
+			
+			NotifyListenerIsReady();
 	
 			while(!StopRun())
 			{
@@ -338,6 +344,3 @@ private:
 #include "MemLeakFindOff.h"
 
 #endif // SERVERSTREAM__H
-
-
-
