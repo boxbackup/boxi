@@ -55,7 +55,7 @@ public:
 		mContext.Initialise(true /* as server */, certFile.c_str(), keyFile.c_str(), caFile.c_str());
 	
 		// Then do normal stream server stuff
-		ServerStream<SocketStreamTLS, Port, ListenBacklog>::Run2(rChildExit);
+		ServerStream<SocketStreamTLS, Port, ListenBacklog, ForkToHandleRequests>::Run2(rChildExit);
 	}
 	
 	virtual void HandleConnection(SocketStreamTLS &rStream)
@@ -70,11 +70,9 @@ private:
 };
 
 #define SERVERTLS_VERIFY_SERVER_KEYS(DEFAULT_ADDRESSES) \
-											{"CertificateFile", 0, ConfigTest_Exists, 0}, \
-											{"PrivateKeyFile", 0, ConfigTest_Exists, 0}, \
-											{"TrustedCAsFile", 0, ConfigTest_Exists, 0}, \
-											SERVERSTREAM_VERIFY_SERVER_KEYS(DEFAULT_ADDRESSES)
-
+{"CertificateFile", 0, ConfigTest_Exists, 0}, \
+{"PrivateKeyFile", 0, ConfigTest_Exists, 0}, \
+{"TrustedCAsFile", 0, ConfigTest_Exists, 0}, \
+SERVERSTREAM_VERIFY_SERVER_KEYS(DEFAULT_ADDRESSES)
 
 #endif // SERVERTLS__H
-
