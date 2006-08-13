@@ -1,0 +1,612 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3b2/docbookx.dtd">
+<book>
+
+  <bookinfo>
+
+    <date>2006-05-02</date>
+    <title>Boxi</title>
+
+    <subtitle>Friendly Internet Backup Software</subtitle>
+
+    <authorgroup>
+
+      <author><firstname>Chris</firstname><surname>Wilson</surname></author>
+
+    </authorgroup>
+
+    <copyright><year>2006</year><holder>Chris 
+    Wilson</holder></copyright>
+    <legalnotice>
+
+      <para>Published under the 
+      <ulink url="http://www.gnu.org/licenses/fdl.html">GNU Free 
+      Documentation License</ulink>.</para>
+
+    </legalnotice>
+
+  </bookinfo>
+
+  <toc />
+  <chapter id="intro">
+
+    <title>Introduction</title>
+
+    <para>This book describes <application>Boxi</application>, a 
+    software program that helps you to back up your important files 
+    over the Internet, securely and efficiently.</para>
+
+    <sect1>
+
+      <title>About this book</title>
+
+      <para>The book explains how to obtain, install, configure and use 
+      <application>Boxi</application>. The book is intended for 
+      ordinary computer users. If you don&apos;t understand anything, 
+      please contact me (the author) so that I can fix it.</para>
+
+      <para>If you have any comments or suggestions about <application>
+      Boxi</application> or this book, please 
+      <ulink url="http://boxi.sourceforge.net/contact.html">contact 
+      us</ulink>.</para>
+
+    </sect1>
+
+    <sect1>
+
+      <title>About Boxi and Box Backup</title>
+
+      <para><application>Boxi</application> is a graphical program that 
+      allows you to back up your files across the Internet (or a local 
+      network) to a <application>Box Backup</application> server.</para>
+
+      <para><application>Box Backup</application> is a software program 
+      for systems administrators to back up their files efficiently and 
+      securely across the Internet.</para>
+
+      <para><application>Boxi</application> is fully compatible with 
+      <application>Box Backup</application>, the command-line backup 
+      tool, but <application>Boxi</application> is designed to be as 
+      easy to use as possible.</para>
+
+      <para><application>Boxi</application> uses the same configuration 
+      files as <application>Box Backup</application>, to make it easy 
+      to switch between the two.</para>
+
+      <para><application>Boxi</application> supports the same security 
+      and efficiency as <application>Box Backup</application>, and also 
+      requires a server where your backups will be stored, usually on 
+      the Internet.</para>
+
+    </sect1>
+
+    <sect1>
+
+      <title>Storage</title>
+
+      <para><application>Boxi</application> stores your data on a 
+      server, rather than on a disk or tape like a conventional backup 
+      system. This is very convenient because you don&apos;t have to do 
+      anything at all to back up your data. It just happens 
+      automatically in the background.</para>
+
+      <para>You can run your own server, but this requires considerable 
+      technical skill, and <application>Boxi</application> is designed 
+      for ordinary users. We expect that you will want to get an 
+      agreement with a server operator, to use the bandwidth and disk 
+      space of their server for your backups.</para>
+
+      <para>The server would normally be connected somewhere else on 
+      the Internet, so that if your computer catches fire, your data 
+      stays cool. This means that you have a very wide choice of 
+      potential server operators, so you should be able to get a good 
+      deal. If your requirements are low, you can probably find a 
+      friend who has a server and will let you use it for your 
+      backups.</para>
+
+    </sect1>
+
+    <sect1>
+
+      <title>Security</title>
+
+      <para><application>Box Backup</application> is secure because it 
+      encrypts your files before sending them to the server. Nobody, 
+      not even the server operator, can read your files.</para>
+
+      <warning>
+
+        <title>Keep your keys safe</title>
+
+        <para>Your files on the server are encrypted with a strong 
+        encryption key, which is stored in a file. If you lose this 
+        key, then there is absolutely no way to access your files, and 
+        your backups are useless. You <emphasis>must</emphasis> keep 
+        extra copies of the key file safe places, such as in the trust 
+        of friends.</para>
+
+      </warning>
+
+    </sect1>
+
+    <sect1>
+
+      <title>Efficiency</title>
+
+      <para><application>Box Backup</application> is efficient because 
+      it doesn&apos;t upload files which have not changed. You can back 
+      up gigabytes of data over a standard ADSL internet connection to 
+      a server hosted somewhere on the Internet.</para>
+
+    </sect1>
+
+    <sect1>
+
+      <title>License</title>
+
+      <para><application>Boxi</application> is 
+      <ulink url="http://www.gnu.org/philosophy/free-sw.html">free 
+      software</ulink>, which means that you can download it and use it 
+      for free. This includes the source code, which guarantees your 
+      freedom to customise the software, or pay others to do so, now 
+      and forever.</para>
+
+      <para>In return, your only obligation is that if you do customise 
+      it, and distribute your changes or any work based on <application>
+      Boxi</application>, you must provide the full source code, to 
+      guarantee the same rights to others that you yourself 
+      received.</para>
+
+      <para>If you do not intend to customise Boxi, this will not 
+      affect you.</para>
+
+      <para>This book is released under the 
+      <ulink url="http://www.gnu.org/licenses/fdl.html">GNU Free 
+      Documentation License</ulink>, which means that you can 
+      distribute copies freely as long as they are complete copies, and 
+      you do not modify them in any way. To distribute this book in any 
+      other fashion, please 
+      <ulink url="http://boxi.sourceforge.net/contact.html">contact 
+      us</ulink> for permission.</para>
+
+    </sect1>
+
+  </chapter>
+
+  <chapter id="install">
+
+    <title>Installation</title>
+
+    <para>This chapter describes how to install <application>
+    Boxi</application> on your computer.</para>
+
+    <para>Most computers are unfortunately not supplied with 
+    <application>Boxi</application> already installed. Therefore, you 
+    will have to download and install it yourself.</para>
+
+    <para>The easiest way to install <application>Boxi</application> is 
+    to download a pre-compiled version for your computer. The available 
+    pre-compiled versions are listed on the 
+    <ulink url="http://boxi.sourceforge.net">Boxi website</ulink>. 
+    Typically they would include the latest versions of <application>
+    Boxi</application> for Windows, Fedora Linux and Ubuntu Linux, 
+    since these are the versions that us developers have on our 
+    computers. Other people may contribute builds for different 
+    operating systems from time to time, but these may not be quite as 
+    recent.</para>
+
+    <para>If the latest version of <application>Boxi</application> is 
+    not available for your computer, but an older version is available, 
+    then you should check the list of changes on the website to 
+    determine whether any important bugs have been fixed since that 
+    older version was released. If so, you might like to build a new 
+    version of Boxi yourself, or request that we build one for you, or 
+    find someone else who can do it for you.</para>
+
+    <para>Please decide whether you want to use a pre-compiled version, 
+    or compile one yourself, before proceeding with the installation. 
+    If in doubt, please 
+    <ulink url="http://boxi.sourceforge.net/contact.html">contact 
+    us</ulink>.</para>
+
+    <sect1>
+
+      <title>Installing a Pre-Compiled Version</title>
+
+      <para>Pre-compiled versions should be easy to install. All 
+      versions are distributed as a single file which you will need to 
+      download from our <ulink url="http://boxi.sourceforge.net">
+      website</ulink>. We strongly recommend that you download an 
+      official copy from our website, rather than using any other 
+      version you might find on the Internet, to protect yourself from 
+      potentially corrupt or dangerous versions that you might find 
+      online.</para>
+
+      <sect2>
+
+        <title>Microsoft Windows</title>
+
+        <para><application>Windows</application> versions are 
+        distributed in a <application>ZIP</application> file, which 
+        newer versions of <application>Windows</application> (XP and 
+        above) can handle automatically. For older versions, you will 
+        need to download a program like 
+        <ulink url="http://www.7-zip.org">7-Zip</ulink> to decompress 
+        it. We hope to provide a proper installer soon, which would 
+        allow you to install <application>Boxi</application> just by 
+        double-clicking on it.</para>
+
+        <para>To install, just double-click on the downloaded file, 
+        drag out the <filename>Boxi</filename> folder from inside it, 
+        and drop it somewhere convenient, for example on your desktop, 
+        or in your <filename>Program Files</filename> folder. Enter the 
+        folder, and if required, drag the <filename>Boxi</filename> 
+        program icon to your desktop or start menu, to help you start 
+        Boxi easily.</para>
+
+        <para>Once you have configured Boxi, you can set it to run as a 
+        Windows service, which means that it will start automatically 
+        when you switch on your computer.</para>
+
+      </sect2>
+
+      <sect2>
+
+        <title>Linux</title>
+
+        <para>Most Linux systems use a <application>package 
+        manager</application> to manage installed software. It&apos;s 
+        better to install a package that&apos;s compatible with your 
+        package manager, rather than a binary <application>
+        tar</application> file, so that you can remove or upgrade 
+        <application>Boxi</application> easily using the package 
+        manager.</para>
+
+        <sect3>
+
+          <title>RPM systems (Red Hat, Fedora, SuSE, Mandriva)</title>
+
+          <para>First, download an <application>RPM</application> 
+          package for your system, or one that seems likely to be 
+          compatible with it. Downloading the wrong version will not 
+          cause any harm, but the package may not install, or may not 
+          run once installed, so if in doubt, download a few different 
+          versions and try them.</para>
+
+          <para>Use the <application>rpm</application> command to 
+          install the package:</para>
+
+          <synopsis>rpm -ivh boxi-xxx.rpm</synopsis>
+          <para>The output should be something like:</para>
+
+          <screen>Preparing... ####################### [100%]
+boxi         ####################### [100%]</screen>
+          <para>If the output indicates that some requirements are 
+          missing, you may be able to use your distribution&apos;s 
+          package management system to install them. If not, please try 
+          a different package. If you can&apos;t find one that works, 
+          please <ulink url="http://boxi.sourceforge.net/contact.html">
+          contact us</ulink>.</para>
+
+          <para>Once the package is installed, you should be able to 
+          start <application>Boxi</application> just by running the 
+          command:</para>
+
+          <synopsis>boxi</synopsis>
+          <para>If this fails for any reason, please 
+          <ulink url="http://boxi.sourceforge.net/contact.html">contact 
+          us</ulink>.</para>
+
+          <para>If you already have an older version of <application>
+          Boxi</application> installed, you may need to remove it 
+          first. The <application>RPM</application> package manager 
+          should complain and refuse to install another version if one 
+          is already installed. You can remove an existing package 
+          using the command:</para>
+
+          <synopsis>rpm -ev package-name</synopsis>
+        </sect3>
+
+        <sect3>
+
+          <title>Debian and Ubuntu systems</title>
+
+          <para><application>Debian</application> systems use the 
+          Debian package manager <application>dpkg</application> to 
+          install and remove packages. The procedure is similar to the 
+          one described for <application>RPM</application> packages 
+          above, but the command to install a package is:</para>
+
+          <synopsis>dpkg -i boxi-xxx.deb</synopsis>
+          <para>And to remove a package:</para>
+
+          <synopsis>dpkg -e boxi</synopsis>
+        </sect3>
+
+      </sect2>
+
+    </sect1>
+
+    <sect1>
+
+      <title>Building from Source</title>
+
+      <para>The other way to install Boxi is to download and compile 
+      the source code. You will probably want to do this if:</para>
+
+      <itemizedlist>
+
+        <listitem><para>No pre-compiled version of <application>
+        Boxi</application> is available for your system;</para></listitem>
+
+        <listitem><para>The latest available pre-compiled version is too 
+        old;</para></listitem>
+
+        <listitem><para>You want to inspect or modify the source 
+        code;</para></listitem>
+
+        <listitem><para>You want to participate in <application>
+        Boxi</application> development.</para></listitem>
+
+      </itemizedlist>
+
+      <para>You will need a number of software tools installed on your 
+      computer before you can build Boxi.</para>
+
+      <sect2>
+
+        <title>Cygwin</title>
+
+        <para>Windows users will need a number of Unix tools installed 
+        on their system in order to compile <application>
+        Boxi</application>. The easiest way to get these tools is to 
+        install <application>Cygwin</application> by Cygnus Solutions. 
+        Unix users do not need to install <application>
+        Cygwin</application>.</para>
+
+        <para><application>Boxi</application> does not depend on 
+        <application>Cygwin</application> once compiled, and can easily 
+        be installed on computers without <application>
+        Cygwin</application>, but the tools are an important part of 
+        the compilation process.</para>
+
+        <para>To install <application>Cygwin</application>, download 
+        and run the <ulink url="http://www.cygwin.com/setup.exe">Cygwin 
+        installer</ulink>. As part of the installation process, you 
+        will need to select some packages to install.</para>
+
+        <para>You should select at least the following packages:</para>
+
+        <itemizedlist>
+
+          <listitem><para>Archive/tar</para></listitem>
+
+          <listitem><para>Devel/gcc-mingw-g++</para></listitem>
+
+          <listitem><para>Devel/make</para></listitem>
+
+          <listitem><para>Interpreters/perl</para></listitem>
+	  
+          <listitem><para>Libs/w32api</para></listitem>
+
+          <listitem><para>Mingw/mingw-zlib</para></listitem>
+
+        </itemizedlist>
+
+      </sect2>
+
+      <sect2>
+
+        <title>C++ Compiler</title>
+
+        <para><application>Boxi</application> is normally compiled with 
+        the free software compiler 
+        <ulink url="http://directory.fsf.org/devel/compilers/gcc.html">
+        <application>GCC</application></ulink>, which is supplied with 
+        most Linux distributions. <application>Windows</application> 
+        users should install <ulink url="http://www.mingw.org">
+        <application>MinGW</application></ulink> through <application>
+        Cygwin</application>, as above, and ignore this step.</para>
+
+        <para>It should be possible to compile Boxi with other C++ 
+        compilers, but most compilers (including the above) have quirks 
+        or non-standard behaviours, so you should expect to have some 
+        problems, and you may need to modify the source code to make it 
+        work. If you use a different compiler, please 
+        <ulink url="http://boxi.sourceforge.net/contact.html">contact 
+        us</ulink> to let us know how it went.</para>
+
+      </sect2>
+
+      <sect2>
+
+        <title>Perl</title>
+
+        <para><application>Boxi</application> depends on Box Backup, 
+        which in turn requires <application>Perl</application> to build 
+        some of the libraries.</para>
+
+        <para>Most Linux and Unix-like systems will be supplied with a 
+        version of Perl, or have one easily available. You should just have
+        to install the <filename>perl</filename> package.</para>
+
+      </sect2>
+      
+      <sect2>
+      
+        <title>OpenSSL</title>
+	
+        <para><application>OpenSSL</application> is a cryptography library
+        which <application>Boxi</application> uses to keep your data safe,
+        both in transit over the network, and stored on the server.</para>
+        
+        <para>Most Linux and Unix-like systems will have a version of
+        OpenSSL available, including the development libraries and headers
+        which you will need to compile <application>Boxi</application>. Just
+        install the <filename>libssl-dev</filename> or
+        <filename>openssl-devel</filename> package.</para>
+        
+        <para><application>Windows</application> users will need to download
+        and compile OpenSSL, by following these steps:</para>
+        
+        <itemizedlist>
+        
+          <listitem><para>Download <application>OpenSSL</application> from
+          <ulink url="http://www.openssl.org/source/openssl-0.9.7i.tar.gz"
+          >http://www.openssl.org/source/openssl-0.9.7i.tar.gz</ulink>
+          </para></listitem>
+          
+          <listitem><para>Open a <application>Cygwin</application> shell, and 
+          unpack OpenSSL:
+            <synopsis>tar xzvf openssl-0.9.7i.tar.gz</synopsis>
+          </para></listitem>
+
+        
+          <listitem><para>Configure <application>OpenSSL</application> for 
+          <application>MinGW</application> compilation, and build and 
+          install it:
+            <synopsis>
+cd openssl-0.9.7i
+./Configure --prefix=/usr/i686-pc-mingw32/ mingw
+make
+make install
+            </synopsis>
+          </para></listitem>
+
+        </itemizedlist>
+        
+      </sect2>
+      
+      <sect2>
+      
+        <title>Regular Expression Library</title>
+        
+        <para>Regular expressions are a powerful tool that allows you to
+        match file and directory names by pattern, to help you include and
+        exclude large numbers of files at once. For example, if you want to
+        exclude all your <application>MP3</application> files from being
+        backed up, you need regular expressions.</para>
+        
+        <para>Most Linux and Unix-like systems will have a standard regular 
+        expression library available, including the development libraries 
+        and headers which you will need to compile 
+        <application>Boxi</application>. Just install the 
+        <filename>libc6-dev</filename> or <filename>glibc-devel</filename> 
+        package.</para>
+        
+        <para><application>Windows</application> users will need to download
+        and compile OpenSSL, by following these steps:</para>
+        
+        <itemizedlist>
+        
+          <listitem><para>Download PCRE from
+          <ulink
+          url="http://prdownloads.sourceforge.net/pcre/pcre-6.3.tar.bz2?download"
+          >http://prdownloads.sourceforge.net/pcre/pcre-6.3.tar.bz2?download</ulink>
+          </para></listitem>
+
+          <listitem><para>Open a Cygwin shell, and unpack PCRE:
+            <synopsis>tar xjvf pcre-6.3.tar.bz2</synopsis></para></listitem>
+            
+          <listitem><para>Configure PCRE for MinGW compilation, and build and 
+          install it:
+            <synopsis>
+cd pcre-6.3
+export CFLAGS="-mno-cygwin"
+./configure
+make winshared
+cp .libs/pcreposix.dll /bin
+cp .libs/pcreposix.dll.a /usr/i686-pc-mingw32/lib
+cp pcreposix.h /usr/i686-pc-mingw32/include/regex.h
+            </synopsis>
+          </para></listitem>
+          
+        </itemizedlist>
+        
+      </sect2>
+
+      <sect2>
+      
+        <title>wxWidgets</title>
+        
+        <para><ulink url="http://www.wxwidgets.org">
+          <application>wxWidgets</application></ulink> is a toolkit for
+          building graphical applications that are compatible with different
+          platforms. For example, it allows the same graphical application 
+          to run on <application>Windows</application>,
+          <application>Linux</application> and
+          <application>MacOS</application>. <application>Boxi</application>
+          uses wxWidgets to be cross-platform compatible.</para>
+        
+        <para>Most Linux and Unix-like systems will have a standard 
+        <application>wxWidgets</application> package available, including 
+        the development libraries and headers which you will need to 
+        compile <application>Boxi</application>. Just install the 
+        <filename>wx2.6-headers</filename> or 
+        <filename>wxGTK-devel</filename> package.</para>
+        
+        <para><application>Windows</application> users will need to download
+        and compile <application>wxWidgets</application>, by following 
+        these steps:</para>
+        
+        <warning>
+        
+          <title>Nota Bene</title>
+          
+          <para>These steps have not been tested yet. This part of the
+          manual must be revisited.</para>
+          
+        </warning>
+        
+        <itemizedlist>
+        
+          <listitem><para>Download wxWidgets from
+          <ulink
+          url="http://www.wxwidgets.org/dl_msw2.htm#stable"
+          >http://www.wxwidgets.org/dl_msw2.htm#stable</ulink>, choosing the
+          latest stable Setup EXE, for example 
+          <synopsis>wxMSW-2.6.3-Setup-1.exe</synopsis></para></listitem>
+
+          <listitem><para>Run the downloaded <filename>exe</filename> 
+          file.</para></listitem>
+          
+        </itemizedlist>
+        
+      </sect2>
+
+    </sect1>
+
+  </chapter>
+  
+  <chapter>
+  
+    <title>Configuring Boxi</title>
+    
+    <para>Once you have installed <application>Boxi</application>, you 
+    must tell it where your important data is, and how to back it up.</para>
+    
+    <sect1>
+    
+      <title>The Server</title>
+      
+      <para><application>Boxi</application> backs up your data to a server,
+      that is a computer that's always on and always connected to the 
+      Internet. You can back up to a local server (on your local network) 
+      instead, but most of the benefits of <application>Boxi</application> 
+      are not very useful in this case. For example, encryption of backups
+      is most useful when you don't control the server, and bandwidth 
+      efficiency is most useful when you have a low-bandwidth connection 
+      between you and the server.</para>
+      
+      <para>The server needs to be running the 
+      <application>Box Backup</application> server software. Normally, we 
+      expect that you would have a contract with someone who operates a
+      server, and runs a <application>Box Backup</application> service on
+      it. Normally, your contract would specify the amount of storage
+      space on the server that is available to you.</para>
+      
+      <para>The server operator 
+    
+
+</book>
+
