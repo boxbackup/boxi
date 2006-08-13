@@ -49,7 +49,7 @@ BackupPanel::BackupPanel
 	mpProgressPanel(pProgressPanel)
 {
 	mpLocationsPanel = new BackupLocationsPanel(pConfig, pParent, 
-		mpMainFrame, this, ID_Client_Panel);
+		mpMainFrame, this, ID_Backup_Files_Panel);
 	mpLocationsPanel->Hide();
 
 	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to back up"));
