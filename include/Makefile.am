@@ -33,6 +33,7 @@ boxi_include_DATA = \
 	TestFrame.h\
 	WxGuiTestHelper.h\
 	swWxGuiTestEventSimulationHelper.h\
-	BoxiApp.h
+	BoxiApp.h\
+	TestBackup.h
 
 EXTRA_DIST = $(boxi_include_DATA)
