@@ -80,6 +80,79 @@ Daemon::~Daemon()
 // --------------------------------------------------------------------------
 //
 // Function
+//		Name:    Daemon::LoadConfigurationFile(const std::string& rFilename)
+//		Purpose: Loads the specified configuration, discarding the old one
+//		Created: 2006/07/31
+//
+// --------------------------------------------------------------------------
+bool Daemon::LoadConfigurationFile(const std::string& rFilename)
+{
+	// Load the configuration file.
+	std::string errors;
+	std::auto_ptr<Configuration> pconfig;
+
+	try
+	{
+		pconfig = Configuration::LoadAndVerify(
+			rFilename.c_str(), 
+			GetConfigVerify(), errors);
+	}
+	catch (BoxException &e)
+	{
+		if (e.GetType() == CommonException::ExceptionType &&
+			e.GetSubType() == CommonException::OSFileOpenError)
+		{
+			fprintf(stderr, "%s: failed to start: "
+				"failed to open configuration file: "
+				"%s", DaemonName(), 
+				rFilename.c_str());
+#if defined WIN32 && !defined BOXI
+			::syslog(LOG_ERR, "%s: failed to start: "
+				"failed to open configuration file: "
+				"%s", DaemonName(), 
+				rFilename.c_str());
+#endif
+			return false;
+		}
+
+		throw;
+	}
+
+	// Got errors?
+	if (pconfig.get() == 0 || !errors.empty())
+	{
+		// Tell user about errors
+		fprintf(stderr, "%s: Errors in config file %s:\n%s", 
+			DaemonName(), mConfigFileName.c_str(), 
+			errors.c_str());
+#ifdef WIN32
+		::syslog(LOG_ERR, "%s: Errors in config file %s:\n%s",
+			DaemonName(), mConfigFileName.c_str(), 
+			errors.c_str());
+#endif
+		// And give up
+		return false;
+	}
+
+	// Delete old configuration
+	if (mpConfiguration)
+	{
+		delete mpConfiguration;
+		mpConfiguration = 0;
+	}
+
+	// Store new configuration
+	mpConfiguration = pconfig.release();
+	mConfigFileName = rFilename;
+	mLoadedConfigModifiedTime = GetConfigFileModifiedTime();
+
+	return true;
+}
+
+
+// --------------------------------------------------------------------------
+//
+// Function
 //		Name:    Daemon::Main(const char *, int, const char *[])
 //		Purpose: Starts the daemon off -- equivalent of C main() function
 //		Created: 2003/07/29
@@ -125,56 +198,10 @@ int Daemon::Main(const char *DefaultConfigFile, int argc, const char *argv[])
 			}
 		}
 
-		// Load the configuration file.
-		std::string errors;
-		std::auto_ptr<Configuration> pconfig;
-
-		try
+		if (!LoadConfigurationFile(mConfigFileName))
 		{
-			pconfig = Configuration::LoadAndVerify(
-				mConfigFileName.c_str(), 
-				GetConfigVerify(), errors);
-		}
-		catch(BoxException &e)
-		{
-			if(e.GetType() == CommonException::ExceptionType &&
-				e.GetSubType() == CommonException::OSFileOpenError)
-			{
-				fprintf(stderr, "%s: failed to start: "
-					"failed to open configuration file: "
-					"%s", DaemonName(), 
-					mConfigFileName.c_str());
-#ifdef WIN32
-				::syslog(LOG_ERR, "%s: failed to start: "
-					"failed to open configuration file: "
-					"%s", DaemonName(), 
-					mConfigFileName.c_str());
-#endif
-				return 1;
-			}
-
-			throw;
-		}
-
-		// Got errors?
-		if(pconfig.get() == 0 || !errors.empty())
-		{
-			// Tell user about errors
-			fprintf(stderr, "%s: Errors in config file %s:\n%s", 
-				DaemonName(), mConfigFileName.c_str(), 
-				errors.c_str());
-#ifdef WIN32
-			::syslog(LOG_ERR, "%s: Errors in config file %s:\n%s",
-				DaemonName(), mConfigFileName.c_str(), 
-				errors.c_str());
-#endif
-			// And give up
 			return 1;
 		}
-		
-		// Store configuration
-		mpConfiguration = pconfig.release();
-		mLoadedConfigModifiedTime = GetConfigFileModifiedTime();
 		
 		// Let the derived class have a go at setting up stuff in the initial process
 		SetupInInitialProcess();
@@ -366,34 +393,10 @@ int Daemon::Main(const char *DefaultConfigFile, int argc, const char *argv[])
 				::syslog(LOG_INFO, "Reloading configuration "
 					"(config: %s)", 
 					mConfigFileName.c_str());
-				std::string errors;
-				std::auto_ptr<Configuration> pconfig = 
-					Configuration::LoadAndVerify(
-						mConfigFileName.c_str(),
-						GetConfigVerify(), errors);
-
-				// Got errors?
-				if(pconfig.get() == 0 || !errors.empty())
-				{
-					// Tell user about errors
-					::syslog(LOG_ERR, "Errors in config "
-						"file %s:\n%s", 
-						mConfigFileName.c_str(),
-						errors.c_str());
-					// And give up
-					return 1;
-				}
 				
-				// delete old configuration
-				delete mpConfiguration;
-				mpConfiguration = 0;
-
-				// Store configuration
-				mpConfiguration = pconfig.release();
-				mLoadedConfigModifiedTime =
-					GetConfigFileModifiedTime();
-				
-				// Stop being marked for loading config again
+				// No need to abort if this fails,
+				// we still have a valid configuration
+				LoadConfigurationFile(mConfigFileName);
 				mReloadConfigWanted = false;
 			}
 		}
@@ -663,4 +666,3 @@ box_time_t Daemon::GetLoadedConfigModifiedTime() const
 {
 	return mLoadedConfigModifiedTime;
 }
-

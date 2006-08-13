@@ -65,6 +65,7 @@ public:
 
 protected:
 	box_time_t GetLoadedConfigModifiedTime() const;
+	bool LoadConfigurationFile(const std::string& rFilename);
 	
 private:
 	static void SignalHandler(int sigraised);
@@ -83,4 +84,3 @@ private:
 									{"User", 0, ConfigTest_LastEntry, 0}
 
 #endif // DAEMON__H
-
