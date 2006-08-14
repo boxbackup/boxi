@@ -220,17 +220,6 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 	{
 		// wxLogDebug(wxT(" pass %d"), pass);
 
-		if (pass == 1 && isExcluded != EST_INCLUDED) 
-		{
-			// already excluded, so don't bother checking the Exclude entries
-			continue;
-		}
-		else if (pass == 2 && isExcluded != EST_EXCLUDED) 
-		{
-			// not excluded, so don't bother checking the AlwaysInclude entries
-			continue;
-		}
-		
 		typedef std::vector<MyExcludeEntry>::const_iterator iterator;
 		
 		for (iterator pEntry = rExcludeList.begin();
