@@ -501,6 +501,19 @@ void TestBackup::RunTest()
 	CPPUNIT_ASSERT(pExcludeLocsListBox);
 	CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
 	
+	wxPanel* pExcludePanel = wxDynamicCast
+	(
+		pMainFrame->FindWindow(ID_BackupLoc_Excludes_Panel), wxPanel
+	);
+	CPPUNIT_ASSERT(pExcludePanel);
+	
+	wxListBox* pExclusionsListBox = wxDynamicCast
+	(
+		pExcludePanel->FindWindow(ID_Backup_LocationsList), wxListBox
+	);
+	CPPUNIT_ASSERT(pExclusionsListBox);
+	CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
+	
 	ActivateTreeItemWaitEvent(pTree, rootId);
 	CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
 	CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
@@ -532,6 +545,8 @@ void TestBackup::RunTest()
 		CPPUNIT_ASSERT(testDepth4Dir.Mkdir(0700));
 		wxFileName testDepth5Dir(testDepth4Dir.GetFullPath(), _("depth5"));
 		CPPUNIT_ASSERT(testDepth5Dir.Mkdir(0700));
+		wxFileName testDepth6Dir(testDepth5Dir.GetFullPath(), _("depth6"));
+		CPPUNIT_ASSERT(testDepth6Dir.Mkdir(0700));
 		
 		wxTreeItemId testDataDirItem = rootId;
 		
@@ -596,7 +611,13 @@ void TestBackup::RunTest()
 			pTree->GetChildrenCount(depth4, false));
 		wxTreeItemId depth5 = pTree->GetFirstChild(depth4, cookie);		
 		CPPUNIT_ASSERT(depth5.IsOk());
-		
+
+		pTree->Expand(depth5);
+		CPPUNIT_ASSERT_EQUAL((size_t)1, 
+			pTree->GetChildrenCount(depth5, false));
+		wxTreeItemId depth6 = pTree->GetFirstChild(depth5, cookie);		
+		CPPUNIT_ASSERT(depth6.IsOk());
+
 		ActivateTreeItemWaitEvent(pTree, testDataDirItem);
 		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
 		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
@@ -604,7 +625,25 @@ void TestBackup::RunTest()
 		expectedTitle.Append(_(" -> testdata"));
 		CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
 		CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+		CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+			pTree->GetItemImage(testDataDirItem));
 
+		for (wxTreeItemId nodeId = pTree->GetItemParent(testDataDirItem);
+			nodeId.IsOk(); nodeId = pTree->GetItemParent(nodeId))
+		{
+			CPPUNIT_ASSERT_EQUAL(images.GetPartialImageId(), 
+				pTree->GetItemImage(nodeId));
+		}
+		
+		for (wxTreeItemId nodeId = depth6; !(nodeId == testDataDirItem); 
+			nodeId = pTree->GetItemParent(nodeId))
+		{
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
+				pTree->GetItemImage(nodeId));
+		}
+
+		CPPUNIT_ASSERT(testDepth6Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth5Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth4Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth3Dir.Rmdir());
