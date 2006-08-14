@@ -618,31 +618,63 @@ void TestBackup::RunTest()
 		wxTreeItemId depth6 = pTree->GetFirstChild(depth5, cookie);		
 		CPPUNIT_ASSERT(depth6.IsOk());
 
-		ActivateTreeItemWaitEvent(pTree, testDataDirItem);
-		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-		wxString expectedTitle = testDataDir.GetFullPath();
-		expectedTitle.Append(_(" -> testdata"));
-		CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
-		CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
-		CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-			pTree->GetItemImage(testDataDirItem));
-
-		for (wxTreeItemId nodeId = pTree->GetItemParent(testDataDirItem);
-			nodeId.IsOk(); nodeId = pTree->GetItemParent(nodeId))
 		{
-			CPPUNIT_ASSERT_EQUAL(images.GetPartialImageId(), 
-				pTree->GetItemImage(nodeId));
+			ActivateTreeItemWaitEvent(pTree, testDataDirItem);
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			wxString expectedTitle = testDataDir.GetFullPath();
+			expectedTitle.Append(_(" -> testdata"));
+			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+	
+			for (wxTreeItemId nodeId = pTree->GetItemParent(testDataDirItem);
+				nodeId.IsOk(); nodeId = pTree->GetItemParent(nodeId))
+			{
+				CPPUNIT_ASSERT_EQUAL(images.GetPartialImageId(), 
+					pTree->GetItemImage(nodeId));
+			}
+			
+			for (wxTreeItemId nodeId = depth6; 
+				!(nodeId == testDataDirItem); 
+				nodeId = pTree->GetItemParent(nodeId))
+			{
+				CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
+					pTree->GetItemImage(nodeId));
+			}
 		}
 		
-		for (wxTreeItemId nodeId = depth6; !(nodeId == testDataDirItem); 
-			nodeId = pTree->GetItemParent(nodeId))
 		{
+			ActivateTreeItemWaitEvent(pTree, depth2);
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			wxString expectedTitle = testDataDir.GetFullPath();
+			expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
+			expectedTitle.Append(testDepth2Dir.GetFullPath());
+			expectedTitle.Append(_(")"));
+			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT_EQUAL(1, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
-				pTree->GetItemImage(nodeId));
+				pTree->GetItemImage(depth1));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(depth2));
+			for (wxTreeItemId nodeId = depth6; !(nodeId == depth2); 
+				nodeId = pTree->GetItemParent(nodeId))
+			{
+				CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+					pTree->GetItemImage(nodeId));
+			}
 		}
-
+		
 		CPPUNIT_ASSERT(testDepth6Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth5Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth4Dir.Rmdir());
