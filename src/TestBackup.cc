@@ -619,6 +619,9 @@ void TestBackup::RunTest()
 		CPPUNIT_ASSERT(depth6.IsOk());
 
 		{
+			// activate the testdata dir node, check that it
+			// and its children are shown as included in the tree,
+			// and all parent nodes are shown as partially included
 			ActivateTreeItemWaitEvent(pTree, testDataDirItem);
 			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
 			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
@@ -649,6 +652,8 @@ void TestBackup::RunTest()
 		}
 		
 		{
+			// activate a node at depth2, check that it and
+			// its children are Excluded
 			ActivateTreeItemWaitEvent(pTree, depth2);
 			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
 			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
@@ -661,6 +666,7 @@ void TestBackup::RunTest()
 			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
 			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
 			CPPUNIT_ASSERT_EQUAL(1, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetSelection());
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
 				pTree->GetItemImage(testDataDirItem));
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
@@ -674,7 +680,177 @@ void TestBackup::RunTest()
 					pTree->GetItemImage(nodeId));
 			}
 		}
+
+		{
+			// activate node at depth 4, check that it and its
+			// children are AlwaysIncluded
+			ActivateTreeItemWaitEvent(pTree, depth4);
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			wxString expectedTitle = testDataDir.GetFullPath();
+			expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
+			expectedTitle.Append(testDepth2Dir.GetFullPath());
+			expectedTitle.Append(_(", AlwaysIncludeDir = "));
+			expectedTitle.Append(testDepth4Dir.GetFullPath());
+			expectedTitle.Append(_(")"));
+			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT_EQUAL(2, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
+				pTree->GetItemImage(depth1));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(depth2));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+				pTree->GetItemImage(depth3));
+			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysImageId(), 
+				pTree->GetItemImage(depth4));
+			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysGreyImageId(), 
+				pTree->GetItemImage(depth5));
+			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysGreyImageId(), 
+				pTree->GetItemImage(depth6));
+		}
+
+		{
+			// activate node at depth 2, check that it is no longer
+			// excluded, but children at depth 4 and below are still
+			// AlwaysIncluded
+			ActivateTreeItemWaitEvent(pTree, depth2);
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			wxString expectedTitle = testDataDir.GetFullPath();
+			expectedTitle.Append(_(" -> testdata (AlwaysIncludeDir = "));
+			expectedTitle.Append(testDepth4Dir.GetFullPath());
+			expectedTitle.Append(_(")"));
+			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT_EQUAL(1, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
+				pTree->GetItemImage(depth1));
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
+				pTree->GetItemImage(depth2));
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
+				pTree->GetItemImage(depth3));
+			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysImageId(), 
+				pTree->GetItemImage(depth4));
+			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysGreyImageId(), 
+				pTree->GetItemImage(depth5));
+			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysGreyImageId(), 
+				pTree->GetItemImage(depth6));
+		}
 		
+		{
+			// activate node at depth 4, check that the 
+			// AlwaysInclude entry is removed.
+			ActivateTreeItemWaitEvent(pTree, depth4);
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			wxString expectedTitle = testDataDir.GetFullPath();
+			expectedTitle.Append(_(" -> testdata"));
+			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+	
+			for (wxTreeItemId nodeId = depth6; 
+				!(nodeId == testDataDirItem); 
+				nodeId = pTree->GetItemParent(nodeId))
+			{
+				CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
+					pTree->GetItemImage(nodeId));
+			}
+		}
+
+		{
+			// activate node at depth 4 again, check that an
+			// Exclude entry is added this time.
+			ActivateTreeItemWaitEvent(pTree, depth4);
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+
+			wxString expectedTitle = testDataDir.GetFullPath();
+			expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
+			expectedTitle.Append(testDepth4Dir.GetFullPath());
+			expectedTitle.Append(_(")"));
+			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+
+			CPPUNIT_ASSERT_EQUAL(1, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetSelection());
+
+			for (wxTreeItemId nodeId = depth6; !(nodeId == depth4); 
+				nodeId = pTree->GetItemParent(nodeId))
+			{
+				CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+					pTree->GetItemImage(nodeId));
+			}
+			
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(depth4));
+			
+			for (wxTreeItemId nodeId = depth3; !(nodeId == testDataDirItem); 
+				nodeId = pTree->GetItemParent(nodeId))
+			{
+				CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
+					pTree->GetItemImage(nodeId));
+			}
+			
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+		}
+
+		{
+			// activate node at depth 2 again, check that an
+			// Exclude entry is added again, and that the node
+			// at depth 4 still shows as excluded
+			ActivateTreeItemWaitEvent(pTree, depth2);
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+
+			wxString expectedTitle = testDataDir.GetFullPath();
+			expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
+			expectedTitle.Append(testDepth4Dir.GetFullPath());
+			expectedTitle.Append(_(", ExcludeDir = "));
+			expectedTitle.Append(testDepth2Dir.GetFullPath());
+			expectedTitle.Append(_(")"));
+			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+
+			CPPUNIT_ASSERT_EQUAL(2, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetSelection());
+
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
+				pTree->GetItemImage(depth1));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(depth2));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+				pTree->GetItemImage(depth3));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(depth4));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+				pTree->GetItemImage(depth5));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+				pTree->GetItemImage(depth6));
+		}
+
 		CPPUNIT_ASSERT(testDepth6Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth5Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth4Dir.Rmdir());
