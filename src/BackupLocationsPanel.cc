@@ -367,7 +367,7 @@ class EditorPanel : public wxPanel, ConfigChangeListener
 	wxGridSizer*      mpDetailsParamSizer;
 	
 	public:
-	EditorPanel(wxWindow* pParent, ClientConfig *pConfig);
+	EditorPanel(wxWindow* pParent, ClientConfig *pConfig, wxWindowID id);
 	virtual ~EditorPanel() { mpConfig->RemoveListener(this); }
 	void NotifyChange(); /* ConfigChangeListener interface */
 	
@@ -383,8 +383,8 @@ class EditorPanel : public wxPanel, ConfigChangeListener
 	DECLARE_EVENT_TABLE()
 };
 
-EditorPanel::EditorPanel(wxWindow* pParent, ClientConfig *pConfig)
-: wxPanel(pParent, wxID_ANY),
+EditorPanel::EditorPanel(wxWindow* pParent, ClientConfig *pConfig, wxWindowID id)
+: wxPanel(pParent, id),
   mpConfig(pConfig)
 {
 	mpConfig->AddListener(this);
@@ -481,6 +481,12 @@ void EditorPanel::PopulateLocationList(wxControlWithItems* pTargetList)
 			pTargetList->SetSelection(newIndex);
 		}
 	}
+	
+	if (pTargetList->GetSelection() == wxNOT_FOUND && 
+		pTargetList->GetCount() > 0)
+	{
+		pTargetList->SetSelection(0);
+	}
 }
 
 BEGIN_EVENT_TABLE(EditorPanel, wxPanel)
@@ -519,7 +525,7 @@ class LocationsPanel : public EditorPanel
 };
 
 LocationsPanel::LocationsPanel(wxWindow* pParent, ClientConfig *pConfig)
-: EditorPanel(pParent, pConfig)
+: EditorPanel(pParent, pConfig, ID_BackupLoc_List_Panel)
 {
 	mpListBoxSizer   ->GetStaticBox()->SetLabel(wxT("&Locations"));
 	mpDetailsBoxSizer->GetStaticBox()->SetLabel(wxT("&Selected or New Location"));
@@ -718,7 +724,7 @@ class ExclusionsPanel : public EditorPanel
 };
 
 ExclusionsPanel::ExclusionsPanel(wxWindow* pParent, ClientConfig *pConfig)
-: EditorPanel(pParent, pConfig)
+: EditorPanel(pParent, pConfig, ID_BackupLoc_Excludes_Panel)
 {
 	wxStaticBoxSizer* pLocationListBox = new wxStaticBoxSizer(wxVERTICAL, 
 		this, wxT("&Locations"));
