@@ -63,6 +63,8 @@ enum {
 	ID_Backup_Locations_Button,
 	ID_Backup_Config_Button,
 
+	ID_BackupLoc_List_Panel,
+	ID_BackupLoc_Excludes_Panel,
 	ID_Backup_Locations_Tree,
 	ID_Backup_LocationsAddButton,
 	ID_Backup_LocationsEditButton,
