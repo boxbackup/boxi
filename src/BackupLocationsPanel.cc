@@ -818,6 +818,12 @@ void ExclusionsPanel::PopulateList()
 			mpList->SetSelection(newIndex);
 		}
 	}
+	
+	if (mpList->GetSelection() == wxNOT_FOUND &&
+		mpList->GetCount() > 0)
+	{
+		mpList->SetSelection(0);
+	}
 }
 
 void ExclusionsPanel::UpdateEnabledState() 
