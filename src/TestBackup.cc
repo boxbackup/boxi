@@ -530,10 +530,14 @@ void TestBackup::RunTest()
 		CPPUNIT_ASSERT(testDepth3Dir.Mkdir(0700));
 		wxFileName testDepth4Dir(testDepth3Dir.GetFullPath(), _("depth4"));
 		CPPUNIT_ASSERT(testDepth4Dir.Mkdir(0700));
+		wxFileName testDepth5Dir(testDepth4Dir.GetFullPath(), _("depth5"));
+		CPPUNIT_ASSERT(testDepth5Dir.Mkdir(0700));
 		
 		wxTreeItemId testDataDirItem = rootId;
 		
 		wxArrayString testDataDirPathDirs = testDataDir.GetDirs();
+		testDataDirPathDirs.Add(testDataDir.GetName());
+		
 		for (size_t i = 0; i < testDataDirPathDirs.Count(); i++)
 		{
 			wxString dirName = testDataDirPathDirs.Item(i);
@@ -563,17 +567,35 @@ void TestBackup::RunTest()
 		
 		wxTreeItemIdValue cookie;
 		
+		pTree->Expand(testDataDirItem);
+		CPPUNIT_ASSERT_EQUAL((size_t)1, 
+			pTree->GetChildrenCount(testDataDirItem, false));
 		wxTreeItemId depth1 = pTree->GetFirstChild(testDataDirItem, cookie);
 		CPPUNIT_ASSERT(depth1.IsOk());
 		
+		pTree->Expand(depth1);
+		CPPUNIT_ASSERT_EQUAL((size_t)1, 
+			pTree->GetChildrenCount(depth1, false));
 		wxTreeItemId depth2 = pTree->GetFirstChild(depth1, cookie);
 		CPPUNIT_ASSERT(depth2.IsOk());
 		
+		pTree->Expand(depth2);
+		CPPUNIT_ASSERT_EQUAL((size_t)1, 
+			pTree->GetChildrenCount(depth2, false));
 		wxTreeItemId depth3 = pTree->GetFirstChild(depth2, cookie);
 		CPPUNIT_ASSERT(depth3.IsOk());
 		
+		pTree->Expand(depth3);
+		CPPUNIT_ASSERT_EQUAL((size_t)1, 
+			pTree->GetChildrenCount(depth3, false));
 		wxTreeItemId depth4 = pTree->GetFirstChild(depth3, cookie);		
 		CPPUNIT_ASSERT(depth4.IsOk());
+
+		pTree->Expand(depth4);
+		CPPUNIT_ASSERT_EQUAL((size_t)1, 
+			pTree->GetChildrenCount(depth4, false));
+		wxTreeItemId depth5 = pTree->GetFirstChild(depth4, cookie);		
+		CPPUNIT_ASSERT(depth5.IsOk());
 		
 		ActivateTreeItemWaitEvent(pTree, testDataDirItem);
 		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
@@ -583,6 +605,7 @@ void TestBackup::RunTest()
 		CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
 		CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
 
+		CPPUNIT_ASSERT(testDepth5Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth4Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth3Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth2Dir.Rmdir());
