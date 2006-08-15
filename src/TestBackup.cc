@@ -501,6 +501,28 @@ void TestBackup::RunTest()
 	CPPUNIT_ASSERT(pExcludeLocsListBox);
 	CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
 	
+	wxPanel* pLocationsPanel = wxDynamicCast
+	(
+		pMainFrame->FindWindow(ID_BackupLoc_List_Panel), wxPanel
+	);
+	CPPUNIT_ASSERT(pLocationsPanel);
+	
+	wxTextCtrl* pLocationNameCtrl = wxDynamicCast
+	(
+		pLocationsPanel->FindWindow(ID_Backup_LocationNameCtrl), wxTextCtrl
+	);
+	CPPUNIT_ASSERT(pLocationNameCtrl);
+	CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
+		pLocationNameCtrl->GetValue());
+
+	wxTextCtrl* pLocationPathCtrl = wxDynamicCast
+	(
+		pLocationsPanel->FindWindow(ID_Backup_LocationPathCtrl), wxTextCtrl
+	);
+	CPPUNIT_ASSERT(pLocationPathCtrl);
+	CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
+		pLocationPathCtrl->GetValue());	
+
 	wxPanel* pExcludePanel = wxDynamicCast
 	(
 		pMainFrame->FindWindow(ID_BackupLoc_Excludes_Panel), wxPanel
@@ -513,7 +535,24 @@ void TestBackup::RunTest()
 	);
 	CPPUNIT_ASSERT(pExclusionsListBox);
 	CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
-	
+
+	wxChoice* pExcludeTypeList = wxDynamicCast
+	(
+		pExcludePanel->FindWindow(ID_BackupLoc_ExcludeTypeList), wxChoice
+	);
+	CPPUNIT_ASSERT(pExcludeTypeList);
+	CPPUNIT_ASSERT_EQUAL(8, pExcludeTypeList->GetCount());
+
+	wxTextCtrl* pExcludePathCtrl = wxDynamicCast
+	(
+		pExcludePanel->FindWindow(ID_BackupLoc_ExcludePathCtrl), wxTextCtrl
+	);
+	CPPUNIT_ASSERT(pExcludePathCtrl);
+	CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
+		pExcludePathCtrl->GetValue());
+
+	// test that creating a location using the tree adds entries 
+	// to the locations and excludes list boxes
 	ActivateTreeItemWaitEvent(pTree, rootId);
 	CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
 	CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
@@ -531,7 +570,7 @@ void TestBackup::RunTest()
 	MessageBoxCheckFired();
 	CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetCount());
 	CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
-	
+
 	{
 		wxFileName testDataDir(tempDir.GetFullPath(), _("testdata"));
 		CPPUNIT_ASSERT(testDataDir.Mkdir(0700));
@@ -623,15 +662,7 @@ void TestBackup::RunTest()
 			// and its children are shown as included in the tree,
 			// and all parent nodes are shown as partially included
 			ActivateTreeItemWaitEvent(pTree, testDataDirItem);
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			wxString expectedTitle = testDataDir.GetFullPath();
-			expectedTitle.Append(_(" -> testdata"));
-			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
+
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
 				pTree->GetItemImage(testDataDirItem));
 	
@@ -649,6 +680,22 @@ void TestBackup::RunTest()
 				CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
 					pTree->GetItemImage(nodeId));
 			}
+			
+			// check that the entry details are shown in the
+			// Locations panel, and the entry is selected
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			wxString expectedTitle = testDataDir.GetFullPath();
+			expectedTitle.Append(_(" -> testdata"));
+			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("testdata"), 
+				pLocationNameCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL(testDataDir.GetFullPath(),
+				pLocationPathCtrl->GetValue());
 		}
 		
 		{
