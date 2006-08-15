@@ -690,6 +690,7 @@ void LocationsPanel::SelectLocation(const Location& rLocation)
 		if (pLocation->IsSameAs(rLocation)) 
 		{
 			mpList->SetSelection(i);
+			PopulateControls();
 			break;
 		}
 	}
