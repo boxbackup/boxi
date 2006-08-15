@@ -542,6 +542,7 @@ LocationsPanel::LocationsPanel(wxWindow* pParent, ClientConfig *pConfig)
 void LocationsPanel::PopulateList()
 {
 	PopulateLocationList(mpList);
+	PopulateControls();
 }
 
 void LocationsPanel::UpdateEnabledState() 
@@ -824,6 +825,8 @@ void ExclusionsPanel::PopulateList()
 	{
 		mpList->SetSelection(0);
 	}
+
+	PopulateControls();
 }
 
 void ExclusionsPanel::UpdateEnabledState() 
