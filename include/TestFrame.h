@@ -30,6 +30,7 @@
 // #include <wx/wx.h>
 
 #include <cppunit/Asserter.h>
+#include <cppunit/TestAssert.h>
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/TestSetUp.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
@@ -102,6 +103,30 @@ class TestSetUpDecorator : public CppUnit::TestSetUp
                               (actual),                \
                               (line),    \
                               "" ) )
+
+namespace CppUnit
+{
+	// specialization for assertions of equality on wxStrings
+	template<>
+	struct assertion_traits<wxString>   
+	{
+		static bool equal(const wxString& x, const wxString& y)
+		{
+			return x.IsSameAs(y);
+		}
+		
+		static std::string toString(const wxString& x)
+		{
+			return x.mb_str(wxConvLibc).data();
+			// std::string text = '"' + x.mb_str(wxConvLibc).data() + '"';    
+			// return text;
+			// adds quote around the string to see whitespace
+			// std::ostringstream ost;
+			// ost << text;
+			// return ost.str();
+		}
+	};
+}
 
 #define MessageBoxSetResponse(messageId, response) \
 	wxGetApp().ExpectMessageBox(messageId, response, CPPUNIT_SOURCELINE())
