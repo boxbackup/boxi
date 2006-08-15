@@ -144,6 +144,7 @@ class GuiTestBase : public CppUnit::TestCase
 	void ClickButtonWaitIdle  (wxWindow* pWindow);
 	void ClickButtonWaitEvent (wxWindowID ParentID, wxWindowID ButtonID);
 	void ClickButtonWaitEvent (wxWindowID ButtonID);
+	void ClickButtonWaitEvent (wxButton* pButton);
 	void ClickRadioWaitEvent  (wxWindow* pButton);
 	void CloseWindow          (wxWindow* pWindow);
 	void CloseWindowWaitClosed(wxWindow* pWindow);

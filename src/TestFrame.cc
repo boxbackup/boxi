@@ -549,9 +549,7 @@ void GuiTestBase::ClickButtonWaitEvent(wxWindowID ParentID, wxWindowID ButtonID)
 		pParentWindow->FindWindow(ButtonID), wxButton
 	);
 	CPPUNIT_ASSERT(pButton);
-
-	wxCommandEvent click = GetButtonClickEvent(pButton);
-	pButton->ProcessEvent(click);
+	ClickButtonWaitEvent(pButton);
 }
 
 void GuiTestBase::ClickButtonWaitEvent(wxWindowID ButtonID)
@@ -561,7 +559,12 @@ void GuiTestBase::ClickButtonWaitEvent(wxWindowID ButtonID)
 		wxWindow::FindWindowById(ButtonID), wxButton
 	);
 	CPPUNIT_ASSERT(pButton);
-	
+	ClickButtonWaitEvent(pButton);
+}
+
+void GuiTestBase::ClickButtonWaitEvent(wxButton* pButton)
+{
+	CPPUNIT_ASSERT(pButton);	
 	wxCommandEvent click = GetButtonClickEvent(pButton);
 	pButton->ProcessEvent(click);
 }
