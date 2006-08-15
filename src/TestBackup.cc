@@ -523,6 +523,12 @@ void TestBackup::RunTest()
 	CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
 		pLocationPathCtrl->GetValue());	
 
+	wxButton* pLocationAddButton = wxDynamicCast
+	(
+		pLocationsPanel->FindWindow(ID_Backup_LocationsAddButton), wxButton
+	);
+	CPPUNIT_ASSERT(pLocationAddButton);
+	
 	wxPanel* pExcludePanel = wxDynamicCast
 	(
 		pMainFrame->FindWindow(ID_BackupLoc_Excludes_Panel), wxPanel
@@ -897,7 +903,50 @@ void TestBackup::RunTest()
 			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
 				pTree->GetItemImage(depth6));
 		}
-
+		
+		{
+			// remove Exclude and Location entries, check that
+			// all is reset.
+			ActivateTreeItemWaitEvent(pTree, depth4);
+			ActivateTreeItemWaitEvent(pTree, depth2);
+			
+			MessageBoxSetResponse(BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, wxYES);
+			ActivateTreeItemWaitEvent(pTree, testDataDirItem);
+			MessageBoxCheckFired();
+			
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetCount());
+			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, 
+				pLocationsListBox  ->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, 
+				pExcludeLocsListBox->GetSelection());
+		}
+		
+		{
+			// add two locations using the Locations panel,
+			// check that the one just added is selected,
+			// and text controls are populated correctly.
+			pLocationNameCtrl->SetValue(_("tmp"));
+			pLocationPathCtrl->SetValue(_("/tmp"));
+			ClickButtonWaitEvent(pLocationAddButton);
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),  
+				pLocationNameCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"), 
+				pLocationPathCtrl->GetValue());
+			
+			pLocationNameCtrl->SetValue(_("etc"));
+			pLocationPathCtrl->SetValue(_("/etc"));
+			ClickButtonWaitEvent(pLocationAddButton);
+			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),  
+				pLocationNameCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"), 
+				pLocationPathCtrl->GetValue());
+		}
+		
 		CPPUNIT_ASSERT(testDepth6Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth5Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth4Dir.Rmdir());
