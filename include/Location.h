@@ -2,8 +2,8 @@
  *            Location.h
  *
  *  Mon Feb 28 23:38:27 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -36,25 +36,29 @@
 // #undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #undef NDEBUG
 
-enum ExcludeSense {
+enum ExcludeSense 
+{
 	ES_UNKNOWN = 0,
 	ES_EXCLUDE,
 	ES_ALWAYSINCLUDE,
 };
 
-enum ExcludeFileDir {
+enum ExcludeFileDir 
+{
 	EFD_UNKNOWN = 0,
 	EFD_FILE,
 	EFD_DIR,
 };
 
-enum ExcludeMatch {
+enum ExcludeMatch 
+{
 	EM_UNKNOWN = 0,
 	EM_EXACT,
 	EM_REGEX,
 };
 
-enum ExcludedState {
+enum ExcludedState 
+{
 	EST_UNKNOWN = 0,
 	EST_NOLOC,
 	EST_INCLUDED,
@@ -62,7 +66,8 @@ enum ExcludedState {
 	EST_ALWAYSINCLUDED,
 };
 
-class MyExcludeType {
+class MyExcludeType 
+{
 	private:
 
 	public:
@@ -83,9 +88,9 @@ class MyExcludeType {
 	const std::string GetSenseString() const {
 		std::string temp;
 		switch (mSense) {
-		case ES_EXCLUDE: 		temp = "Exclude"; 		break;
-		case ES_ALWAYSINCLUDE: 	temp = "AlwaysInclude"; break;
-		default: 				temp = "Unknown"; 		break;
+		case ES_EXCLUDE:       temp = "Exclude";       break;
+		case ES_ALWAYSINCLUDE: temp = "AlwaysInclude"; break;
+		default:               temp = "Unknown";       break;
 		}
 		return temp;
 	}
@@ -94,10 +99,11 @@ class MyExcludeType {
 	const std::string GetFileDirString() const
 	{
 		std::string temp;
-		switch (mFileOrDir) {
-		case EFD_FILE: 	temp = "File"; 		break;
-		case EFD_DIR: 	temp = "Dir";		break;
-		default: 		temp = "Unknown"; 	break;
+		switch (mFileOrDir) 
+		{
+			case EFD_FILE:  temp = "File";    break;
+			case EFD_DIR:   temp = "Dir";     break;
+			default:        temp = "Unknown"; break;
 		}
 		return temp;
 	}
@@ -106,16 +112,18 @@ class MyExcludeType {
 	const std::string GetMatchString() const
 	{
 		std::string temp;
-		switch (mMatch) {
-		case EM_EXACT: 	temp = ""; 			break;
-		case EM_REGEX: 	temp = "sRegex";	break;
-		default: 		temp = "Unknown"; 	break;
+		switch (mMatch) 
+		{
+			case EM_EXACT: temp = "";        break;
+			case EM_REGEX: temp = "sRegex";	 break;
+			default:       temp = "Unknown"; break;
 		}
 		return temp;
 	}
 	
 	public:
-	std::string ToString() const {
+	std::string ToString() const 
+	{
 		std::string buffer = "";
 		buffer.append(GetSenseString());
 		buffer.append(GetFileDirString());
@@ -132,7 +140,8 @@ class MyExcludeType {
 #define numExcludeTypes 8
 extern MyExcludeType theExcludeTypes [];
 
-enum ExcludeTypeIndex {
+enum ExcludeTypeIndex 
+{
 	ETI_EXCLUDE_DIR = 0,
 	ETI_EXCLUDE_DIRS_REGEX,
 	ETI_EXCLUDE_FILE,
