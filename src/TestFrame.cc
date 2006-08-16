@@ -525,6 +525,7 @@ wxCommandEvent GuiTestBase::GetButtonClickEvent(wxWindow* pWindow)
 	
 	wxButton* pButton = wxDynamicCast(pWindow, wxButton);
 	assert(pButton);
+	assert(pButton->IsEnabled());
 
 	wxCommandEvent click(wxEVT_COMMAND_BUTTON_CLICKED, pButton->GetId());
 	click.SetEventObject(pButton);
@@ -651,6 +652,38 @@ void GuiTestBase::CollapseTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rIt
 	click.SetItem(rItem);
 	
 	pTree->ProcessEvent(click);
+}
+
+void GuiTestBase::SetTextCtrlValue(wxTextCtrl* pTextCtrl, const wxString& rValue)
+{
+	assert(pTextCtrl);
+	assert(pTextCtrl->IsEnabled());
+	pTextCtrl->SetValue(rValue);
+}
+
+	void SetSelection(wxListBox* pListCtrl, int value);
+	void SetSelection(wxChoice*  pListCtrl, int value);
+
+void GuiTestBase::SetSelection(wxListBox* pListCtrl, int value)
+{
+	assert(pListCtrl);
+	assert(pListCtrl->IsEnabled());
+	pListCtrl->SetSelection(value);
+	wxCommandEvent click(wxEVT_COMMAND_LISTBOX_SELECTED, pListCtrl->GetId());
+	click.SetEventObject(pListCtrl);
+	click.SetInt(value);
+	pListCtrl->ProcessEvent(click);
+}
+
+void GuiTestBase::SetSelection(wxChoice* pChoiceCtrl, int value)
+{
+	assert(pChoiceCtrl);
+	assert(pChoiceCtrl->IsEnabled());
+	pChoiceCtrl->SetSelection(value);
+	wxCommandEvent click(wxEVT_COMMAND_CHOICE_SELECTED, pChoiceCtrl->GetId());
+	click.SetEventObject(pChoiceCtrl);
+	click.SetInt(value);
+	pChoiceCtrl->ProcessEvent(click);
 }
 
 MainFrame* GuiTestBase::GetMainFrame()

@@ -155,6 +155,9 @@ class GuiTestBase : public CppUnit::TestCase
 	void ActivateTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem);
 	void ExpandTreeItemWaitEvent  (wxTreeCtrl* pTree, wxTreeItemId& rItem);
 	void CollapseTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem);
+	void SetTextCtrlValue(wxTextCtrl* pTextCtrl, const wxString& rValue);
+	void SetSelection(wxListBox* pListCtrl,   int value);
+	void SetSelection(wxChoice*  pChoiceCtrl, int value);
 	
 	MainFrame* GetMainFrame();
 	wxWindow*  FindWindow(wxWindowID id) 
