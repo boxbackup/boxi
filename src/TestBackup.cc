@@ -535,12 +535,12 @@ void TestBackup::RunTest()
 	);
 	CPPUNIT_ASSERT(pExcludePanel);
 	
-	wxListBox* pExclusionsListBox = wxDynamicCast
+	wxListBox* pExcludeListBox = wxDynamicCast
 	(
 		pExcludePanel->FindWindow(ID_Backup_LocationsList), wxListBox
 	);
-	CPPUNIT_ASSERT(pExclusionsListBox);
-	CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
+	CPPUNIT_ASSERT(pExcludeListBox);
+	CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
 
 	wxChoice* pExcludeTypeList = wxDynamicCast
 	(
@@ -557,13 +557,19 @@ void TestBackup::RunTest()
 	CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
 		pExcludePathCtrl->GetValue());
 
+	wxButton* pExcludeAddButton = wxDynamicCast
+	(
+		pExcludePanel->FindWindow(ID_Backup_LocationsAddButton), wxButton
+	);
+	CPPUNIT_ASSERT(pExcludeAddButton);
+
 	// test that creating a location using the tree adds entries 
 	// to the locations and excludes list boxes
 	ActivateTreeItemWaitEvent(pTree, rootId);
 	CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
 	CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-	CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(_("/ -> root")));
-	CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(_("/ -> root")));
+	CPPUNIT_ASSERT_EQUAL((wxString)_("/ -> root"), pLocationsListBox  ->GetString(0));
+	CPPUNIT_ASSERT_EQUAL((wxString)_("/ -> root"), pExcludeLocsListBox->GetString(0));
 
 	MessageBoxSetResponse(BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, wxNO);
 	ActivateTreeItemWaitEvent(pTree, rootId);
@@ -695,9 +701,11 @@ void TestBackup::RunTest()
 			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
 			wxString expectedTitle = testDataDir.GetFullPath();
 			expectedTitle.Append(_(" -> testdata"));
-			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
+				pLocationsListBox  ->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(expectedTitle,
+				pExcludeLocsListBox->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
 			CPPUNIT_ASSERT_EQUAL((wxString)_("testdata"), 
 				pLocationNameCtrl->GetValue());
 			CPPUNIT_ASSERT_EQUAL(testDataDir.GetFullPath(),
@@ -716,10 +724,12 @@ void TestBackup::RunTest()
 			expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
 			expectedTitle.Append(testDepth2Dir.GetFullPath());
 			expectedTitle.Append(_(")"));
-			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT_EQUAL(1, pExclusionsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
+				pLocationsListBox  ->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(expectedTitle,
+				pExcludeLocsListBox->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
 				pTree->GetItemImage(testDataDirItem));
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
@@ -748,10 +758,12 @@ void TestBackup::RunTest()
 			expectedTitle.Append(_(", AlwaysIncludeDir = "));
 			expectedTitle.Append(testDepth4Dir.GetFullPath());
 			expectedTitle.Append(_(")"));
-			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT_EQUAL(2, pExclusionsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
+				pLocationsListBox  ->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(expectedTitle,
+				pExcludeLocsListBox->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
 				pTree->GetItemImage(testDataDirItem));
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
@@ -781,10 +793,12 @@ void TestBackup::RunTest()
 			expectedTitle.Append(_(" -> testdata (AlwaysIncludeDir = "));
 			expectedTitle.Append(testDepth4Dir.GetFullPath());
 			expectedTitle.Append(_(")"));
-			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT_EQUAL(1, pExclusionsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
+				pLocationsListBox  ->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(expectedTitle,
+				pExcludeLocsListBox->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
 				pTree->GetItemImage(testDataDirItem));
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
@@ -811,9 +825,11 @@ void TestBackup::RunTest()
 			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
 			wxString expectedTitle = testDataDir.GetFullPath();
 			expectedTitle.Append(_(" -> testdata"));
-			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
+				pLocationsListBox  ->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(expectedTitle,
+				pExcludeLocsListBox->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
 				pTree->GetItemImage(testDataDirItem));
 	
@@ -839,11 +855,13 @@ void TestBackup::RunTest()
 			expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
 			expectedTitle.Append(testDepth4Dir.GetFullPath());
 			expectedTitle.Append(_(")"));
-			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
+				pLocationsListBox  ->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(expectedTitle,
+				pExcludeLocsListBox->GetString(0));
 
-			CPPUNIT_ASSERT_EQUAL(1, pExclusionsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
 
 			for (wxTreeItemId nodeId = depth6; !(nodeId == depth4); 
 				nodeId = pTree->GetItemParent(nodeId))
@@ -882,11 +900,13 @@ void TestBackup::RunTest()
 			expectedTitle.Append(_(", ExcludeDir = "));
 			expectedTitle.Append(testDepth2Dir.GetFullPath());
 			expectedTitle.Append(_(")"));
-			CPPUNIT_ASSERT(pLocationsListBox  ->GetString(0).IsSameAs(expectedTitle));
-			CPPUNIT_ASSERT(pExcludeLocsListBox->GetString(0).IsSameAs(expectedTitle));
+			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
+				pLocationsListBox  ->GetString(0));
+			CPPUNIT_ASSERT_EQUAL(expectedTitle,
+				pExcludeLocsListBox->GetString(0));
 
-			CPPUNIT_ASSERT_EQUAL(2, pExclusionsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExclusionsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
 
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
 				pTree->GetItemImage(testDataDirItem));
@@ -926,8 +946,8 @@ void TestBackup::RunTest()
 			// add two locations using the Locations panel,
 			// check that the one just added is selected,
 			// and text controls are populated correctly.
-			pLocationNameCtrl->SetValue(_("tmp"));
-			pLocationPathCtrl->SetValue(_("/tmp"));
+			SetTextCtrlValue(pLocationNameCtrl, _("tmp"));
+			SetTextCtrlValue(pLocationPathCtrl, _("/tmp"));
 			ClickButtonWaitEvent(pLocationAddButton);
 			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetCount());
 			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
@@ -936,8 +956,8 @@ void TestBackup::RunTest()
 			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"), 
 				pLocationPathCtrl->GetValue());
 			
-			pLocationNameCtrl->SetValue(_("etc"));
-			pLocationPathCtrl->SetValue(_("/etc"));
+			SetTextCtrlValue(pLocationNameCtrl, _("etc"));
+			SetTextCtrlValue(pLocationPathCtrl, _("/etc"));
 			ClickButtonWaitEvent(pLocationAddButton);
 			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
 			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
@@ -945,6 +965,57 @@ void TestBackup::RunTest()
 				pLocationNameCtrl->GetValue());
 			CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"), 
 				pLocationPathCtrl->GetValue());
+		}
+
+		{
+			// add an exclude entry using the Exclusions panel,
+			// check that the one just added is selected,
+			// and text controls are populated correctly.
+			
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
+
+			SetTextCtrlValue(pExcludePathCtrl, _("/tmp/foo"));
+			ClickButtonWaitEvent(pExcludeAddButton);
+			
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
+				pExcludePathCtrl->GetValue());
+		}
+		
+		{
+			// add another exclude entry using the Exclusions panel,
+			// check that the one just added is selected,
+			// and text controls are populated correctly.
+			
+			SetSelection(pExcludeTypeList, 1);
+			SetTextCtrlValue(pExcludePathCtrl, _("/tmp/bar"));
+			ClickButtonWaitEvent(pExcludeAddButton);
+
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
+				pExcludePathCtrl->GetValue());
+		}
+
+		{
+			// change selected exclude entry, check that
+			// controls are populated correctly
+			SetSelection(pExcludeListBox, 0);
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
+				pExcludePathCtrl->GetValue());
+			
+			SetSelection(pExcludeListBox, 1);
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
+				pExcludePathCtrl->GetValue());
 		}
 		
 		CPPUNIT_ASSERT(testDepth6Dir.Rmdir());
