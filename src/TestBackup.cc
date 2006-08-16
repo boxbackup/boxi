@@ -563,6 +563,18 @@ void TestBackup::RunTest()
 	);
 	CPPUNIT_ASSERT(pExcludeAddButton);
 
+	wxButton* pExcludeEditButton = wxDynamicCast
+	(
+		pExcludePanel->FindWindow(ID_Backup_LocationsEditButton), wxButton
+	);
+	CPPUNIT_ASSERT(pExcludeEditButton);
+
+	wxButton* pExcludeDelButton = wxDynamicCast
+	(
+		pExcludePanel->FindWindow(ID_Backup_LocationsDelButton), wxButton
+	);
+	CPPUNIT_ASSERT(pExcludeDelButton);
+
 	// test that creating a location using the tree adds entries 
 	// to the locations and excludes list boxes
 	ActivateTreeItemWaitEvent(pTree, rootId);
@@ -1015,6 +1027,139 @@ void TestBackup::RunTest()
 			SetSelection(pExcludeListBox, 1);
 			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
 			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
+				pExcludePathCtrl->GetValue());
+		}
+
+		{
+			// edit exclude entries, check that
+			// controls are populated correctly
+			SetSelection(pExcludeListBox, 0);
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
+				pExcludePathCtrl->GetValue());
+			SetSelection(pExcludeTypeList, 2);
+			SetTextCtrlValue(pExcludePathCtrl, _("/tmp/baz"));
+			ClickButtonWaitEvent(pExcludeEditButton);
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+			
+			SetSelection(pExcludeListBox, 1);
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
+				pExcludePathCtrl->GetValue());
+			SetSelection(pExcludeTypeList, 3);
+			SetTextCtrlValue(pExcludePathCtrl, _("/tmp/whee"));
+			ClickButtonWaitEvent(pExcludeEditButton);
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
+				pExcludePathCtrl->GetValue());
+
+			SetSelection(pExcludeListBox, 0);
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+
+			SetSelection(pExcludeListBox, 1);
+			CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
+				pExcludePathCtrl->GetValue());
+		}
+
+		{
+			// check that adding a new entry based on an
+			// existing entry works correctly
+			
+			SetSelection(pExcludeListBox, 0);
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+			
+			// change path and add new entry
+			SetTextCtrlValue(pExcludePathCtrl, _("/tmp/foo"));
+			ClickButtonWaitEvent(pExcludeAddButton);
+			CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
+				pExcludePathCtrl->GetValue());
+			
+			// original entry unchanged
+			SetSelection(pExcludeListBox, 0);
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+				
+			// change type and add new entry
+			SetSelection(pExcludeTypeList, 1);
+			ClickButtonWaitEvent(pExcludeAddButton);
+			CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+
+			// original entry unchanged
+			SetSelection(pExcludeListBox, 0);
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+		}
+		
+		{
+			// check that removing entries works correctly
+			SetSelection(pExcludeListBox, 3);
+			CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+			ClickButtonWaitEvent(pExcludeDelButton);
+			CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+			
+			SetSelection(pExcludeListBox, 2);
+			CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
+				pExcludePathCtrl->GetValue());
+			ClickButtonWaitEvent(pExcludeDelButton);
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+
+			SetSelection(pExcludeListBox, 1);
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
+				pExcludePathCtrl->GetValue());
+			ClickButtonWaitEvent(pExcludeDelButton);
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+
+			SetSelection(pExcludeListBox, 0);
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+			ClickButtonWaitEvent(pExcludeDelButton);
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
 				pExcludePathCtrl->GetValue());
 		}
 		
