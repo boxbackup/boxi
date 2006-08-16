@@ -528,7 +528,19 @@ void TestBackup::RunTest()
 		pLocationsPanel->FindWindow(ID_Backup_LocationsAddButton), wxButton
 	);
 	CPPUNIT_ASSERT(pLocationAddButton);
-	
+
+	wxButton* pLocationEditButton = wxDynamicCast
+	(
+		pLocationsPanel->FindWindow(ID_Backup_LocationsEditButton), wxButton
+	);
+	CPPUNIT_ASSERT(pLocationEditButton);
+
+	wxButton* pLocationDelButton = wxDynamicCast
+	(
+		pLocationsPanel->FindWindow(ID_Backup_LocationsDelButton), wxButton
+	);
+	CPPUNIT_ASSERT(pLocationDelButton);
+
 	wxPanel* pExcludePanel = wxDynamicCast
 	(
 		pMainFrame->FindWindow(ID_BackupLoc_Excludes_Panel), wxPanel
@@ -1107,6 +1119,60 @@ void TestBackup::RunTest()
 			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
 				pExcludePathCtrl->GetValue());
 		}
+
+		{
+			// add an exclude entry to the second location,
+			// check that the exclude entries for the two locations
+			// are not conflated
+			
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+
+			SetSelection(pExcludeLocsListBox, 1);
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
+			
+			SetSelection(pExcludeTypeList, 4);
+			SetTextCtrlValue(pExcludePathCtrl, _("fubar"));
+			ClickButtonWaitEvent(pExcludeAddButton);
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			
+			SetSelection(pExcludeLocsListBox, 0);
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+			
+			SetSelection(pExcludeLocsListBox, 1);
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(4, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("fubar"), 
+				pExcludePathCtrl->GetValue());
+
+			ClickButtonWaitEvent(pExcludeDelButton);
+			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
+
+			SetSelection(pExcludeLocsListBox, 0);
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+				pExcludePathCtrl->GetValue());
+		}
 		
 		{
 			// check that removing entries works correctly
@@ -1162,6 +1228,99 @@ void TestBackup::RunTest()
 			CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
 				pExcludePathCtrl->GetValue());
 		}
+		
+		{
+			// check that adding a new location using the
+			// Locations panel works correctly
+			
+			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
+			SetSelection(pLocationsListBox, 0);
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
+				pLocationPathCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
+				pLocationNameCtrl->GetValue());
+			
+			SetTextCtrlValue(pLocationNameCtrl, _("foobar"));
+			SetTextCtrlValue(pLocationPathCtrl, _("whee"));
+			ClickButtonWaitEvent(pLocationAddButton);
+
+			CPPUNIT_ASSERT_EQUAL(3, pLocationsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
+				pLocationPathCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
+				pLocationNameCtrl->GetValue());			
+		}
+		
+		{
+			// check that switching locations works correctly,
+			// and changes the selected location in the
+			// Excludes panel (doesn't work yet)
+			SetSelection(pLocationsListBox, 0);
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
+				pLocationPathCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
+				pLocationNameCtrl->GetValue());
+			// CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+			
+			SetSelection(pLocationsListBox, 1);
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
+				pLocationPathCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
+				pLocationNameCtrl->GetValue());
+			// CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
+
+			SetSelection(pLocationsListBox, 2);
+			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
+				pLocationPathCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
+				pLocationNameCtrl->GetValue());
+			// CPPUNIT_ASSERT_EQUAL(2, pExcludeLocsListBox->GetSelection());
+		}
+		
+		{
+			// check that removing locations works correctly
+			SetSelection(pLocationsListBox, 0);
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
+				pLocationPathCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
+				pLocationNameCtrl->GetValue());
+
+			ClickButtonWaitEvent(pLocationDelButton);
+			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
+				pLocationPathCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
+				pLocationNameCtrl->GetValue());
+
+			SetSelection(pLocationsListBox, 1);
+			CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
+				pLocationPathCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
+				pLocationNameCtrl->GetValue());
+
+			ClickButtonWaitEvent(pLocationDelButton);
+			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
+				pLocationPathCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
+				pLocationNameCtrl->GetValue());
+
+			ClickButtonWaitEvent(pLocationDelButton);
+			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetCount());
+			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, 
+				pLocationsListBox->GetSelection());
+			CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString,
+				pLocationPathCtrl->GetValue());
+			CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString,
+				pLocationNameCtrl->GetValue());				
+		}			
 		
 		CPPUNIT_ASSERT(testDepth6Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth5Dir.Rmdir());
