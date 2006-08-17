@@ -28,8 +28,8 @@
 #include <wx/file.h>
 #include <wx/filename.h>
 #include <wx/treectrl.h>
-// #include <wx/wfstream.h>
-// #include <wx/zipstrm.h>
+#include <wx/wfstream.h>
+#include <wx/zipstrm.h>
 
 #include <cppunit/TestSuite.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -234,6 +234,49 @@ CppUnit::Test *TestBackup::suite()
 	return suiteOfTests;
 }
 
+void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir)
+{
+	CPPUNIT_ASSERT(rZipFile.FileExists());
+	wxFileInputStream zipFis(rZipFile.GetFullPath());
+	CPPUNIT_ASSERT(zipFis.Ok());
+	wxZipInputStream zipInput(zipFis);
+	
+	for (std::auto_ptr<wxZipEntry> apEntry(zipInput.GetNextEntry());
+		apEntry.get() != NULL; apEntry.reset(zipInput.GetNextEntry()))
+	{
+		wxFileName outName = rDestDir;
+		wxString entryName = apEntry->GetInternalName();
+		
+		for (int index = entryName.Find('/'); index != -1; 
+			index = entryName.Find('/'))
+		{
+			CPPUNIT_ASSERT(index > 0);
+			outName.AppendDir(entryName.Mid(0, index));
+			entryName = entryName.Mid(index + 1);
+		}
+			
+		outName.SetFullName(entryName);	
+		CPPUNIT_ASSERT(outName.IsOk());
+		CPPUNIT_ASSERT(!outName.FileExists());
+		CPPUNIT_ASSERT(!outName.DirExists());
+		
+		if (apEntry->IsDir())
+		{
+			wxMkdir(outName.GetFullPath(), 0700);
+			CPPUNIT_ASSERT(outName.DirExists());
+		}
+		else
+		{
+			wxFileOutputStream outFos(outName.GetFullPath());
+			CPPUNIT_ASSERT(outFos.Ok());
+			outFos.Write(zipFis);
+			CPPUNIT_ASSERT_EQUAL((int)apEntry->GetSize(), 
+				(int)outFos.LastWrite());
+			CPPUNIT_ASSERT(outName.FileExists());
+		}
+	}
+}
+
 void TestBackup::RunTest()
 {
 	// create a working directory
@@ -251,34 +294,6 @@ void TestBackup::RunTest()
 	// unzip the certificates
 	/*
 	wxFileName certZipFile(_("../test/config/testcerts.zip"));
-	CPPUNIT_ASSERT(certZipFile.FileExists());
-	wxFileInputStream zipFis(certZipFile.GetFullPath());
-	CPPUNIT_ASSERT(zipFis.Ok());
-	wxZipInputStream zipInput(zipFis);
-	
-	for (std::auto_ptr<wxZipEntry> apEntry(zipInput.GetNextEntry());
-		apEntry.get() != NULL; apEntry.reset(zipInput.GetNextEntry()))
-	{
-		wxFileName outName(confDir.GetFullPath(), 
-			apEntry->GetInternalName());
-		
-		CPPUNIT_ASSERT(!outName.FileExists());
-		CPPUNIT_ASSERT(!outName.DirExists());
-		
-		if (apEntry->IsDir())
-		{
-			wxMkdir(outName.GetFullPath(), 0700);
-			CPPUNIT_ASSERT(outName.DirExists());
-		}
-		else
-		{
-			wxFileOutputStream outFos(outName.GetFullPath());
-			CPPUNIT_ASSERT(outFos.Ok());
-			outFos.Write(zipFis);
-			CPPUNIT_ASSERT_EQUAL((int)apEntry->GetSize(), 
-				(int)outFos.LastWrite());
-		}
-	}
 	*/
 
 	// create a directory to hold bbstored's store temporarily
@@ -607,9 +622,13 @@ void TestBackup::RunTest()
 	CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetCount());
 	CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
 
+	wxFileName testDataDir(tempDir.GetFullPath(), _("testdata"));
+	CPPUNIT_ASSERT(testDataDir.Mkdir(0700));
+	
+	// will be changed in the block below
+	wxTreeItemId testDataDirItem = rootId;
+
 	{
-		wxFileName testDataDir(tempDir.GetFullPath(), _("testdata"));
-		CPPUNIT_ASSERT(testDataDir.Mkdir(0700));
 		wxFileName testDepth1Dir(testDataDir.GetFullPath(), _("depth1"));
 		CPPUNIT_ASSERT(testDepth1Dir.Mkdir(0700));
 		wxFileName testDepth2Dir(testDepth1Dir.GetFullPath(), _("depth2"));
@@ -622,8 +641,6 @@ void TestBackup::RunTest()
 		CPPUNIT_ASSERT(testDepth5Dir.Mkdir(0700));
 		wxFileName testDepth6Dir(testDepth5Dir.GetFullPath(), _("depth6"));
 		CPPUNIT_ASSERT(testDepth6Dir.Mkdir(0700));
-		
-		wxTreeItemId testDataDirItem = rootId;
 		
 		wxArrayString testDataDirPathDirs = testDataDir.GetDirs();
 		testDataDirPathDirs.Add(testDataDir.GetName());
@@ -966,571 +983,571 @@ void TestBackup::RunTest()
 				pExcludeLocsListBox->GetSelection());
 		}
 		
-		{
-			// add two locations using the Locations panel,
-			// check that the one just added is selected,
-			// and text controls are populated correctly.
-			SetTextCtrlValue(pLocationNameCtrl, _("tmp"));
-			SetTextCtrlValue(pLocationPathCtrl, _("/tmp"));
-			ClickButtonWaitEvent(pLocationAddButton);
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),  
-				pLocationNameCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"), 
-				pLocationPathCtrl->GetValue());
-			
-			SetTextCtrlValue(pLocationNameCtrl, _("etc"));
-			SetTextCtrlValue(pLocationPathCtrl, _("/etc"));
-			ClickButtonWaitEvent(pLocationAddButton);
-			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),  
-				pLocationNameCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"), 
-				pLocationPathCtrl->GetValue());
-		}
-
-		{
-			// add an exclude entry using the Exclusions panel,
-			// check that the one just added is selected,
-			// and text controls are populated correctly.
-			
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
-
-			SetTextCtrlValue(pExcludePathCtrl, _("/tmp/foo"));
-			ClickButtonWaitEvent(pExcludeAddButton);
-			
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
-				pExcludePathCtrl->GetValue());
-		}
-		
-		{
-			// add another exclude entry using the Exclusions panel,
-			// check that the one just added is selected,
-			// and text controls are populated correctly.
-			
-			SetSelection(pExcludeTypeList, 1);
-			SetTextCtrlValue(pExcludePathCtrl, _("/tmp/bar"));
-			ClickButtonWaitEvent(pExcludeAddButton);
-
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
-				pExcludePathCtrl->GetValue());
-		}
-
-		{
-			// change selected exclude entry, check that
-			// controls are populated correctly
-			SetSelection(pExcludeListBox, 0);
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
-				pExcludePathCtrl->GetValue());
-			
-			SetSelection(pExcludeListBox, 1);
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
-				pExcludePathCtrl->GetValue());
-		}
-
-		{
-			// edit exclude entries, check that
-			// controls are populated correctly
-			SetSelection(pExcludeListBox, 0);
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
-				pExcludePathCtrl->GetValue());
-			SetSelection(pExcludeTypeList, 2);
-			SetTextCtrlValue(pExcludePathCtrl, _("/tmp/baz"));
-			ClickButtonWaitEvent(pExcludeEditButton);
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-			
-			SetSelection(pExcludeListBox, 1);
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
-				pExcludePathCtrl->GetValue());
-			SetSelection(pExcludeTypeList, 3);
-			SetTextCtrlValue(pExcludePathCtrl, _("/tmp/whee"));
-			ClickButtonWaitEvent(pExcludeEditButton);
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
-				pExcludePathCtrl->GetValue());
-
-			SetSelection(pExcludeListBox, 0);
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-
-			SetSelection(pExcludeListBox, 1);
-			CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
-				pExcludePathCtrl->GetValue());
-		}
-
-		{
-			// check that adding a new entry based on an
-			// existing entry works correctly
-			
-			SetSelection(pExcludeListBox, 0);
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-			
-			// change path and add new entry
-			SetTextCtrlValue(pExcludePathCtrl, _("/tmp/foo"));
-			ClickButtonWaitEvent(pExcludeAddButton);
-			CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
-				pExcludePathCtrl->GetValue());
-			
-			// original entry unchanged
-			SetSelection(pExcludeListBox, 0);
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-				
-			// change type and add new entry
-			SetSelection(pExcludeTypeList, 1);
-			ClickButtonWaitEvent(pExcludeAddButton);
-			CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-
-			// original entry unchanged
-			SetSelection(pExcludeListBox, 0);
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-		}
-
-		{
-			// add an exclude entry to the second location,
-			// check that the exclude entries for the two locations
-			// are not conflated
-			
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-
-			SetSelection(pExcludeLocsListBox, 1);
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
-			
-			SetSelection(pExcludeTypeList, 4);
-			SetTextCtrlValue(pExcludePathCtrl, _("fubar"));
-			ClickButtonWaitEvent(pExcludeAddButton);
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			
-			SetSelection(pExcludeLocsListBox, 0);
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-			
-			SetSelection(pExcludeLocsListBox, 1);
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(4, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("fubar"), 
-				pExcludePathCtrl->GetValue());
-
-			ClickButtonWaitEvent(pExcludeDelButton);
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
-
-			SetSelection(pExcludeLocsListBox, 0);
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-		}
-		
-		{
-			// check that removing entries works correctly
-			SetSelection(pExcludeListBox, 3);
-			CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-			ClickButtonWaitEvent(pExcludeDelButton);
-			CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-			
-			SetSelection(pExcludeListBox, 2);
-			CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
-				pExcludePathCtrl->GetValue());
-			ClickButtonWaitEvent(pExcludeDelButton);
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-
-			SetSelection(pExcludeListBox, 1);
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
-				pExcludePathCtrl->GetValue());
-			ClickButtonWaitEvent(pExcludeDelButton);
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-
-			SetSelection(pExcludeListBox, 0);
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-				pExcludePathCtrl->GetValue());
-			ClickButtonWaitEvent(pExcludeDelButton);
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
-				pExcludePathCtrl->GetValue());
-		}
-		
-		{
-			// check that adding a new location using the
-			// Locations panel works correctly
-			
-			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
-			SetSelection(pLocationsListBox, 0);
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
-				pLocationPathCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
-				pLocationNameCtrl->GetValue());
-			
-			SetTextCtrlValue(pLocationNameCtrl, _("foobar"));
-			SetTextCtrlValue(pLocationPathCtrl, _("whee"));
-			ClickButtonWaitEvent(pLocationAddButton);
-
-			CPPUNIT_ASSERT_EQUAL(3, pLocationsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
-				pLocationPathCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
-				pLocationNameCtrl->GetValue());			
-		}
-		
-		{
-			// check that switching locations works correctly,
-			// and changes the selected location in the
-			// Excludes panel (doesn't work yet)
-			SetSelection(pLocationsListBox, 0);
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
-				pLocationPathCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
-				pLocationNameCtrl->GetValue());
-			// CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			
-			SetSelection(pLocationsListBox, 1);
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
-				pLocationPathCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
-				pLocationNameCtrl->GetValue());
-			// CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
-
-			SetSelection(pLocationsListBox, 2);
-			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
-				pLocationPathCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
-				pLocationNameCtrl->GetValue());
-			// CPPUNIT_ASSERT_EQUAL(2, pExcludeLocsListBox->GetSelection());
-		}
-		
-		{
-			// check that removing locations works correctly
-			SetSelection(pLocationsListBox, 0);
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
-				pLocationPathCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
-				pLocationNameCtrl->GetValue());
-
-			ClickButtonWaitEvent(pLocationDelButton);
-			CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
-				pLocationPathCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
-				pLocationNameCtrl->GetValue());
-
-			SetSelection(pLocationsListBox, 1);
-			CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
-				pLocationPathCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
-				pLocationNameCtrl->GetValue());
-
-			ClickButtonWaitEvent(pLocationDelButton);
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
-				pLocationPathCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
-				pLocationNameCtrl->GetValue());
-
-			ClickButtonWaitEvent(pLocationDelButton);
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, 
-				pLocationsListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString,
-				pLocationPathCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString,
-				pLocationNameCtrl->GetValue());				
-		}			
-		
 		CPPUNIT_ASSERT(testDepth6Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth5Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth4Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth3Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth2Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth1Dir.Rmdir());
+	}
+	
+	{
+		// add two locations using the Locations panel,
+		// check that the one just added is selected,
+		// and text controls are populated correctly.
+		SetTextCtrlValue(pLocationNameCtrl, _("tmp"));
+		SetTextCtrlValue(pLocationPathCtrl, _("/tmp"));
+		ClickButtonWaitEvent(pLocationAddButton);
+		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),  
+			pLocationNameCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"), 
+			pLocationPathCtrl->GetValue());
 		
-		// more complex exclusion tests
-		/*
-			Config:
-			ExcludeFile = testfiles/TestDir1/excluded_1
-			ExcludeFile = testfiles/TestDir1/excluded_2
-			ExcludeFilesRegex = \.excludethis$
-			ExcludeFilesRegex = EXCLUDE
-			AlwaysIncludeFile = testfiles/TestDir1/dont.excludethis
-			ExcludeDir = testfiles/TestDir1/exclude_dir
-			ExcludeDir = testfiles/TestDir1/exclude_dir_2
-			ExcludeDirsRegex = not_this_dir
-			AlwaysIncludeDirsRegex = ALWAYSINCLUDE
-					
-			Type	Name					Excluded
-			----	----					--------
-			Dir	TestDir1/exclude_dir			Yes
-			Dir	TestDir1/exclude_dir_2			Yes
-			Dir	TestDir1/sub23				No
-			Dir	TestDir1/sub23/xx_not_this_dir_22	Yes
-			File	TestDir1/sub23/somefile.excludethis	Yes
-			File	TestDir1/xx_not_this_dir_22		No
-			File	TestDir1/excluded_1			Yes
-			File	TestDir1/excluded_2			Yes
-			File	TestDir1/zEXCLUDEu			Yes
-			File	TestDir1/dont.excludethis		No
-			Dir	TestDir1/xx_not_this_dir_ALWAYSINCLUDE	No
-			
-			// under TestDir1:
-			TEST_THAT(!SearchDir(dir, "excluded_1"));
-                        TEST_THAT(!SearchDir(dir, "excluded_2"));
-                        TEST_THAT(!SearchDir(dir, "exclude_dir"));
-                        TEST_THAT(!SearchDir(dir, "exclude_dir_2"));
-                        // xx_not_this_dir_22 should not be excluded by
-                        // ExcludeDirsRegex, because it's a file
-                        TEST_THAT(SearchDir (dir, "xx_not_this_dir_22"));
-                        TEST_THAT(!SearchDir(dir, "zEXCLUDEu"));
-                        TEST_THAT(SearchDir (dir, "dont.excludethis"));
-                        TEST_THAT(SearchDir (dir, "xx_not_this_dir_ALWAYSINCLUDE"));
-			
-			// under TestDir1/sub23:
-                        TEST_THAT(!SearchDir(dir, "xx_not_this_dir_22"));
-                        TEST_THAT(!SearchDir(dir, "somefile.excludethis"));
+		SetTextCtrlValue(pLocationNameCtrl, _("etc"));
+		SetTextCtrlValue(pLocationPathCtrl, _("/etc"));
+		ClickButtonWaitEvent(pLocationAddButton);
+		CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),  
+			pLocationNameCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"), 
+			pLocationPathCtrl->GetValue());
+	}
 
-		*/
+	{
+		// add an exclude entry using the Exclusions panel,
+		// check that the one just added is selected,
+		// and text controls are populated correctly.
+		
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
+
+		SetTextCtrlValue(pExcludePathCtrl, _("/tmp/foo"));
+		ClickButtonWaitEvent(pExcludeAddButton);
+		
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
+			pExcludePathCtrl->GetValue());
+	}
+	
+	{
+		// add another exclude entry using the Exclusions panel,
+		// check that the one just added is selected,
+		// and text controls are populated correctly.
+		
+		SetSelection(pExcludeTypeList, 1);
+		SetTextCtrlValue(pExcludePathCtrl, _("/tmp/bar"));
+		ClickButtonWaitEvent(pExcludeAddButton);
+
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
+			pExcludePathCtrl->GetValue());
+	}
+
+	{
+		// change selected exclude entry, check that
+		// controls are populated correctly
+		SetSelection(pExcludeListBox, 0);
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
+			pExcludePathCtrl->GetValue());
+		
+		SetSelection(pExcludeListBox, 1);
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
+			pExcludePathCtrl->GetValue());
+	}
+
+	{
+		// edit exclude entries, check that
+		// controls are populated correctly
+		SetSelection(pExcludeListBox, 0);
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
+			pExcludePathCtrl->GetValue());
+		SetSelection(pExcludeTypeList, 2);
+		SetTextCtrlValue(pExcludePathCtrl, _("/tmp/baz"));
+		ClickButtonWaitEvent(pExcludeEditButton);
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+		
+		SetSelection(pExcludeListBox, 1);
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
+			pExcludePathCtrl->GetValue());
+		SetSelection(pExcludeTypeList, 3);
+		SetTextCtrlValue(pExcludePathCtrl, _("/tmp/whee"));
+		ClickButtonWaitEvent(pExcludeEditButton);
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
+			pExcludePathCtrl->GetValue());
+
+		SetSelection(pExcludeListBox, 0);
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+
+		SetSelection(pExcludeListBox, 1);
+		CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
+			pExcludePathCtrl->GetValue());
+	}
+
+	{
+		// check that adding a new entry based on an
+		// existing entry works correctly
+		
+		SetSelection(pExcludeListBox, 0);
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+		
+		// change path and add new entry
+		SetTextCtrlValue(pExcludePathCtrl, _("/tmp/foo"));
+		ClickButtonWaitEvent(pExcludeAddButton);
+		CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
+			pExcludePathCtrl->GetValue());
+		
+		// original entry unchanged
+		SetSelection(pExcludeListBox, 0);
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+			
+		// change type and add new entry
+		SetSelection(pExcludeTypeList, 1);
+		ClickButtonWaitEvent(pExcludeAddButton);
+		CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+
+		// original entry unchanged
+		SetSelection(pExcludeListBox, 0);
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+	}
+
+	{
+		// add an exclude entry to the second location,
+		// check that the exclude entries for the two locations
+		// are not conflated
+		
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+
+		SetSelection(pExcludeLocsListBox, 1);
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
+		
+		SetSelection(pExcludeTypeList, 4);
+		SetTextCtrlValue(pExcludePathCtrl, _("fubar"));
+		ClickButtonWaitEvent(pExcludeAddButton);
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		
+		SetSelection(pExcludeLocsListBox, 0);
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+		
+		SetSelection(pExcludeLocsListBox, 1);
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(4, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("fubar"), 
+			pExcludePathCtrl->GetValue());
+
+		ClickButtonWaitEvent(pExcludeDelButton);
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
+
+		SetSelection(pExcludeLocsListBox, 0);
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+	}
+	
+	{
+		// check that removing entries works correctly
+		SetSelection(pExcludeListBox, 3);
+		CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+		ClickButtonWaitEvent(pExcludeDelButton);
+		CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+		
+		SetSelection(pExcludeListBox, 2);
+		CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
+			pExcludePathCtrl->GetValue());
+		ClickButtonWaitEvent(pExcludeDelButton);
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+
+		SetSelection(pExcludeListBox, 1);
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
+			pExcludePathCtrl->GetValue());
+		ClickButtonWaitEvent(pExcludeDelButton);
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+
+		SetSelection(pExcludeListBox, 0);
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
+			pExcludePathCtrl->GetValue());
+		ClickButtonWaitEvent(pExcludeDelButton);
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
+			pExcludePathCtrl->GetValue());
+	}
+	
+	{
+		// check that adding a new location using the
+		// Locations panel works correctly
+		
+		CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
+		SetSelection(pLocationsListBox, 0);
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
+			pLocationPathCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
+			pLocationNameCtrl->GetValue());
+		
+		SetTextCtrlValue(pLocationNameCtrl, _("foobar"));
+		SetTextCtrlValue(pLocationPathCtrl, _("whee"));
+		ClickButtonWaitEvent(pLocationAddButton);
+
+		CPPUNIT_ASSERT_EQUAL(3, pLocationsListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
+			pLocationPathCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
+			pLocationNameCtrl->GetValue());			
+	}
+	
+	{
+		// check that switching locations works correctly,
+		// and changes the selected location in the
+		// Excludes panel (doesn't work yet)
+		SetSelection(pLocationsListBox, 0);
+		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
+			pLocationPathCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
+			pLocationNameCtrl->GetValue());
+		// CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
+		
+		SetSelection(pLocationsListBox, 1);
+		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
+			pLocationPathCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
+			pLocationNameCtrl->GetValue());
+		// CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
+
+		SetSelection(pLocationsListBox, 2);
+		CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
+			pLocationPathCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
+			pLocationNameCtrl->GetValue());
+		// CPPUNIT_ASSERT_EQUAL(2, pExcludeLocsListBox->GetSelection());
+	}
+	
+	{
+		// check that removing locations works correctly
+		SetSelection(pLocationsListBox, 0);
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
+			pLocationPathCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
+			pLocationNameCtrl->GetValue());
+
+		ClickButtonWaitEvent(pLocationDelButton);
+		CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
+			pLocationPathCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
+			pLocationNameCtrl->GetValue());
+
+		SetSelection(pLocationsListBox, 1);
+		CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
+			pLocationPathCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
+			pLocationNameCtrl->GetValue());
+
+		ClickButtonWaitEvent(pLocationDelButton);
+		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
+			pLocationPathCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
+			pLocationNameCtrl->GetValue());
+
+		ClickButtonWaitEvent(pLocationDelButton);
+		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, 
+			pLocationsListBox->GetSelection());
+		CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString,
+			pLocationPathCtrl->GetValue());
+		CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString,
+			pLocationNameCtrl->GetValue());				
+	}			
+	
+	// more complex exclusion tests
+	/*
+		Config:
+		ExcludeFile = testfiles/TestDir1/excluded_1
+		ExcludeFile = testfiles/TestDir1/excluded_2
+		ExcludeFilesRegex = \.excludethis$
+		ExcludeFilesRegex = EXCLUDE
+		AlwaysIncludeFile = testfiles/TestDir1/dont.excludethis
+		ExcludeDir = testfiles/TestDir1/exclude_dir
+		ExcludeDir = testfiles/TestDir1/exclude_dir_2
+		ExcludeDirsRegex = not_this_dir
+		AlwaysIncludeDirsRegex = ALWAYSINCLUDE
+				
+		Type	Name					Excluded
+		----	----					--------
+		Dir	TestDir1/exclude_dir			Yes
+		Dir	TestDir1/exclude_dir_2			Yes
+		Dir	TestDir1/sub23				No
+		Dir	TestDir1/sub23/xx_not_this_dir_22	Yes
+		File	TestDir1/sub23/somefile.excludethis	Yes
+		File	TestDir1/xx_not_this_dir_22		No
+		File	TestDir1/excluded_1			Yes
+		File	TestDir1/excluded_2			Yes
+		File	TestDir1/zEXCLUDEu			Yes
+		File	TestDir1/dont.excludethis		No
+		Dir	TestDir1/xx_not_this_dir_ALWAYSINCLUDE	No
+		
+		// under TestDir1:
+		TEST_THAT(!SearchDir(dir, "excluded_1"));
+		TEST_THAT(!SearchDir(dir, "excluded_2"));
+		TEST_THAT(!SearchDir(dir, "exclude_dir"));
+		TEST_THAT(!SearchDir(dir, "exclude_dir_2"));
+		// xx_not_this_dir_22 should not be excluded by
+		// ExcludeDirsRegex, because it's a file
+		TEST_THAT(SearchDir (dir, "xx_not_this_dir_22"));
+		TEST_THAT(!SearchDir(dir, "zEXCLUDEu"));
+		TEST_THAT(SearchDir (dir, "dont.excludethis"));
+		TEST_THAT(SearchDir (dir, "xx_not_this_dir_ALWAYSINCLUDE"));
+		
+		// under TestDir1/sub23:
+		TEST_THAT(!SearchDir(dir, "xx_not_this_dir_22"));
+		TEST_THAT(!SearchDir(dir, "somefile.excludethis"));
+
+	*/
+	
+	{
+		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+		
+		Location* pNewLoc = NULL;
 		
 		{
-			CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
-			
-			Location* pNewLoc = NULL;
-			
-			{
-				Location testDirLoc(_("testdata"), testDataDir.GetFullPath(),
-					mpConfig);
-				mpConfig->AddLocation(testDirLoc);
-				CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-					pTree->GetItemImage(testDataDirItem));
-				pNewLoc = mpConfig->GetLocation(testDirLoc);
-				CPPUNIT_ASSERT(pNewLoc);
-			}
-			
-			MyExcludeList& rExcludes = pNewLoc->GetExcludeList();
-
-			#define CREATE_FILE(dir, name) \
-			wxFileName dir ## _ ## name(dir.GetFullPath(), _(#name)); \
-			{ wxFile f; CPPUNIT_ASSERT(f.Create(dir ## _ ## name.GetFullPath())); }
-			
-			#define CREATE_DIR(dir, name) \
-			wxFileName dir ## _ ## name(dir.GetFullPath(), _(#name)); \
-			CPPUNIT_ASSERT(dir ## _ ## name.Mkdir(0700));
-			
-			CREATE_DIR( testDataDir, exclude_dir);
-			CREATE_DIR( testDataDir, exclude_dir_2);
-			CREATE_DIR( testDataDir, sub23);
-			CREATE_DIR( testDataDir_sub23, xx_not_this_dir_22);
-			CREATE_FILE(testDataDir_sub23, somefile_excludethis);
-			CREATE_FILE(testDataDir, xx_not_this_dir_22);
-			CREATE_FILE(testDataDir, excluded_1);
-			CREATE_FILE(testDataDir, excluded_2);
-			CREATE_FILE(testDataDir, zEXCLUDEu);
-			CREATE_FILE(testDataDir, dont_excludethis);
-			CREATE_DIR( testDataDir, xx_not_this_dir_ALWAYSINCLUDE);
-			
-			#undef CREATE_DIR
-			#undef CREATE_FILE
-
-			#define ADD_ENTRY(type, path) \
-			rExcludes.AddEntry \
-			( \
-				MyExcludeEntry \
-				( \
-					theExcludeTypes[type], path \
-				) \
-			)
-			
-			ADD_ENTRY(ETI_EXCLUDE_FILE, testDataDir_excluded_1.GetFullPath());
-			ADD_ENTRY(ETI_EXCLUDE_FILE, testDataDir_excluded_2.GetFullPath());
-			ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("_excludethis$"));
-			ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("EXCLUDE"));
-			ADD_ENTRY(ETI_ALWAYS_INCLUDE_FILE, testDataDir_dont_excludethis.GetFullPath());
-			ADD_ENTRY(ETI_EXCLUDE_DIR, testDataDir_exclude_dir.GetFullPath());
-			ADD_ENTRY(ETI_EXCLUDE_DIR, testDataDir_exclude_dir_2.GetFullPath());
-			ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, _("not_this_dir"));
-			ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, _("ALWAYSINCLUDE"));
-			
-			#undef ADD_ENTRY
-
-			wxFileName configFile(confDir.GetFullPath(), _("bbackupd.conf"));
-			mpConfig->Save(configFile.GetFullPath());
-			CPPUNIT_ASSERT(configFile.FileExists());
-
-			pTree->Collapse(testDataDirItem);
-			pTree->Expand(testDataDirItem);
-
-			wxTreeItemIdValue cookie1;
-			wxTreeItemId dir1 = testDataDirItem;
-			wxTreeItemId item;
-			
-			#define CHECK_ITEM(name, image) \
-			CPPUNIT_ASSERT(item.IsOk()); \
-			CPPUNIT_ASSERT_EQUAL((wxString)_(name), \
-				pTree->GetItemText(item)); \
-			CPPUNIT_ASSERT_EQUAL(images.Get ## image ## ImageId(), \
-				pTree->GetItemImage(item))
-			
-			item = pTree->GetFirstChild(dir1, cookie1);
-			CHECK_ITEM("exclude_dir", Crossed);
-
-			item = pTree->GetNextChild(dir1, cookie1);
-			CHECK_ITEM("exclude_dir_2", Crossed);
-
-			item = pTree->GetNextChild(dir1, cookie1);
-			CHECK_ITEM("sub23", CheckedGrey);
-
-			// under sub23:
-			{
-				wxTreeItemIdValue cookie2;
-				wxTreeItemId dir2 = item;
-				pTree->Expand(dir2);
-
-				item = pTree->GetFirstChild(dir2, cookie2);
-				CHECK_ITEM("xx_not_this_dir_22", Crossed);
-
-				item = pTree->GetNextChild(dir2, cookie2);
-				CHECK_ITEM("somefile_excludethis", Crossed);
-				
-				item = pTree->GetNextChild(dir2, cookie2);
-				CPPUNIT_ASSERT(!item.IsOk());
-			}
-
-			item = pTree->GetNextChild(dir1, cookie1);
-			CHECK_ITEM("xx_not_this_dir_ALWAYSINCLUDE", Always);
-
-			item = pTree->GetNextChild(dir1, cookie1);
-			CHECK_ITEM("dont_excludethis", Always);
-
-			item = pTree->GetNextChild(dir1, cookie1);
-			CHECK_ITEM("excluded_1", Crossed);
-
-			item = pTree->GetNextChild(dir1, cookie1);
-			CHECK_ITEM("excluded_2", Crossed);
-
-                        // xx_not_this_dir_22 should not be excluded by
-                        // ExcludeDirsRegex, because it's a file
-			item = pTree->GetNextChild(dir1, cookie1);
-			CHECK_ITEM("xx_not_this_dir_22", CheckedGrey);
-
-			item = pTree->GetNextChild(dir1, cookie1);
-			CHECK_ITEM("zEXCLUDEu", Crossed);
-
-			item = pTree->GetNextChild(dir1, cookie1);
-			CPPUNIT_ASSERT(!item.IsOk());
-			
-			#undef CHECK_ITEM
-			
-			#define DELETE_FILE(dir, name) \
-			CPPUNIT_ASSERT(wxRemoveFile(dir ## _ ## name.GetFullPath()))
-			
-			#define DELETE_DIR(dir, name) \
-			CPPUNIT_ASSERT(dir ## _ ## name.Rmdir())
-
-			DELETE_DIR( testDataDir_sub23, xx_not_this_dir_22);
-			DELETE_FILE(testDataDir_sub23, somefile_excludethis);
-			DELETE_FILE(testDataDir, xx_not_this_dir_22);
-			DELETE_FILE(testDataDir, excluded_1);
-			DELETE_FILE(testDataDir, excluded_2);
-			DELETE_FILE(testDataDir, zEXCLUDEu);
-			DELETE_FILE(testDataDir, dont_excludethis);
-			DELETE_DIR( testDataDir, xx_not_this_dir_ALWAYSINCLUDE);
-			DELETE_DIR( testDataDir, sub23);
-			DELETE_DIR( testDataDir, exclude_dir);
-			DELETE_DIR( testDataDir, exclude_dir_2);
-			
-			#undef DELETE_DIR
-			#undef DELETE_FILE
-			
-			CPPUNIT_ASSERT(wxRemoveFile(configFile.GetFullPath()));
+			Location testDirLoc(_("testdata"), testDataDir.GetFullPath(),
+				mpConfig);
+			mpConfig->AddLocation(testDirLoc);
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+			pNewLoc = mpConfig->GetLocation(testDirLoc);
+			CPPUNIT_ASSERT(pNewLoc);
 		}
 		
-		CPPUNIT_ASSERT(testDataDir.Rmdir());
+		MyExcludeList& rExcludes = pNewLoc->GetExcludeList();
+
+		#define CREATE_FILE(dir, name) \
+		wxFileName dir ## _ ## name(dir.GetFullPath(), _(#name)); \
+		{ wxFile f; CPPUNIT_ASSERT(f.Create(dir ## _ ## name.GetFullPath())); }
+		
+		#define CREATE_DIR(dir, name) \
+		wxFileName dir ## _ ## name(dir.GetFullPath(), _(#name)); \
+		CPPUNIT_ASSERT(dir ## _ ## name.Mkdir(0700));
+		
+		CREATE_DIR( testDataDir, exclude_dir);
+		CREATE_DIR( testDataDir, exclude_dir_2);
+		CREATE_DIR( testDataDir, sub23);
+		CREATE_DIR( testDataDir_sub23, xx_not_this_dir_22);
+		CREATE_FILE(testDataDir_sub23, somefile_excludethis);
+		CREATE_FILE(testDataDir, xx_not_this_dir_22);
+		CREATE_FILE(testDataDir, excluded_1);
+		CREATE_FILE(testDataDir, excluded_2);
+		CREATE_FILE(testDataDir, zEXCLUDEu);
+		CREATE_FILE(testDataDir, dont_excludethis);
+		CREATE_DIR( testDataDir, xx_not_this_dir_ALWAYSINCLUDE);
+		
+		#undef CREATE_DIR
+		#undef CREATE_FILE
+
+		#define ADD_ENTRY(type, path) \
+		rExcludes.AddEntry \
+		( \
+			MyExcludeEntry \
+			( \
+				theExcludeTypes[type], path \
+			) \
+		)
+		
+		ADD_ENTRY(ETI_EXCLUDE_FILE, testDataDir_excluded_1.GetFullPath());
+		ADD_ENTRY(ETI_EXCLUDE_FILE, testDataDir_excluded_2.GetFullPath());
+		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("_excludethis$"));
+		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("EXCLUDE"));
+		ADD_ENTRY(ETI_ALWAYS_INCLUDE_FILE, testDataDir_dont_excludethis.GetFullPath());
+		ADD_ENTRY(ETI_EXCLUDE_DIR, testDataDir_exclude_dir.GetFullPath());
+		ADD_ENTRY(ETI_EXCLUDE_DIR, testDataDir_exclude_dir_2.GetFullPath());
+		ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, _("not_this_dir"));
+		ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, _("ALWAYSINCLUDE"));
+		
+		#undef ADD_ENTRY
+
+		wxFileName configFile(confDir.GetFullPath(), _("bbackupd.conf"));
+		mpConfig->Save(configFile.GetFullPath());
+		CPPUNIT_ASSERT(configFile.FileExists());
+
+		pTree->Collapse(testDataDirItem);
+		pTree->Expand(testDataDirItem);
+
+		wxTreeItemIdValue cookie1;
+		wxTreeItemId dir1 = testDataDirItem;
+		wxTreeItemId item;
+		
+		#define CHECK_ITEM(name, image) \
+		CPPUNIT_ASSERT(item.IsOk()); \
+		CPPUNIT_ASSERT_EQUAL((wxString)_(name), \
+			pTree->GetItemText(item)); \
+		CPPUNIT_ASSERT_EQUAL(images.Get ## image ## ImageId(), \
+			pTree->GetItemImage(item))
+		
+		item = pTree->GetFirstChild(dir1, cookie1);
+		CHECK_ITEM("exclude_dir", Crossed);
+
+		item = pTree->GetNextChild(dir1, cookie1);
+		CHECK_ITEM("exclude_dir_2", Crossed);
+
+		item = pTree->GetNextChild(dir1, cookie1);
+		CHECK_ITEM("sub23", CheckedGrey);
+
+		// under sub23:
+		{
+			wxTreeItemIdValue cookie2;
+			wxTreeItemId dir2 = item;
+			pTree->Expand(dir2);
+
+			item = pTree->GetFirstChild(dir2, cookie2);
+			CHECK_ITEM("xx_not_this_dir_22", Crossed);
+
+			item = pTree->GetNextChild(dir2, cookie2);
+			CHECK_ITEM("somefile_excludethis", Crossed);
+			
+			item = pTree->GetNextChild(dir2, cookie2);
+			CPPUNIT_ASSERT(!item.IsOk());
+		}
+
+		item = pTree->GetNextChild(dir1, cookie1);
+		CHECK_ITEM("xx_not_this_dir_ALWAYSINCLUDE", Always);
+
+		item = pTree->GetNextChild(dir1, cookie1);
+		CHECK_ITEM("dont_excludethis", Always);
+
+		item = pTree->GetNextChild(dir1, cookie1);
+		CHECK_ITEM("excluded_1", Crossed);
+
+		item = pTree->GetNextChild(dir1, cookie1);
+		CHECK_ITEM("excluded_2", Crossed);
+
+		// xx_not_this_dir_22 should not be excluded by
+		// ExcludeDirsRegex, because it's a file
+		item = pTree->GetNextChild(dir1, cookie1);
+		CHECK_ITEM("xx_not_this_dir_22", CheckedGrey);
+
+		item = pTree->GetNextChild(dir1, cookie1);
+		CHECK_ITEM("zEXCLUDEu", Crossed);
+
+		item = pTree->GetNextChild(dir1, cookie1);
+		CPPUNIT_ASSERT(!item.IsOk());
+		
+		#undef CHECK_ITEM
+		
+		#define DELETE_FILE(dir, name) \
+		CPPUNIT_ASSERT(wxRemoveFile(dir ## _ ## name.GetFullPath()))
+		
+		#define DELETE_DIR(dir, name) \
+		CPPUNIT_ASSERT(dir ## _ ## name.Rmdir())
+
+		DELETE_DIR( testDataDir_sub23, xx_not_this_dir_22);
+		DELETE_FILE(testDataDir_sub23, somefile_excludethis);
+		DELETE_FILE(testDataDir, xx_not_this_dir_22);
+		DELETE_FILE(testDataDir, excluded_1);
+		DELETE_FILE(testDataDir, excluded_2);
+		DELETE_FILE(testDataDir, zEXCLUDEu);
+		DELETE_FILE(testDataDir, dont_excludethis);
+		DELETE_DIR( testDataDir, xx_not_this_dir_ALWAYSINCLUDE);
+		DELETE_DIR( testDataDir, sub23);
+		DELETE_DIR( testDataDir, exclude_dir);
+		DELETE_DIR( testDataDir, exclude_dir_2);
+		
+		#undef DELETE_DIR
+		#undef DELETE_FILE
+		
+		CPPUNIT_ASSERT(wxRemoveFile(configFile.GetFullPath()));
 	}
 	
 	// clean up
+
+	CPPUNIT_ASSERT(testDataDir.Rmdir());	
 	CPPUNIT_ASSERT(wxRemoveFile(storeConfigFileName.GetFullPath()));
 	CPPUNIT_ASSERT(wxRemoveFile(accountsDb.GetFullPath()));
 	CPPUNIT_ASSERT(wxRemoveFile(raidConf.GetFullPath()));
