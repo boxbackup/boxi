@@ -1328,6 +1328,205 @@ void TestBackup::RunTest()
 		CPPUNIT_ASSERT(testDepth3Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth2Dir.Rmdir());
 		CPPUNIT_ASSERT(testDepth1Dir.Rmdir());
+		
+		// more complex exclusion tests
+		/*
+			Config:
+			ExcludeFile = testfiles/TestDir1/excluded_1
+			ExcludeFile = testfiles/TestDir1/excluded_2
+			ExcludeFilesRegex = \.excludethis$
+			ExcludeFilesRegex = EXCLUDE
+			AlwaysIncludeFile = testfiles/TestDir1/dont.excludethis
+			ExcludeDir = testfiles/TestDir1/exclude_dir
+			ExcludeDir = testfiles/TestDir1/exclude_dir_2
+			ExcludeDirsRegex = not_this_dir
+			AlwaysIncludeDirsRegex = ALWAYSINCLUDE
+					
+			Type	Name					Excluded
+			----	----					--------
+			Dir	TestDir1/exclude_dir			Yes
+			Dir	TestDir1/exclude_dir_2			Yes
+			Dir	TestDir1/sub23				No
+			Dir	TestDir1/sub23/xx_not_this_dir_22	Yes
+			File	TestDir1/sub23/somefile.excludethis	Yes
+			File	TestDir1/xx_not_this_dir_22		No
+			File	TestDir1/excluded_1			Yes
+			File	TestDir1/excluded_2			Yes
+			File	TestDir1/zEXCLUDEu			Yes
+			File	TestDir1/dont.excludethis		No
+			Dir	TestDir1/xx_not_this_dir_ALWAYSINCLUDE	No
+			
+			// under TestDir1:
+			TEST_THAT(!SearchDir(dir, "excluded_1"));
+                        TEST_THAT(!SearchDir(dir, "excluded_2"));
+                        TEST_THAT(!SearchDir(dir, "exclude_dir"));
+                        TEST_THAT(!SearchDir(dir, "exclude_dir_2"));
+                        // xx_not_this_dir_22 should not be excluded by
+                        // ExcludeDirsRegex, because it's a file
+                        TEST_THAT(SearchDir (dir, "xx_not_this_dir_22"));
+                        TEST_THAT(!SearchDir(dir, "zEXCLUDEu"));
+                        TEST_THAT(SearchDir (dir, "dont.excludethis"));
+                        TEST_THAT(SearchDir (dir, "xx_not_this_dir_ALWAYSINCLUDE"));
+			
+			// under TestDir1/sub23:
+                        TEST_THAT(!SearchDir(dir, "xx_not_this_dir_22"));
+                        TEST_THAT(!SearchDir(dir, "somefile.excludethis"));
+
+		*/
+		
+		{
+			CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+			
+			Location* pNewLoc = NULL;
+			
+			{
+				Location testDirLoc(_("testdata"), testDataDir.GetFullPath(),
+					mpConfig);
+				mpConfig->AddLocation(testDirLoc);
+				CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+					pTree->GetItemImage(testDataDirItem));
+				pNewLoc = mpConfig->GetLocation(testDirLoc);
+				CPPUNIT_ASSERT(pNewLoc);
+			}
+			
+			MyExcludeList& rExcludes = pNewLoc->GetExcludeList();
+
+			#define CREATE_FILE(dir, name) \
+			wxFileName dir ## _ ## name(dir.GetFullPath(), _(#name)); \
+			{ wxFile f; CPPUNIT_ASSERT(f.Create(dir ## _ ## name.GetFullPath())); }
+			
+			#define CREATE_DIR(dir, name) \
+			wxFileName dir ## _ ## name(dir.GetFullPath(), _(#name)); \
+			CPPUNIT_ASSERT(dir ## _ ## name.Mkdir(0700));
+			
+			CREATE_DIR( testDataDir, exclude_dir);
+			CREATE_DIR( testDataDir, exclude_dir_2);
+			CREATE_DIR( testDataDir, sub23);
+			CREATE_DIR( testDataDir_sub23, xx_not_this_dir_22);
+			CREATE_FILE(testDataDir_sub23, somefile_excludethis);
+			CREATE_FILE(testDataDir, xx_not_this_dir_22);
+			CREATE_FILE(testDataDir, excluded_1);
+			CREATE_FILE(testDataDir, excluded_2);
+			CREATE_FILE(testDataDir, zEXCLUDEu);
+			CREATE_FILE(testDataDir, dont_excludethis);
+			CREATE_DIR( testDataDir, xx_not_this_dir_ALWAYSINCLUDE);
+			
+			#undef CREATE_DIR
+			#undef CREATE_FILE
+
+			#define ADD_ENTRY(type, path) \
+			rExcludes.AddEntry \
+			( \
+				MyExcludeEntry \
+				( \
+					theExcludeTypes[type], path \
+				) \
+			)
+			
+			ADD_ENTRY(ETI_EXCLUDE_FILE, testDataDir_excluded_1.GetFullPath());
+			ADD_ENTRY(ETI_EXCLUDE_FILE, testDataDir_excluded_2.GetFullPath());
+			ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("_excludethis$"));
+			ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("EXCLUDE"));
+			ADD_ENTRY(ETI_ALWAYS_INCLUDE_FILE, testDataDir_dont_excludethis.GetFullPath());
+			ADD_ENTRY(ETI_EXCLUDE_DIR, testDataDir_exclude_dir.GetFullPath());
+			ADD_ENTRY(ETI_EXCLUDE_DIR, testDataDir_exclude_dir_2.GetFullPath());
+			ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, _("not_this_dir"));
+			ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, _("ALWAYSINCLUDE"));
+			
+			#undef ADD_ENTRY
+
+			wxFileName configFile(confDir.GetFullPath(), _("bbackupd.conf"));
+			mpConfig->Save(configFile.GetFullPath());
+			CPPUNIT_ASSERT(configFile.FileExists());
+
+			pTree->Collapse(testDataDirItem);
+			pTree->Expand(testDataDirItem);
+
+			wxTreeItemIdValue cookie1;
+			wxTreeItemId dir1 = testDataDirItem;
+			wxTreeItemId item;
+			
+			#define CHECK_ITEM(name, image) \
+			CPPUNIT_ASSERT(item.IsOk()); \
+			CPPUNIT_ASSERT_EQUAL((wxString)_(name), \
+				pTree->GetItemText(item)); \
+			CPPUNIT_ASSERT_EQUAL(images.Get ## image ## ImageId(), \
+				pTree->GetItemImage(item))
+			
+			item = pTree->GetFirstChild(dir1, cookie1);
+			CHECK_ITEM("exclude_dir", Crossed);
+
+			item = pTree->GetNextChild(dir1, cookie1);
+			CHECK_ITEM("exclude_dir_2", Crossed);
+
+			item = pTree->GetNextChild(dir1, cookie1);
+			CHECK_ITEM("sub23", CheckedGrey);
+
+			// under sub23:
+			{
+				wxTreeItemIdValue cookie2;
+				wxTreeItemId dir2 = item;
+				pTree->Expand(dir2);
+
+				item = pTree->GetFirstChild(dir2, cookie2);
+				CHECK_ITEM("xx_not_this_dir_22", Crossed);
+
+				item = pTree->GetNextChild(dir2, cookie2);
+				CHECK_ITEM("somefile_excludethis", Crossed);
+				
+				item = pTree->GetNextChild(dir2, cookie2);
+				CPPUNIT_ASSERT(!item.IsOk());
+			}
+
+			item = pTree->GetNextChild(dir1, cookie1);
+			CHECK_ITEM("xx_not_this_dir_ALWAYSINCLUDE", Always);
+
+			item = pTree->GetNextChild(dir1, cookie1);
+			CHECK_ITEM("dont_excludethis", Always);
+
+			item = pTree->GetNextChild(dir1, cookie1);
+			CHECK_ITEM("excluded_1", Crossed);
+
+			item = pTree->GetNextChild(dir1, cookie1);
+			CHECK_ITEM("excluded_2", Crossed);
+
+                        // xx_not_this_dir_22 should not be excluded by
+                        // ExcludeDirsRegex, because it's a file
+			item = pTree->GetNextChild(dir1, cookie1);
+			CHECK_ITEM("xx_not_this_dir_22", CheckedGrey);
+
+			item = pTree->GetNextChild(dir1, cookie1);
+			CHECK_ITEM("zEXCLUDEu", Crossed);
+
+			item = pTree->GetNextChild(dir1, cookie1);
+			CPPUNIT_ASSERT(!item.IsOk());
+			
+			#undef CHECK_ITEM
+			
+			#define DELETE_FILE(dir, name) \
+			CPPUNIT_ASSERT(wxRemoveFile(dir ## _ ## name.GetFullPath()))
+			
+			#define DELETE_DIR(dir, name) \
+			CPPUNIT_ASSERT(dir ## _ ## name.Rmdir())
+
+			DELETE_DIR( testDataDir_sub23, xx_not_this_dir_22);
+			DELETE_FILE(testDataDir_sub23, somefile_excludethis);
+			DELETE_FILE(testDataDir, xx_not_this_dir_22);
+			DELETE_FILE(testDataDir, excluded_1);
+			DELETE_FILE(testDataDir, excluded_2);
+			DELETE_FILE(testDataDir, zEXCLUDEu);
+			DELETE_FILE(testDataDir, dont_excludethis);
+			DELETE_DIR( testDataDir, xx_not_this_dir_ALWAYSINCLUDE);
+			DELETE_DIR( testDataDir, sub23);
+			DELETE_DIR( testDataDir, exclude_dir);
+			DELETE_DIR( testDataDir, exclude_dir_2);
+			
+			#undef DELETE_DIR
+			#undef DELETE_FILE
+			
+			CPPUNIT_ASSERT(wxRemoveFile(configFile.GetFullPath()));
+		}
+		
 		CPPUNIT_ASSERT(testDataDir.Rmdir());
 	}
 	
