@@ -1174,9 +1174,12 @@ void BackupQueries::Compare(const std::string &rStoreDir, const std::string &rLo
 	// Found?
 	if(dirID == 0)
 	{
-		printf("Local directory '%s' exists, but "
-			"server directory '%s' does not exist\n", 
-			rLocalDir.c_str(), rStoreDir.c_str());		
+		if (!rParams.mQuiet)
+		{
+			printf("Local directory '%s' exists, but "
+				"server directory '%s' does not exist\n", 
+				rLocalDir.c_str(), rStoreDir.c_str());		
+		}
 		rParams.mDifferences ++;
 		return;
 	}
@@ -1224,21 +1227,32 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 		// What kind of error?
 		if(errno == ENOTDIR)
 		{
-			printf("Local object '%s' is a file, "
-				"server object '%s' is a directory\n", 
-				localName.c_str(), storeName.c_str());
+			if (!rParams.mQuiet)
+			{
+				printf("Local object '%s' is a file, "
+					"server object '%s' is a directory\n", 
+					localName.c_str(), storeName.c_str());
+			}
 			rParams.mDifferences ++;
 		}
 		else if(errno == ENOENT)
 		{
-			printf("Local directory '%s' does not exist "
-				"(compared to server directory '%s')\n",
-				localName.c_str(), storeName.c_str());
+			if (!rParams.mQuiet)
+			{
+				printf("Local directory '%s' does not exist "
+					"(compared to server directory '%s')\n",
+					localName.c_str(), storeName.c_str());
+			}
+			rParams.mDifferences ++;
 		}
 		else
 		{
-			printf("ERROR: stat on local dir '%s'\n", 
-				localName.c_str());
+			if (!rParams.mQuiet)
+			{
+				printf("ERROR: stat on local dir '%s'\n", 
+					localName.c_str());
+			}
+			rParams.mDifferences ++;
 		}
 		return;
 	}
@@ -1258,8 +1272,12 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 	// Test out the attributes
 	if(!dir.HasAttributes())
 	{
-		printf("Store directory '%s' doesn't have attributes.\n", 
-			storeName.c_str());
+		if (!rParams.mQuiet)
+		{
+			printf("Store directory '%s' doesn't have attributes.\n", 
+				storeName.c_str());
+		}
+		rParams.mDifferences ++;
 	}
 	else
 	{
@@ -1274,9 +1292,12 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 
 		if(!(attr.Compare(localAttr, true, true /* ignore modification times */)))
 		{
-			printf("Local directory '%s' has different attributes "
-				"to store directory '%s'.\n",
-				localName.c_str(), storeName.c_str());
+			if(!rParams.mQuiet)
+			{
+				printf("Local directory '%s' has different attributes "
+					"to store directory '%s'.\n",
+					localName.c_str(), storeName.c_str());
+			}
 			rParams.mDifferences ++;
 		}
 	}
@@ -1285,7 +1306,11 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 	DIR *dirhandle = ::opendir(rLocalDir.c_str());
 	if(dirhandle == 0)
 	{
-		printf("ERROR: opendir on local dir '%s'\n", localName.c_str());
+		if(!rParams.mQuiet)
+		{
+			printf("ERROR: opendir on local dir '%s'\n", localName.c_str());
+		}
+		rParams.mDifferences ++;
 		return;
 	}
 	try
@@ -1342,8 +1367,12 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 		// Close directory
 		if(::closedir(dirhandle) != 0)
 		{
-			printf("ERROR: closedir on local dir '%s'\n", 
-				localName.c_str());
+			if(!rParams.mQuiet)
+			{
+				printf("ERROR: closedir on local dir '%s'\n", 
+					localName.c_str());
+			}
+			rParams.mDifferences ++;		
 		}
 		dirhandle = 0;
 	
@@ -1385,11 +1414,14 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 			if(local == localFiles.end())
 			{
 				// Not found -- report
-				printf("Local file '%s" DIRECTORY_SEPARATOR 
-					"%s' does not exist, "
-					"but store file '%s/%s' does.\n",
-					localName.c_str(), i->first.c_str(), 
-					storeName.c_str(), i->first.c_str());
+				if(!rParams.mQuiet)
+				{
+					printf("Local file '%s" DIRECTORY_SEPARATOR 
+						"%s' does not exist, "
+						"but store file '%s/%s' does.\n",
+						localName.c_str(), i->first.c_str(), 
+						storeName.c_str(), i->first.c_str());
+				}
 				rParams.mDifferences ++;
 			}
 			else
@@ -1455,20 +1487,29 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 								true /* ignore attr mod time */,
 								fileOnServerStream->IsSymLink() /* ignore modification time if it's a symlink */))
 						{
-							printf("Local file '%s"
-								DIRECTORY_SEPARATOR
-								"%s' has different attributes "
-								"to store file '%s/%s'.\n",
-								localName.c_str(), i->first.c_str(), storeName.c_str(), i->first.c_str());						
+							if(!rParams.mQuiet)
+							{
+								printf("Local file '%s"
+									DIRECTORY_SEPARATOR
+									"%s' has different attributes "
+									"to store file '%s/%s'.\n",
+									localName.c_str(), i->first.c_str(), storeName.c_str(), i->first.c_str());						
+							}
 							rParams.mDifferences ++;
 							if(modifiedAfterLastSync)
 							{
 								rParams.mDifferencesExplainedByModTime ++;
-								printf("(the file above was modified after the last sync time -- might be reason for difference)\n");
+								if(!rParams.mQuiet)
+								{
+									printf("(the file above was modified after the last sync time -- might be reason for difference)\n");
+								}
 							}
 							else if(i->second->HasAttributes())
 							{
-								printf("(the file above has had new attributes applied)\n");
+								if(!rParams.mQuiet)
+								{
+									printf("(the file above has had new attributes applied)\n");
+								}
 							}
 						}
 	
@@ -1523,20 +1564,29 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 					// Report if not equal.
 					if(!equal)
 					{
-						printf("Local file '%s"
-							DIRECTORY_SEPARATOR
-							"%s' has different contents "
-							"to store file '%s/%s'.\n",
-							localName.c_str(), i->first.c_str(), storeName.c_str(), i->first.c_str());
+						if(!rParams.mQuiet)
+						{
+							printf("Local file '%s"
+								DIRECTORY_SEPARATOR
+								"%s' has different contents "
+								"to store file '%s/%s'.\n",
+								localName.c_str(), i->first.c_str(), storeName.c_str(), i->first.c_str());
+						}
 						rParams.mDifferences ++;
 						if(modifiedAfterLastSync)
 						{
 							rParams.mDifferencesExplainedByModTime ++;
-							printf("(the file above was modified after the last sync time -- might be reason for difference)\n");
+							if(!rParams.mQuiet)
+							{
+								printf("(the file above was modified after the last sync time -- might be reason for difference)\n");
+							}
 						}
 						else if(i->second->HasAttributes())
 						{
-							printf("(the file above has had new attributes applied)\n");
+							if(!rParams.mQuiet)
+							{
+								printf("(the file above has had new attributes applied)\n");
+							}
 						}
 					}
 				}
@@ -1567,11 +1617,14 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 			if(rParams.mpExcludeFiles == 0 || 
 				!(rParams.mpExcludeFiles->IsExcluded(localFileName)))
 			{
-				printf("Local file '%s" DIRECTORY_SEPARATOR
-					"%s' exists, but store file '%s/%s' "
-					"does not exist.\n",
-					localName.c_str(), (*i).c_str(), 
-					storeName.c_str(), (*i).c_str());
+				if(!rParams.mQuiet)
+				{
+					printf("Local file '%s" DIRECTORY_SEPARATOR
+						"%s' exists, but store file '%s/%s' "
+						"does not exist.\n",
+						localName.c_str(), (*i).c_str(), 
+						storeName.c_str(), (*i).c_str());
+				}
 				rParams.mDifferences ++;
 				
 				// Check the file modification time
@@ -1582,7 +1635,10 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 						if(FileModificationTime(st) > rParams.mLatestFileUploadTime)
 						{
 							rParams.mDifferencesExplainedByModTime ++;
-							printf("(the file above was modified after the last sync time -- might be reason for difference)\n");
+							if(!rParams.mQuiet)
+							{
+								printf("(the file above was modified after the last sync time -- might be reason for difference)\n");
+							}
 						}
 					}
 				}
@@ -1605,12 +1661,15 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 			if(local == localDirs.end())
 			{
 				// Not found -- report
-				printf("Local directory '%s" 
-					DIRECTORY_SEPARATOR "%s' "
-					"does not exist, but store directory "
-					"'%s/%s' does.\n",
-					localName.c_str(), i->first.c_str(), 
-					storeName.c_str(), i->first.c_str());
+				if(!rParams.mQuiet)
+				{
+					printf("Local directory '%s" 
+						DIRECTORY_SEPARATOR "%s' "
+						"does not exist, but store directory "
+						"'%s/%s' does.\n",
+						localName.c_str(), i->first.c_str(), 
+						storeName.c_str(), i->first.c_str());
+				}
 				rParams.mDifferences ++;
 			}
 			else
@@ -1630,10 +1689,13 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 			// Should this be ignored (ie is excluded)?
 			if(rParams.mpExcludeDirs == 0 || !(rParams.mpExcludeDirs->IsExcluded(localName)))
 			{
-				printf("Local directory '%s/%s' exists, but "
-					"store directory '%s/%s' does not exist.\n",
-					localName.c_str(), (*i).c_str(), 
-					storeName.c_str(), (*i).c_str());
+				if(!rParams.mQuiet)
+				{
+					printf("Local directory '%s/%s' exists, but "
+						"store directory '%s/%s' does not exist.\n",
+						localName.c_str(), (*i).c_str(), 
+						storeName.c_str(), (*i).c_str());
+				}
 				rParams.mDifferences ++;
 			}
 			else
