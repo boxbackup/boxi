@@ -47,6 +47,10 @@
 #include "BackupContext.h"
 #include "autogen_BackupProtocolServer.h"
 #include "BackupStoreConfigVerify.h"
+#include "BackupQueries.h"
+#include "BackupDaemonConfigVerify.h"
+#include "BackupClientCryptoKeys.h"
+#include "BackupStoreConstants.h"
 
 #include "main.h"
 #include "BoxiApp.h"
@@ -1639,13 +1643,14 @@ void TestBackup::RunTest()
 		CPPUNIT_ASSERT(!pBackupFilesPanel->IsShown());
 	}
 	
+	Location* pTestDataLocation = NULL;
+	
 	{
 		wxFileName spaceTestZipFile(_("../test/data/spacetest1.zip"));
 		CPPUNIT_ASSERT(spaceTestZipFile.FileExists());
 		Unzip(spaceTestZipFile, testDataDir);
 
 		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
-		Location* pNewLoc = NULL;
 		
 		{
 			Location testDirLoc(_("testdata"), testDataDir.GetFullPath(),
@@ -1655,53 +1660,56 @@ void TestBackup::RunTest()
 				mpConfig->GetLocations().size());
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
 				pTree->GetItemImage(testDataDirItem));
-			pNewLoc = mpConfig->GetLocation(testDirLoc);
-			CPPUNIT_ASSERT(pNewLoc);
+			pTestDataLocation = mpConfig->GetLocation(testDirLoc);
+			CPPUNIT_ASSERT(pTestDataLocation);
 		}
 
 		CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
-		mpConfig->RemoveLocation(*pNewLoc);
-		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+	}
 
-		wxPanel* pBackupProgressPanel = wxDynamicCast
-		(
-			pMainFrame->FindWindow(ID_Backup_Progress_Panel), wxPanel
-		);
-		CPPUNIT_ASSERT(pBackupProgressPanel);
-		CPPUNIT_ASSERT(!pBackupProgressPanel->IsShown());
+	wxPanel* pBackupProgressPanel = wxDynamicCast
+	(
+		pMainFrame->FindWindow(ID_Backup_Progress_Panel), wxPanel
+	);
+	CPPUNIT_ASSERT(pBackupProgressPanel);
+	CPPUNIT_ASSERT(!pBackupProgressPanel->IsShown());
 
-		wxListBox* pBackupErrorList = wxDynamicCast
-		(
-			pBackupProgressPanel->FindWindow(ID_BackupProgress_ErrorList), 
-			wxListBox
-		);
-		CPPUNIT_ASSERT(pBackupErrorList);
-		CPPUNIT_ASSERT_EQUAL(0, pBackupErrorList->GetCount());
-				
-		wxButton* pBackupStartButton = wxDynamicCast
-		(
-			pBackupPanel->FindWindow(ID_Function_Start_Button), wxButton
-		);
-		CPPUNIT_ASSERT(pBackupStartButton);
+	wxListBox* pBackupErrorList = wxDynamicCast
+	(
+		pBackupProgressPanel->FindWindow(ID_BackupProgress_ErrorList), 
+		wxListBox
+	);
+	CPPUNIT_ASSERT(pBackupErrorList);
+	CPPUNIT_ASSERT_EQUAL(0, pBackupErrorList->GetCount());
+			
+	wxButton* pBackupStartButton = wxDynamicCast
+	(
+		pBackupPanel->FindWindow(ID_Function_Start_Button), wxButton
+	);
+	CPPUNIT_ASSERT(pBackupStartButton);
 
-		wxButton* pBackupProgressCloseButton = wxDynamicCast
-		(
-			pBackupProgressPanel->FindWindow(wxID_CANCEL), wxButton
-		);
-		CPPUNIT_ASSERT(pBackupProgressCloseButton);
+	wxButton* pBackupProgressCloseButton = wxDynamicCast
+	(
+		pBackupProgressPanel->FindWindow(wxID_CANCEL), wxButton
+	);
+	CPPUNIT_ASSERT(pBackupProgressCloseButton);
 
-		// BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION,
-		
-		#define CHECK_BACKUP_ERROR(message) \
-		MessageBoxSetResponse(message, wxOK); \
-		ClickButtonWaitEvent(pBackupStartButton); \
-		MessageBoxCheckFired(); \
-		CPPUNIT_ASSERT(pBackupProgressPanel->IsShown()); \
-		CPPUNIT_ASSERT(pMainFrame->IsTopPanel(pBackupProgressPanel)); \
-		CPPUNIT_ASSERT_EQUAL(1, pBackupErrorList->GetCount()); \
-		ClickButtonWaitEvent(pBackupProgressCloseButton); \
-		CPPUNIT_ASSERT(!pBackupProgressPanel->IsShown())
+	// BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION,
+	
+	#define CHECK_BACKUP() \
+	ClickButtonWaitEvent(pBackupStartButton); \
+	CPPUNIT_ASSERT(pBackupProgressPanel->IsShown()); \
+	CPPUNIT_ASSERT(pMainFrame->IsTopPanel(pBackupProgressPanel)); \
+	CPPUNIT_ASSERT_EQUAL(1, pBackupErrorList->GetCount()); \
+	ClickButtonWaitEvent(pBackupProgressCloseButton); \
+	CPPUNIT_ASSERT(!pBackupProgressPanel->IsShown())
 
+	#define CHECK_BACKUP_ERROR(message) \
+	MessageBoxSetResponse(message, wxOK); \
+	CHECK_BACKUP(); \
+	MessageBoxCheckFired()
+
+	{
 		#define CHECK_PROPERTY(property, message) \
 		CHECK_BACKUP_ERROR(message); \
 		mpConfig->property.Revert()
@@ -1722,7 +1730,10 @@ void TestBackup::RunTest()
 		mpConfig->MinimumFileAge.Set(GetCurrentBoxTime() + 1000000);
 		CHECK_PROPERTY(MinimumFileAge, BM_BACKUP_FAILED_INVALID_SYNC_PERIOD);
 		*/
-		
+
+		#undef CHECK_UNSET_PROPERTY
+		#undef CHECK_PROPERTY
+
 		server.Stop();
 		CHECK_BACKUP_ERROR(BM_BACKUP_FAILED_CONNECT_FAILED);
 		server.Start();
@@ -1731,9 +1742,140 @@ void TestBackup::RunTest()
 		BM_BACKUP_FAILED_INTERRUPTED,
 		BM_BACKUP_FAILED_UNKNOWN_ERROR,
 		*/
-	}		
+	}
+
+	wxFileName configFile(confDir.GetFullPath(), _("bbackupd.conf"));
+	mpConfig->Save(configFile.GetFullPath());
+	CPPUNIT_ASSERT(configFile.FileExists());
+	
+	std::string errs;
+	std::auto_ptr<Configuration> apClientConfig
+	(
+		Configuration::LoadAndVerify
+		(
+			configFile.GetFullPath().mb_str(wxConvLibc).data(), 
+			&BackupDaemonConfigVerify, errs
+		)
+	);
+	CPPUNIT_ASSERT(apClientConfig.get());
+	CPPUNIT_ASSERT(errs.empty());
+	CPPUNIT_ASSERT(wxRemoveFile(configFile.GetFullPath()));
+	const Configuration &rClientConfig(*apClientConfig);
+
+	// Setup and connect
+	// 1. TLS context
+	SSLLib::Initialise();
+	// Read in the certificates creating a TLS context
+	TLSContext tlsContext;
+	std::string certFile(rClientConfig.GetKeyValue("CertificateFile"));
+	std::string keyFile(rClientConfig.GetKeyValue("PrivateKeyFile"));
+	std::string caFile(rClientConfig.GetKeyValue("TrustedCAsFile"));
+	tlsContext.Initialise(false /* as client */, 
+		certFile.c_str(), keyFile.c_str(), caFile.c_str());
+	
+	// Initialise keys
+	BackupClientCryptoKeys_Setup(rClientConfig.GetKeyValue("KeysFile").c_str());
+
+	{
+		// Connect to server
+		SocketStreamTLS socket;
+		socket.Open(tlsContext, Socket::TypeINET, 
+			rClientConfig.GetKeyValue("StoreHostname").c_str(), 
+			BOX_PORT_BBSTORED);
+		
+		// Make a protocol, and handshake
+		BackupProtocolClient connection(socket);
+		connection.Handshake();
+		
+		// Check the version of the server
+		{
+			std::auto_ptr<BackupProtocolClientVersion> serverVersion
+			(
+				connection.QueryVersion(BACKUP_STORE_SERVER_VERSION)
+			);
+			CPPUNIT_ASSERT_EQUAL(BACKUP_STORE_SERVER_VERSION,
+				serverVersion->GetVersion());
+		}
+
+		// Login -- if this fails, the Protocol will exception
+		connection.QueryLogin
+		(
+			rClientConfig.GetKeyValueInt("AccountNumber"),
+			BackupProtocolClientLogin::Flags_ReadOnly
+		);
+	
+		// Set up a context for our work
+		BackupQueries query(connection, rClientConfig);
+		
+		// compare
+		BackupQueries::CompareParams params;
+		params.mQuiet = true;
+		query.Compare("testdata", 
+			testDataDir.GetFullPath().mb_str(wxConvLibc).data(), 
+			params);
+		CPPUNIT_ASSERT_EQUAL(1, params.mDifferences);
+		CPPUNIT_ASSERT_EQUAL(0, 
+			params.mDifferencesExplainedByModTime);
+		CPPUNIT_ASSERT_EQUAL(0, params.mExcludedDirs);
+		CPPUNIT_ASSERT_EQUAL(0, params.mExcludedFiles);
+
+		connection.QueryFinished();
+	}
+	
+	CHECK_BACKUP();
+
+	{
+		// Connect to server
+		SocketStreamTLS socket;
+		socket.Open(tlsContext, Socket::TypeINET, 
+			rClientConfig.GetKeyValue("StoreHostname").c_str(), 
+			BOX_PORT_BBSTORED);
+		
+		// Make a protocol, and handshake
+		BackupProtocolClient connection(socket);
+		connection.Handshake();
+		
+		// Check the version of the server
+		{
+			std::auto_ptr<BackupProtocolClientVersion> serverVersion
+			(
+				connection.QueryVersion(BACKUP_STORE_SERVER_VERSION)
+			);
+			CPPUNIT_ASSERT_EQUAL(BACKUP_STORE_SERVER_VERSION,
+				serverVersion->GetVersion());
+		}
+
+		// Login -- if this fails, the Protocol will exception
+		connection.QueryLogin
+		(
+			rClientConfig.GetKeyValueInt("AccountNumber"),
+			BackupProtocolClientLogin::Flags_ReadOnly
+		);
+	
+		// Set up a context for our work
+		BackupQueries query(connection, rClientConfig);
+
+		BackupQueries::CompareParams params;
+		params.mQuiet = false;
+		query.Compare("testdata", 
+			testDataDir.GetFullPath().mb_str(wxConvLibc).data(), 
+			params);
+		CPPUNIT_ASSERT_EQUAL(0, params.mDifferences);
+		CPPUNIT_ASSERT_EQUAL(0, 
+			params.mDifferencesExplainedByModTime);
+		CPPUNIT_ASSERT_EQUAL(0, params.mExcludedDirs);
+		CPPUNIT_ASSERT_EQUAL(0, params.mExcludedFiles);
+
+		connection.QueryFinished();
+	}
 		
 	// clean up
+
+	{
+		CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+		mpConfig->RemoveLocation(*pTestDataLocation);
+		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+	}
 
 	DeleteRecursive(testDataDir);
 	CPPUNIT_ASSERT(wxRemoveFile(storeConfigFileName.GetFullPath()));
@@ -1742,11 +1884,7 @@ void TestBackup::RunTest()
 	CPPUNIT_ASSERT(confDir.Rmdir());
 	wxFileName backupDir (storeDir.GetFullPath(),  _("backup"));
 	wxFileName accountDir(backupDir.GetFullPath(), _("00000002"));
-	CPPUNIT_ASSERT(wxRemoveFile(wxFileName(accountDir.GetFullPath(), 
-		_("info.rfw")).GetFullPath()));
-	CPPUNIT_ASSERT(wxRemoveFile(wxFileName(accountDir.GetFullPath(), 
-		_("o01.rfw")).GetFullPath()));
-	CPPUNIT_ASSERT(accountDir.Rmdir());
+	DeleteRecursive(accountDir);
 	CPPUNIT_ASSERT(backupDir.Rmdir());
 	CPPUNIT_ASSERT(storeDir.Rmdir());
 	CPPUNIT_ASSERT(tempDir.Rmdir());
