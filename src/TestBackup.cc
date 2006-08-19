@@ -25,6 +25,7 @@
 #include <openssl/ssl.h>
 
 #include <wx/button.h>
+#include <wx/dir.h>
 #include <wx/file.h>
 #include <wx/filename.h>
 #include <wx/treectrl.h>
@@ -244,7 +245,7 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir)
 	for (std::auto_ptr<wxZipEntry> apEntry(zipInput.GetNextEntry());
 		apEntry.get() != NULL; apEntry.reset(zipInput.GetNextEntry()))
 	{
-		wxFileName outName = rDestDir;
+		wxFileName outName(rDestDir.GetFullPath(), wxEmptyString);
 		wxString entryName = apEntry->GetInternalName();
 		
 		for (int index = entryName.Find('/'); index != -1; 
@@ -269,11 +270,43 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir)
 		{
 			wxFileOutputStream outFos(outName.GetFullPath());
 			CPPUNIT_ASSERT(outFos.Ok());
-			outFos.Write(zipFis);
-			CPPUNIT_ASSERT_EQUAL((int)apEntry->GetSize(), 
-				(int)outFos.LastWrite());
+
+			outFos.Write(zipInput);
+			CPPUNIT_ASSERT_EQUAL((int)apEntry->GetSize(),
+			       (int)outFos.LastWrite());
+
 			CPPUNIT_ASSERT(outName.FileExists());
+			
+			wxFile outFile(outName.GetFullPath());
+			CPPUNIT_ASSERT_EQUAL(apEntry->GetSize(), 
+				outFile.Length());
 		}
+	}
+}
+
+void DeleteRecursive(const wxFileName& rPath)
+{
+	if (rPath.FileExists())
+	{
+		CPPUNIT_ASSERT(wxRemoveFile(rPath.GetFullPath()));
+	}
+	else if (rPath.DirExists())
+	{
+		wxDir dir(rPath.GetFullPath());
+		CPPUNIT_ASSERT(dir.IsOpened());
+		
+		wxString file;
+		if (dir.GetFirst(&file))
+		{
+			do
+			{
+				wxFileName filename(rPath.GetFullPath(), file);
+				DeleteRecursive(filename);
+			}
+			while (dir.GetNext(&file));
+		}
+			
+		CPPUNIT_ASSERT(wxRmdir(rPath.GetFullPath()));
 	}
 }
 
@@ -1401,6 +1434,8 @@ void TestBackup::RunTest()
 			Location testDirLoc(_("testdata"), testDataDir.GetFullPath(),
 				mpConfig);
 			mpConfig->AddLocation(testDirLoc);
+			CPPUNIT_ASSERT_EQUAL((size_t)1, 
+				mpConfig->GetLocations().size());
 			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
 				pTree->GetItemImage(testDataDirItem));
 			pNewLoc = mpConfig->GetLocation(testDirLoc);
@@ -1543,11 +1578,97 @@ void TestBackup::RunTest()
 		#undef DELETE_FILE
 		
 		CPPUNIT_ASSERT(wxRemoveFile(configFile.GetFullPath()));
+		
+		CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+		mpConfig->RemoveLocation(*pNewLoc);
+		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+	}
+
+	{
+		wxButton* pBackupFilesCloseButton = wxDynamicCast
+		(
+			pBackupFilesPanel->FindWindow(wxID_CANCEL), wxButton
+		);
+		CPPUNIT_ASSERT(pBackupFilesCloseButton);
+	
+		ClickButtonWaitEvent(pBackupFilesCloseButton);
+		CPPUNIT_ASSERT(!pBackupFilesPanel->IsShown());
 	}
 	
+	{
+		wxFileName spaceTestZipFile(_("../test/data/spacetest1.zip"));
+		CPPUNIT_ASSERT(spaceTestZipFile.FileExists());
+		Unzip(spaceTestZipFile, testDataDir);
+
+		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+		Location* pNewLoc = NULL;
+		
+		{
+			Location testDirLoc(_("testdata"), testDataDir.GetFullPath(),
+				mpConfig);
+			mpConfig->AddLocation(testDirLoc);
+			CPPUNIT_ASSERT_EQUAL((size_t)1, 
+				mpConfig->GetLocations().size());
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+			pNewLoc = mpConfig->GetLocation(testDirLoc);
+			CPPUNIT_ASSERT(pNewLoc);
+		}
+
+		CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+		mpConfig->RemoveLocation(*pNewLoc);
+		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+
+		wxPanel* pBackupProgressPanel = wxDynamicCast
+		(
+			pMainFrame->FindWindow(ID_Backup_Progress_Panel), wxPanel
+		);
+		CPPUNIT_ASSERT(pBackupProgressPanel);
+		CPPUNIT_ASSERT(!pBackupProgressPanel->IsShown());
+
+		wxListBox* pBackupErrorList = wxDynamicCast
+		(
+			pBackupProgressPanel->FindWindow(ID_BackupProgress_ErrorList), 
+			wxListBox
+		);
+		CPPUNIT_ASSERT(pBackupErrorList);
+		CPPUNIT_ASSERT_EQUAL(0, pBackupErrorList->GetCount());
+				
+		wxButton* pBackupStartButton = wxDynamicCast
+		(
+			pBackupPanel->FindWindow(ID_Function_Start_Button), wxButton
+		);
+		CPPUNIT_ASSERT(pBackupStartButton);
+
+		// BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION,
+		
+		MessageBoxSetResponse(BM_BACKUP_FAILED_NO_STORE_HOSTNAME, wxOK);
+		mpConfig->StoreHostname.Clear();
+		ClickButtonWaitEvent(pBackupStartButton);
+		MessageBoxCheckFired();
+		mpConfig->StoreHostname.Reset();
+		CPPUNIT_ASSERT(pBackupProgressPanel->IsShown());
+		CPPUNIT_ASSERT(pMainFrame->IsTopPanel(pBackupProgressPanel));
+		CPPUNIT_ASSERT_EQUAL(1, pBackupErrorList->GetCount());
+		
+		/*
+		BM_BACKUP_FAILED_NO_STORE_HOSTNAME,
+		BM_BACKUP_FAILED_NO_KEYS_FILE,
+		BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER,
+		BM_BACKUP_FAILED_NO_MINIMUM_FILE_AGE,
+		BM_BACKUP_FAILED_NO_MAXIMUM_UPLOAD_WAIT,
+		BM_BACKUP_FAILED_NO_TRACKING_THRESHOLD,
+		BM_BACKUP_FAILED_NO_DIFFING_THRESHOLD,
+		BM_BACKUP_FAILED_INVALID_SYNC_PERIOD,
+		BM_BACKUP_FAILED_CONNECT_FAILED,
+		BM_BACKUP_FAILED_INTERRUPTED,
+		BM_BACKUP_FAILED_UNKNOWN_ERROR,
+		*/
+	}		
+		
 	// clean up
 
-	CPPUNIT_ASSERT(testDataDir.Rmdir());	
+	DeleteRecursive(testDataDir);
 	CPPUNIT_ASSERT(wxRemoveFile(storeConfigFileName.GetFullPath()));
 	CPPUNIT_ASSERT(wxRemoveFile(accountsDb.GetFullPath()));
 	CPPUNIT_ASSERT(wxRemoveFile(raidConf.GetFullPath()));
