@@ -35,7 +35,7 @@ END_EVENT_TABLE()
 
 void BoundStringCtrl::Reload() 
 {
-	const std::string * pValue = mrStringProp.Get();
+	const std::string * pValue = mrStringProp.GetPointer();
 	if (pValue) 
 	{
 		wxString valueString(pValue->c_str(), wxConvLibc);
@@ -117,7 +117,7 @@ END_EVENT_TABLE()
 		
 void BoundIntCtrl::Reload()
 {
-	const int * ValuePtr = mrIntProp.Get();
+	const int* ValuePtr = mrIntProp.GetPointer();
 	if (ValuePtr)
 	{
 		wxString ValueString;
@@ -168,7 +168,7 @@ END_EVENT_TABLE()
 
 void BoundBoolCtrl::Reload()
 {
-	const bool * value = mrBoolProp.Get();
+	const bool * value = mrBoolProp.GetPointer();
 	if (value) 
 	{
 		SetValue(*value);
