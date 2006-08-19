@@ -120,9 +120,10 @@ public:
 	{
 		try
 		{
-			// Wait object with a timeout of 10 seconds, which is a reasonable time to wait before
+			// Wait object with a timeout of 10 seconds, 
+			// which is a reasonable time to wait before
 			// cleaning up finished child processes.
-			WaitForEvent connectionWait(10000);
+			WaitForEvent connectionWait(1000);
 			
 			// BLOCK
 			{
