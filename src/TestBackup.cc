@@ -167,40 +167,40 @@ class StoreServerThread : public wxThread
 	TestBackupStoreDaemon mDaemon;
 
 	public:
-	StoreServerThread::StoreServerThread(const wxString& rFilename)
+	StoreServerThread(const wxString& rFilename)
 	: wxThread(wxTHREAD_JOINABLE)
 	{
 		mDaemon.Load(rFilename.mb_str(wxConvLibc).data());
 		mDaemon.Setup();
 	}
 
-	StoreServerThread::~StoreServerThread()
+	~StoreServerThread()
 	{
-		mDaemon.SetTerminateWanted();
-		Wait();
+		Stop();
 	}
 
-	wxThreadError Run();
-	
+	void Start();
+	void Stop();
+
 	private:
 	virtual ExitCode Entry();
 };
 
-wxThreadError StoreServerThread::Run()
+void StoreServerThread::Start()
 {
-	mDaemon.mConditionLock.Lock();
-	
-	wxThreadError result = wxThread::Run();
-	
-	if (result != wxTHREAD_NO_ERROR)
-	{
-		return result;
-	}
+	mDaemon.mConditionLock.Lock();	
+	CPPUNIT_ASSERT_EQUAL(wxTHREAD_NO_ERROR, Create());
+	CPPUNIT_ASSERT_EQUAL(wxTHREAD_NO_ERROR, Run());
 	
 	// wait until listening thread is ready to accept connections
 	mDaemon.mIsReadyCondition.Wait();
-	
-	return result;
+}
+
+void StoreServerThread::Stop()
+{
+	if (!IsAlive()) return;
+	mDaemon.SetTerminateWanted();
+	Wait();
 }
 
 StoreServerThread::ExitCode StoreServerThread::Entry()
@@ -220,6 +220,51 @@ StoreServerThread::ExitCode StoreServerThread::Entry()
 		printf("Server thread died due to unknown exception\n");
 	}
 	return (void *)1;
+}
+
+class StoreServer
+{
+	private:
+	std::auto_ptr<StoreServerThread> mapThread;
+	wxString mConfigFile;
+
+	public:
+	StoreServer(const wxString& rFilename)
+	: mConfigFile(rFilename)
+	{ }
+
+	~StoreServer()
+	{
+		if (mapThread.get())
+		{
+			Stop();
+		}
+	}
+
+	void Start();
+	void Stop();
+};
+
+void StoreServer::Start()
+{
+	if (mapThread.get()) 
+	{
+		throw "already running";
+	}
+	
+	mapThread.reset(new StoreServerThread(mConfigFile)),
+	mapThread->Start();
+}
+
+void StoreServer::Stop()
+{
+	if (!mapThread.get()) 
+	{
+		throw "not running";
+	}
+
+	mapThread->Stop();
+	mapThread.reset();
 }
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(TestBackup, "WxGuiTest");
@@ -305,7 +350,7 @@ void DeleteRecursive(const wxFileName& rPath)
 			}
 			while (dir.GetNext(&file));
 		}
-			
+		
 		CPPUNIT_ASSERT(wxRmdir(rPath.GetFullPath()));
 	}
 }
@@ -453,9 +498,8 @@ void TestBackup::RunTest()
 	mpConfig = pMainFrame->GetConfig();
 	CPPUNIT_ASSERT(mpConfig);
 	
-	StoreServerThread server(storeConfigFileName.GetFullPath());
-	CPPUNIT_ASSERT_EQUAL(wxTHREAD_NO_ERROR, server.Create());
-	CPPUNIT_ASSERT_EQUAL(wxTHREAD_NO_ERROR, server.Run());
+	StoreServer server(storeConfigFileName.GetFullPath());
+	server.Start();
 
 	pMainFrame->DoFileOpen(_("../test/config/bbackupd.conf"));
 	wxString msg;
@@ -1640,27 +1684,50 @@ void TestBackup::RunTest()
 		);
 		CPPUNIT_ASSERT(pBackupStartButton);
 
+		wxButton* pBackupProgressCloseButton = wxDynamicCast
+		(
+			pBackupProgressPanel->FindWindow(wxID_CANCEL), wxButton
+		);
+		CPPUNIT_ASSERT(pBackupProgressCloseButton);
+
 		// BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION,
 		
-		MessageBoxSetResponse(BM_BACKUP_FAILED_NO_STORE_HOSTNAME, wxOK);
-		mpConfig->StoreHostname.Clear();
-		ClickButtonWaitEvent(pBackupStartButton);
-		MessageBoxCheckFired();
-		mpConfig->StoreHostname.Reset();
-		CPPUNIT_ASSERT(pBackupProgressPanel->IsShown());
-		CPPUNIT_ASSERT(pMainFrame->IsTopPanel(pBackupProgressPanel));
-		CPPUNIT_ASSERT_EQUAL(1, pBackupErrorList->GetCount());
+		#define CHECK_BACKUP_ERROR(message) \
+		MessageBoxSetResponse(message, wxOK); \
+		ClickButtonWaitEvent(pBackupStartButton); \
+		MessageBoxCheckFired(); \
+		CPPUNIT_ASSERT(pBackupProgressPanel->IsShown()); \
+		CPPUNIT_ASSERT(pMainFrame->IsTopPanel(pBackupProgressPanel)); \
+		CPPUNIT_ASSERT_EQUAL(1, pBackupErrorList->GetCount()); \
+		ClickButtonWaitEvent(pBackupProgressCloseButton); \
+		CPPUNIT_ASSERT(!pBackupProgressPanel->IsShown())
+
+		#define CHECK_PROPERTY(property, message) \
+		CHECK_BACKUP_ERROR(message); \
+		mpConfig->property.Revert()
+
+		#define CHECK_UNSET_PROPERTY(property, message) \
+		mpConfig->property.Clear(); \
+		CHECK_PROPERTY(property, message)
+		
+		CHECK_UNSET_PROPERTY(StoreHostname,  BM_BACKUP_FAILED_NO_STORE_HOSTNAME);
+		CHECK_UNSET_PROPERTY(KeysFile,       BM_BACKUP_FAILED_NO_KEYS_FILE);
+		CHECK_UNSET_PROPERTY(AccountNumber,  BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER);
+		CHECK_UNSET_PROPERTY(MinimumFileAge, BM_BACKUP_FAILED_NO_MINIMUM_FILE_AGE);
+		CHECK_UNSET_PROPERTY(MaxUploadWait,  BM_BACKUP_FAILED_NO_MAXIMUM_UPLOAD_WAIT);
+		CHECK_UNSET_PROPERTY(FileTrackingSizeThreshold, BM_BACKUP_FAILED_NO_TRACKING_THRESHOLD);
+		CHECK_UNSET_PROPERTY(DiffingUploadSizeThreshold, BM_BACKUP_FAILED_NO_DIFFING_THRESHOLD);
 		
 		/*
-		BM_BACKUP_FAILED_NO_STORE_HOSTNAME,
-		BM_BACKUP_FAILED_NO_KEYS_FILE,
-		BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER,
-		BM_BACKUP_FAILED_NO_MINIMUM_FILE_AGE,
-		BM_BACKUP_FAILED_NO_MAXIMUM_UPLOAD_WAIT,
-		BM_BACKUP_FAILED_NO_TRACKING_THRESHOLD,
-		BM_BACKUP_FAILED_NO_DIFFING_THRESHOLD,
-		BM_BACKUP_FAILED_INVALID_SYNC_PERIOD,
-		BM_BACKUP_FAILED_CONNECT_FAILED,
+		mpConfig->MinimumFileAge.Set(GetCurrentBoxTime() + 1000000);
+		CHECK_PROPERTY(MinimumFileAge, BM_BACKUP_FAILED_INVALID_SYNC_PERIOD);
+		*/
+		
+		server.Stop();
+		CHECK_BACKUP_ERROR(BM_BACKUP_FAILED_CONNECT_FAILED);
+		server.Start();
+
+		/*
 		BM_BACKUP_FAILED_INTERRUPTED,
 		BM_BACKUP_FAILED_UNKNOWN_ERROR,
 		*/
