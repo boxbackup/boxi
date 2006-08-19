@@ -60,12 +60,15 @@ private:
 
 	// Implementations
 	void List(int64_t DirID, const std::string &rListRoot, const bool *opts, bool FirstLevel);
+
+public:
 	class CompareParams
 	{
 	public:
 		CompareParams();
 		~CompareParams();
 		void DeleteExcludeLists();
+		bool mQuiet;
 		bool mQuickCompare;
 		bool mIgnoreExcludes;
 		int mDifferences;
@@ -76,8 +79,10 @@ private:
 		const ExcludeList *mpExcludeDirs;
 		box_time_t mLatestFileUploadTime;
 	};
-	void CompareLocation(const std::string &rLocation, CompareParams &rParams);
 	void Compare(const std::string &rStoreDir, const std::string &rLocalDir, CompareParams &rParams);
+	
+private:
+	void CompareLocation(const std::string &rLocation, CompareParams &rParams);
 	void Compare(int64_t DirID, const std::string &rStoreDir, const std::string &rLocalDir, CompareParams &rParams);
 
 	// Utility functions
@@ -98,4 +103,3 @@ private:
 };
 
 #endif // BACKUPQUERIES__H
-
