@@ -75,6 +75,7 @@ Daemon::~Daemon()
 		delete mpConfiguration;
 		mpConfiguration = 0;
 	}
+	spDaemon = NULL;
 }
 
 // --------------------------------------------------------------------------
