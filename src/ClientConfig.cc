@@ -62,13 +62,13 @@
 	INIT_PROP_EMPTY(PidFile), \
 	INIT_PROP_EMPTY(StoreObjectInfoFile), \
 	INIT_PROP_EMPTY(AccountNumber), \
-	INIT_PROP(UpdateStoreInterval, 3600), \
-	INIT_PROP(MinimumFileAge,  21600), \
-	INIT_PROP(MaxUploadWait,   86400), \
-	INIT_PROP(FileTrackingSizeThreshold, 65535), \
+	INIT_PROP(UpdateStoreInterval,        3600), \
+	INIT_PROP(MinimumFileAge,             21600), \
+	INIT_PROP(MaxUploadWait,              86400), \
+	INIT_PROP(FileTrackingSizeThreshold,  65535), \
 	INIT_PROP(DiffingUploadSizeThreshold, 8192), \
-	INIT_PROP(MaximumDiffingTime, 20), \
-	INIT_PROP(MaxFileTimeInFuture, 0), \
+	INIT_PROP(MaximumDiffingTime,         20), \
+	INIT_PROP(MaxFileTimeInFuture,        0), \
 	INIT_PROP_EMPTY(KeepAliveTime), \
 	INIT_PROP(ExtendedLogging, false), \
 	INIT_PROP(AutomaticBackup, true)
@@ -344,7 +344,7 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	wxString buffer;
 
 	#define WRITE_STR_PROP(name) \
-	if (const std::string * value = name.Get()) { \
+	if (const std::string * value = name.GetPointer()) { \
 		buffer.Printf(wxT(#name " = %s\n"), \
 			wxString(value->c_str(), wxConvLibc).c_str()); \
 		file.Write(buffer); \
@@ -352,7 +352,7 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 
 	#ifdef __CYGWIN__
 	#define WRITE_DIR_PROP(name) \
-	if (const std::string * value = name.Get()) { \
+	if (const std::string * value = name.GetPointer()) { \
 		wxString cygpath = ConvertWindowsPathToCygwin(value.c_str()); \
 		buffer.Printf(wxT(#name " = %s\n"), \
 			wxString(cygpath.c_str(), wxConvLibc).c_str()); \
@@ -360,7 +360,7 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	}
 	#else /* ! __CYGWIN__ */
 	#define WRITE_DIR_PROP(name) \
-	if (const std::string * value = name.Get()) { \
+	if (const std::string * value = name.GetPointer()) { \
 		buffer.Printf(wxT(#name " = %s\n"), \
 			wxString(value->c_str(), wxConvLibc).c_str()); \
 		file.Write(buffer); \
@@ -368,19 +368,19 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	#endif
 
 	#define WRITE_INT_PROP_FMT(name, fmt) \
-	if (const int * value = name.Get()) { \
+	if (const int * value = name.GetPointer()) { \
 		buffer.Printf(wxT(#name " = " fmt "\n"), *value); \
 		file.Write(buffer); \
 	}
 	
 	#define WRITE_INT_PROP(name) \
-	if (const int * value = name.Get()) { \
+	if (const int * value = name.GetPointer()) { \
 		buffer.Printf(wxT(#name " = %d\n"), *value); \
 		file.Write(buffer); \
 	}
 
 	#define WRITE_BOOL_PROP(name) \
-	if (const bool * value = name.Get()) { \
+	if (const bool * value = name.GetPointer()) { \
 		buffer.Printf(wxT(#name " = %s\n"), \
 			*value ? wxT("yes") : wxT("no")); \
 		file.Write(buffer); \
@@ -416,7 +416,7 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 	#undef WRITE_INT_PROP_FMT
 	#undef WRITE_BOOL_PROP
 	
-	if (PidFile.Get()) {
+	if (PidFile.GetPointer()) {
 		wxString pidbuf;
 		PidFile.GetInto(pidbuf);
 		buffer.Printf(wxT("Server\n{\n\tPidFile = %s\n}\n"), pidbuf.c_str());
@@ -546,7 +546,7 @@ void ClientConfig::OnExcludeListChange(MyExcludeList* pExcludeList)
 
 bool PropSet(StringProperty& rProp, wxString& msg, const char* desc)
 {
-	if (rProp.Get())
+	if (rProp.GetPointer())
 		return true;
 	wxString desc2(desc, wxConvLibc);
 	msg.Printf(wxT("The %s is not set"), desc2.c_str());
@@ -555,7 +555,7 @@ bool PropSet(StringProperty& rProp, wxString& msg, const char* desc)
 
 bool PropSet(IntProperty& rProp, wxString& msg, const char* desc)
 {
-	if (rProp.Get())
+	if (rProp.GetPointer())
 		return true;
 	wxString desc2(desc, wxConvLibc);
 	msg.Printf(wxT("The %s is not set"), desc2.c_str());
@@ -564,7 +564,7 @@ bool PropSet(IntProperty& rProp, wxString& msg, const char* desc)
 
 bool PropSet(BoolProperty& rProp, wxString& msg, const char* desc)
 {
-	if (rProp.Get())
+	if (rProp.GetPointer())
 		return true;
 	wxString desc2(desc, wxConvLibc);
 	msg.Printf(wxT("The %s is not set"), desc2.c_str());
