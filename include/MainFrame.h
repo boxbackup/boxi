@@ -47,7 +47,8 @@ class MainFrame : public wxFrame, public ConfigChangeListener
 		const wxPoint& pos, const wxSize& size, 
 		long style = wxDEFAULT_FRAME_STYLE
 	);
-	void ShowPanel(wxPanel* pPanel);
+	void ShowPanel (wxPanel* pPanel);
+	bool IsTopPanel(wxPanel* pPanel);
 	ClientConfig* GetConfig() { return mpConfig; }
 	
 	private:

@@ -404,7 +404,6 @@ void MainFrame::UpdateTitle()
 	SetTitle(title);
 }
 
-
 void MainFrame::ShowPanel(wxPanel* pTargetPanel)
 {
 	pTargetPanel->Show();
@@ -417,4 +416,11 @@ void MainFrame::ShowPanel(wxPanel* pTargetPanel)
 			break;
 		}
 	}
+}
+
+bool MainFrame::IsTopPanel(wxPanel* pTargetPanel)
+{
+	size_t index = mpTopNotebook->GetSelection();
+	wxWindow* pPage = mpTopNotebook->GetPage(index);
+	return (pPage == pTargetPanel);
 }
