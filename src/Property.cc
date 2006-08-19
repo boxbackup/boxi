@@ -2,8 +2,8 @@
  *            Property.cc
  *
  *  Thu Dec  1 12:55:13 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -24,17 +24,21 @@
  
 #include "Property.h"
 
-Property::Property(
+Property::Property
+(
 	const char * pKeyName, 
-	PropertyChangeListener* pListener)
+	PropertyChangeListener* pListener
+)
 {
 	mKeyName = pKeyName;
 	mpListener = pListener;
 }
 
-BoolProperty::BoolProperty(
+BoolProperty::BoolProperty
+(
 	const char * pKeyName, bool value, 
-	PropertyChangeListener* pListener) 
+	PropertyChangeListener* pListener
+) 
 : Property(pKeyName, pListener) 
 {
 	mValue = value;
@@ -46,9 +50,12 @@ BoolProperty::BoolProperty(
 	SetClean();
 }
 	
-BoolProperty::BoolProperty(
-	const char * pKeyName, const Configuration* pConf,
-	PropertyChangeListener* pListener) 
+BoolProperty::BoolProperty
+(
+	const char * pKeyName, 
+	const Configuration* pConf,
+	PropertyChangeListener* pListener
+) 
 : Property(pKeyName, pListener) 
 {
 	SetFrom(pConf);
@@ -68,7 +75,7 @@ void BoolProperty::SetFrom(const Configuration* pConf)
 	SetClean();
 }
 
-const bool* BoolProperty::Get()
+const bool* BoolProperty::GetPointer()
 { 
 	return mConfigured ? &mValue : NULL; 
 }
@@ -108,15 +115,25 @@ void BoolProperty::SetClean()
 	mOriginalValue = mValue; 
 }
 
-bool BoolProperty::IsClean()  { 
+bool BoolProperty::IsClean()  
+{ 
 	if (mConfigured != mWasConfigured) return FALSE;
 	if (!mConfigured) return TRUE;
 	return (mOriginalValue == mValue);
 }
 
-IntProperty::IntProperty(
-	const char * pKeyName, int value,
-	PropertyChangeListener* pListener) 
+void BoolProperty::Revert()  
+{ 
+	mConfigured = mWasConfigured;
+	mValue = mOriginalValue;
+}
+
+IntProperty::IntProperty
+(
+	const char * pKeyName, 
+	int value,
+	PropertyChangeListener* pListener
+) 
 : Property(pKeyName, pListener) 
 {
 	mValue = value;
@@ -128,10 +145,12 @@ IntProperty::IntProperty(
 	SetClean();
 }
 
-IntProperty::IntProperty(
+IntProperty::IntProperty
+(
 	const char * pKeyName, 
 	const Configuration* pConf,
-	PropertyChangeListener* pListener) 
+	PropertyChangeListener* pListener
+) 
 : Property(pKeyName, pListener)
 {
 	SetFrom(pConf);
@@ -140,8 +159,11 @@ IntProperty::IntProperty(
 	mDefaultConfigured = mConfigured;
 }
 
-IntProperty::IntProperty(
-	const char * pKeyName, PropertyChangeListener* pListener) 
+IntProperty::IntProperty
+(
+	const char * pKeyName, 
+	PropertyChangeListener* pListener
+) 
 : Property(pKeyName, pListener) 
 {
 	this->mValue = 0;
@@ -164,7 +186,7 @@ void IntProperty::SetFrom(const Configuration* pConf)
 	SetClean();
 }
 
-const int* IntProperty::Get()
+const int* IntProperty::GetPointer()
 { 
 	return mConfigured ? &mValue : NULL; 
 }
@@ -217,6 +239,12 @@ void IntProperty::Reset()
 	SetClean();
 }
 
+void IntProperty::Revert()  
+{ 
+	mConfigured = mWasConfigured;
+	mValue = mOriginalValue;
+}
+
 bool IntProperty::GetInto(wxString& rDest) 
 { 
 	if (!mConfigured) return FALSE;
@@ -254,10 +282,12 @@ bool IntProperty::IsClean()
 	return (mOriginalValue == mValue);
 }
 
-StringProperty::StringProperty(
+StringProperty::StringProperty
+(
 	const char * pKeyName, 
 	const std::string& value,
-	PropertyChangeListener* pListener) 
+	PropertyChangeListener* pListener
+) 
 : Property(pKeyName, pListener) 
 {
 	this->mValue = value;
@@ -273,10 +303,12 @@ StringProperty::StringProperty(
 	SetClean();
 }
 
-StringProperty::StringProperty(
+StringProperty::StringProperty
+(
 	const char * pKeyName, 
 	const Configuration* pConf,
-	PropertyChangeListener* pListener) 
+	PropertyChangeListener* pListener
+) 
 : Property(pKeyName, pListener) 
 {
 	SetFrom(pConf);
@@ -285,8 +317,11 @@ StringProperty::StringProperty(
 	mDefaultConfigured = mConfigured;
 }
 
-StringProperty::StringProperty(
-	const char * pKeyName, PropertyChangeListener* pListener) 
+StringProperty::StringProperty
+(
+	const char * pKeyName, 
+	PropertyChangeListener* pListener
+) 
 : Property(pKeyName, pListener) 
 {
 	this->mConfigured = FALSE;
@@ -308,7 +343,7 @@ void StringProperty::SetFrom(const Configuration* pConf)
 	SetClean();
 }
 
-const std::string* StringProperty::Get() 
+const std::string* StringProperty::GetPointer() 
 { 
 	return mConfigured ? &mValue : NULL; 
 }
@@ -351,6 +386,12 @@ void StringProperty::Reset()
 	mValue = mDefaultValue;
 	mConfigured = mDefaultConfigured;
 	SetClean();
+}
+
+void StringProperty::Revert()  
+{ 
+	mConfigured = mWasConfigured;
+	mValue = mOriginalValue;
 }
 
 bool StringProperty::GetInto(std::string& rDest) 

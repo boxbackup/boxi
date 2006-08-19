@@ -81,6 +81,7 @@ class Property {
 	virtual void SetClean() = 0;
 	virtual bool IsClean () = 0;
 	virtual void Reset   () = 0;
+	virtual void Revert  () = 0;
 	const std::string& GetKeyName() { return mKeyName; }
 };
 
@@ -92,14 +93,16 @@ class BoolProperty : public Property
 	BoolProperty(const char * pKeyName, const Configuration* pConf,
 		PropertyChangeListener* pListener);
 	
-	void SetFrom(const Configuration* pConf);
-	const bool* Get();
+	virtual void SetFrom(const Configuration* pConf);
+	virtual void Reset();
+	virtual void Revert();
+	virtual void SetClean();
+	virtual bool IsClean();
+
+	const bool* GetPointer();
 	void Set(bool newValue);
 	void Clear();
-	void Reset();
 	bool GetInto(bool& dest);
-	void SetClean();
-	bool IsClean();
 	bool Is(bool expectedValue) 
 	{ return mConfigured && mValue == expectedValue; }
 
@@ -117,17 +120,19 @@ class IntProperty : public Property
 		PropertyChangeListener* pListener);
 	IntProperty(const char * pKeyName, PropertyChangeListener* pListener);
 	
-	void SetFrom(const Configuration* pConf);
-	const int* Get();
+	virtual void SetFrom(const Configuration* pConf);
+	virtual void Reset();
+	virtual void Revert();
+	virtual void SetClean();
+	virtual bool IsClean();
+
+	const int* GetPointer();
 	void Set(int newValue);
 	bool SetFromString(const wxString& rSource);
 	void Clear();
-	void Reset();
 	bool GetInto(wxString& rDest);
 	bool GetInto(std::string& rDest);
 	bool GetInto(int& dest);
-	void SetClean();
-	bool IsClean();
 	bool IsConfigured() { return mConfigured; }
 	bool Is(int expectedValue)
 	{ return mConfigured && mValue == expectedValue; }
@@ -146,17 +151,19 @@ class StringProperty : public Property
 		PropertyChangeListener* pListener);
 	StringProperty(const char * pKeyName, PropertyChangeListener* pListener);
 
-	void SetFrom(const Configuration* pConf);
-	const std::string* Get();
+	virtual void SetFrom(const Configuration* pConf);
+	virtual void Reset();
+	virtual void Revert();
+	virtual void SetClean();
+	virtual bool IsClean();
+		
+	const std::string* GetPointer();
 	void Set(const wxString&    rNewValue);
 	void Set(const std::string& rNewValue);
 	void Set(const char *       pNewValue);
 	void Clear();
-	void Reset();
 	bool GetInto(std::string& rDest);
 	bool GetInto(wxString&    rDest);
-	void SetClean();
-	bool IsClean();
 	bool IsConfigured() { return mConfigured; }
 	bool Is(const wxString& expectedValue)
 	{ return mConfigured && expectedValue.IsSameAs(wxString(mValue.c_str(), wxConvLibc)); }
