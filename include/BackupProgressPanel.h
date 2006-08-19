@@ -2,8 +2,8 @@
  *            BackupProgressPanel.h
  *
  *  Mon Apr  4 20:35:39 2005
- *  Copyright  2005  Chris Wilson
- *  Email <boxi_BackupProgressPanel.h@qwirx.com>
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -38,10 +38,7 @@
 #include "BackupStoreException.h"
 #undef NDEBUG
 
-// #ifdef HAVE_CONFIG_H
-// #  include <config.h>
-// #endif
-
+#include "BoxiApp.h"
 #include "ClientConfig.h"
 #include "ClientConnection.h"
 
@@ -337,9 +334,10 @@ class BackupProgressPanel
 		mpNumBytesTotal->SetValue(FormatNumBytes(mNumBytesCounted));
 	}
 
-	void ReportBackupFatalError(wxString msg)
+	void ReportBackupFatalError(message_t messageId, wxString msg)
 	{
-		wxMessageBox(msg, wxT("Boxi Error"), wxOK | wxICON_ERROR, this);
+		wxGetApp().ShowMessageBox(messageId, msg, wxT("Boxi Error"), 
+			wxOK | wxICON_ERROR, this);
 		mpErrorList->Append(msg);
 	}
 

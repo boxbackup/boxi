@@ -2,8 +2,8 @@
  *            BackupProgressPanel.cc
  *
  *  Mon Apr  4 20:36:25 2005
- *  Copyright  2005  Chris Wilson
- *  Email <boxi_BackupProgressPanel.cc@qwirx.com>
+ *  Copyright 2005-2006 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -106,7 +106,7 @@ BackupProgressPanel::BackupProgressPanel(
 		this, wxT("Errors"));
 	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
-	mpErrorList = new wxListBox(this, wxID_ANY);
+	mpErrorList = new wxListBox(this, ID_BackupProgress_ErrorList);
 	pErrorsBox->Add(mpErrorList, 1, wxGROW | wxALL, 4);
 
 	wxStaticBoxSizer* pStatsBox = new wxStaticBoxSizer(wxVERTICAL,
@@ -178,7 +178,7 @@ void BackupProgressPanel::StartBackup()
 	{
 		wxString msg;
 		msg.Printf(wxT("Error: cannot start backup: %s"), errorMsg.c_str());
-		ReportBackupFatalError(msg);
+		ReportBackupFatalError(BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION, msg);
 		return;
 	}
 	
@@ -187,8 +187,9 @@ void BackupProgressPanel::StartBackup()
 
 	if (storeHost.length() == 0) 
 	{
-		ReportBackupFatalError(
-			wxT("You have not configured the Store Hostname!"));
+		ReportBackupFatalError(BM_BACKUP_FAILED_NO_STORE_HOSTNAME,
+			wxT("Error: cannot start backup: "
+			"You have not configured the Store Hostname!"));
 		return;
 	}
 
@@ -197,18 +198,18 @@ void BackupProgressPanel::StartBackup()
 
 	if (keysFile.length() == 0) 
 	{
-		ReportBackupFatalError(
+		ReportBackupFatalError(BM_BACKUP_FAILED_NO_KEYS_FILE,
 			wxT("Error: cannot start backup: "
-				"you have not configured the Keys File"));
+			"you have not configured the Keys File"));
 		return;
 	}
 
 	int acctNo;
 	if (!mpConfig->AccountNumber.GetInto(acctNo))
 	{
-		ReportBackupFatalError(
+		ReportBackupFatalError(BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER,
 			wxT("Error: cannot start backup: "
-				"you have not configured the Account Number"));
+			"you have not configured the Account Number"));
 		return;
 	}
 	
@@ -222,8 +223,9 @@ void BackupProgressPanel::StartBackup()
 	int minimumFileAgeSecs;
 	if (!mpConfig->MinimumFileAge.GetInto(minimumFileAgeSecs))
 	{
-		ReportBackupFatalError(
-			wxT("You have not configured the minimum file age"));
+		ReportBackupFatalError(BM_BACKUP_FAILED_NO_MINIMUM_FILE_AGE,
+			wxT("Error: cannot start backup: "
+			"You have not configured the minimum file age"));
 		return;
 	}
 	box_time_t minimumFileAge = SecondsToBoxTime((uint32_t)minimumFileAgeSecs);
@@ -233,8 +235,9 @@ void BackupProgressPanel::StartBackup()
 	int maxUploadWaitSecs;
 	if (!mpConfig->MaxUploadWait.GetInto(maxUploadWaitSecs))
 	{
-		ReportBackupFatalError(
-			wxT("You have not configured the maximum upload wait"));
+		ReportBackupFatalError(BM_BACKUP_FAILED_NO_MAXIMUM_UPLOAD_WAIT,
+			wxT("Error: cannot start backup: "
+			"You have not configured the maximum upload wait"));
 		return;
 	}
 	box_time_t maxUploadWait = SecondsToBoxTime((uint32_t)maxUploadWaitSecs);
@@ -253,16 +256,18 @@ void BackupProgressPanel::StartBackup()
 	if (!mpConfig->FileTrackingSizeThreshold.GetInto(
 		params.mFileTrackingSizeThreshold))
 	{
-		ReportBackupFatalError(
-			wxT("You have not configured the file tracking size threshold"));
+		ReportBackupFatalError(BM_BACKUP_FAILED_NO_TRACKING_THRESHOLD,
+			wxT("Error: cannot start backup: "
+			"You have not configured the file tracking size threshold"));
 		return;
 	}
 
 	if (!mpConfig->DiffingUploadSizeThreshold.GetInto(
 		params.mDiffingUploadSizeThreshold))
 	{
-		ReportBackupFatalError(
-			wxT("You have not configured the diffing upload size threshold"));
+		ReportBackupFatalError(BM_BACKUP_FAILED_NO_DIFFING_THRESHOLD,
+			wxT("Error: cannot start backup: "
+			"You have not configured the diffing upload size threshold"));
 		return;
 	}
 
@@ -275,16 +280,16 @@ void BackupProgressPanel::StartBackup()
 	
 	// Calculate the sync period of files to examine
 	box_time_t syncPeriodStart = 0;
-	box_time_t syncPeriodEnd = 	GetCurrentBoxTime() - minimumFileAge;
-	// Check logic
-	ASSERT(syncPeriodEnd > syncPeriodStart);
+	box_time_t syncPeriodEnd = GetCurrentBoxTime() - minimumFileAge;
+
 	// Paranoid check on sync times
 	if (syncPeriodStart >= syncPeriodEnd)
 	{
 		wxString msg;
-		msg.Printf(wxT("Sync time window calculation failed: %lld >= %lld"),
+		msg.Printf(wxT("Error: cannot start backup: "
+			"Sync time window calculation failed: %lld >= %lld"),
 			syncPeriodStart, syncPeriodEnd);
-		ReportBackupFatalError(msg);
+		ReportBackupFatalError(BM_BACKUP_FAILED_INVALID_SYNC_PERIOD, msg);
 		return;
 	}
 
@@ -399,16 +404,18 @@ void BackupProgressPanel::StartBackup()
 	{
 		mpSummaryText->SetLabel(wxT("Backup Failed"));
 		wxString msg;
-		msg.Printf(wxT("Failed to connect to server: %s"),
+		msg.Printf(wxT("Error: cannot start backup: "
+			"Failed to connect to server: %s"),
 			wxString(e.what(), wxConvLibc).c_str());
-		ReportBackupFatalError(msg);
+		ReportBackupFatalError(BM_BACKUP_FAILED_CONNECT_FAILED, msg);
 	}
 	catch (BackupStoreException& be)
 	{
 		if (be.GetSubType() == BackupStoreException::SignalReceived)
 		{
 			mpSummaryText->SetLabel(wxT("Backup Interrupted"));
-			ReportBackupFatalError(wxT("Backup interrupted by user"));
+			ReportBackupFatalError(BM_BACKUP_FAILED_INTERRUPTED,
+				wxT("Backup interrupted by user"));
 		}
 		else		
 		{
@@ -418,7 +425,8 @@ void BackupProgressPanel::StartBackup()
 	catch (...)
 	{
 		mpSummaryText->SetLabel(wxT("Backup Failed"));
-		ReportBackupFatalError(wxT("Unknown error"));
+		ReportBackupFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR,
+			wxT("Unknown error"));
 	}	
 
 	mpCurrentText->SetLabel(wxT("Idle (nothing to do)"));
