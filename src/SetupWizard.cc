@@ -542,14 +542,13 @@ class PrivateKeyPage : public FileSavingPage
 	
 	bool CreateNewKeyWithBio(BIGNUM* pBigNum, RSA* pRSA, BIO* pKeyOutBio)
 	{
-		char* filename = strdup(GetFileNameString().mb_str(wxConvLibc).data());		
-		int result = BIO_write_filename(pKeyOutBio, filename);
-		free(filename);
+		wxCharBuffer buf = GetFileNameString().mb_str(wxConvLibc);
+		int result = BIO_write_filename(pKeyOutBio, buf.data());
 		
 		if (result <= 0)
 		{
-			ShowSslError(wxT("Failed to open key file using an OpenSSL BIO"),
-				BM_SETUP_WIZARD_OPENSSL_ERROR);
+			ShowSslError(wxT("Failed to open key file using an "
+				"OpenSSL BIO"), BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
 
@@ -911,11 +910,10 @@ class CertRequestPage : public FileSavingPage
 		
 		X509_NAME* pX509SubjectName = X509_REQ_get_subject_name(pRequest);
 
-		unsigned char* subject = (unsigned char *)strdup(
-			certSubject.mb_str(wxConvLibc).data());
-		int result = X509_NAME_add_entry_by_NID(pX509SubjectName, commonNameNid, 
-			MBSTRING_ASC, subject, -1, -1, 0);
-		free(subject);
+		wxCharBuffer buf = certSubject.mb_str(wxConvLibc);
+		int result = X509_NAME_add_entry_by_NID(pX509SubjectName, 
+			commonNameNid, MBSTRING_ASC, 
+			(unsigned char *)buf.data(), -1, -1, 0);
 		
 		// X509_NAME_free(pX509SubjectName);
 		
@@ -987,10 +985,8 @@ class CertRequestPage : public FileSavingPage
 			return FALSE;
 		}
 		
-		wxCharBuffer buf = GetFileNameString().mb_str(wxConvLibc);
-		char* filename = strdup(buf.data());
-		result = BIO_write_filename(pRequestBio, filename);
-		free(filename);
+		buf = GetFileNameString().mb_str(wxConvLibc);
+		result = BIO_write_filename(pRequestBio, buf.data());
 		
 		if (result <= 0)
 		{
@@ -1182,8 +1178,12 @@ class CertExistsPage : public SetupWizardPage
 	wxWizardPage*  mpCertFilePage;
 	
 	public:
-	CertExistsPage(ClientConfig *pConfig, wxWizard* pParent = NULL, 
-		CertRequestPage* pCertRequestPage, CertificatePage* pCertFilePage)
+	CertExistsPage
+	(
+		ClientConfig *pConfig, wxWizard* pParent, 
+		CertRequestPage* pCertRequestPage, 
+		CertificatePage* pCertFilePage
+	)
  	: SetupWizardPage(pConfig, pParent, wxT(
 		"<html><body><h1>Certificate</h1>"
 		"<p>You must have a certificate to tell the server operator who you "
@@ -1321,10 +1321,8 @@ class CryptoKeyPage : public FileSavingPage
 			return FALSE;
 		}
 		
-		char* filename = strdup(
-			GetFileNameString().mb_str(wxConvLibc).data());
-		int result = BIO_write_filename(pKeyOutBio, filename);
-		free(filename);
+		wxCharBuffer buf = GetFileNameString().mb_str(wxConvLibc);
+		int result = BIO_write_filename(pKeyOutBio, buf.data());
 		
 		if (!result)
 		{
@@ -1553,13 +1551,13 @@ class DataDirectoryPage : public SetupWizardPage
 			if (st.st_mode & 0077)
 			{
 				wxString msg;
-				msg.Printf(wxT("The specified data directory "
+				msg.Printf(wxT("The specified data directory (%s) "
 					"already exists, and is accessible to other "
 					"users. This is dangerous and not allowed.\n\n"
 					"Please remove all permissions for other users "
 					"to access the data directory, or choose a "
 					"different one"),
-					parent.GetFullPath().c_str());
+					dataDirName.c_str());
 				ShowError(msg, BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
 				return false;
 			}
@@ -1573,10 +1571,11 @@ class DataDirectoryPage : public SetupWizardPage
 		if (!parent.DirExists())
 		{
 			wxString msg;
-			msg.Printf(wxT("The specified data directory "
+			msg.Printf(wxT("The specified data directory (%s) "
 				"does not exist, and cannot be created, "
 				"because the parent directory (%s) "
 				"does not exist"),
+				dataDirName.c_str(),
 				parent.GetFullPath().c_str());
 			ShowError(msg, BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
 			return false;
@@ -1604,10 +1603,11 @@ class DataDirectoryPage : public SetupWizardPage
 		if (!parentAccessible)
 		{
 			wxString msg;
-			msg.Printf(wxT("The specified data directory "
+			msg.Printf(wxT("The specified data directory (%s) "
 				"does not exist, and cannot be created, "
 				"because you do not have permission to write "
 				"to the parent directory (%s)"),
+				dataDirName.c_str(),
 				parent.GetFullPath().c_str());
 			ShowError(msg, BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
 			return false;
@@ -1632,7 +1632,7 @@ class DataDirectoryPage : public SetupWizardPage
 			if (st.st_mode & 0077)
 			{
 				wxString msg;
-				msg.Printf(wxT("The specified data directory "
+				msg.Printf(wxT("The specified data directory (%s) "
 					"already exists, and is accessible to other "
 					"users. This is dangerous and not allowed.\n\n"
 					"Please remove all permissions for other users "

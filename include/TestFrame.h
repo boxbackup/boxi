@@ -117,7 +117,9 @@ namespace CppUnit
 		
 		static std::string toString(const wxString& x)
 		{
-			return x.mb_str(wxConvLibc).data();
+			wxCharBuffer buf = x.mb_str(wxConvLibc);
+			std::string ret = buf.data();
+			return ret;
 			// std::string text = '"' + x.mb_str(wxConvLibc).data() + '"';    
 			// return text;
 			// adds quote around the string to see whitespace

@@ -1249,13 +1249,12 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		
 		if (!handled)
 		{
-			wxCharBuffer buf = pTreeNode->GetFullPath().mb_str(wxConvLibc);
 			MyExcludeEntry newEntry(
 				theExcludeTypes[
 					pTreeNode->IsDirectory() 
 					? ETI_ALWAYS_INCLUDE_DIR
 					: ETI_ALWAYS_INCLUDE_FILE],
-				buf.data());
+				pTreeNode->GetFullPath());
 			if (pList)
 				pList->AddEntry(newEntry);
 			updateChildren = TRUE;
@@ -1297,15 +1296,12 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		
 		if (!handled) 
 		{
-			wxCharBuffer buf = pTreeNode->GetFullPath()
-				.mb_str(wxConvLibc);
-
 			MyExcludeEntry newEntry(
 				theExcludeTypes[
 					pTreeNode->IsDirectory() 
 					? ETI_EXCLUDE_DIR
 					: ETI_EXCLUDE_FILE],
-				buf.data());
+				pTreeNode->GetFullPath());
 
 			if (pList)
 				pList->AddEntry(newEntry);

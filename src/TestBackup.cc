@@ -174,7 +174,8 @@ class StoreServerThread : public wxThread
 	StoreServerThread(const wxString& rFilename)
 	: wxThread(wxTHREAD_JOINABLE)
 	{
-		mDaemon.Load(rFilename.mb_str(wxConvLibc).data());
+		wxCharBuffer buf = rFilename.mb_str(wxConvLibc);
+		mDaemon.Load(buf.data());
 		mDaemon.Setup();
 	}
 
@@ -489,9 +490,9 @@ void TestBackup::RunTest()
 		long result = wxExecute(command, wxEXEC_SYNC);
 		if (result != 0)
 		{
+			wxCharBuffer buf = command.mb_str(wxConvLibc);
 			printf("Failed to execute command '%s': error %d\n",
-				command.mb_str(wxConvLibc).data(),
-				(int)result);
+				buf.data(), (int)result);
 			CPPUNIT_ASSERT_EQUAL(0, (int)result);
 		}
 	}
@@ -576,8 +577,7 @@ void TestBackup::RunTest()
 
 	wxTreeItemId rootId = pTree->GetRootItem();
 	wxString rootLabel  = pTree->GetItemText(rootId);
-	CPPUNIT_ASSERT_EQUAL((std::string)"/ (local root)", 
-		(std::string)rootLabel.mb_str(wxConvLibc).data());
+	CPPUNIT_ASSERT_EQUAL((wxString)_("/ (local root)"), rootLabel);
 	
 	FileImageList images;
 	CPPUNIT_ASSERT_EQUAL(images.GetEmptyImageId(), 
@@ -749,8 +749,9 @@ void TestBackup::RunTest()
 					break;
 				}
 			}
-			
-			CPPUNIT_ASSERT_MESSAGE(dirName.mb_str(wxConvLibc).data(), found);
+		
+			wxCharBuffer buf = dirName.mb_str(wxConvLibc);	
+			CPPUNIT_ASSERT_MESSAGE(buf.data(), found);
 		}
 		
 		wxTreeItemIdValue cookie;
@@ -1520,7 +1521,7 @@ void TestBackup::RunTest()
 		( \
 			MyExcludeEntry \
 			( \
-				theExcludeTypes[type], path \
+				theExcludeTypes[type], (wxString)path \
 			) \
 		)
 		
@@ -1749,13 +1750,11 @@ void TestBackup::RunTest()
 	CPPUNIT_ASSERT(configFile.FileExists());
 	
 	std::string errs;
+	wxCharBuffer buf = configFile.GetFullPath().mb_str(wxConvLibc);
 	std::auto_ptr<Configuration> apClientConfig
 	(
-		Configuration::LoadAndVerify
-		(
-			configFile.GetFullPath().mb_str(wxConvLibc).data(), 
-			&BackupDaemonConfigVerify, errs
-		)
+		Configuration::LoadAndVerify(buf.data(), 
+			&BackupDaemonConfigVerify, errs)
 	);
 	CPPUNIT_ASSERT(apClientConfig.get());
 	CPPUNIT_ASSERT(errs.empty());
@@ -1810,9 +1809,8 @@ void TestBackup::RunTest()
 		// compare
 		BackupQueries::CompareParams params;
 		params.mQuiet = true;
-		query.Compare("testdata", 
-			testDataDir.GetFullPath().mb_str(wxConvLibc).data(), 
-			params);
+		wxCharBuffer buf = testDataDir.GetFullPath().mb_str(wxConvLibc);
+		query.Compare("testdata", buf.data(), params);
 		CPPUNIT_ASSERT_EQUAL(1, params.mDifferences);
 		CPPUNIT_ASSERT_EQUAL(0, 
 			params.mDifferencesExplainedByModTime);
@@ -1857,9 +1855,8 @@ void TestBackup::RunTest()
 
 		BackupQueries::CompareParams params;
 		params.mQuiet = false;
-		query.Compare("testdata", 
-			testDataDir.GetFullPath().mb_str(wxConvLibc).data(), 
-			params);
+		wxCharBuffer buf = testDataDir.GetFullPath().mb_str(wxConvLibc);
+		query.Compare("testdata", buf.data(), params);
 		CPPUNIT_ASSERT_EQUAL(0, params.mDifferences);
 		CPPUNIT_ASSERT_EQUAL(0, 
 			params.mDifferencesExplainedByModTime);

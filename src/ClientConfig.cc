@@ -957,15 +957,17 @@ static AutoFree<X509, X509_free> LoadCertificate(wxString rCertificateFileName,
 		*pMsgOut = FormatSslError(_("Failed to create an OpenSSL BIO"));
 		return error;
 	}
-	
-	if (BIO_read_filename(apCertBio.get(), 
-		rCertificateFileName.mb_str(wxConvLibc).data()) <= 0)
+
 	{
-		wxString msg;
-		msg.Printf(_("Failed to set the certificate file name (%s)"),
-			rCertificateFileName.c_str());
-		*pMsgOut = FormatSslError(msg);
-		return error;
+		wxCharBuffer buf = rCertificateFileName.mb_str(wxConvLibc);	
+		if (BIO_read_filename(apCertBio.get(), buf.data()) <= 0)
+		{
+			wxString msg;
+			msg.Printf(_("Failed to set the certificate file name "
+				"(%s)"), rCertificateFileName.c_str());
+			*pMsgOut = FormatSslError(msg);
+			return error;
+		}
 	}
 	
 	AutoFree<X509, X509_free> apCertToVerify(
@@ -1008,16 +1010,19 @@ static bool VerifyCertificate
 			_("Failed to create an OpenSSL certificate lookup"));
 		return false;
 	}
-	
-	if (!X509_LOOKUP_load_file(pLookup, 
-		rIssuerCertFileName.mb_str(wxConvLibc).data(), 
-		X509_FILETYPE_PEM))
-	{
-		wxString msg;
-		msg.Printf(_("Failed to load the expected issuer's "
-			"certificate file (%s)"), rIssuerCertFileName.c_str());
-		*pMsgOut = FormatSslError(msg);
-		return false;
+
+	{	
+		wxCharBuffer buf = rIssuerCertFileName.mb_str(wxConvLibc);
+		if (!X509_LOOKUP_load_file(pLookup, buf.data(),
+			X509_FILETYPE_PEM))
+		{
+			wxString msg;
+			msg.Printf(_("Failed to load the expected issuer's "
+				"certificate file (%s)"), 
+				rIssuerCertFileName.c_str());
+			*pMsgOut = FormatSslError(msg);
+			return false;
+		}
 	}
 	
 	AutoFree<X509, X509_free> apCertToVerify = 
@@ -1428,16 +1433,18 @@ EVP_PKEY* LoadKey(const wxString& rKeyFileName, wxString* pMsgOut)
 			"to read the private key"));
 		return NULL;
 	}
-	
-	if (BIO_read_filename(pKeyBio, 
-		rKeyFileName.mb_str(wxConvLibc).data()) <= 0)
+
 	{
-		wxString msg;
-		msg.Printf(_("Failed to read the private key file (%s)"),
-			rKeyFileName.c_str());
-		*pMsgOut = FormatSslError(msg);
-		BIO_free(pKeyBio);
-		return NULL;
+		wxCharBuffer buf = rKeyFileName.mb_str(wxConvLibc);
+		if (BIO_read_filename(pKeyBio, buf.data()) <= 0)
+		{
+			wxString msg;
+			msg.Printf(_("Failed to read the private key file "
+				"(%s)"), rKeyFileName.c_str());
+			*pMsgOut = FormatSslError(msg);
+			BIO_free(pKeyBio);
+			return NULL;
+		}
 	}
 	
 	EVP_PKEY* pKey = PEM_read_bio_PrivateKey(pKeyBio, NULL, NULL, NULL);

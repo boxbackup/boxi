@@ -296,8 +296,9 @@ void TestWizard::CheckForwardErrorImpl
 	msg.Printf(_("Expected error message was not shown: %s"),
 		rMessageName.c_str());
 	
-	CPPUNIT_ASSERT_MESSAGE_AT(msg.mb_str(wxConvLibc).data(), 
-		wxGetApp().ShowedMessageBox(), rLine);
+	wxCharBuffer buf = msg.mb_str(wxConvLibc);
+	CPPUNIT_ASSERT_MESSAGE_AT(buf.data(), wxGetApp().ShowedMessageBox(), 
+		rLine);
 	
 	CPPUNIT_ASSERT_EQUAL_AT(oldPageId, mpWizard->GetCurrentPageId(), rLine);
 }
@@ -675,13 +676,11 @@ void TestWizard::RunTest()
 		CPPUNIT_ASSERT_MESSAGE("Failed to create an OpenSSL BIO object",
 			pKeyOutBio);
 		
-		char* filename = strdup
-		(
-			clientCaKeyFileName.GetFullPath().mb_str(wxConvLibc).data()
-		);
-		CPPUNIT_ASSERT_MESSAGE("Failed to open key file using an OpenSSL BIO",
-			BIO_write_filename(pKeyOutBio, filename) >= 0);
-		free(filename);
+		wxCharBuffer filename = 
+			clientCaKeyFileName.GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT_MESSAGE("Failed to open key file using an "
+			"OpenSSL BIO",
+			BIO_write_filename(pKeyOutBio, filename.data()) >= 0);
 		
 		CPPUNIT_ASSERT_MESSAGE("Failed to set key type to RSA F4",
 			BN_set_word(pBigNum, RSA_F4));
@@ -766,13 +765,13 @@ void TestWizard::RunTest()
 		CPPUNIT_ASSERT_MESSAGE("X.509 subject name was null", 
 			pX509SubjectName);
 
-		unsigned char* subject = (unsigned char *)strdup(
-			certSubject.mb_str(wxConvLibc).data());
+		wxCharBuffer subject = certSubject.mb_str(wxConvLibc);
 		CPPUNIT_ASSERT_MESSAGE("Failed to add common name to "
 			"certificate request",
-			X509_NAME_add_entry_by_NID(pX509SubjectName, commonNameNid, 
-				MBSTRING_ASC, subject, -1, -1, 0));
-		free(subject);
+			X509_NAME_add_entry_by_NID(pX509SubjectName, 
+				commonNameNid, MBSTRING_ASC, 
+				(unsigned char *)subject.data(), 
+				-1, -1, 0));
 
 		CPPUNIT_ASSERT_MESSAGE("Failed to set public key of "
 			"certificate request", X509_REQ_set_pubkey(pRequest, pKey));
@@ -809,15 +808,14 @@ void TestWizard::RunTest()
 		CPPUNIT_ASSERT_MESSAGE("Failed to verify signature on "
 			"certificate request", X509_REQ_verify(pRequest, pKey));
 		
-		wxCharBuffer buf = clientCaCsrFileName.GetFullPath().mb_str(wxConvLibc);
-		filename = strdup(buf.data());
+		wxCharBuffer buf = 
+			clientCaCsrFileName.GetFullPath().mb_str(wxConvLibc);
 		CPPUNIT_ASSERT_MESSAGE("Failed to set certificate request "
 			"output filename", 
-			BIO_write_filename(pRequestBio, filename) > 0);
-		free(filename);
+			BIO_write_filename(pRequestBio, buf.data()) > 0);
 		
-		CPPUNIT_ASSERT_MESSAGE("Failed to write certificate request file",
-			PEM_write_bio_X509_REQ(pRequestBio, pRequest));
+		CPPUNIT_ASSERT_MESSAGE("Failed to write certificate request "
+			"file", PEM_write_bio_X509_REQ(pRequestBio, pRequest));
 		
 		X509_REQ_free(pRequest);
 		pRequest = NULL;
