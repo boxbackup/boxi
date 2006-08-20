@@ -9,7 +9,7 @@ DIE=0
 
 mkdir -p boxbackup
 touch boxbackup/Makefile.in
-ACLOCAL_FLAGS="-I $srcdir/boxbackup/infrastructure/m4"
+ACLOCAL_FLAGS="-I $srcdir/boxbackup/infrastructure/m4 -I $HOME/`hostname`/share/aclocal"
 
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
   echo
@@ -109,7 +109,10 @@ do
       fi
       test -d m4 && aclocalinclude="$aclocalinclude -I m4"
       echo "Running aclocal $aclocalinclude ..."
-      aclocal $aclocalinclude
+      if ! aclocal $aclocalinclude; then
+        echo "Error: aclocal failed, aborting." >&2
+        exit 2
+      fi
       if grep "^AM_CONFIG_HEADER" configure.in >/dev/null; then
 	echo "Running autoheader..."
 	autoheader
@@ -118,7 +121,7 @@ do
       automake --add-missing --gnu $am_opt
       echo "Running autoconf ..."
       autoconf
-    )
+    ) || exit $?
   fi
 done
 
