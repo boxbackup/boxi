@@ -38,6 +38,7 @@
 #include "SslConfig.h"
 #include "TestFrame.h"
 #include "TestBackup.h"
+#include "TestBackupConfig.h"
 #include "TestConfig.h"
 #include "TestWizard.h"
 
@@ -506,6 +507,7 @@ class GuiTestSuite : public CppUnit::TestFixture
 		)
 		
 		ADD_TEST(TestBackup);
+		ADD_TEST(TestBackupConfig);
 		// ADD_TEST(TestOpenWizard);
 		// ADD_TEST(TestWizard);
 		// ADD_TEST(TestConfig);
