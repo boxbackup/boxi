@@ -716,6 +716,7 @@ void BackupDaemon::Run2()
 				{
 					// Tell the sysadmin about this
 					NotifySysadmin(NotifyEvent_StoreFull);
+					storageLimitExceeded = true;
 				}
 				else
 				{
