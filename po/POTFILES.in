@@ -52,5 +52,6 @@ src/swWxGuiTestEventSimulationHelper.cpp
 src/TestConfig.cc
 src/TestWizard.cc
 src/TestBackup.cc
+src/TestBackupConfig.cc
 
 

@@ -108,7 +108,8 @@ module.include.files=\
 	WxGuiTestHelper.h\
 	swWxGuiTestEventSimulationHelper.h\
 	BoxiApp.h\
-	TestBackup.h
+	TestBackup.h\
+	TestBackupConfig.h
 
 module.source.name=src
 module.source.type=
@@ -159,7 +160,8 @@ module.source.files=\
 	swWxGuiTestEventSimulationHelper.cpp\
 	TestConfig.cc\
 	TestWizard.cc\
-	TestBackup.cc
+	TestBackup.cc\
+	TestBackupConfig.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=

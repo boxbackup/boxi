@@ -63,7 +63,8 @@ boxi_SOURCES = \
 	swWxGuiTestEventSimulationHelper.cpp\
 	TestConfig.cc\
 	TestWizard.cc\
-	TestBackup.cc
+	TestBackup.cc\
+	TestBackupConfig.cc
 
 boxi_LDFLAGS = 
 
