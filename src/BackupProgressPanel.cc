@@ -364,7 +364,7 @@ void BackupProgressPanel::StartBackup()
 		mpProgressGauge->SetRange(mNumFilesCounted);
 		mpProgressGauge->Show();
 		
-		// Go through the records, syncing them
+		// Go through the records agains, this time syncing them
 		for (tLocationRecords::const_iterator i = mLocations.begin();
 			i != mLocations.end(); i++)
 		{
@@ -395,9 +395,24 @@ void BackupProgressPanel::StartBackup()
 			// Unset exclude lists (just in case)
 			clientContext.SetExcludeLists(0, 0);
 		}
-	
-		mpSummaryText->SetLabel(wxT("Backup Finished"));
-		mpErrorList  ->Append  (wxT("Backup Finished"));
+		
+		// Perform any deletions required -- these are delayed until
+		// the end to allow renaming to happen neatly.
+		clientContext.PerformDeletions();
+		
+		if (clientContext.StorageLimitExceeded())
+		{
+			ReportBackupFatalError(BM_BACKUP_FAILED_STORE_FULL,
+				_("Error: cannot finish backup: "
+				"out of space on server"));
+			mpSummaryText->SetLabel(wxT("Backup Failed"));
+		}
+		else
+		{
+			mpSummaryText->SetLabel(wxT("Backup Finished"));
+			mpErrorList  ->Append  (wxT("Backup Finished"));
+		}
+		
 		mpProgressGauge->Hide();
 	}
 	catch (ConnectionException& e) 
