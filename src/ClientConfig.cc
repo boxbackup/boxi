@@ -244,7 +244,20 @@ Location* ClientConfig::GetLocation(const Location& rConstLocation)
 	}
 	return NULL;
 }
-	
+
+Location* ClientConfig::GetLocation(const wxString& rName)
+{
+	for (std::vector<Location>::iterator pLoc = mLocations.begin();
+		pLoc != mLocations.end(); pLoc++)
+	{
+		if (pLoc->GetName().IsSameAs(rName))
+		{
+			return &(*pLoc);
+		}
+	}
+	return NULL;
+}
+
 void ClientConfig::AddListener(ConfigChangeListener* pNewListener)
 {
 	for (std::vector<ConfigChangeListener*>::iterator i = mListeners.begin();

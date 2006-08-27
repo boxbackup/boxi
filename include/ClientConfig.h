@@ -82,6 +82,7 @@ class ClientConfig :
 	void RemoveLocation (int index);
 	void RemoveLocation (const Location& rOldLocation);
 	Location* GetLocation(const Location& rConstLocation);
+	Location* GetLocation(const wxString& rName);
 	
 	void AddListener   (ConfigChangeListener* pNewListener);
 	void RemoveListener(ConfigChangeListener* pOldListener);
