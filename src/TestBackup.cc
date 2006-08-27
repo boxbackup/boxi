@@ -22,6 +22,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <sys/time.h> // for utimes()
+
 #include <openssl/ssl.h>
 
 #include <wx/button.h>
@@ -51,6 +53,10 @@
 #include "BackupDaemonConfigVerify.h"
 #include "BackupClientCryptoKeys.h"
 #include "BackupStoreConstants.h"
+#include "BackupStoreInfo.h"
+#include "StoreStructure.h"
+#include "NamedLock.h"
+#include "BackupClientMakeExcludeList.h"
 
 #include "main.h"
 #include "BoxiApp.h"
@@ -59,6 +65,7 @@
 #include "SetupWizard.h"
 #include "SslConfig.h"
 #include "TestBackup.h"
+#include "TestBackupConfig.h"
 #include "FileTree.h"
 
 #include "ServerConnection.h"
@@ -71,7 +78,8 @@ class TestBackupStoreDaemon
 {
 	public:
 	TestBackupStoreDaemon::TestBackupStoreDaemon()
-	: mIsReadyCondition(mConditionLock)
+	: mStateKnownCondition(mConditionLock),
+	  mStateListening(false), mStateDead(false)
 	{ }
 	
 	virtual void Run()   { ServerTLS<BOX_PORT_BBSTORED, 1, false>::Run(); }
@@ -82,7 +90,9 @@ class TestBackupStoreDaemon
 	}
 	
 	wxMutex     mConditionLock;
-	wxCondition mIsReadyCondition;
+	wxCondition mStateKnownCondition;
+	bool        mStateListening;
+	bool        mStateDead;
 
 	virtual void SendMessageToHousekeepingProcess(const void *Msg, int MsgLen)
 	{ }
@@ -104,7 +114,8 @@ class TestBackupStoreDaemon
 void TestBackupStoreDaemon::NotifyListenerIsReady()
 {
 	wxMutexLocker lock(mConditionLock);
-	mIsReadyCondition.Signal();
+	mStateListening = true;
+	mStateKnownCondition.Signal();
 }
 
 void TestBackupStoreDaemon::SetupInInitialProcess()
@@ -186,6 +197,11 @@ class StoreServerThread : public wxThread
 
 	void Start();
 	void Stop();
+	
+	const Configuration& GetConfiguration()
+	{
+		return mDaemon.GetConfiguration();
+	}
 
 	private:
 	virtual ExitCode Entry();
@@ -198,7 +214,9 @@ void StoreServerThread::Start()
 	CPPUNIT_ASSERT_EQUAL(wxTHREAD_NO_ERROR, Run());
 	
 	// wait until listening thread is ready to accept connections
-	mDaemon.mIsReadyCondition.Wait();
+	mDaemon.mStateKnownCondition.Wait();
+	CPPUNIT_ASSERT(mDaemon.mStateListening);
+	CPPUNIT_ASSERT(!mDaemon.mStateDead);
 }
 
 void StoreServerThread::Stop()
@@ -224,6 +242,9 @@ StoreServerThread::ExitCode StoreServerThread::Entry()
 	{
 		printf("Server thread died due to unknown exception\n");
 	}
+	mDaemon.mStateListening = false;
+	mDaemon.mStateDead = true;
+	mDaemon.mStateKnownCondition.Signal();
 	return (void *)1;
 }
 
@@ -248,6 +269,16 @@ class StoreServer
 
 	void Start();
 	void Stop();
+
+	const Configuration& GetConfiguration()
+	{
+		if (!mapThread.get()) 
+		{
+			throw "not running";
+		}
+		
+		return mapThread->GetConfiguration();
+	}
 };
 
 void StoreServer::Start()
@@ -285,7 +316,8 @@ CppUnit::Test *TestBackup::suite()
 	return suiteOfTests;
 }
 
-void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir)
+static void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
+	bool restoreTimes = false)
 {
 	CPPUNIT_ASSERT(rZipFile.FileExists());
 	wxFileInputStream zipFis(rZipFile.GetFullPath());
@@ -295,35 +327,31 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir)
 	for (std::auto_ptr<wxZipEntry> apEntry(zipInput.GetNextEntry());
 		apEntry.get() != NULL; apEntry.reset(zipInput.GetNextEntry()))
 	{
-		wxFileName outName(rDestDir.GetFullPath(), wxEmptyString);
-		wxString entryName = apEntry->GetInternalName();
-		
-		for (int index = entryName.Find('/'); index != -1; 
-			index = entryName.Find('/'))
-		{
-			CPPUNIT_ASSERT(index > 0);
-			outName.AppendDir(entryName.Mid(0, index));
-			entryName = entryName.Mid(index + 1);
-		}
-			
-		outName.SetFullName(entryName);	
-		CPPUNIT_ASSERT(outName.IsOk());
-		CPPUNIT_ASSERT(!outName.FileExists());
-		CPPUNIT_ASSERT(!outName.DirExists());
-		
+		wxFileName outName = MakeAbsolutePath(rDestDir, 
+			apEntry->GetInternalName());
+
 		if (apEntry->IsDir())
 		{
-			wxMkdir(outName.GetFullPath(), 0700);
-			CPPUNIT_ASSERT(outName.DirExists());
+			CPPUNIT_ASSERT(!outName.FileExists());
+			if (!outName.DirExists())
+			{
+				wxMkdir(outName.GetFullPath(), 0700);
+				CPPUNIT_ASSERT(outName.DirExists());
+			}
 		}
 		else
 		{
+			CPPUNIT_ASSERT(!outName.FileExists());
+			CPPUNIT_ASSERT(!outName.DirExists());
+		
 			wxFileOutputStream outFos(outName.GetFullPath());
 			CPPUNIT_ASSERT(outFos.Ok());
 
 			outFos.Write(zipInput);
+			/*
 			CPPUNIT_ASSERT_EQUAL((int)apEntry->GetSize(),
 			       (int)outFos.LastWrite());
+			*/
 
 			CPPUNIT_ASSERT(outName.FileExists());
 			
@@ -331,33 +359,279 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir)
 			CPPUNIT_ASSERT_EQUAL(apEntry->GetSize(), 
 				outFile.Length());
 		}
+		
+		if (restoreTimes)
+		{
+			wxDateTime time = apEntry->GetDateTime();
+			struct timeval tvs[2];
+			tvs[0].tv_sec  = time.GetTicks();
+			tvs[0].tv_usec = 0;
+			tvs[1].tv_sec  = time.GetTicks();
+			tvs[1].tv_usec = 0;
+			wxCharBuffer buf = outName.GetFullPath().mb_str(wxConvLibc);
+			CPPUNIT_ASSERT(::utimes(buf.data(), tvs) == 0);
+		}
 	}
 }
 
-void DeleteRecursive(const wxFileName& rPath)
+int BlockSizeOfDiscSet(int DiscSet)
 {
-	if (rPath.FileExists())
+	// Get controller, check disc set number
+	RaidFileController &controller(RaidFileController::GetController());
+	if(DiscSet < 0 || DiscSet >= controller.GetNumDiscSets())
 	{
-		CPPUNIT_ASSERT(wxRemoveFile(rPath.GetFullPath()));
+		printf("Disc set %d does not exist\n", DiscSet);
+		exit(1);
 	}
-	else if (rPath.DirExists())
+	
+	// Return block size
+	return controller.GetDiscSet(DiscSet).GetBlockSize();
+}
+
+// copied from bbstoreaccounts.o
+static int64_t SizeStringToBlocks(const char *string, int DiscSet)
+{
+	// Find block size
+	int blockSize = BlockSizeOfDiscSet(DiscSet);
+	
+	// Get number
+	char *endptr = (char*)string;
+	int64_t number = strtol(string, &endptr, 0);
+	if(endptr == string || number == LONG_MIN || number == LONG_MAX)
 	{
-		wxDir dir(rPath.GetFullPath());
-		CPPUNIT_ASSERT(dir.IsOpened());
+		printf("%s is an invalid number\n", string);
+		exit(1);
+	}
+	
+	// Check units
+	switch(*endptr)
+	{
+	case 'M':
+	case 'm':
+		// Units: Mb
+		return (number * 1024*1024) / blockSize;
+		break;
 		
-		wxString file;
-		if (dir.GetFirst(&file))
+	case 'G':
+	case 'g':
+		// Units: Gb
+		return (number * 1024*1024*1024) / blockSize;
+		break;
+		
+	case 'B':
+	case 'b':
+		// Units: Blocks
+		// Easy! Just return the number specified.
+		return number;
+		break;
+	
+	default:
+		printf("%s has an invalid units specifier\nUse B for blocks, M for Mb, G for Gb, eg 2Gb\n", string);
+		exit(1);
+		break;		
+	}
+}
+
+bool GetWriteLockOnAccount(NamedLock &rLock, const std::string rRootDir, int DiscSetNum)
+{
+	std::string writeLockFilename;
+	StoreStructure::MakeWriteLockFilename(rRootDir, DiscSetNum, writeLockFilename);
+
+	bool gotLock = false;
+	int triesLeft = 8;
+	do
+	{
+		gotLock = rLock.TryAndGetLock(writeLockFilename.c_str(), 0600 /* restrictive file permissions */);
+		
+		if(!gotLock)
 		{
-			do
-			{
-				wxFileName filename(rPath.GetFullPath(), file);
-				DeleteRecursive(filename);
-			}
-			while (dir.GetNext(&file));
+			--triesLeft;
+			::sleep(1);
 		}
-		
-		CPPUNIT_ASSERT(wxRmdir(rPath.GetFullPath()));
+	} while(!gotLock && triesLeft > 0);
+
+	CPPUNIT_ASSERT(gotLock);
+
+	return gotLock;
+}
+
+// copied from bbstoreaccounts.o
+static void SetLimit(const Configuration &rConfig, int32_t ID, 
+	const char *SoftLimitStr, const char *HardLimitStr)
+{
+	// Load in the account database 
+	std::auto_ptr<BackupStoreAccountDatabase> db(
+		BackupStoreAccountDatabase::Read(
+			rConfig.GetKeyValue("AccountDatabase").c_str()));
+	
+	// Already exists?
+	CPPUNIT_ASSERT(db->EntryExists(ID));
+	
+	// Load it in
+	BackupStoreAccounts acc(*db);
+	std::string rootDir;
+	int discSet;
+	acc.GetAccountRoot(ID, rootDir, discSet);
+	
+	// Attempt to lock
+	NamedLock writeLock;
+	CPPUNIT_ASSERT(GetWriteLockOnAccount(writeLock, rootDir, discSet));
+
+	// Load the info
+	std::auto_ptr<BackupStoreInfo> info(BackupStoreInfo::Load(
+		ID, rootDir, discSet, false /* Read/Write */));
+
+	// Change the limits
+	int64_t softlimit = SizeStringToBlocks(SoftLimitStr, discSet);
+	int64_t hardlimit = SizeStringToBlocks(HardLimitStr, discSet);
+	// CheckSoftHardLimits(softlimit, hardlimit);
+	info->ChangeLimits(softlimit, hardlimit);
+	
+	// Save
+	info->Save();
+}
+
+static void CompareBackup(const Configuration& rClientConfig, 
+	TLSContext& rTlsContext, BackupQueries::CompareParams& rParams,
+	const wxString& rRemoteDir, const wxFileName& rLocalPath)
+{
+	// Connect to server
+	SocketStreamTLS socket;
+	socket.Open(rTlsContext, Socket::TypeINET, 
+		rClientConfig.GetKeyValue("StoreHostname").c_str(), 
+		BOX_PORT_BBSTORED);
+	
+	// Make a protocol, and handshake
+	BackupProtocolClient connection(socket);
+	connection.Handshake();
+	
+	// Check the version of the server
+	{
+		std::auto_ptr<BackupProtocolClientVersion> serverVersion
+		(
+			connection.QueryVersion(BACKUP_STORE_SERVER_VERSION)
+		);
+		CPPUNIT_ASSERT_EQUAL(BACKUP_STORE_SERVER_VERSION,
+			serverVersion->GetVersion());
 	}
+
+	// Login -- if this fails, the Protocol will exception
+	connection.QueryLogin
+	(
+		rClientConfig.GetKeyValueInt("AccountNumber"),
+		BackupProtocolClientLogin::Flags_ReadOnly
+	);
+
+	// Set up a context for our work
+	BackupQueries query(connection, rClientConfig);
+
+	wxCharBuffer remote = rRemoteDir.mb_str(wxConvLibc);
+	wxCharBuffer local  = rLocalPath.GetFullPath().mb_str(wxConvLibc);
+	query.Compare(remote.data(), local.data(), rParams);
+
+	connection.QueryFinished();
+}
+
+static void CompareExpectNoDifferences(const Configuration& rClientConfig, 
+	TLSContext& rTlsContext, const wxString& rRemoteDir, 
+	const wxFileName& rLocalPath)
+{
+	BackupQueries::CompareParams params;
+	params.mQuiet = false;
+	CompareBackup(rClientConfig, rTlsContext, params, rRemoteDir, rLocalPath);
+
+	CPPUNIT_ASSERT_EQUAL(0, params.mDifferences);
+	CPPUNIT_ASSERT_EQUAL(0, 
+		params.mDifferencesExplainedByModTime);
+	CPPUNIT_ASSERT_EQUAL(0, params.mExcludedDirs);
+	CPPUNIT_ASSERT_EQUAL(0, params.mExcludedFiles);
+}
+
+static void CompareExpectDifferences(const Configuration& rClientConfig, 
+	TLSContext& rTlsContext, const wxString& rRemoteDir, 
+	const wxFileName& rLocalPath, int numDiffs, int numDiffsModTime)
+{
+	BackupQueries::CompareParams params;
+	params.mQuiet = true;
+	CompareBackup(rClientConfig, rTlsContext, params, rRemoteDir, rLocalPath);
+
+	CPPUNIT_ASSERT_EQUAL(numDiffs, params.mDifferences);
+	CPPUNIT_ASSERT_EQUAL(numDiffsModTime, 
+		params.mDifferencesExplainedByModTime);
+	CPPUNIT_ASSERT_EQUAL(0, params.mExcludedDirs);
+	CPPUNIT_ASSERT_EQUAL(0, params.mExcludedFiles);
+}
+
+static std::auto_ptr<BackupStoreInfo> GetAccountInfo(const Configuration& rConfig)
+{
+	// Load in the account database 
+	std::auto_ptr<BackupStoreAccountDatabase> db(BackupStoreAccountDatabase::Read(rConfig.GetKeyValue("AccountDatabase").c_str()));
+
+	// Account exists?
+	CPPUNIT_ASSERT(db->EntryExists(2));
+
+	// Load it in
+	BackupStoreAccounts acc(*db);
+	std::string rootDir;
+	int discSet;
+	acc.GetAccountRoot(2, rootDir, discSet);
+	std::auto_ptr<BackupStoreInfo> info(BackupStoreInfo::Load(
+		2, rootDir, discSet, true /* ReadOnly */));
+	return info;
+}
+
+static void CompareLocation(const Configuration& rConfig, 
+	TLSContext& rTlsContext,
+	const std::string& rLocationName, 
+	BackupQueries::CompareParams& rParams)
+{
+	// Find the location's sub configuration
+	const Configuration &locations(rConfig.GetSubConfiguration("BackupLocations"));
+	CPPUNIT_ASSERT(locations.SubConfigurationExists(rLocationName.c_str()));
+	const Configuration &loc(locations.GetSubConfiguration(rLocationName.c_str()));
+	
+	// Generate the exclude lists
+	if(!rParams.mIgnoreExcludes)
+	{
+		rParams.mpExcludeFiles = BackupClientMakeExcludeList_Files(loc);
+		rParams.mpExcludeDirs = BackupClientMakeExcludeList_Dirs(loc);
+	}
+			
+	// Then get it compared
+	CompareBackup(rConfig, rTlsContext, rParams, 
+		std::string("/") + rLocation, loc.GetKeyValue("Path"));
+	
+	// Delete exclude lists
+	rParams.DeleteExcludeLists();
+}
+
+static void CompareLocationExpectNoDifferences(const Configuration& rClientConfig, 
+	TLSContext& rTlsContext, const std::string& rLocationName)
+{
+	BackupQueries::CompareParams params;
+	params.mQuiet = false;
+	CompareLocation(rClientConfig, rTlsContext, params, rLocationName);
+
+	CPPUNIT_ASSERT_EQUAL(0, params.mDifferences);
+	CPPUNIT_ASSERT_EQUAL(0, 
+		params.mDifferencesExplainedByModTime);
+	CPPUNIT_ASSERT_EQUAL(0, params.mExcludedDirs);
+	CPPUNIT_ASSERT_EQUAL(0, params.mExcludedFiles);
+}
+
+static void CompareLocationExpectDifferences(const Configuration& rClientConfig, 
+	TLSContext& rTlsContext, const std::string& rLocationName, 
+	int numDiffs, int numDiffsModTime)
+{
+	BackupQueries::CompareParams params;
+	params.mQuiet = true;
+	CompareLocation(rClientConfig, rTlsContext, params, rLocationName);
+
+	CPPUNIT_ASSERT_EQUAL(numDiffs, params.mDifferences);
+	CPPUNIT_ASSERT_EQUAL(numDiffsModTime, 
+		params.mDifferencesExplainedByModTime);
+	CPPUNIT_ASSERT_EQUAL(0, params.mExcludedDirs);
+	CPPUNIT_ASSERT_EQUAL(0, params.mExcludedFiles);
 }
 
 void TestBackup::RunTest()
@@ -374,47 +648,46 @@ void TestBackup::RunTest()
 	CPPUNIT_ASSERT(wxMkdir(confDir.GetFullPath(), 0700));
 	CPPUNIT_ASSERT(confDir.DirExists());
 	
-	// unzip the certificates
-	/*
-	wxFileName certZipFile(_("../test/config/testcerts.zip"));
-	*/
-
 	// create a directory to hold bbstored's store temporarily
 	wxFileName storeDir(tempDir.GetFullPath(), _("store"));
 	CPPUNIT_ASSERT(wxMkdir(storeDir.GetFullPath(), 0700));
 	CPPUNIT_ASSERT(storeDir.DirExists());
-	/*
-	{
-		wxFileName backupDir(storeDir.GetFullPath(), _("backup"));
-		CPPUNIT_ASSERT(wxMkdir(backupDir.GetFullPath(), 0700));
-		wxFileName accountDir(backupDir.GetFullPath(), _("00000002"));
-		CPPUNIT_ASSERT(wxMkdir(accountDir.GetFullPath(), 0700));
-	}
-	*/
 
 	// create raidfile.conf for the store daemon
 	wxFileName raidConf(confDir.GetFullPath(), _("raidfile.conf"));
 	CPPUNIT_ASSERT(!raidConf.FileExists());
 	
 	{
+		wxFileName storeDir0(storeDir.GetFullPath(), _("0_0"));
+		CPPUNIT_ASSERT(wxMkdir(storeDir0.GetFullPath(), 0700));
+		CPPUNIT_ASSERT(storeDir0.DirExists());
+	
+		wxFileName storeDir1(storeDir.GetFullPath(), _("0_1"));
+		CPPUNIT_ASSERT(wxMkdir(storeDir1.GetFullPath(), 0700));
+		CPPUNIT_ASSERT(storeDir1.DirExists());
+	
+		wxFileName storeDir2(storeDir.GetFullPath(), _("0_2"));
+		CPPUNIT_ASSERT(wxMkdir(storeDir2.GetFullPath(), 0700));
+		CPPUNIT_ASSERT(storeDir2.DirExists());
+	
 		wxFile raidConfFile;
 		CPPUNIT_ASSERT(raidConfFile.Create(raidConf.GetFullPath()));
 		
 		CPPUNIT_ASSERT(raidConfFile.Write(_("disc0\n")));
 		CPPUNIT_ASSERT(raidConfFile.Write(_("{\n")));
 		CPPUNIT_ASSERT(raidConfFile.Write(_("\tSetNumber = 0\n")));
-		CPPUNIT_ASSERT(raidConfFile.Write(_("\tBlockSize = 4096\n")));
+		CPPUNIT_ASSERT(raidConfFile.Write(_("\tBlockSize = 2048\n")));
 
 		CPPUNIT_ASSERT(raidConfFile.Write(_("\tDir0 = ")));
-		CPPUNIT_ASSERT(raidConfFile.Write(storeDir.GetFullPath()));
+		CPPUNIT_ASSERT(raidConfFile.Write(storeDir0.GetFullPath()));
 		CPPUNIT_ASSERT(raidConfFile.Write(_("\n")));
 
 		CPPUNIT_ASSERT(raidConfFile.Write(_("\tDir1 = ")));
-		CPPUNIT_ASSERT(raidConfFile.Write(storeDir.GetFullPath()));
+		CPPUNIT_ASSERT(raidConfFile.Write(storeDir1.GetFullPath()));
 		CPPUNIT_ASSERT(raidConfFile.Write(_("\n")));
 		
 		CPPUNIT_ASSERT(raidConfFile.Write(_("\tDir2 = ")));
-		CPPUNIT_ASSERT(raidConfFile.Write(storeDir.GetFullPath()));
+		CPPUNIT_ASSERT(raidConfFile.Write(storeDir2.GetFullPath()));
 		CPPUNIT_ASSERT(raidConfFile.Write(_("\n")));
 
 		CPPUNIT_ASSERT(raidConfFile.Write(_("}\n")));
@@ -459,19 +732,22 @@ void TestBackup::RunTest()
 	
 		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tListenAddresses = inet:0.0.0.0\n")));
 		
-		wxFileName serverCert(_("../test/config/bbstored/server-cert.pem"));
+		wxFileName serverCert(MakeAbsolutePath(
+			_("../test/config/bbstored/server-cert.pem")));
 		CPPUNIT_ASSERT(serverCert.FileExists());
 		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tCertificateFile = ")));
 		CPPUNIT_ASSERT(storeConfigFile.Write(serverCert.GetFullPath()));
 		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
 	
-		wxFileName serverKey(_("../test/config/bbstored/server-key.pem"));
+		wxFileName serverKey(MakeAbsolutePath(
+			_("../test/config/bbstored/server-key.pem")));
 		CPPUNIT_ASSERT(serverKey.FileExists());
 		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tPrivateKeyFile = ")));
 		CPPUNIT_ASSERT(storeConfigFile.Write(serverKey.GetFullPath()));
 		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
 	
-		wxFileName clientCA(_("../test/config/bbstored/client-ca.pem"));
+		wxFileName clientCA(MakeAbsolutePath(
+			_("../test/config/bbstored/client-ca.pem")));
 		CPPUNIT_ASSERT(clientCA.FileExists());
 		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tTrustedCAsFile = ")));
 		CPPUNIT_ASSERT(storeConfigFile.Write(clientCA.GetFullPath()));
@@ -496,6 +772,10 @@ void TestBackup::RunTest()
 			CPPUNIT_ASSERT_EQUAL(0, (int)result);
 		}
 	}
+
+	// create a directory to hold the data that we will be backing up	
+	wxFileName testDataDir(tempDir.GetFullPath(), _("testdata"));
+	CPPUNIT_ASSERT(testDataDir.Mkdir(0700));
 	
 	MainFrame* pMainFrame = GetMainFrame();
 	CPPUNIT_ASSERT(pMainFrame);
@@ -506,7 +786,8 @@ void TestBackup::RunTest()
 	StoreServer server(storeConfigFileName.GetFullPath());
 	server.Start();
 
-	pMainFrame->DoFileOpen(_("../test/config/bbackupd.conf"));
+	pMainFrame->DoFileOpen(MakeAbsolutePath(
+		_("../test/config/bbackupd.conf")).GetFullPath());
 	wxString msg;
 	bool isOk = mpConfig->Check(msg);
 
@@ -558,1091 +839,6 @@ void TestBackup::RunTest()
 	CPPUNIT_ASSERT(!pBackupPanel->IsShown());	
 	ClickButtonWaitEvent(ID_Main_Frame, ID_General_Backup_Button);
 	CPPUNIT_ASSERT(pBackupPanel->IsShown());
-
-	wxPanel* pBackupFilesPanel = wxDynamicCast
-	(
-		pMainFrame->FindWindow(ID_Backup_Files_Panel), wxPanel
-	);
-	CPPUNIT_ASSERT(pBackupFilesPanel);
-	
-	CPPUNIT_ASSERT(!pBackupFilesPanel->IsShown());	
-	ClickButtonWaitEvent(ID_Main_Frame, ID_Function_Source_Button);
-	CPPUNIT_ASSERT(pBackupFilesPanel->IsShown());
-
-	wxTreeCtrl* pTree = wxDynamicCast
-	(
-		pMainFrame->FindWindow(ID_Backup_Locations_Tree), wxTreeCtrl
-	);
-	CPPUNIT_ASSERT(pTree);
-
-	wxTreeItemId rootId = pTree->GetRootItem();
-	wxString rootLabel  = pTree->GetItemText(rootId);
-	CPPUNIT_ASSERT_EQUAL((wxString)_("/ (local root)"), rootLabel);
-	
-	FileImageList images;
-	CPPUNIT_ASSERT_EQUAL(images.GetEmptyImageId(), 
-		pTree->GetItemImage(rootId));
-		
-	wxListBox* pLocationsListBox = wxDynamicCast
-	(
-		pMainFrame->FindWindow(ID_Backup_LocationsList), wxListBox
-	);
-	CPPUNIT_ASSERT(pLocationsListBox);
-	CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetCount());
-	
-	wxChoice* pExcludeLocsListBox = wxDynamicCast
-	(
-		pMainFrame->FindWindow(ID_BackupLoc_ExcludeLocList), wxChoice
-	);
-	CPPUNIT_ASSERT(pExcludeLocsListBox);
-	CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
-	
-	wxPanel* pLocationsPanel = wxDynamicCast
-	(
-		pMainFrame->FindWindow(ID_BackupLoc_List_Panel), wxPanel
-	);
-	CPPUNIT_ASSERT(pLocationsPanel);
-	
-	wxTextCtrl* pLocationNameCtrl = wxDynamicCast
-	(
-		pLocationsPanel->FindWindow(ID_Backup_LocationNameCtrl), wxTextCtrl
-	);
-	CPPUNIT_ASSERT(pLocationNameCtrl);
-	CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
-		pLocationNameCtrl->GetValue());
-
-	wxTextCtrl* pLocationPathCtrl = wxDynamicCast
-	(
-		pLocationsPanel->FindWindow(ID_Backup_LocationPathCtrl), wxTextCtrl
-	);
-	CPPUNIT_ASSERT(pLocationPathCtrl);
-	CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
-		pLocationPathCtrl->GetValue());	
-
-	wxButton* pLocationAddButton = wxDynamicCast
-	(
-		pLocationsPanel->FindWindow(ID_Backup_LocationsAddButton), wxButton
-	);
-	CPPUNIT_ASSERT(pLocationAddButton);
-
-	wxButton* pLocationEditButton = wxDynamicCast
-	(
-		pLocationsPanel->FindWindow(ID_Backup_LocationsEditButton), wxButton
-	);
-	CPPUNIT_ASSERT(pLocationEditButton);
-
-	wxButton* pLocationDelButton = wxDynamicCast
-	(
-		pLocationsPanel->FindWindow(ID_Backup_LocationsDelButton), wxButton
-	);
-	CPPUNIT_ASSERT(pLocationDelButton);
-
-	wxPanel* pExcludePanel = wxDynamicCast
-	(
-		pMainFrame->FindWindow(ID_BackupLoc_Excludes_Panel), wxPanel
-	);
-	CPPUNIT_ASSERT(pExcludePanel);
-	
-	wxListBox* pExcludeListBox = wxDynamicCast
-	(
-		pExcludePanel->FindWindow(ID_Backup_LocationsList), wxListBox
-	);
-	CPPUNIT_ASSERT(pExcludeListBox);
-	CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
-
-	wxChoice* pExcludeTypeList = wxDynamicCast
-	(
-		pExcludePanel->FindWindow(ID_BackupLoc_ExcludeTypeList), wxChoice
-	);
-	CPPUNIT_ASSERT(pExcludeTypeList);
-	CPPUNIT_ASSERT_EQUAL(8, pExcludeTypeList->GetCount());
-
-	wxTextCtrl* pExcludePathCtrl = wxDynamicCast
-	(
-		pExcludePanel->FindWindow(ID_BackupLoc_ExcludePathCtrl), wxTextCtrl
-	);
-	CPPUNIT_ASSERT(pExcludePathCtrl);
-	CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
-		pExcludePathCtrl->GetValue());
-
-	wxButton* pExcludeAddButton = wxDynamicCast
-	(
-		pExcludePanel->FindWindow(ID_Backup_LocationsAddButton), wxButton
-	);
-	CPPUNIT_ASSERT(pExcludeAddButton);
-
-	wxButton* pExcludeEditButton = wxDynamicCast
-	(
-		pExcludePanel->FindWindow(ID_Backup_LocationsEditButton), wxButton
-	);
-	CPPUNIT_ASSERT(pExcludeEditButton);
-
-	wxButton* pExcludeDelButton = wxDynamicCast
-	(
-		pExcludePanel->FindWindow(ID_Backup_LocationsDelButton), wxButton
-	);
-	CPPUNIT_ASSERT(pExcludeDelButton);
-
-	// test that creating a location using the tree adds entries 
-	// to the locations and excludes list boxes
-	ActivateTreeItemWaitEvent(pTree, rootId);
-	CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-	CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-	CPPUNIT_ASSERT_EQUAL((wxString)_("/ -> root"), pLocationsListBox  ->GetString(0));
-	CPPUNIT_ASSERT_EQUAL((wxString)_("/ -> root"), pExcludeLocsListBox->GetString(0));
-
-	MessageBoxSetResponse(BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, wxNO);
-	ActivateTreeItemWaitEvent(pTree, rootId);
-	MessageBoxCheckFired();
-	CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-	CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-
-	MessageBoxSetResponse(BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, wxYES);
-	ActivateTreeItemWaitEvent(pTree, rootId);
-	MessageBoxCheckFired();
-	CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetCount());
-	CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
-
-	wxFileName testDataDir(tempDir.GetFullPath(), _("testdata"));
-	CPPUNIT_ASSERT(testDataDir.Mkdir(0700));
-	
-	// will be changed in the block below
-	wxTreeItemId testDataDirItem = rootId;
-
-	{
-		wxFileName testDepth1Dir(testDataDir.GetFullPath(), _("depth1"));
-		CPPUNIT_ASSERT(testDepth1Dir.Mkdir(0700));
-		wxFileName testDepth2Dir(testDepth1Dir.GetFullPath(), _("depth2"));
-		CPPUNIT_ASSERT(testDepth2Dir.Mkdir(0700));
-		wxFileName testDepth3Dir(testDepth2Dir.GetFullPath(), _("depth3"));
-		CPPUNIT_ASSERT(testDepth3Dir.Mkdir(0700));
-		wxFileName testDepth4Dir(testDepth3Dir.GetFullPath(), _("depth4"));
-		CPPUNIT_ASSERT(testDepth4Dir.Mkdir(0700));
-		wxFileName testDepth5Dir(testDepth4Dir.GetFullPath(), _("depth5"));
-		CPPUNIT_ASSERT(testDepth5Dir.Mkdir(0700));
-		wxFileName testDepth6Dir(testDepth5Dir.GetFullPath(), _("depth6"));
-		CPPUNIT_ASSERT(testDepth6Dir.Mkdir(0700));
-		
-		wxArrayString testDataDirPathDirs = testDataDir.GetDirs();
-		testDataDirPathDirs.Add(testDataDir.GetName());
-		
-		for (size_t i = 0; i < testDataDirPathDirs.Count(); i++)
-		{
-			wxString dirName = testDataDirPathDirs.Item(i);
-			
-			if (!pTree->IsExpanded(testDataDirItem))
-			{
-				pTree->Expand(testDataDirItem);
-			}
-			
-			bool found = false;
-			wxTreeItemIdValue cookie;
-			wxTreeItemId child;
-			
-			for (child = pTree->GetFirstChild(testDataDirItem, cookie);
-				child.IsOk(); child = pTree->GetNextChild(testDataDirItem, cookie))
-			{
-				if (pTree->GetItemText(child).IsSameAs(dirName))
-				{
-					testDataDirItem = child;
-					found = true;
-					break;
-				}
-			}
-		
-			wxCharBuffer buf = dirName.mb_str(wxConvLibc);	
-			CPPUNIT_ASSERT_MESSAGE(buf.data(), found);
-		}
-		
-		wxTreeItemIdValue cookie;
-		
-		pTree->Expand(testDataDirItem);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
-			pTree->GetChildrenCount(testDataDirItem, false));
-		wxTreeItemId depth1 = pTree->GetFirstChild(testDataDirItem, cookie);
-		CPPUNIT_ASSERT(depth1.IsOk());
-		
-		pTree->Expand(depth1);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
-			pTree->GetChildrenCount(depth1, false));
-		wxTreeItemId depth2 = pTree->GetFirstChild(depth1, cookie);
-		CPPUNIT_ASSERT(depth2.IsOk());
-		
-		pTree->Expand(depth2);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
-			pTree->GetChildrenCount(depth2, false));
-		wxTreeItemId depth3 = pTree->GetFirstChild(depth2, cookie);
-		CPPUNIT_ASSERT(depth3.IsOk());
-		
-		pTree->Expand(depth3);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
-			pTree->GetChildrenCount(depth3, false));
-		wxTreeItemId depth4 = pTree->GetFirstChild(depth3, cookie);		
-		CPPUNIT_ASSERT(depth4.IsOk());
-
-		pTree->Expand(depth4);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
-			pTree->GetChildrenCount(depth4, false));
-		wxTreeItemId depth5 = pTree->GetFirstChild(depth4, cookie);		
-		CPPUNIT_ASSERT(depth5.IsOk());
-
-		pTree->Expand(depth5);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
-			pTree->GetChildrenCount(depth5, false));
-		wxTreeItemId depth6 = pTree->GetFirstChild(depth5, cookie);		
-		CPPUNIT_ASSERT(depth6.IsOk());
-
-		{
-			// activate the testdata dir node, check that it
-			// and its children are shown as included in the tree,
-			// and all parent nodes are shown as partially included
-			ActivateTreeItemWaitEvent(pTree, testDataDirItem);
-
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-				pTree->GetItemImage(testDataDirItem));
-	
-			for (wxTreeItemId nodeId = pTree->GetItemParent(testDataDirItem);
-				nodeId.IsOk(); nodeId = pTree->GetItemParent(nodeId))
-			{
-				CPPUNIT_ASSERT_EQUAL(images.GetPartialImageId(), 
-					pTree->GetItemImage(nodeId));
-			}
-			
-			for (wxTreeItemId nodeId = depth6; 
-				!(nodeId == testDataDirItem); 
-				nodeId = pTree->GetItemParent(nodeId))
-			{
-				CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
-					pTree->GetItemImage(nodeId));
-			}
-			
-			// check that the entry details are shown in the
-			// Locations panel, and the entry is selected
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			wxString expectedTitle = testDataDir.GetFullPath();
-			expectedTitle.Append(_(" -> testdata"));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
-				pLocationsListBox  ->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle,
-				pExcludeLocsListBox->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL((wxString)_("testdata"), 
-				pLocationNameCtrl->GetValue());
-			CPPUNIT_ASSERT_EQUAL(testDataDir.GetFullPath(),
-				pLocationPathCtrl->GetValue());
-		}
-		
-		{
-			// activate a node at depth2, check that it and
-			// its children are Excluded
-			ActivateTreeItemWaitEvent(pTree, depth2);
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			wxString expectedTitle = testDataDir.GetFullPath();
-			expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
-			expectedTitle.Append(testDepth2Dir.GetFullPath());
-			expectedTitle.Append(_(")"));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
-				pLocationsListBox  ->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle,
-				pExcludeLocsListBox->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-				pTree->GetItemImage(testDataDirItem));
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
-				pTree->GetItemImage(depth1));
-			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
-				pTree->GetItemImage(depth2));
-			for (wxTreeItemId nodeId = depth6; !(nodeId == depth2); 
-				nodeId = pTree->GetItemParent(nodeId))
-			{
-				CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
-					pTree->GetItemImage(nodeId));
-			}
-		}
-
-		{
-			// activate node at depth 4, check that it and its
-			// children are AlwaysIncluded
-			ActivateTreeItemWaitEvent(pTree, depth4);
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			wxString expectedTitle = testDataDir.GetFullPath();
-			expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
-			expectedTitle.Append(testDepth2Dir.GetFullPath());
-			expectedTitle.Append(_(", AlwaysIncludeDir = "));
-			expectedTitle.Append(testDepth4Dir.GetFullPath());
-			expectedTitle.Append(_(")"));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
-				pLocationsListBox  ->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle,
-				pExcludeLocsListBox->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-				pTree->GetItemImage(testDataDirItem));
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
-				pTree->GetItemImage(depth1));
-			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
-				pTree->GetItemImage(depth2));
-			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
-				pTree->GetItemImage(depth3));
-			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysImageId(), 
-				pTree->GetItemImage(depth4));
-			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysGreyImageId(), 
-				pTree->GetItemImage(depth5));
-			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysGreyImageId(), 
-				pTree->GetItemImage(depth6));
-		}
-
-		{
-			// activate node at depth 2, check that it is no longer
-			// excluded, but children at depth 4 and below are still
-			// AlwaysIncluded
-			ActivateTreeItemWaitEvent(pTree, depth2);
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			wxString expectedTitle = testDataDir.GetFullPath();
-			expectedTitle.Append(_(" -> testdata (AlwaysIncludeDir = "));
-			expectedTitle.Append(testDepth4Dir.GetFullPath());
-			expectedTitle.Append(_(")"));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
-				pLocationsListBox  ->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle,
-				pExcludeLocsListBox->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-				pTree->GetItemImage(testDataDirItem));
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
-				pTree->GetItemImage(depth1));
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
-				pTree->GetItemImage(depth2));
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
-				pTree->GetItemImage(depth3));
-			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysImageId(), 
-				pTree->GetItemImage(depth4));
-			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysGreyImageId(), 
-				pTree->GetItemImage(depth5));
-			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysGreyImageId(), 
-				pTree->GetItemImage(depth6));
-		}
-		
-		{
-			// activate node at depth 4, check that the 
-			// AlwaysInclude entry is removed.
-			ActivateTreeItemWaitEvent(pTree, depth4);
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-			wxString expectedTitle = testDataDir.GetFullPath();
-			expectedTitle.Append(_(" -> testdata"));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
-				pLocationsListBox  ->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle,
-				pExcludeLocsListBox->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-				pTree->GetItemImage(testDataDirItem));
-	
-			for (wxTreeItemId nodeId = depth6; 
-				!(nodeId == testDataDirItem); 
-				nodeId = pTree->GetItemParent(nodeId))
-			{
-				CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
-					pTree->GetItemImage(nodeId));
-			}
-		}
-
-		{
-			// activate node at depth 4 again, check that an
-			// Exclude entry is added this time.
-			ActivateTreeItemWaitEvent(pTree, depth4);
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-
-			wxString expectedTitle = testDataDir.GetFullPath();
-			expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
-			expectedTitle.Append(testDepth4Dir.GetFullPath());
-			expectedTitle.Append(_(")"));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
-				pLocationsListBox  ->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle,
-				pExcludeLocsListBox->GetString(0));
-
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-
-			for (wxTreeItemId nodeId = depth6; !(nodeId == depth4); 
-				nodeId = pTree->GetItemParent(nodeId))
-			{
-				CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
-					pTree->GetItemImage(nodeId));
-			}
-			
-			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
-				pTree->GetItemImage(depth4));
-			
-			for (wxTreeItemId nodeId = depth3; !(nodeId == testDataDirItem); 
-				nodeId = pTree->GetItemParent(nodeId))
-			{
-				CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
-					pTree->GetItemImage(nodeId));
-			}
-			
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-				pTree->GetItemImage(testDataDirItem));
-		}
-
-		{
-			// activate node at depth 2 again, check that an
-			// Exclude entry is added again, and that the node
-			// at depth 4 still shows as excluded
-			ActivateTreeItemWaitEvent(pTree, depth2);
-			CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-
-			wxString expectedTitle = testDataDir.GetFullPath();
-			expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
-			expectedTitle.Append(testDepth4Dir.GetFullPath());
-			expectedTitle.Append(_(", ExcludeDir = "));
-			expectedTitle.Append(testDepth2Dir.GetFullPath());
-			expectedTitle.Append(_(")"));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle, 
-				pLocationsListBox  ->GetString(0));
-			CPPUNIT_ASSERT_EQUAL(expectedTitle,
-				pExcludeLocsListBox->GetString(0));
-
-			CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-				pTree->GetItemImage(testDataDirItem));
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(), 
-				pTree->GetItemImage(depth1));
-			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
-				pTree->GetItemImage(depth2));
-			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
-				pTree->GetItemImage(depth3));
-			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
-				pTree->GetItemImage(depth4));
-			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
-				pTree->GetItemImage(depth5));
-			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
-				pTree->GetItemImage(depth6));
-		}
-		
-		{
-			// remove Exclude and Location entries, check that
-			// all is reset.
-			ActivateTreeItemWaitEvent(pTree, depth4);
-			ActivateTreeItemWaitEvent(pTree, depth2);
-			
-			MessageBoxSetResponse(BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, wxYES);
-			ActivateTreeItemWaitEvent(pTree, testDataDirItem);
-			MessageBoxCheckFired();
-			
-			CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetCount());
-			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, 
-				pLocationsListBox  ->GetSelection());
-			CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
-			CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, 
-				pExcludeLocsListBox->GetSelection());
-		}
-		
-		CPPUNIT_ASSERT(testDepth6Dir.Rmdir());
-		CPPUNIT_ASSERT(testDepth5Dir.Rmdir());
-		CPPUNIT_ASSERT(testDepth4Dir.Rmdir());
-		CPPUNIT_ASSERT(testDepth3Dir.Rmdir());
-		CPPUNIT_ASSERT(testDepth2Dir.Rmdir());
-		CPPUNIT_ASSERT(testDepth1Dir.Rmdir());
-	}
-	
-	{
-		// add two locations using the Locations panel,
-		// check that the one just added is selected,
-		// and text controls are populated correctly.
-		SetTextCtrlValue(pLocationNameCtrl, _("tmp"));
-		SetTextCtrlValue(pLocationPathCtrl, _("/tmp"));
-		ClickButtonWaitEvent(pLocationAddButton);
-		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),  
-			pLocationNameCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"), 
-			pLocationPathCtrl->GetValue());
-		
-		SetTextCtrlValue(pLocationNameCtrl, _("etc"));
-		SetTextCtrlValue(pLocationPathCtrl, _("/etc"));
-		ClickButtonWaitEvent(pLocationAddButton);
-		CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),  
-			pLocationNameCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"), 
-			pLocationPathCtrl->GetValue());
-	}
-
-	{
-		// add an exclude entry using the Exclusions panel,
-		// check that the one just added is selected,
-		// and text controls are populated correctly.
-		
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
-
-		SetTextCtrlValue(pExcludePathCtrl, _("/tmp/foo"));
-		ClickButtonWaitEvent(pExcludeAddButton);
-		
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
-			pExcludePathCtrl->GetValue());
-	}
-	
-	{
-		// add another exclude entry using the Exclusions panel,
-		// check that the one just added is selected,
-		// and text controls are populated correctly.
-		
-		SetSelection(pExcludeTypeList, 1);
-		SetTextCtrlValue(pExcludePathCtrl, _("/tmp/bar"));
-		ClickButtonWaitEvent(pExcludeAddButton);
-
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
-			pExcludePathCtrl->GetValue());
-	}
-
-	{
-		// change selected exclude entry, check that
-		// controls are populated correctly
-		SetSelection(pExcludeListBox, 0);
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
-			pExcludePathCtrl->GetValue());
-		
-		SetSelection(pExcludeListBox, 1);
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
-			pExcludePathCtrl->GetValue());
-	}
-
-	{
-		// edit exclude entries, check that
-		// controls are populated correctly
-		SetSelection(pExcludeListBox, 0);
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
-			pExcludePathCtrl->GetValue());
-		SetSelection(pExcludeTypeList, 2);
-		SetTextCtrlValue(pExcludePathCtrl, _("/tmp/baz"));
-		ClickButtonWaitEvent(pExcludeEditButton);
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-		
-		SetSelection(pExcludeListBox, 1);
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/bar"), 
-			pExcludePathCtrl->GetValue());
-		SetSelection(pExcludeTypeList, 3);
-		SetTextCtrlValue(pExcludePathCtrl, _("/tmp/whee"));
-		ClickButtonWaitEvent(pExcludeEditButton);
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
-			pExcludePathCtrl->GetValue());
-
-		SetSelection(pExcludeListBox, 0);
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-
-		SetSelection(pExcludeListBox, 1);
-		CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
-			pExcludePathCtrl->GetValue());
-	}
-
-	{
-		// check that adding a new entry based on an
-		// existing entry works correctly
-		
-		SetSelection(pExcludeListBox, 0);
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-		
-		// change path and add new entry
-		SetTextCtrlValue(pExcludePathCtrl, _("/tmp/foo"));
-		ClickButtonWaitEvent(pExcludeAddButton);
-		CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
-			pExcludePathCtrl->GetValue());
-		
-		// original entry unchanged
-		SetSelection(pExcludeListBox, 0);
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-			
-		// change type and add new entry
-		SetSelection(pExcludeTypeList, 1);
-		ClickButtonWaitEvent(pExcludeAddButton);
-		CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-
-		// original entry unchanged
-		SetSelection(pExcludeListBox, 0);
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-	}
-
-	{
-		// add an exclude entry to the second location,
-		// check that the exclude entries for the two locations
-		// are not conflated
-		
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-
-		SetSelection(pExcludeLocsListBox, 1);
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
-		
-		SetSelection(pExcludeTypeList, 4);
-		SetTextCtrlValue(pExcludePathCtrl, _("fubar"));
-		ClickButtonWaitEvent(pExcludeAddButton);
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		
-		SetSelection(pExcludeLocsListBox, 0);
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-		
-		SetSelection(pExcludeLocsListBox, 1);
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(4, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("fubar"), 
-			pExcludePathCtrl->GetValue());
-
-		ClickButtonWaitEvent(pExcludeDelButton);
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
-
-		SetSelection(pExcludeLocsListBox, 0);
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-	}
-	
-	{
-		// check that removing entries works correctly
-		SetSelection(pExcludeListBox, 3);
-		CPPUNIT_ASSERT_EQUAL(4, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-		ClickButtonWaitEvent(pExcludeDelButton);
-		CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-		
-		SetSelection(pExcludeListBox, 2);
-		CPPUNIT_ASSERT_EQUAL(3, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/foo"), 
-			pExcludePathCtrl->GetValue());
-		ClickButtonWaitEvent(pExcludeDelButton);
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-
-		SetSelection(pExcludeListBox, 1);
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(3, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/whee"), 
-			pExcludePathCtrl->GetValue());
-		ClickButtonWaitEvent(pExcludeDelButton);
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-
-		SetSelection(pExcludeListBox, 0);
-		CPPUNIT_ASSERT_EQUAL(1, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(2, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp/baz"), 
-			pExcludePathCtrl->GetValue());
-		ClickButtonWaitEvent(pExcludeDelButton);
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pExcludeListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL(0, pExcludeTypeList->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString, 
-			pExcludePathCtrl->GetValue());
-	}
-	
-	{
-		// check that adding a new location using the
-		// Locations panel works correctly
-		
-		CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
-		SetSelection(pLocationsListBox, 0);
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
-			pLocationPathCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
-			pLocationNameCtrl->GetValue());
-		
-		SetTextCtrlValue(pLocationNameCtrl, _("foobar"));
-		SetTextCtrlValue(pLocationPathCtrl, _("whee"));
-		ClickButtonWaitEvent(pLocationAddButton);
-
-		CPPUNIT_ASSERT_EQUAL(3, pLocationsListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
-			pLocationPathCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
-			pLocationNameCtrl->GetValue());			
-	}
-	
-	{
-		// check that switching locations works correctly,
-		// and changes the selected location in the
-		// Excludes panel (doesn't work yet)
-		SetSelection(pLocationsListBox, 0);
-		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
-			pLocationPathCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
-			pLocationNameCtrl->GetValue());
-		// CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetSelection());
-		
-		SetSelection(pLocationsListBox, 1);
-		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
-			pLocationPathCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
-			pLocationNameCtrl->GetValue());
-		// CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetSelection());
-
-		SetSelection(pLocationsListBox, 2);
-		CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
-			pLocationPathCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
-			pLocationNameCtrl->GetValue());
-		// CPPUNIT_ASSERT_EQUAL(2, pExcludeLocsListBox->GetSelection());
-	}
-	
-	{
-		// check that removing locations works correctly
-		SetSelection(pLocationsListBox, 0);
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/tmp"),
-			pLocationPathCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("tmp"),
-			pLocationNameCtrl->GetValue());
-
-		ClickButtonWaitEvent(pLocationDelButton);
-		CPPUNIT_ASSERT_EQUAL(2, pLocationsListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
-			pLocationPathCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
-			pLocationNameCtrl->GetValue());
-
-		SetSelection(pLocationsListBox, 1);
-		CPPUNIT_ASSERT_EQUAL((wxString)_("whee"),
-			pLocationPathCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("foobar"),
-			pLocationNameCtrl->GetValue());
-
-		ClickButtonWaitEvent(pLocationDelButton);
-		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("/etc"),
-			pLocationPathCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)_("etc"),
-			pLocationNameCtrl->GetValue());
-
-		ClickButtonWaitEvent(pLocationDelButton);
-		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox->GetCount());
-		CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, 
-			pLocationsListBox->GetSelection());
-		CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString,
-			pLocationPathCtrl->GetValue());
-		CPPUNIT_ASSERT_EQUAL((wxString)wxEmptyString,
-			pLocationNameCtrl->GetValue());				
-	}			
-	
-	// more complex exclusion tests
-	/*
-		Config:
-		ExcludeFile = testfiles/TestDir1/excluded_1
-		ExcludeFile = testfiles/TestDir1/excluded_2
-		ExcludeFilesRegex = \.excludethis$
-		ExcludeFilesRegex = EXCLUDE
-		AlwaysIncludeFile = testfiles/TestDir1/dont.excludethis
-		ExcludeDir = testfiles/TestDir1/exclude_dir
-		ExcludeDir = testfiles/TestDir1/exclude_dir_2
-		ExcludeDirsRegex = not_this_dir
-		AlwaysIncludeDirsRegex = ALWAYSINCLUDE
-				
-		Type	Name					Excluded
-		----	----					--------
-		Dir	TestDir1/exclude_dir			Yes
-		Dir	TestDir1/exclude_dir_2			Yes
-		Dir	TestDir1/sub23				No
-		Dir	TestDir1/sub23/xx_not_this_dir_22	Yes
-		File	TestDir1/sub23/somefile.excludethis	Yes
-		File	TestDir1/xx_not_this_dir_22		No
-		File	TestDir1/excluded_1			Yes
-		File	TestDir1/excluded_2			Yes
-		File	TestDir1/zEXCLUDEu			Yes
-		File	TestDir1/dont.excludethis		No
-		Dir	TestDir1/xx_not_this_dir_ALWAYSINCLUDE	No
-		
-		// under TestDir1:
-		TEST_THAT(!SearchDir(dir, "excluded_1"));
-		TEST_THAT(!SearchDir(dir, "excluded_2"));
-		TEST_THAT(!SearchDir(dir, "exclude_dir"));
-		TEST_THAT(!SearchDir(dir, "exclude_dir_2"));
-		// xx_not_this_dir_22 should not be excluded by
-		// ExcludeDirsRegex, because it's a file
-		TEST_THAT(SearchDir (dir, "xx_not_this_dir_22"));
-		TEST_THAT(!SearchDir(dir, "zEXCLUDEu"));
-		TEST_THAT(SearchDir (dir, "dont.excludethis"));
-		TEST_THAT(SearchDir (dir, "xx_not_this_dir_ALWAYSINCLUDE"));
-		
-		// under TestDir1/sub23:
-		TEST_THAT(!SearchDir(dir, "xx_not_this_dir_22"));
-		TEST_THAT(!SearchDir(dir, "somefile.excludethis"));
-
-	*/
-	
-	{
-		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
-		
-		Location* pNewLoc = NULL;
-		
-		{
-			Location testDirLoc(_("testdata"), testDataDir.GetFullPath(),
-				mpConfig);
-			mpConfig->AddLocation(testDirLoc);
-			CPPUNIT_ASSERT_EQUAL((size_t)1, 
-				mpConfig->GetLocations().size());
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-				pTree->GetItemImage(testDataDirItem));
-			pNewLoc = mpConfig->GetLocation(testDirLoc);
-			CPPUNIT_ASSERT(pNewLoc);
-		}
-		
-		MyExcludeList& rExcludes = pNewLoc->GetExcludeList();
-
-		#define CREATE_FILE(dir, name) \
-		wxFileName dir ## _ ## name(dir.GetFullPath(), _(#name)); \
-		{ wxFile f; CPPUNIT_ASSERT(f.Create(dir ## _ ## name.GetFullPath())); }
-		
-		#define CREATE_DIR(dir, name) \
-		wxFileName dir ## _ ## name(dir.GetFullPath(), _(#name)); \
-		CPPUNIT_ASSERT(dir ## _ ## name.Mkdir(0700));
-		
-		CREATE_DIR( testDataDir, exclude_dir);
-		CREATE_DIR( testDataDir, exclude_dir_2);
-		CREATE_DIR( testDataDir, sub23);
-		CREATE_DIR( testDataDir_sub23, xx_not_this_dir_22);
-		CREATE_FILE(testDataDir_sub23, somefile_excludethis);
-		CREATE_FILE(testDataDir, xx_not_this_dir_22);
-		CREATE_FILE(testDataDir, excluded_1);
-		CREATE_FILE(testDataDir, excluded_2);
-		CREATE_FILE(testDataDir, zEXCLUDEu);
-		CREATE_FILE(testDataDir, dont_excludethis);
-		CREATE_DIR( testDataDir, xx_not_this_dir_ALWAYSINCLUDE);
-		
-		#undef CREATE_DIR
-		#undef CREATE_FILE
-
-		#define ADD_ENTRY(type, path) \
-		rExcludes.AddEntry \
-		( \
-			MyExcludeEntry \
-			( \
-				theExcludeTypes[type], (wxString)path \
-			) \
-		)
-		
-		ADD_ENTRY(ETI_EXCLUDE_FILE, testDataDir_excluded_1.GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_FILE, testDataDir_excluded_2.GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("_excludethis$"));
-		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("EXCLUDE"));
-		ADD_ENTRY(ETI_ALWAYS_INCLUDE_FILE, testDataDir_dont_excludethis.GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_DIR, testDataDir_exclude_dir.GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_DIR, testDataDir_exclude_dir_2.GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, _("not_this_dir"));
-		ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, _("ALWAYSINCLUDE"));
-		
-		#undef ADD_ENTRY
-
-		wxFileName configFile(confDir.GetFullPath(), _("bbackupd.conf"));
-		mpConfig->Save(configFile.GetFullPath());
-		CPPUNIT_ASSERT(configFile.FileExists());
-
-		pTree->Collapse(testDataDirItem);
-		pTree->Expand(testDataDirItem);
-
-		wxTreeItemIdValue cookie1;
-		wxTreeItemId dir1 = testDataDirItem;
-		wxTreeItemId item;
-		
-		#define CHECK_ITEM(name, image) \
-		CPPUNIT_ASSERT(item.IsOk()); \
-		CPPUNIT_ASSERT_EQUAL((wxString)_(name), \
-			pTree->GetItemText(item)); \
-		CPPUNIT_ASSERT_EQUAL(images.Get ## image ## ImageId(), \
-			pTree->GetItemImage(item))
-		
-		item = pTree->GetFirstChild(dir1, cookie1);
-		CHECK_ITEM("exclude_dir", Crossed);
-
-		item = pTree->GetNextChild(dir1, cookie1);
-		CHECK_ITEM("exclude_dir_2", Crossed);
-
-		item = pTree->GetNextChild(dir1, cookie1);
-		CHECK_ITEM("sub23", CheckedGrey);
-
-		// under sub23:
-		{
-			wxTreeItemIdValue cookie2;
-			wxTreeItemId dir2 = item;
-			pTree->Expand(dir2);
-
-			item = pTree->GetFirstChild(dir2, cookie2);
-			CHECK_ITEM("xx_not_this_dir_22", Crossed);
-
-			item = pTree->GetNextChild(dir2, cookie2);
-			CHECK_ITEM("somefile_excludethis", Crossed);
-			
-			item = pTree->GetNextChild(dir2, cookie2);
-			CPPUNIT_ASSERT(!item.IsOk());
-		}
-
-		item = pTree->GetNextChild(dir1, cookie1);
-		CHECK_ITEM("xx_not_this_dir_ALWAYSINCLUDE", Always);
-
-		item = pTree->GetNextChild(dir1, cookie1);
-		CHECK_ITEM("dont_excludethis", Always);
-
-		item = pTree->GetNextChild(dir1, cookie1);
-		CHECK_ITEM("excluded_1", Crossed);
-
-		item = pTree->GetNextChild(dir1, cookie1);
-		CHECK_ITEM("excluded_2", Crossed);
-
-		// xx_not_this_dir_22 should not be excluded by
-		// ExcludeDirsRegex, because it's a file
-		item = pTree->GetNextChild(dir1, cookie1);
-		CHECK_ITEM("xx_not_this_dir_22", CheckedGrey);
-
-		item = pTree->GetNextChild(dir1, cookie1);
-		CHECK_ITEM("zEXCLUDEu", Crossed);
-
-		item = pTree->GetNextChild(dir1, cookie1);
-		CPPUNIT_ASSERT(!item.IsOk());
-		
-		#undef CHECK_ITEM
-		
-		#define DELETE_FILE(dir, name) \
-		CPPUNIT_ASSERT(wxRemoveFile(dir ## _ ## name.GetFullPath()))
-		
-		#define DELETE_DIR(dir, name) \
-		CPPUNIT_ASSERT(dir ## _ ## name.Rmdir())
-
-		DELETE_DIR( testDataDir_sub23, xx_not_this_dir_22);
-		DELETE_FILE(testDataDir_sub23, somefile_excludethis);
-		DELETE_FILE(testDataDir, xx_not_this_dir_22);
-		DELETE_FILE(testDataDir, excluded_1);
-		DELETE_FILE(testDataDir, excluded_2);
-		DELETE_FILE(testDataDir, zEXCLUDEu);
-		DELETE_FILE(testDataDir, dont_excludethis);
-		DELETE_DIR( testDataDir, xx_not_this_dir_ALWAYSINCLUDE);
-		DELETE_DIR( testDataDir, sub23);
-		DELETE_DIR( testDataDir, exclude_dir);
-		DELETE_DIR( testDataDir, exclude_dir_2);
-		
-		#undef DELETE_DIR
-		#undef DELETE_FILE
-		
-		CPPUNIT_ASSERT(wxRemoveFile(configFile.GetFullPath()));
-		
-		CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
-		mpConfig->RemoveLocation(*pNewLoc);
-		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
-	}
-
-	{
-		wxButton* pBackupFilesCloseButton = wxDynamicCast
-		(
-			pBackupFilesPanel->FindWindow(wxID_CANCEL), wxButton
-		);
-		CPPUNIT_ASSERT(pBackupFilesCloseButton);
-	
-		ClickButtonWaitEvent(pBackupFilesCloseButton);
-		CPPUNIT_ASSERT(!pBackupFilesPanel->IsShown());
-	}
 	
 	Location* pTestDataLocation = NULL;
 	
@@ -1659,14 +855,17 @@ void TestBackup::RunTest()
 			mpConfig->AddLocation(testDirLoc);
 			CPPUNIT_ASSERT_EQUAL((size_t)1, 
 				mpConfig->GetLocations().size());
-			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
-				pTree->GetItemImage(testDataDirItem));
 			pTestDataLocation = mpConfig->GetLocation(testDirLoc);
 			CPPUNIT_ASSERT(pTestDataLocation);
 		}
 
 		CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
 	}
+
+	// helps with debugging
+	wxFileName configFile(confDir.GetFullPath(), _("bbackupd.conf"));
+	mpConfig->Save(configFile.GetFullPath());
+	CPPUNIT_ASSERT(configFile.FileExists());
 
 	wxPanel* pBackupProgressPanel = wxDynamicCast
 	(
@@ -1695,20 +894,43 @@ void TestBackup::RunTest()
 	);
 	CPPUNIT_ASSERT(pBackupProgressCloseButton);
 
-	// BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION,
+	// TODO: test BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION
 	
 	#define CHECK_BACKUP() \
 	ClickButtonWaitEvent(pBackupStartButton); \
 	CPPUNIT_ASSERT(pBackupProgressPanel->IsShown()); \
 	CPPUNIT_ASSERT(pMainFrame->IsTopPanel(pBackupProgressPanel)); \
-	CPPUNIT_ASSERT_EQUAL(1, pBackupErrorList->GetCount()); \
 	ClickButtonWaitEvent(pBackupProgressCloseButton); \
-	CPPUNIT_ASSERT(!pBackupProgressPanel->IsShown())
+	CPPUNIT_ASSERT(!pBackupProgressPanel->IsShown());
 
 	#define CHECK_BACKUP_ERROR(message) \
 	MessageBoxSetResponse(message, wxOK); \
 	CHECK_BACKUP(); \
-	MessageBoxCheckFired()
+	MessageBoxCheckFired(); \
+	CPPUNIT_ASSERT(pBackupErrorList->GetCount() > 0);
+
+	#define CHECK_BACKUP_OK(message) \
+	CHECK_BACKUP(); \
+	if (pBackupErrorList->GetCount() > 0) \
+	{ \
+		wxCharBuffer buf = pBackupErrorList->GetString(0).mb_str(wxConvLibc); \
+		CPPUNIT_ASSERT_MESSAGE(buf.data(), pBackupErrorList->GetCount() > 0); \
+	}
+
+	#define CHECK_COMPARE_OK() \
+	CompareExpectNoDifferences(rClientConfig, tlsContext, _("testdata"), \
+		testDataDir);
+
+	#define CHECK_COMPARE_FAILS(diffs, modified) \
+	CompareExpectDifferences(rClientConfig, tlsContext, _("testdata"), \
+		testDataDir, diffs, modified);
+
+	#define CHECK_COMPARE_LOC_OK() \
+	CompareLocationExpectNoDifferences(rClientConfig, tlsContext, "testdata");
+
+	#define CHECK_COMPARE_LOC_FAILS(diffs, modified) \
+	CompareLocationExpectDifferences(rClientConfig, tlsContext, "testdata", \
+		diffs, modified);
 
 	{
 		#define CHECK_PROPERTY(property, message) \
@@ -1727,6 +949,7 @@ void TestBackup::RunTest()
 		CHECK_UNSET_PROPERTY(FileTrackingSizeThreshold, BM_BACKUP_FAILED_NO_TRACKING_THRESHOLD);
 		CHECK_UNSET_PROPERTY(DiffingUploadSizeThreshold, BM_BACKUP_FAILED_NO_DIFFING_THRESHOLD);
 		
+		// TODO: test BM_BACKUP_FAILED_INVALID_SYNC_PERIOD
 		/*
 		mpConfig->MinimumFileAge.Set(GetCurrentBoxTime() + 1000000);
 		CHECK_PROPERTY(MinimumFileAge, BM_BACKUP_FAILED_INVALID_SYNC_PERIOD);
@@ -1740,12 +963,12 @@ void TestBackup::RunTest()
 		server.Start();
 
 		/*
+		TODO: write tests for:
 		BM_BACKUP_FAILED_INTERRUPTED,
 		BM_BACKUP_FAILED_UNKNOWN_ERROR,
 		*/
 	}
 
-	wxFileName configFile(confDir.GetFullPath(), _("bbackupd.conf"));
 	mpConfig->Save(configFile.GetFullPath());
 	CPPUNIT_ASSERT(configFile.FileExists());
 	
@@ -1758,7 +981,6 @@ void TestBackup::RunTest()
 	);
 	CPPUNIT_ASSERT(apClientConfig.get());
 	CPPUNIT_ASSERT(errs.empty());
-	CPPUNIT_ASSERT(wxRemoveFile(configFile.GetFullPath()));
 	const Configuration &rClientConfig(*apClientConfig);
 
 	// Setup and connect
@@ -1775,114 +997,279 @@ void TestBackup::RunTest()
 	// Initialise keys
 	BackupClientCryptoKeys_Setup(rClientConfig.GetKeyValue("KeysFile").c_str());
 
-	{
-		// Connect to server
-		SocketStreamTLS socket;
-		socket.Open(tlsContext, Socket::TypeINET, 
-			rClientConfig.GetKeyValue("StoreHostname").c_str(), 
-			BOX_PORT_BBSTORED);
-		
-		// Make a protocol, and handshake
-		BackupProtocolClient connection(socket);
-		connection.Handshake();
-		
-		// Check the version of the server
-		{
-			std::auto_ptr<BackupProtocolClientVersion> serverVersion
-			(
-				connection.QueryVersion(BACKUP_STORE_SERVER_VERSION)
-			);
-			CPPUNIT_ASSERT_EQUAL(BACKUP_STORE_SERVER_VERSION,
-				serverVersion->GetVersion());
-		}
-
-		// Login -- if this fails, the Protocol will exception
-		connection.QueryLogin
-		(
-			rClientConfig.GetKeyValueInt("AccountNumber"),
-			BackupProtocolClientLogin::Flags_ReadOnly
-		);
+	// before the first backup, there should be differences
+	CHECK_COMPARE_LOC_FAILS(1, 0);
 	
-		// Set up a context for our work
-		BackupQueries query(connection, rClientConfig);
-		
-		// compare
-		BackupQueries::CompareParams params;
-		params.mQuiet = true;
-		wxCharBuffer buf = testDataDir.GetFullPath().mb_str(wxConvLibc);
-		query.Compare("testdata", buf.data(), params);
-		CPPUNIT_ASSERT_EQUAL(1, params.mDifferences);
-		CPPUNIT_ASSERT_EQUAL(0, 
-			params.mDifferencesExplainedByModTime);
-		CPPUNIT_ASSERT_EQUAL(0, params.mExcludedDirs);
-		CPPUNIT_ASSERT_EQUAL(0, params.mExcludedFiles);
+	CHECK_BACKUP_OK();
 
-		connection.QueryFinished();
+	// and afterwards, there should be no differences any more
+	CHECK_COMPARE_LOC_OK();
+	
+	// ensure that the mod time of newly created files 
+	// is later than the last backup.
+	// sleep(1);
+
+	// Set limit to something very small
+	{
+		// About 28 blocks will be used at this point (14 files in RAID)
+		CPPUNIT_ASSERT_EQUAL((int64_t)28, 
+			GetAccountInfo(server.GetConfiguration())->GetBlocksUsed());
+
+		// Backup will fail if the size used is greater than 
+		// soft limit + 1/3 of (hard - soft). 
+		// Set small values for limits accordingly.
+		SetLimit(server.GetConfiguration(), 2, "10B", "40B");
+
+		// Unpack some more files
+		wxFileName spaceTestZipFile(_("../test/data/spacetest2.zip"));
+		CPPUNIT_ASSERT(spaceTestZipFile.FileExists());
+		Unzip(spaceTestZipFile, testDataDir);
+
+		// Delete a file and a directory
+		CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(testDataDir,
+			_("spacetest/d1/f3")).GetFullPath()));
+		DeleteRecursive(MakeAbsolutePath(testDataDir, 
+			_("spacetest/d3/d4")));
 	}
 	
-	CHECK_BACKUP();
-
-	{
-		// Connect to server
-		SocketStreamTLS socket;
-		socket.Open(tlsContext, Socket::TypeINET, 
-			rClientConfig.GetKeyValue("StoreHostname").c_str(), 
-			BOX_PORT_BBSTORED);
-		
-		// Make a protocol, and handshake
-		BackupProtocolClient connection(socket);
-		connection.Handshake();
-		
-		// Check the version of the server
-		{
-			std::auto_ptr<BackupProtocolClientVersion> serverVersion
-			(
-				connection.QueryVersion(BACKUP_STORE_SERVER_VERSION)
-			);
-			CPPUNIT_ASSERT_EQUAL(BACKUP_STORE_SERVER_VERSION,
-				serverVersion->GetVersion());
-		}
-
-		// Login -- if this fails, the Protocol will exception
-		connection.QueryLogin
-		(
-			rClientConfig.GetKeyValueInt("AccountNumber"),
-			BackupProtocolClientLogin::Flags_ReadOnly
-		);
+	// check the number of differences before backup
+	// 1 file and 1 dir added (dir d8 contains one file, f7, not counted)
+	// and 1 file and 1 dir removed (mod times not checked)
+	CHECK_COMPARE_LOC_FAILS(4, 2);
 	
-		// Set up a context for our work
-		BackupQueries query(connection, rClientConfig);
-
-		BackupQueries::CompareParams params;
-		params.mQuiet = false;
-		wxCharBuffer buf = testDataDir.GetFullPath().mb_str(wxConvLibc);
-		query.Compare("testdata", buf.data(), params);
-		CPPUNIT_ASSERT_EQUAL(0, params.mDifferences);
-		CPPUNIT_ASSERT_EQUAL(0, 
-			params.mDifferencesExplainedByModTime);
-		CPPUNIT_ASSERT_EQUAL(0, params.mExcludedDirs);
-		CPPUNIT_ASSERT_EQUAL(0, params.mExcludedFiles);
-
-		connection.QueryFinished();
+	// fixme: should return an error
+	mpConfig->ExtendedLogging.Set(true);
+	CHECK_BACKUP_ERROR(BM_BACKUP_FAILED_STORE_FULL);
+	
+	// backup should not complete, so there should still be differences
+	// the deleted file and directory should have been deleted on the store,
+	// but the locally changed files should not have been uploaded
+	CPPUNIT_ASSERT_EQUAL((int64_t)28, 
+			GetAccountInfo(server.GetConfiguration())->GetBlocksUsed());
+	CHECK_COMPARE_LOC_FAILS(2, 2);
+	
+	// set the limits back
+	SetLimit(server.GetConfiguration(), 2, "1000B", "2000B");
+	
+	// unpack some more test files
+	{
+		wxFileName baseFilesZipFile(MakeAbsolutePath(
+			_("../test/data/test_base.zip")).GetFullPath());
+		CPPUNIT_ASSERT(baseFilesZipFile.FileExists());
+		Unzip(baseFilesZipFile, testDataDir);
 	}
+	
+	// run a backup
+	CHECK_BACKUP_OK();
+	
+	// check that it worked
+	CHECK_COMPARE_LOC_OK();
+	
+	// Delete a file
+	CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(testDataDir, 
+		_("x1/dsfdsfs98.fd")).GetFullPath()));
+	
+#ifndef WIN32
+	{
+		// New symlink
+		wxCharBuffer buf = wxFileName(testDataDir.GetFullPath(),
+			_("symlink-to-dir")).GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
+	}
+#endif		
+
+	// Update a file (will be uploaded as a diff)
+	{
+		// Check that the file is over the diffing threshold in the 
+		// bbackupd.conf file
+		wxFileName bigFileName(MakeAbsolutePath(testDataDir, _("f45.df")));
+		wxFile bigFile(bigFileName.GetFullPath(), wxFile::read_write);
+		CPPUNIT_ASSERT(bigFile.Length() > 1024);
 		
+		// Add a bit to the end
+		CPPUNIT_ASSERT(bigFile.IsOpened());
+		CPPUNIT_ASSERT(bigFile.SeekEnd() != wxInvalidOffset);
+		CPPUNIT_ASSERT(bigFile.Write(_("EXTRA STUFF")));
+		CPPUNIT_ASSERT(bigFile.Length() > 1024);
+	}
+
+	// Run another backup and check that it works
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK();
+
+	// Bad case: delete a file/symlink, replace it with a directory
+#ifndef WIN32
+	{
+		// Delete symlink
+		wxCharBuffer buf = wxFileName(testDataDir.GetFullPath(),
+			_("symlink-to-dir")).GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT(::unlink(buf.data()) == 0);
+	}
+#endif
+	CPPUNIT_ASSERT(wxMkdir(MakeAbsolutePath(testDataDir, 
+		_("symlink-to-dir")).GetFullPath(), 0755));
+	wxFileName dirTestDirName(MakeAbsolutePath(testDataDir, 
+		_("x1/dir-to-file")));
+	CPPUNIT_ASSERT(wxMkdir(dirTestDirName.GetFullPath(), 0755));
+	// NOTE: create a file within the directory to avoid deletion by the 
+	// housekeeping process later
+	wxFileName placeHolderName(dirTestDirName.GetFullPath(), _("contents"));
+#ifdef WIN32
+	{
+		wxFile f;
+		CPPUNIT_ASSERT(f.Create(placeHolderName.GetFullPath()));
+	}
+#else // !WIN32
+	{
+		wxCharBuffer buf = placeHolderName.GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
+	}
+#endif
+
+	// Run another backup and check that it works
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK();
+
+	// And the inverse, replace a directory with a file/symlink
+	CPPUNIT_ASSERT(wxRemoveFile(placeHolderName.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(dirTestDirName.GetFullPath()));
+#ifdef WIN32
+	{
+		wxFile f;
+		CPPUNIT_ASSERT(f.Create(dirTestDirName.GetFullPath()));
+	}
+#else // !WIN32
+	{
+		wxCharBuffer buf = dirTestDirName.GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
+	}
+#endif
+	
+	// Run another backup and check that it works
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK();
+
+	// And then, put it back to how it was before.
+	CPPUNIT_ASSERT(wxRemoveFile(dirTestDirName.GetFullPath()));
+	CPPUNIT_ASSERT(wxMkdir(dirTestDirName.GetFullPath(), 0755));
+	wxFileName placeHolderName2(dirTestDirName.GetFullPath(), _("contents2"));
+#ifdef WIN32
+	{
+		wxFile f;
+		CPPUNIT_ASSERT(f.Create(placeHolderName2.GetFullPath()));
+	}
+#else // !WIN32
+	{
+		wxCharBuffer buf = placeHolderName2.GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
+	}
+#endif
+
+	// Run another backup and check that it works
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK();
+	
+	// And finally, put it back to how it was before it was put back to 
+	// how it was before. This gets lots of nasty things in the store with 
+	// directories over other old directories.
+	CPPUNIT_ASSERT(wxRemoveFile(placeHolderName2.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(dirTestDirName.GetFullPath()));
+#ifdef WIN32
+	{
+		wxFile f;
+		CPPUNIT_ASSERT(f.Create(dirTestDirName.GetFullPath()));
+	}
+#else // !WIN32
+	{
+		wxCharBuffer buf = dirTestDirName.GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
+	}
+#endif
+
+	// Run another backup and check that it works
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK();
+
+	// case which went wrong: rename a tracked file over a deleted file
+#ifdef WIN32
+	CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(testDataDir, 
+		_("x1/dsfdsfs98.fd"))));
+#endif
+	CPPUNIT_ASSERT(wxRenameFile(
+		MakeAbsolutePath(testDataDir, _("df9834.dsf")).GetFullPath(),
+		MakeAbsolutePath(testDataDir, _("x1/dsfdsfs98.fd")).GetFullPath()));
+
+	// Run another backup and check that it works
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK();
+
+	// Move that file back
+	CPPUNIT_ASSERT(wxRenameFile(
+		MakeAbsolutePath(testDataDir, _("x1/dsfdsfs98.fd")).GetFullPath(),
+		MakeAbsolutePath(testDataDir, _("df9834.dsf")).GetFullPath()));
+
+	// Add some more files. Because we restore the original
+	// time stamps, these files will look very old to the daemon.
+	// Lucky it'll upload them then!
+	wxFileName test2ZipFile(MakeAbsolutePath(_("../test/data/test2.zip")));
+	Unzip(test2ZipFile, testDataDir, true);
+
+	// Run another backup and check that it works
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK();
+
+	// Then modify an existing file
+	{
+		wxFileName fileToUpdate(MakeAbsolutePath(testDataDir,
+			_("sub23/rand.h")));
+		wxFile f(fileToUpdate.GetFullPath(), wxFile::read_write);
+		CPPUNIT_ASSERT(f.IsOpened());
+		CPPUNIT_ASSERT(f.SeekEnd() != wxInvalidOffset);
+		CPPUNIT_ASSERT(f.Write(_("MODIFIED!\n")));
+		f.Close();
+		
+		// and then move the time backwards!
+		struct timeval times[2];
+		BoxTimeToTimeval(SecondsToBoxTime((time_t)(365*24*60*60)), times[1]);
+		times[0] = times[1];
+		wxCharBuffer buf = fileToUpdate.GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT(::utimes(buf.data(), times) == 0);
+	}
+
+	// Run another backup and check that it works
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK();
+	
+	// Add some files and directories which are marked as excluded
+	wxFileName zipExcludeTest(MakeAbsolutePath(_("../test/data/testexclude.zip")));
+	Unzip(zipExcludeTest, testDataDir);
+	
+	// backup should still work
+	CHECK_BACKUP_OK();
+	
+	// compare location (with exclude lists) should pass
+	CHECK_COMPARE_LOC_OK();
+	
+	// compare directly (without exclude lists) should fail
+	CHECK_COMPARE_FAILS(8, 0);
+
 	// clean up
-
+#ifndef WIN32
 	{
-		CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
-		mpConfig->RemoveLocation(*pTestDataLocation);
-		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+		// Delete symlink
+		wxCharBuffer buf = dirTestDirName.GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT(::unlink(buf.data()) == 0);
 	}
-
+#endif		
+	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+	mpConfig->RemoveLocation(*pTestDataLocation);
+	CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
 	DeleteRecursive(testDataDir);
 	CPPUNIT_ASSERT(wxRemoveFile(storeConfigFileName.GetFullPath()));
 	CPPUNIT_ASSERT(wxRemoveFile(accountsDb.GetFullPath()));
 	CPPUNIT_ASSERT(wxRemoveFile(raidConf.GetFullPath()));
+	CPPUNIT_ASSERT(wxRemoveFile(configFile.GetFullPath()));		
 	CPPUNIT_ASSERT(confDir.Rmdir());
-	wxFileName backupDir (storeDir.GetFullPath(),  _("backup"));
-	wxFileName accountDir(backupDir.GetFullPath(), _("00000002"));
-	DeleteRecursive(accountDir);
-	CPPUNIT_ASSERT(backupDir.Rmdir());
-	CPPUNIT_ASSERT(storeDir.Rmdir());
+	DeleteRecursive(storeDir);
 	CPPUNIT_ASSERT(tempDir.Rmdir());
 }
