@@ -1691,12 +1691,28 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 			{
 				if(!rParams.mQuiet)
 				{
-					printf("Local directory '%s/%s' exists, but "
+					printf("Local directory '%s' exists, but "
 						"store directory '%s/%s' does not exist.\n",
-						localName.c_str(), (*i).c_str(), 
+						localName.c_str(),
 						storeName.c_str(), (*i).c_str());
 				}
 				rParams.mDifferences ++;
+
+				// Check the dir modification time
+				{
+					struct stat st;
+					if(::stat(localName.c_str(), &st) == 0)
+					{
+						if(FileModificationTime(st) > rParams.mLatestFileUploadTime)
+						{
+							rParams.mDifferencesExplainedByModTime ++;
+							if(!rParams.mQuiet)
+							{
+								printf("(the directory above was modified after the last sync time -- might be reason for difference)\n");
+							}
+						}
+					}
+				}
 			}
 			else
 			{
