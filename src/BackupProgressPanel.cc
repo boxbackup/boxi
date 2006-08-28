@@ -35,6 +35,8 @@
 #include <wx/button.h>
 #include <wx/gauge.h>
 #include <wx/dir.h>
+#include <wx/file.h>
+#include <wx/filename.h>
 
 #include "SandBox.h"
 
@@ -312,6 +314,17 @@ void BackupProgressPanel::StartBackup()
 	int64_t clientStoreMarker = BackupClientContext::ClientStoreMarker_NotKnown;
 	clientContext.SetClientStoreMarker(clientStoreMarker);
 	
+	// Touch a file to record times in filesystem
+	{
+		wxString datadir;
+		if (mpConfig->DataDirectory.GetInto(datadir))
+		{
+			wxFile f;
+			f.Create(wxFileName(datadir, 
+				_("last_sync_start")).GetFullPath(), true);
+		}
+	}
+	
 	mNumFilesCounted = 0;
 	mNumBytesCounted = 0;
 	mNumFilesSynchronised = 0;
@@ -443,6 +456,17 @@ void BackupProgressPanel::StartBackup()
 		ReportBackupFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR,
 			wxT("Unknown error"));
 	}	
+
+	// Touch a file to record times in filesystem
+	{
+		wxString datadir;
+		if (mpConfig->DataDirectory.GetInto(datadir))
+		{
+			wxFile f;
+			f.Create(wxFileName(datadir, 
+				_("last_sync_finish")).GetFullPath(), true);
+		}
+	}
 
 	mpCurrentText->SetLabel(wxT("Idle (nothing to do)"));
 	mBackupRunning = FALSE;
