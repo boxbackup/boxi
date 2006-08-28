@@ -57,6 +57,8 @@
 #include "StoreStructure.h"
 #include "NamedLock.h"
 #include "BackupClientMakeExcludeList.h"
+#include "BoxTime.h"
+#include "BoxTimeToUnix.h"
 
 #include "main.h"
 #include "BoxiApp.h"
@@ -598,8 +600,11 @@ static void CompareLocation(const Configuration& rConfig,
 	}
 			
 	// Then get it compared
+	std::string localPathString = std::string("/") + rLocationName;
+	wxString remotePath(localPathString.c_str(), wxConvLibc);
+	wxString localPath(loc.GetKeyValue("Path").c_str(), wxConvLibc);
 	CompareBackup(rConfig, rTlsContext, rParams, 
-		std::string("/") + rLocation, loc.GetKeyValue("Path"));
+		remotePath, localPath);
 	
 	// Delete exclude lists
 	rParams.DeleteExcludeLists();
@@ -610,7 +615,7 @@ static void CompareLocationExpectNoDifferences(const Configuration& rClientConfi
 {
 	BackupQueries::CompareParams params;
 	params.mQuiet = false;
-	CompareLocation(rClientConfig, rTlsContext, params, rLocationName);
+	CompareLocation(rClientConfig, rTlsContext, rLocationName, params);
 
 	CPPUNIT_ASSERT_EQUAL(0, params.mDifferences);
 	CPPUNIT_ASSERT_EQUAL(0, 
@@ -625,7 +630,7 @@ static void CompareLocationExpectDifferences(const Configuration& rClientConfig,
 {
 	BackupQueries::CompareParams params;
 	params.mQuiet = true;
-	CompareLocation(rClientConfig, rTlsContext, params, rLocationName);
+	CompareLocation(rClientConfig, rTlsContext, rLocationName, params);
 
 	CPPUNIT_ASSERT_EQUAL(numDiffs, params.mDifferences);
 	CPPUNIT_ASSERT_EQUAL(numDiffsModTime, 
