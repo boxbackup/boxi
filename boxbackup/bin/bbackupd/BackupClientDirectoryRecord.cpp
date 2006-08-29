@@ -182,6 +182,19 @@ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::Syn
 			dirHandle = ::opendir(rLocalPath.c_str());
 			if(dirHandle == 0)
 			{
+				// Report the error (logs and 
+				// eventual email to administrator)
+				if (errno == EACCES)
+				{
+					rParams.GetProgressNotifier().NotifyDirListFailed(
+						this, rLocalPath, "Access denied");
+				}
+				else
+				{
+					rParams.GetProgressNotifier().NotifyDirListFailed(this, 
+						rLocalPath, strerror(errno));
+				}
+				
 				// Report the error (logs and eventual email to administrator)
 				SetErrorWhenReadingFilesystemObject(rParams, rLocalPath.c_str());
 				// Ignore this directory for now.
@@ -1195,7 +1208,8 @@ int64_t BackupClientDirectoryRecord::UploadFile(BackupClientDirectoryRecord::Syn
 
 		if(e.GetType() == ConnectionException::ExceptionType && e.GetSubType() == ConnectionException::Protocol_UnexpectedReply)
 		{
-			// Check and see what error the protocol has -- as it might be an error...
+			// Check and see what error the protocol has, since it
+			// might just mean that the store is full.
 			int type, subtype;
 			if(connection.GetLastError(type, subtype)
 				&& type == BackupProtocolClientError::ErrorType
@@ -1231,9 +1245,11 @@ void BackupClientDirectoryRecord::SetErrorWhenReadingFilesystemObject(BackupClie
 	// Zero hash, so it gets synced properly next time round.
 	::memset(mStateChecksum, 0, sizeof(mStateChecksum));
 
-	// Log the error
+	// Log the error - already done by caller
+	/*
 	rParams.GetProgressNotifier().NotifyFileReadFailed(this, 
 		Filename, strerror(errno));
+	*/
 
 	// Mark that an error occured in the parameters object
 	rParams.mReadErrorsOnFilesystemObjects = true;
