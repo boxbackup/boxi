@@ -111,11 +111,7 @@ wxFileName MakeAbsolutePath(wxString relativePath)
 
 void DeleteRecursive(const wxFileName& rPath)
 {
-	if (rPath.FileExists())
-	{
-		CPPUNIT_ASSERT(wxRemoveFile(rPath.GetFullPath()));
-	}
-	else if (rPath.DirExists())
+	if (rPath.DirExists())
 	{
 		wxDir dir(rPath.GetFullPath());
 		CPPUNIT_ASSERT(dir.IsOpened());
@@ -131,8 +127,14 @@ void DeleteRecursive(const wxFileName& rPath)
 			while (dir.GetNext(&file));
 		}
 		
-		CPPUNIT_ASSERT(wxRmdir(rPath.GetFullPath()));
+		wxCharBuffer buf = rPath.GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT_MESSAGE(buf.data(), wxRmdir(rPath.GetFullPath()));
 	}
+	else // rPath.FileExists() doesn't catch symlinks
+	{
+		CPPUNIT_ASSERT(wxRemoveFile(rPath.GetFullPath()));
+	}
+
 }
 
 void TestBackupConfig::RunTest()
