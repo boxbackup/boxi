@@ -178,6 +178,14 @@ private:
  	{
  		TRACE1("Stat failed for '%s' (contents)\n", rLocalPath.c_str());
  	}
+ 	virtual void NotifyDirListFailed(
+ 		const BackupClientDirectoryRecord* pDirRecord,
+ 		const std::string& rLocalPath,
+ 		const std::string& rErrorMsg)
+ 	{
+ 		::syslog(LOG_ERR, "Backup object failed, error when reading %s", 
+ 			rLocalPath.c_str());
+ 	}
  	virtual void NotifyFileReadFailed(
  		const BackupClientDirectoryRecord* pDirRecord,
  		const std::string& rLocalPath,
