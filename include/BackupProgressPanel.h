@@ -187,6 +187,18 @@ class BackupProgressPanel
 	{
 		NotifyFileReadFailed(pDirRecord, rLocalPath, rErrorMsg);
 	}
+	virtual void NotifyDirListFailed(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		const std::string& rErrorMsg)
+	{
+		wxString msg;
+		msg.Printf(wxT("Failed to list directory '%s': %s"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+			wxString(rErrorMsg.c_str(),  wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		wxYield();
+	}
 	virtual void NotifyFileReadFailed(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
@@ -226,9 +238,18 @@ class BackupProgressPanel
 		const BoxException& rException)
 	{
 		wxString msg;
-		msg.Printf(wxT("Failed to send file '%s': %s"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
-			wxString(rException.what(),  wxConvLibc).c_str());
+		if (rException.GetType() == CommonException::ExceptionType &&
+			rException.GetSubType() == CommonException::AccessDenied)
+		{
+			msg.Printf(wxT("Failed to send file '%s': Access denied"), 
+				wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+		}
+		else
+		{
+			msg.Printf(wxT("Failed to send file '%s': %s"), 
+				wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+				wxString(rException.what(),  wxConvLibc).c_str());
+		}
 		mpErrorList->Append(msg);
 		wxYield();
 	}
