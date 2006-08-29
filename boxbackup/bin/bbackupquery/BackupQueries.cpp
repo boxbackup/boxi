@@ -1592,7 +1592,7 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 				}
 				catch(BoxException &e)
 				{
-					printf("ERROR: (%d/%d) during file fetch and comparsion for '%s/%s'\n",
+					printf("ERROR: (%d/%d) during file fetch and comparison for '%s/%s'\n",
 						e.GetType(),
 						e.GetSubType(),
 						storeName.c_str(), 
@@ -1600,7 +1600,7 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 				}
 				catch(...)
 				{
-					printf("ERROR: (unknown) during file fetch and comparsion for '%s/%s'\n", storeName.c_str(), i->first.c_str());
+					printf("ERROR: (unknown) during file fetch and comparison for '%s/%s'\n", storeName.c_str(), i->first.c_str());
 				}
 
 				// Remove from set so that we know it's been compared
