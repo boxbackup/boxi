@@ -1490,10 +1490,11 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 							if(!rParams.mQuiet)
 							{
 								printf("Local file '%s"
-									DIRECTORY_SEPARATOR
-									"%s' has different attributes "
+									"has different attributes "
 									"to store file '%s/%s'.\n",
-									localName.c_str(), i->first.c_str(), storeName.c_str(), i->first.c_str());						
+									localName.c_str(), 
+									storeName.c_str(), 
+									i->first.c_str());						
 							}
 							rParams.mDifferences ++;
 							if(modifiedAfterLastSync)
@@ -1518,37 +1519,53 @@ void BackupQueries::Compare(int64_t DirID, const std::string &rStoreDir, const s
 						if(!fileOnServerStream->IsSymLink())
 						{
 							// Open the local file
-							FileStream l(localName.c_str());
-							
-							// Size
-							IOStream::pos_type fileSizeLocal = l.BytesLeftToRead();
-							IOStream::pos_type fileSizeServer = 0;
-							
-							// Test the contents
-							char buf1[2048];
-							char buf2[2048];
-							while(fileOnServerStream->StreamDataLeft() && l.StreamDataLeft())
+							try 
 							{
-								int size = fileOnServerStream->Read(buf1, sizeof(buf1), mrConnection.GetTimeout());
-								fileSizeServer += size;
+								FileStream l(localName.c_str());
 								
-								if(l.Read(buf2, size) != size
-										|| ::memcmp(buf1, buf2, size) != 0)
+								// Size
+								IOStream::pos_type fileSizeLocal = l.BytesLeftToRead();
+								IOStream::pos_type fileSizeServer = 0;
+								
+								// Test the contents
+								char buf1[2048];
+								char buf2[2048];
+								while(fileOnServerStream->StreamDataLeft() && l.StreamDataLeft())
+								{
+									int size = fileOnServerStream->Read(buf1, sizeof(buf1), mrConnection.GetTimeout());
+									fileSizeServer += size;
+									
+									if(l.Read(buf2, size) != size
+											|| ::memcmp(buf1, buf2, size) != 0)
+									{
+										equal = false;
+										break;
+									}
+								}
+	
+								// Check read all the data from the server and file -- can't be equal if local and remote aren't the same length
+								// Can't use StreamDataLeft() test on file, because if it's the same size, it won't know
+								// it's EOF yet.
+								if(fileOnServerStream->StreamDataLeft() || fileSizeServer != fileSizeLocal)
 								{
 									equal = false;
-									break;
 								}
 							}
-	
-							// Check read all the data from the server and file -- can't be equal if local and remote aren't the same length
-							// Can't use StreamDataLeft() test on file, because if it's the same size, it won't know
-							// it's EOF yet.
-							if(fileOnServerStream->StreamDataLeft() || fileSizeServer != fileSizeLocal)
+							catch (std::exception &e)
 							{
+								if (!rParams.mQuiet)
+								{
+									printf("Error comparing '%s': %s\n",
+										localName.c_str(),
+										e.what());
+								}
 								equal = false;
 							}
 
-							// Must always read the entire decoded string, if it's not a symlink
+							// Must always read the entire stream, if it's not a symlink,
+							// otherwise server connection will be out of sync and
+							// unusable.
+							
 							if(fileOnServerStream->StreamDataLeft())
 							{
 								// Absorb all the data remaining
