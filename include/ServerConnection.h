@@ -76,7 +76,7 @@ class ServerConnection {
 		const char * destFileName);
 
 	bool UndeleteDirectory(int64_t theDirectoryId);
-	bool DeleteDirectory(int64_t theDirectoryId);
+	bool DeleteDirectory  (int64_t theDirectoryId);
 	
 	BackupProtocolClientAccountUsage* GetAccountUsage();
 	
