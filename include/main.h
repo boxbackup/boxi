@@ -116,6 +116,9 @@ enum {
 	ID_Setup_Wizard_Backed_Up_Checkbox,
 	
 	ID_BackupProgress_ErrorList,
+	
+	ID_Restore_Panel_New_Location_Radio,
+	ID_Restore_Panel_New_Location_Text,
 };
 
 typedef enum
@@ -176,6 +179,9 @@ typedef enum
 	BM_BACKUP_FAILED_INTERRUPTED,
 	BM_BACKUP_FAILED_UNKNOWN_ERROR,
 	BM_BACKUP_FAILED_STORE_FULL,
+	BM_RESTORE_FAILED_INVALID_DESTINATION_PATH,
+	BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS,
+	BM_RESTORE_FAILED_TO_CREATE_OBJECT,
 }
 message_t;
 
