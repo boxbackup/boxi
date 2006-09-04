@@ -52,6 +52,7 @@ enum {
 	ID_Restore_Panel,
 	ID_Compare_Panel,
 	ID_Backup_Progress_Panel,
+	ID_Restore_Progress_Panel,
 
 	ID_General_Setup_Wizard_Button,
 	ID_General_Setup_Advanced_Button,
@@ -99,6 +100,7 @@ enum {
 	ID_Compare_List,
 	ID_Compare_Button,
 	
+	ID_Function_Source_List,
 	ID_Function_Source_Button,
 	ID_Function_Dest_Button,
 	ID_Function_Start_Button,
