@@ -109,7 +109,10 @@ module.include.files=\
 	swWxGuiTestEventSimulationHelper.h\
 	BoxiApp.h\
 	TestBackup.h\
-	TestBackupConfig.h
+	TestBackupConfig.h\
+	Restore.h\
+	TestRestore.h\
+	RestoreProgressPanel.h
 
 module.source.name=src
 module.source.type=
@@ -161,7 +164,9 @@ module.source.files=\
 	TestConfig.cc\
 	TestWizard.cc\
 	TestBackup.cc\
-	TestBackupConfig.cc
+	TestBackupConfig.cc\
+	TestRestore.cc\
+	RestoreProgressPanel.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=

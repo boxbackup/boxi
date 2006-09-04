@@ -64,7 +64,9 @@ boxi_SOURCES = \
 	TestConfig.cc\
 	TestWizard.cc\
 	TestBackup.cc\
-	TestBackupConfig.cc
+	TestBackupConfig.cc\
+	TestRestore.cc\
+	RestoreProgressPanel.cc
 
 boxi_LDFLAGS = 
 

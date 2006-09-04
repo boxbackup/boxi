@@ -35,6 +35,9 @@ boxi_include_DATA = \
 	swWxGuiTestEventSimulationHelper.h\
 	BoxiApp.h\
 	TestBackup.h\
-	TestBackupConfig.h
+	TestBackupConfig.h\
+	Restore.h\
+	TestRestore.h\
+	RestoreProgressPanel.h
 
 EXTRA_DIST = $(boxi_include_DATA)
