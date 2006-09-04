@@ -67,6 +67,7 @@ class MainFrame : public wxFrame, public ConfigChangeListener
 	public:
 	// don't want to expose this, but need to unit test it.
 	void DoFileOpen   (const wxString& path);
+	ServerConnection* GetConnection() { return mpServerConnection; }
 	
 	private:
 	void DoFileNew    ();
