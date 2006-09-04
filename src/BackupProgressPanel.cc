@@ -93,6 +93,7 @@ BackupProgressPanel::BackupProgressPanel(
 	pSummarySizer->Add(mpSummaryText, 0, wxALIGN_CENTER_VERTICAL, 0);
 	
 	mpProgressGauge = new wxGauge(this, wxID_ANY, 100);
+	mpProgressGauge->SetValue(0);
 	pSummarySizer->Add(mpProgressGauge, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
 	mpProgressGauge->Hide();
 	
@@ -375,7 +376,11 @@ void BackupProgressPanel::StartBackup()
 		}
 		
 		mpProgressGauge->SetRange(mNumFilesCounted);
+		mpProgressGauge->SetValue(0);
 		mpProgressGauge->Show();
+
+		mpSummaryText->SetLabel(_("Backing up files"));
+		wxYield();
 		
 		// Go through the records agains, this time syncing them
 		for (tLocationRecords::const_iterator i = mLocations.begin();
@@ -384,12 +389,6 @@ void BackupProgressPanel::StartBackup()
 			LocationRecord* pLocRecord = *i;
 			int IDMapIndex = pLocRecord->mIDMapIndex;
 	
-			wxString msg;
-			msg.Printf(wxT("Backing up %s"), 
-				wxString(pLocRecord->mPath.c_str(), wxConvLibc).c_str());
-			mpSummaryText->SetLabel(msg);
-			wxYield();
-			
 			// Set current and new ID map pointers in the context
 			clientContext.SetIDMaps(
 				mCurrentIDMaps[IDMapIndex], 
@@ -478,7 +477,7 @@ void BackupProgressPanel::StartBackup()
 //
 // Function
 //		Name:    BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::SyncParams &, int64_t, const std::string &, bool)
-//		Purpose: Syncronise, recusively, a local directory with the server.
+//		Purpose: Recursively synchronise a local directory with the server.
 //		Created: 2003/10/08
 //
 // --------------------------------------------------------------------------
