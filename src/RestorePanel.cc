@@ -69,11 +69,12 @@ RestorePanel::RestorePanel
 	wxSizer* mpNewDestSizer = new wxBoxSizer(wxHORIZONTAL);
 	mpDestBox->Add(mpNewDestSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
-	mpNewLocRadio = new wxRadioButton(this, wxID_ANY, 
+	mpNewLocRadio = new wxRadioButton(this, ID_Restore_Panel_New_Location_Radio, 
 		wxT("&New Location:"), wxDefaultPosition, wxDefaultSize, 0);
 	mpNewDestSizer->Add(mpNewLocRadio, 0, wxGROW, 0);
 
-	mpNewLocText = new wxTextCtrl(this, wxID_ANY, wxT(""));
+	mpNewLocText = new wxTextCtrl(this, ID_Restore_Panel_New_Location_Text, 
+		wxT(""));
 	mpNewDestSizer->Add(mpNewLocText, 1, wxGROW | wxLEFT, 8);
 	
 	mpNewLocButton = new DirSelButton(this, wxID_ANY, mpNewLocText);
@@ -138,9 +139,19 @@ void RestorePanel::OnClickSourceButton(wxCommandEvent& rEvent)
 
 void RestorePanel::OnClickStartButton(wxCommandEvent& rEvent)
 {
+	wxFileName dest(mpNewLocText->GetValue());
+	
+	if (!dest.IsOk())
+	{
+		wxGetApp().ShowMessageBox(BM_RESTORE_FAILED_INVALID_DESTINATION_PATH,
+			_("Cannot start restore: the destination path is not set"),
+			_("Boxi Error"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+	
 	mpMainFrame->ShowPanel(mpProgressPanel);
 	wxYield();
-	mpProgressPanel->StartRestore();
+	mpProgressPanel->StartRestore(mpFilesPanel->GetRestoreSpec(), dest);
 }
 
 void RestorePanel::OnRadioButtonClick(wxCommandEvent& rEvent)
