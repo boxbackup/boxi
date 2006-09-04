@@ -50,7 +50,13 @@ ServerFileVersion::ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry)
 	mDateTime      = wxDateTime(BoxTimeToSeconds(
 		pDirEntry->GetModificationTime()));
 	// mHasAttributes = FALSE;
-	mCached = FALSE;
+	mCached = false;
+	
+	if(pDirEntry->HasAttributes())
+	{
+		const StreamableMemBlock &storeAttr(pDirEntry->GetAttributes());
+		mapAttributes.reset(new BackupClientFileAttributes(storeAttr));
+	}
 }
 
 void RestoreSpec::Add(const RestoreSpecEntry& rNewEntry)
@@ -821,7 +827,11 @@ const ServerCacheNode::Vector* ServerCacheNode::GetChildren()
 		pChildNode->mVersions.push_back(new ServerFileVersion(en));
 	}
 	
-	mCached = TRUE;
+	// ListDirectory always gives us attributes
+	const StreamableMemBlock &dirAttrBlock(dir.GetAttributes());
+	pMostRecent->SetAttributes(BackupClientFileAttributes(dirAttrBlock));
+	
+	mCached = true;
 	return &mChildren;
 }
 

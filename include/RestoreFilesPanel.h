@@ -40,6 +40,7 @@
 #include "BackupStoreConstants.h"
 #include "BackupStoreDirectory.h"
 #include "BackupStoreException.h"
+#include "BackupClientFileAttributes.h"
 #undef NDEBUG
 
 #include "ClientConfig.h"
@@ -68,17 +69,17 @@ class ServerFileVersion
 	// bool            mHasAttributes;
 	wxDateTime         mDateTime;
 	bool               mCached;
+	std::auto_ptr<BackupClientFileAttributes> mapAttributes;
 	
 	public:
 	ServerFileVersion() 
 	{
-		mBoxFileId   = BackupProtocolClientListDirectory::RootDirectory;
-		mIsDirectory = TRUE;
-		mIsDeleted   = FALSE;
-		mFlags       = 0;
+		mBoxFileId    = BackupProtocolClientListDirectory::RootDirectory;
+		mIsDirectory  = true;
+		mIsDeleted    = false;
+		mFlags        = 0;
 		mSizeInBlocks = 0;
-		// mHasAttributes = FALSE;
-		mCached = FALSE;
+		mCached       = false;
 	}
 	ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry);
 
@@ -88,6 +89,13 @@ class ServerFileVersion
 	bool IsDirectory()                const { return mIsDirectory; }
 	bool IsDeleted()                  const { return mIsDeleted; }
 	void SetDeleted(bool value = true) { mIsDeleted   = value; }
+	bool HasAttributes()              const { return mapAttributes.get(); }
+	BackupClientFileAttributes GetAttributes() const { return *mapAttributes; }
+	void SetAttributes(const BackupClientFileAttributes& rAttribs)
+	{
+		mapAttributes.reset(new BackupClientFileAttributes(rAttribs));
+	}
+	
 	private:
 };
 
