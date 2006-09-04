@@ -55,6 +55,7 @@
 #undef NDEBUG
 
 #include "main.h"
+#include "RestoreFilesPanel.h"
 #include "RestoreProgressPanel.h"
 #include "ServerConnection.h"
 
@@ -172,7 +173,7 @@ RestoreProgressPanel::RestoreProgressPanel(
 	SetSizer(pMainSizer);
 }
 
-void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec)
+void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName dest)
 {
 	RestoreSpec spec(rSpec);
 	
@@ -241,12 +242,29 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec)
 	try 
 	{
 		// count files to restore
+		std::auto_ptr<BackupProtocolClientAccountUsage> accountInfo = 
+			mpConnection->GetAccountUsage();
+		int blockSize = 0;
+		if (accountInfo.get())
+		{
+			blockSize = accountInfo->GetBlockSize();
+		}
+		else
+		{
+			mpErrorList->Append(_("Warning: failed to get account "
+				"information from server, file size will not "
+				"be reported"));
+		}
+		
 		RestoreSpecEntry::Vector entries = spec.GetEntries();
 		for (RestoreSpecEntry::ConstIterator i = entries.begin();
 			i != entries.end(); i++)
 		{
-			ServerCacheNode* pNode = i->GetNode();
-			CountFilesRecursive(spec, pNode);
+			if (i->IsInclude())
+			{
+				ServerCacheNode* pNode = i->GetNode();
+				CountFilesRecursive(spec, pNode, blockSize);
+			}
 		}
 		
 		mpProgressGauge->SetRange(mNumFilesCounted);
@@ -256,7 +274,22 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec)
 		mpSummaryText->SetLabel(_("Restoring files"));
 		wxYield();
 		
+		bool succeeded = false;
+		
 		// Go through the records agains, this time syncing them
+		for (RestoreSpecEntry::ConstIterator i = entries.begin();
+			i != entries.end(); i++)
+		{
+			if (i->IsInclude())
+			{
+				ServerCacheNode* pNode = i->GetNode();
+				succeeded = RestoreFilesRecursive(spec, pNode, 
+					pNode->GetParent()->GetMostRecent()->GetBoxFileId(),
+					dest, blockSize);
+			}
+			
+			if (!succeeded) break;
+		}
 		
 		if (mRestoreStopRequested)
 		{
@@ -264,6 +297,11 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec)
 			ReportRestoreFatalError(BM_BACKUP_FAILED_INTERRUPTED,
 				wxT("Restore interrupted by user"));
 			mpSummaryText->SetLabel(wxT("Restore Interrupted"));
+		}
+		else if (!succeeded)
+		{
+			mpSummaryText->SetLabel(wxT("Restore Failed"));
+			mpErrorList  ->Append  (wxT("Restore Failed"));
 		}
 		else
 		{
@@ -298,15 +336,135 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec)
 	}	
 
 	mpCurrentText->SetLabel(wxT("Idle (nothing to do)"));
-	mRestoreRunning = FALSE;
-	mRestoreStopRequested = FALSE;
+	mRestoreRunning = false;
+	mRestoreStopRequested = false;
 	mpStopCloseButton->SetLabel(wxT("Close"));
 }
 
-void CountFilesRecursive(const RestoreSpec& rSpec, ServerFileNode* pNode)
+void RestoreProgressPanel::CountFilesRecursive
+(
+	const RestoreSpec& rSpec, ServerCacheNode* pNode, int blockSize
+)
 {
+	// stop if requested
+	if (mRestoreStopRequested) return;
+		
 	ServerFileVersion* pVersion = pNode->GetMostRecent();
+	
+	RestoreSpecEntry::Vector specs = rSpec.GetEntries();
+	for (RestoreSpecEntry::Iterator i = specs.begin();
+		i != specs.end(); i++)
+	{
+		if (i->GetNode() == pNode && ! i->IsInclude())
+		{
+			// excluded, stop here.
+			return;
+		}
+	}
+	
 	if (pVersion->IsDirectory())
 	{
+		const ServerCacheNode::Vector* pChildren = pNode->GetChildren();
+		if (pChildren)
+		{
+			for (ServerCacheNode::ConstIterator i = pChildren->begin();
+				i != pChildren->end(); i++)
+			{
+				CountFilesRecursive(rSpec, *i, blockSize);
+			}
+		}
+	}
+	else
+	{
+		NotifyMoreFilesCounted(1, pVersion->GetSizeBlocks() * blockSize);
+	}
+}
+
+bool RestoreProgressPanel::RestoreFilesRecursive
+(
+	const RestoreSpec& rSpec, ServerCacheNode* pNode, int64_t parentId,
+	wxFileName localName, int blockSize
+)
+{
+	// stop if requested
+	if (mRestoreStopRequested) return false;
 		
-				NotifyMoreFilesCounted(
+	ServerFileVersion* pVersion = pNode->GetMostRecent();
+	
+	RestoreSpecEntry::Vector specs = rSpec.GetEntries();
+	for (RestoreSpecEntry::Iterator i = specs.begin();
+		i != specs.end(); i++)
+	{
+		if (i->GetNode() == pNode && ! i->IsInclude())
+		{
+			// excluded, stop here.
+			return false;
+		}
+	}
+	
+	if (localName.FileExists() || localName.DirExists())
+	{
+		wxString msg;
+		msg.Printf(_("Error: failed to finish restore: "
+			"object already exists: '%s'"), 
+			localName.GetFullPath().c_str());
+		ReportRestoreFatalError(
+			BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS, msg);
+		return false;
+	}
+
+	wxCharBuffer namebuf = localName.GetFullPath().mb_str(wxConvLibc);
+		
+	if (pVersion->IsDirectory())
+	{
+		if (!wxMkdir(localName.GetFullPath()))
+		{
+			wxString msg;
+			msg.Printf(_("Error: failed to finish restore: "
+				"cannot create directory: '%s'"), 
+				localName.GetFullPath().c_str());
+			ReportRestoreFatalError(
+				BM_RESTORE_FAILED_TO_CREATE_OBJECT, msg);
+			return false;
+		}
+		
+		pVersion->GetAttributes().WriteAttributes(namebuf.data());
+			 
+		const ServerCacheNode::Vector* pChildren = pNode->GetChildren();
+		if (pChildren)
+		{
+			for (ServerCacheNode::ConstIterator i = pChildren->begin();
+				i != pChildren->end(); i++)
+			{
+				wxFileName childName(localName.GetFullPath(),
+					(*i)->GetFileName());
+				if (!RestoreFilesRecursive(rSpec, *i, 
+					pVersion->GetBoxFileId(), childName, 
+					blockSize))
+				{
+					return false;
+				}
+			}
+		}
+	}
+	else
+	{		
+		if (!mpConnection->GetFile(parentId, pVersion->GetBoxFileId(), 
+			namebuf.data()))
+		{
+			return false;
+		}
+		
+		// Decode the file -- need to do different things depending on whether 
+		// the directory entry has additional attributes
+		if(pVersion->HasAttributes())
+		{
+			// Use these attributes
+			pVersion->GetAttributes().WriteAttributes(namebuf.data());
+		}
+
+		NotifyMoreFilesRestored(1, pVersion->GetSizeBlocks() * blockSize);		
+	}
+	
+	return true;
+}

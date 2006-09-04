@@ -42,6 +42,8 @@
 #include "ClientConfig.h"
 #include "ClientConnection.h"
 
+class ServerCacheNode;
+	
 /** 
  * RestoreProgressPanel
  * Shows status of a running backup and allows user to pause or cancel it.
@@ -63,7 +65,7 @@ class RestoreProgressPanel
 		long style = wxTAB_TRAVERSAL, 
 		const wxString& name = wxT("Restore Progress Panel"));
 
-	void StartRestore(const RestoreSpec& rSpec);
+	void StartRestore(const RestoreSpec& rSpec, wxFileName dest);
 
 	wxString GetNumFilesTotalString() { return mpNumFilesTotal->GetValue(); }
 	wxString GetNumBytesTotalString() { return mpNumBytesTotal->GetValue(); }
@@ -150,6 +152,28 @@ class RestoreProgressPanel
 		mpNumBytesTotal->SetValue(FormatNumBytes(mNumBytesCounted));
 	}
 
+	void NotifyMoreFilesRestored(size_t numAdditionalFiles, 
+		int64_t numAdditionalBytes)
+	{
+		mNumFilesDownloaded += numAdditionalFiles;
+		mNumBytesDownloaded += numAdditionalBytes;
+
+		wxString str;
+		str.Printf(wxT("%d"), mNumFilesDownloaded);
+		mpNumFilesDone->SetValue(str);
+		mpNumBytesDone->SetValue(FormatNumBytes(mNumBytesDownloaded));
+		
+		int64_t numFilesRemaining = mNumFilesCounted - mNumFilesDownloaded;
+		int64_t numBytesRemaining = mNumBytesCounted - mNumBytesDownloaded;
+
+		str.Printf(wxT("%d"), numFilesRemaining);
+		mpNumFilesRemaining->SetValue(str);
+		mpNumBytesRemaining->SetValue(FormatNumBytes(numBytesRemaining));
+		
+		mpProgressGauge->SetValue(mNumFilesDownloaded);
+		wxYield();
+	}
+
 	void ReportRestoreFatalError(message_t messageId, wxString msg)
 	{
 		wxGetApp().ShowMessageBox(messageId, msg, wxT("Boxi Error"), 
@@ -169,7 +193,11 @@ class RestoreProgressPanel
 		}
 	}
 	
-	void CountFilesRecursive(const RestoreSpec& rSpec, ServerFileNode* pNode);
+	void CountFilesRecursive(const RestoreSpec& rSpec, 
+		ServerCacheNode* pNode, int blockSize);
+	bool RestoreFilesRecursive(const RestoreSpec& rSpec, 
+		ServerCacheNode* pNode,	int64_t parentId, wxFileName localName, 
+		int blockSize);
 
 	DECLARE_EVENT_TABLE()
 };
