@@ -37,21 +37,27 @@
 #include "MainFrame.h"
 #include "ParamPanel.h"
 #include "RestorePanel.h"
+#include "RestoreProgressPanel.h"
 
 BEGIN_EVENT_TABLE(RestorePanel, FunctionPanel)
 	EVT_RADIOBUTTON(wxID_ANY, RestorePanel::OnRadioButtonClick)
 END_EVENT_TABLE()
 
-RestorePanel::RestorePanel(
-	ClientConfig*     pConfig,
-	ClientInfoPanel*  pClientConfigPanel,
-	MainFrame*        pMainFrame,
-	ServerConnection* pServerConnection,
-	wxWindow*         pParent
-	)
+RestorePanel::RestorePanel
+(
+	ClientConfig*         pConfig,
+	ClientInfoPanel*      pClientConfigPanel,
+	MainFrame*            pMainFrame,
+	ServerConnection*     pServerConnection,
+	wxWindow*             pParent
+)
 :	FunctionPanel(wxT("Restore Panel"), pConfig, pClientConfigPanel, 
 		pMainFrame, pParent, ID_Restore_Panel)
 {
+	mpProgressPanel = new RestoreProgressPanel(pConfig, pServerConnection,
+		pParent, ID_Restore_Progress_Panel);
+	mpProgressPanel->Hide();
+	
 	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to restore"));
 	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Restore &Destination"));
 
@@ -84,9 +90,9 @@ RestorePanel::RestorePanel(
 	mpSourceEditButton->SetLabel(wxT("&Select Files"));
 	mpStartButton     ->SetLabel(wxT("Start &Restore"));
 	
-	mpLocationsPanel = new RestoreFilesPanel(pConfig, 
+	mpFilesPanel = new RestoreFilesPanel(pConfig, 
 		pServerConnection, pMainFrame, pParent, this, this);
-	mpLocationsPanel->Hide();
+	mpFilesPanel->Hide();
 
 	Update();
 	UpdateEnabledState();
@@ -103,10 +109,10 @@ void RestorePanel::Update()
 {
 	mpSourceList->Clear();
 	
-	const RestoreSpec::Vector rEntries = 
-		mpLocationsPanel->GetRestoreSpec().GetEntries();
+	const RestoreSpecEntry::Vector rEntries = 
+		mpFilesPanel->GetRestoreSpec().GetEntries();
 	
-	for (RestoreSpec::ConstIterator pEntry = rEntries.begin();
+	for (RestoreSpecEntry::ConstIterator pEntry = rEntries.begin();
 		pEntry != rEntries.end(); pEntry++)
 	{
 		wxString path = pEntry->GetNode()->GetFullPath();
@@ -120,19 +126,21 @@ void RestorePanel::Update()
 void RestorePanel::AddToNotebook(wxNotebook* pNotebook)
 {
 	pNotebook->AddPage(this, wxT("Restore"));
-	pNotebook->AddPage(mpLocationsPanel, wxT("Restore Files"));
+	pNotebook->AddPage(mpFilesPanel, wxT("Restore Files"));
+	pNotebook->AddPage(mpProgressPanel, wxT("Restore Progress"));
+	
 }
 
 void RestorePanel::OnClickSourceButton(wxCommandEvent& rEvent)
 {
-	mpMainFrame->ShowPanel(mpLocationsPanel);
+	mpMainFrame->ShowPanel(mpFilesPanel);
 }
 
 void RestorePanel::OnClickStartButton(wxCommandEvent& rEvent)
 {
-	// mpMainFrame->ShowPanel(mpProgressPanel);
-	// wxYield();
-	// mpProgressPanel->StartBackup();
+	mpMainFrame->ShowPanel(mpProgressPanel);
+	wxYield();
+	mpProgressPanel->StartRestore();
 }
 
 void RestorePanel::OnRadioButtonClick(wxCommandEvent& rEvent)
