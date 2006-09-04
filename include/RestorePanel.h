@@ -34,32 +34,32 @@
 //#include "ClientConnection.h"
 #include "RestoreFilesPanel.h"
 
-class BackupLocationsPanel;
-class BackupProgressPanel;
+class RestoreProgressPanel;
 class DirSelButton;
 
 /** 
  * RestorePanel
- * Allows the user to configure and start an interactive backup
+ * Allows the user to configure and start an interactive restore
  */
 
 class RestorePanel : public FunctionPanel, RestoreSpecChangeListener
 {
 	public:
-	RestorePanel(
+	RestorePanel
+	(
 		ClientConfig*     pConfig,
 		ClientInfoPanel*  pClientConfigPanel,
 		MainFrame*        pMainFrame,
 		ServerConnection* pServerConnection,
 		wxWindow*         pParent
-		);
+	);
 	
 	void AddToNotebook(wxNotebook* pNotebook);
 	virtual void OnRestoreSpecChange();
 	
 	private:
-	// BackupProgressPanel*  mpProgressPanel;
-	RestoreFilesPanel* mpLocationsPanel;
+	RestoreProgressPanel* mpProgressPanel;
+	RestoreFilesPanel* mpFilesPanel;
 	wxRadioButton* mpOldLocRadio;
 	wxRadioButton* mpNewLocRadio;
 	wxTextCtrl*    mpNewLocText;
