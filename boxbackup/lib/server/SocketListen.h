@@ -10,6 +10,10 @@
 #ifndef SOCKETLISTEN__H
 #define SOCKETLISTEN__H
 
+#ifndef BOX__H
+#error You must include <Box.h> before <SocketListen.h>
+#endif
+
 #include <errno.h>
 
 #ifdef HAVE_UNISTD_H
@@ -278,4 +282,3 @@ private:
 #include "MemLeakFindOff.h"
 
 #endif // SOCKETLISTEN__H
-
