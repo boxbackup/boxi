@@ -47,13 +47,11 @@
 #include "RaidFileController.h"
 #include "BackupStoreAccountDatabase.h"
 #include "BackupStoreAccounts.h"
-#include "BackupContext.h"
 #include "autogen_BackupProtocolServer.h"
 #include "BackupStoreConfigVerify.h"
 #include "BackupQueries.h"
 #include "BackupDaemonConfigVerify.h"
 #include "BackupClientCryptoKeys.h"
-#include "BackupStoreConstants.h"
 #include "BackupStoreInfo.h"
 #include "StoreStructure.h"
 #include "NamedLock.h"
@@ -62,6 +60,7 @@
 #include "BoxTimeToUnix.h"
 #include "FileModificationTime.h"
 #include "BackupStoreException.h"
+#include "BackupStoreConstants.h"
 
 #include "main.h"
 #include "BoxiApp.h"
@@ -72,49 +71,15 @@
 #include "TestBackup.h"
 #include "TestBackupConfig.h"
 #include "FileTree.h"
-
+#include "Restore.h"
 #include "ServerConnection.h"
 
 #undef TLS_CLASS_IMPLEMENTATION_CPP
 
-class TestBackupStoreDaemon
-: public ServerTLS<BOX_PORT_BBSTORED, 1, false>,
-  public HousekeepingInterface
+const ConfigurationVerify *TestBackupStoreDaemon::GetConfigVerify() const
 {
-	public:
-	TestBackupStoreDaemon::TestBackupStoreDaemon()
-	: mStateKnownCondition(mConditionLock),
-	  mStateListening(false), mStateDead(false)
-	{ }
-	
-	virtual void Run()   { ServerTLS<BOX_PORT_BBSTORED, 1, false>::Run(); }
-	virtual void Setup() { SetupInInitialProcess(); }
-	virtual bool Load(const std::string& file) 
-	{ 
-		return LoadConfigurationFile(file); 
-	}
-	
-	wxMutex     mConditionLock;
-	wxCondition mStateKnownCondition;
-	bool        mStateListening;
-	bool        mStateDead;
-
-	virtual void SendMessageToHousekeepingProcess(const void *Msg, int MsgLen)
-	{ }
-
-	protected:
-	virtual void NotifyListenerIsReady();
-	virtual void Connection(SocketStreamTLS &rStream);
-	virtual const ConfigurationVerify *GetConfigVerify() const
-	{
-		return &BackupConfigFileVerify;
-	}
-
-	private:
-	void SetupInInitialProcess();
-	BackupStoreAccountDatabase *mpAccountDatabase;
-	BackupStoreAccounts *mpAccounts;
-};
+	return &BackupConfigFileVerify;
+}
 
 void TestBackupStoreDaemon::NotifyListenerIsReady()
 {
@@ -182,36 +147,6 @@ void TestBackupStoreDaemon::Connection(SocketStreamTLS &rStream)
 	context.CleanUp();
 }
 
-class StoreServerThread : public wxThread
-{
-	TestBackupStoreDaemon mDaemon;
-
-	public:
-	StoreServerThread(const wxString& rFilename)
-	: wxThread(wxTHREAD_JOINABLE)
-	{
-		wxCharBuffer buf = rFilename.mb_str(wxConvLibc);
-		mDaemon.Load(buf.data());
-		mDaemon.Setup();
-	}
-
-	~StoreServerThread()
-	{
-		Stop();
-	}
-
-	void Start();
-	void Stop();
-	
-	const Configuration& GetConfiguration()
-	{
-		return mDaemon.GetConfiguration();
-	}
-
-	private:
-	virtual ExitCode Entry();
-};
-
 void StoreServerThread::Start()
 {
 	mDaemon.mConditionLock.Lock();	
@@ -253,39 +188,6 @@ StoreServerThread::ExitCode StoreServerThread::Entry()
 	return (void *)1;
 }
 
-class StoreServer
-{
-	private:
-	std::auto_ptr<StoreServerThread> mapThread;
-	wxString mConfigFile;
-
-	public:
-	StoreServer(const wxString& rFilename)
-	: mConfigFile(rFilename)
-	{ }
-
-	~StoreServer()
-	{
-		if (mapThread.get())
-		{
-			Stop();
-		}
-	}
-
-	void Start();
-	void Stop();
-
-	const Configuration& GetConfiguration()
-	{
-		if (!mapThread.get()) 
-		{
-			throw "not running";
-		}
-		
-		return mapThread->GetConfiguration();
-	}
-};
-
 void StoreServer::Start()
 {
 	if (mapThread.get()) 
@@ -321,8 +223,8 @@ CppUnit::Test *TestBackup::suite()
 	return suiteOfTests;
 }
 
-static void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
-	bool restoreTimes = false)
+void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
+	bool restoreTimes)
 {
 	CPPUNIT_ASSERT(rZipFile.FileExists());
 	wxFileInputStream zipFis(rZipFile.GetFullPath());
@@ -346,7 +248,7 @@ static void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 		}
 		else
 		{
-			CPPUNIT_ASSERT(!outName.FileExists());
+			// CPPUNIT_ASSERT(!outName.FileExists());
 			CPPUNIT_ASSERT(!outName.DirExists());
 		
 			wxFileOutputStream outFos(outName.GetFullPath());
@@ -496,7 +398,7 @@ static void SetLimit(const Configuration &rConfig, int32_t ID,
 	info->Save();
 }
 
-static void CompareBackup(const Configuration& rClientConfig, 
+void CompareBackup(const Configuration& rClientConfig, 
 	TLSContext& rTlsContext, BackupQueries::CompareParams& rParams,
 	const wxString& rRemoteDir, const wxFileName& rLocalPath)
 {
@@ -555,8 +457,7 @@ static void CompareBackup(const Configuration& rClientConfig,
 	connection.QueryFinished();
 }
 
-/*
-static void CompareExpectNoDifferences(const Configuration& rClientConfig, 
+void CompareExpectNoDifferences(const Configuration& rClientConfig, 
 	TLSContext& rTlsContext, const wxString& rRemoteDir, 
 	const wxFileName& rLocalPath)
 {
@@ -570,9 +471,8 @@ static void CompareExpectNoDifferences(const Configuration& rClientConfig,
 	CPPUNIT_ASSERT_EQUAL(0, params.mExcludedDirs);
 	CPPUNIT_ASSERT_EQUAL(0, params.mExcludedFiles);
 }
-*/
 
-static void CompareExpectDifferences(const Configuration& rClientConfig, 
+void CompareExpectDifferences(const Configuration& rClientConfig, 
 	TLSContext& rTlsContext, const wxString& rRemoteDir, 
 	const wxFileName& rLocalPath, int numDiffs, int numDiffsModTime)
 {
@@ -605,7 +505,7 @@ static std::auto_ptr<BackupStoreInfo> GetAccountInfo(const Configuration& rConfi
 	return info;
 }
 
-static void CompareLocation(const Configuration& rConfig, 
+void CompareLocation(const Configuration& rConfig, 
 	TLSContext& rTlsContext,
 	const std::string& rLocationName, 
 	BackupQueries::CompareParams& rParams)
@@ -633,7 +533,7 @@ static void CompareLocation(const Configuration& rConfig,
 	rParams.DeleteExcludeLists();
 }
 
-static void CompareLocationExpectNoDifferences(const Configuration& rClientConfig, 
+void CompareLocationExpectNoDifferences(const Configuration& rClientConfig, 
 	TLSContext& rTlsContext, const std::string& rLocationName,
 	int excludedDirs, int excludedFiles)
 {
@@ -648,7 +548,7 @@ static void CompareLocationExpectNoDifferences(const Configuration& rClientConfi
 	CPPUNIT_ASSERT_EQUAL(excludedFiles, params.mExcludedFiles);
 }
 
-static void CompareLocationExpectDifferences(const Configuration& rClientConfig, 
+void CompareLocationExpectDifferences(const Configuration& rClientConfig, 
 	TLSContext& rTlsContext, const std::string& rLocationName, 
 	int numDiffs, int numDiffsModTime, int excludedDirs, int excludedFiles)
 {
@@ -663,8 +563,7 @@ static void CompareLocationExpectDifferences(const Configuration& rClientConfig,
 	CPPUNIT_ASSERT_EQUAL(excludedFiles, params.mExcludedFiles);
 }
 
-static int64_t SearchDir(BackupStoreDirectory& rDir,
-	const std::string& rChildName)
+int64_t SearchDir(BackupStoreDirectory& rDir, const std::string& rChildName)
 {
 	BackupStoreDirectory::Iterator i(rDir);
 	BackupStoreFilenameClear child(rChildName.c_str());
@@ -1054,15 +953,15 @@ void TestBackup::RunTest()
 	mpConfig->Save(configFile.GetFullPath());
 	CPPUNIT_ASSERT(configFile.FileExists());
 	
-	std::string errs;
-	wxCharBuffer buf = configFile.GetFullPath().mb_str(wxConvLibc);
-	std::auto_ptr<Configuration> apClientConfig
-	(
-		Configuration::LoadAndVerify(buf.data(), 
-			&BackupDaemonConfigVerify, errs)
-	);
-	CPPUNIT_ASSERT(apClientConfig.get());
-	CPPUNIT_ASSERT(errs.empty());
+	std::auto_ptr<Configuration> apClientConfig;
+	{
+		std::string errs;
+		wxCharBuffer buf = configFile.GetFullPath().mb_str(wxConvLibc);
+		apClientConfig = Configuration::LoadAndVerify(buf.data(), 
+			&BackupDaemonConfigVerify, errs);
+		CPPUNIT_ASSERT(apClientConfig.get());
+		CPPUNIT_ASSERT(errs.empty());
+	}
 	const Configuration &rClientConfig(*apClientConfig);
 
 	// Setup and connect
@@ -1086,6 +985,36 @@ void TestBackup::RunTest()
 
 	// and afterwards, there should be no differences any more
 	CHECK_COMPARE_LOC_OK(0, 0);
+
+	// check that attributes are backed up and compared correctly - later
+	/*
+	{
+		wxFileName testFileName = MakeAbsolutePath(testDataDir, 
+			_("spacetest/f1"));
+		CPPUNIT_ASSERT(testFileName.FileExists());
+		wxCharBuffer namebuf = testFileName.GetFullPath().mb_str(wxConvLibc);
+		std::string cmd = "echo foo > ";
+		cmd += namebuf.data();
+		CPPUNIT_ASSERT(system(cmd.c_str()) == 0);
+		
+		CHECK_BACKUP_OK();
+		
+		// make one of the files read-only, expect a compare failure
+		#ifdef WIN32
+		wxString cmd = _("attrib +r ");
+		cmd.Append(testFileName);
+		wxCharBuffer cmdbuf = cmd.mb_str(wxConvLibc);
+		int compareReturnValue = ::system(cmdbuf.data());
+		CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
+		#else
+		CPPUNIT_ASSERT_EQUAL(0, chmod(namebuf.data(), 0000));
+		#endif
+		
+		CHECK_COMPARE_LOC_FAILS(1, 0, 0, 0);
+		CPPUNIT_ASSERT_EQUAL(0, chmod(namebuf.data(), 0644));
+		CHECK_COMPARE_LOC_OK(0, 0);
+	}
+	*/
 	
 	// ensure that the mod time of newly created files 
 	// is later than the last backup.
@@ -1327,9 +1256,11 @@ void TestBackup::RunTest()
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
 	
-	// Add some files and directories which are marked as excluded
-	wxFileName zipExcludeTest(MakeAbsolutePath(_("../test/data/testexclude.zip")));
-	Unzip(zipExcludeTest, testDataDir, true);
+	{
+		// Add some files and directories which are marked as excluded
+		wxFileName zipExcludeTest(MakeAbsolutePath(_("../test/data/testexclude.zip")));
+		Unzip(zipExcludeTest, testDataDir, true);
+	}
 	
 	// backup should still work
 	CHECK_BACKUP_OK();
@@ -1475,33 +1406,45 @@ void TestBackup::RunTest()
 	{
 		wxFileName testFileName = MakeAbsolutePath(testDataDir, 
 			_("f1.dat"));
-		wxCharBuffer namebuf = testFileName.GetFullPath().mb_str(wxConvLibc);
+		wxCharBuffer buf = testFileName.GetFullPath().mb_str(wxConvLibc);
+
+		#ifndef WIN32		
+		// make one of the files unreadable, expect a compare failure
+		struct stat st;
+		CPPUNIT_ASSERT(stat(buf.data(), &st) == 0);
+		CPPUNIT_ASSERT_EQUAL(0, chmod(buf.data(), 0000));
+		CHECK_COMPARE_LOC_FAILS(2, 0, 3, 4);
+		#endif
 		
 		// make one of the files read-only, expect a compare failure
 		#ifdef WIN32
-		int compareReturnValue = ::system("attrib +r "
-			"testfiles\\restore-Test1\\f1.dat");
+		wxString cmd = _("attrib +r ");
+		cmd.Append(testFileName);
+		wxCharBuffer cmdbuf = cmd.mb_str(wxConvLibc);
+		int compareReturnValue = ::system(cmdbuf.data());
 		CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
 		#else
-		CPPUNIT_ASSERT_EQUAL(0, chmod(namebuf.data(), 0000));
+		CPPUNIT_ASSERT_EQUAL(0, chmod(buf.data(), 0444));
 		#endif
 		
 		CHECK_COMPARE_LOC_FAILS(1, 0, 3, 4);
 	
 		// set it back, expect no failures
 		#ifdef WIN32
-		int compareReturnValue = ::system("attrib -r "
-			"testfiles\\restore-Test1\\f1.dat");
+		cmd = _("attrib -r ");
+		cmd.Append(testFileName);
+		cmdbuf = cmd.mb_str(wxConvLibc);
+		compareReturnValue = ::system(cmdbuf.data());
 		CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
 		#else
-		CPPUNIT_ASSERT_EQUAL(0, chmod(namebuf.data(), 0755));
+		CPPUNIT_ASSERT_EQUAL(0, chmod(buf.data(), st.st_mode));
 		#endif
 		
 		CHECK_COMPARE_LOC_OK(3, 4);
 
 		// change the timestamp on a file, expect a compare failure
 		#ifdef WIN32
-		HANDLE handle = openfile(namebuf.data(), O_RDWR, 0);
+		HANDLE handle = openfile(buf.data(), O_RDWR, 0);
 		CPPUNIT_ASSERT(handle != INVALID_HANDLE_VALUE);
 		FILETIME creationTime, lastModTime, lastAccessTime;
 		CPPUNIT_ASSERT(GetFileTime(handle, &creationTime, &lastAccessTime, 
@@ -1510,8 +1453,6 @@ void TestBackup::RunTest()
 		FILETIME dummyTime = lastModTime;
 		dummyTime.dwHighDateTime -= 100;
 		#else
-		struct stat st;
-		CPPUNIT_ASSERT(stat(buf.data(), &st) == 0);
 		time_t creationTime = st.st_ctime, 
 			lastModTime = st.st_mtime, 
 			lastAccessTime = st.st_atime,
@@ -1541,16 +1482,167 @@ void TestBackup::RunTest()
 		SetFileTime(buf.data(), creationTime, lastModTime, lastAccessTime);
 		CHECK_COMPARE_LOC_OK(3, 4);
 	}
+
+	{
+		// Add some more files and modify others
+		// Don't use the timestamp flag this time, so they have 
+		// a recent modification time.
+		wxFileName zipTest3(MakeAbsolutePath(_("../test/data/test3.zip")));
+		Unzip(zipTest3, testDataDir, false);
+	}
+
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK(3, 4);
+
+	{
+		// Rename directory
+		wxFileName from = MakeAbsolutePath(testDataDir,
+			_("sub23/dhsfdss"));
+		wxFileName to = MakeAbsolutePath(testDataDir,
+			_("renamed-dir"));
+		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
+			to.GetFullPath()));
+		
+		CHECK_BACKUP_OK();
+		CHECK_COMPARE_LOC_OK(3, 4);
+		
+		// Rename some files -- one under the threshold, others above
+		/*
+		from = MakeAbsolutePath(testDataDir,
+			_("continousupdate"));
+		to = MakeAbsolutePath(testDataDir,
+			_("continousupdate-ren"));
+		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
+			to.GetFullPath()));
+		*/
+
+		from = MakeAbsolutePath(testDataDir,
+			_("df324"));
+		to = MakeAbsolutePath(testDataDir,
+			_("df324-ren"));
+		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
+			to.GetFullPath()));
+
+		from = MakeAbsolutePath(testDataDir,
+			_("sub23/find2perl"));
+		to = MakeAbsolutePath(testDataDir,
+			_("find2perl-ren"));
+		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
+			to.GetFullPath()));
+
+		CHECK_BACKUP_OK();
+		CHECK_COMPARE_LOC_OK(3, 4);
+
+		// Check that modifying files with madly in the future 
+		// timestamps still get added
+
+		{
+			// Create a new file
+			wxFileName fn = MakeAbsolutePath(testDataDir, 
+				_("sub23/in-the-future"));
+			wxFile f;
+			CPPUNIT_ASSERT(f.Create(fn.GetFullPath()));
+			CPPUNIT_ASSERT(f.Write(_("Back to the future!\n")));
+			f.Close();
+
+			// and then move the time forwards!
+			struct timeval times[2];
+			BoxTimeToTimeval(GetCurrentBoxTime() + 
+				SecondsToBoxTime((time_t)(365*24*60*60)), 
+				times[1]);
+			times[0] = times[1];
+			wxCharBuffer buf = fn.GetFullPath().mb_str(wxConvLibc);
+			CPPUNIT_ASSERT(::utimes(buf.data(), times) == 0);
+		}
+
+		CHECK_BACKUP_OK();
+		CHECK_COMPARE_LOC_OK(3, 4);
+	}
+	
+	// try a restore
+	/*
+	{
+		wxPanel* pRestorePanel = wxDynamicCast
+		(
+			pMainFrame->FindWindow(ID_Restore_Panel), wxPanel
+		);
+		CPPUNIT_ASSERT(pRestorePanel);
+	
+		CPPUNIT_ASSERT(!pRestorePanel->IsShown());	
+		ClickButtonWaitEvent(ID_Main_Frame, ID_General_Restore_Button);
+		CPPUNIT_ASSERT(pRestorePanel->IsShown());
+		
+		wxListBox* pLocsList = wxDynamicCast
+		(
+			pRestorePanel->FindWindow(ID_Function_Source_List), wxListBox
+		);
+		CPPUNIT_ASSERT(pLocsList);
+		CPPUNIT_ASSERT_EQUAL(0, pLocsList->GetCount());
+		
+		wxPanel* pRestoreFilesPanel = wxDynamicCast
+		(
+			pMainFrame->FindWindow(ID_Restore_Files_Panel), wxPanel
+		);
+		CPPUNIT_ASSERT(pRestoreFilesPanel);
+
+		CPPUNIT_ASSERT(!pRestoreFilesPanel->IsShown());	
+		ClickButtonWaitEvent(ID_Restore_Panel, ID_Function_Source_Button);
+		CPPUNIT_ASSERT(pRestoreFilesPanel->IsShown());
+		
+		wxTreeCtrl* pRestoreTree = wxDynamicCast
+		(
+			pRestoreFilesPanel->FindWindow(ID_Server_File_Tree), 
+			wxTreeCtrl
+		);
+		CPPUNIT_ASSERT(pRestoreTree);
+		
+		wxTreeItemId rootId = pRestoreTree->GetRoot();
+		CPPUNIT_ASSERT(rootId.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("Server root")),
+			pRestoreTree->GetItemText(rootId));
+		pRestoreTree->Expand(rootId);
+		CPPUNIT_ASSERT_EQUAL(1, pRestoreTree->GetChildrenCount(rootId), 
+			false);
+			
+		wxTreeItemIdValue cookie;
+		wxTreeItemId loc = pRestoreTree->GetFirstChild(rootId, cookie);
+		CPPUNIT_ASSERT(loc.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("testdata")),
+			pRestoreTree->GetItemText(loc));
+		pRestoreTree->Expand(loc);
+		
+		
+	}
+	*/
+	
+	// try a restore
+	{
+		BackupStoreDirectory dir;
+
+		CPPUNIT_ASSERT(conn.ListDirectory(
+			BackupProtocolClientListDirectory::RootDirectory,
+			BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING,
+			dir));
+		int64_t testId = SearchDir(dir, "testdata");
+		CPPUNIT_ASSERT(testId);
+
+		wxFileName restoreDir(tempDir.GetFullPath(), _("restore"));
+		CPPUNIT_ASSERT(!restoreDir.DirExists());
+		// CPPUNIT_ASSERT(wxMkdir(restoreDir.GetFullPath()));
+		
+		wxCharBuffer buf = restoreDir.GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT_EQUAL((int)Restore_Complete, conn.Restore(
+			testId, buf.data(), NULL, NULL, false, false, false));
+
+		conn.Disconnect();
+		
+		CompareExpectNoDifferences(rClientConfig, tlsContext, 
+			_("testdata"), restoreDir);
+			
+		DeleteRecursive(restoreDir);
+	}
 	
 	// clean up
-	#ifndef WIN32
-	{
-		// Delete symlink
-		wxCharBuffer buf = dirTestDirName.GetFullPath().mb_str(wxConvLibc);
-		CPPUNIT_ASSERT(::unlink(buf.data()) == 0);
-	}
-	#endif		
-	
 	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
 	mpConfig->RemoveLocation(*pTestDataLocation);
 	CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
