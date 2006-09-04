@@ -54,7 +54,7 @@ FunctionPanel::FunctionPanel(
 	mpSourceBox = new wxStaticBoxSizer(wxVERTICAL, this, wxT(""));
 	mpMainSizer->Add(mpSourceBox, 1, wxGROW | wxALL, 8);
 	
-	mpSourceList = new wxListBox(this, wxID_ANY);
+	mpSourceList = new wxListBox(this, ID_Function_Source_List);
 	mpSourceBox->Add(mpSourceList, 1, wxGROW | wxALL, 8);
 	
 	mpSourceCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
