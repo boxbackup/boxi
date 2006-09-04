@@ -78,7 +78,7 @@ class ServerConnection {
 	bool UndeleteDirectory(int64_t theDirectoryId);
 	bool DeleteDirectory  (int64_t theDirectoryId);
 	
-	BackupProtocolClientAccountUsage* GetAccountUsage();
+	std::auto_ptr<BackupProtocolClientAccountUsage> GetAccountUsage();
 	
 	bool ListDirectory(int64_t theDirectoryId, int16_t excludeFlags, 
 		BackupStoreDirectory& rDirectoryObject);

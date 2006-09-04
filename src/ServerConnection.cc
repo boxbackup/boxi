@@ -283,7 +283,7 @@ bool ServerConnection::ListDirectory(
 			BackupProtocolClientListDirectory::Flags_INCLUDE_EVERYTHING,
 			excludeFlags,
 			// want attributes:
-			TRUE);
+			true);
 
 		// Retrieve the directory from the stream following
 		std::auto_ptr<IOStream> dirstream(mpConnection->ReceiveStream());
@@ -300,22 +300,24 @@ bool ServerConnection::ListDirectory(
 	}
 }
 
-BackupProtocolClientAccountUsage* ServerConnection::GetAccountUsage() {
-	if (!Connect(FALSE)) return FALSE;
+std::auto_ptr<BackupProtocolClientAccountUsage> ServerConnection::GetAccountUsage() 
+{
+	std::auto_ptr<BackupProtocolClientAccountUsage> apUsage;
+	
+	if (!Connect(FALSE)) return apUsage;
 
 	try 
 	{
-		std::auto_ptr<BackupProtocolClientAccountUsage> Usage =
-			mpConnection->QueryGetAccountUsage();
-		return new BackupProtocolClientAccountUsage(*Usage);
+		apUsage = mpConnection->QueryGetAccountUsage();
 	} 
 	catch (BoxException &e) 
 	{
 		HandleException(BM_SERVER_CONNECTION_GET_ACCT_FAILED,
 			wxT("Error getting account information from server"), 
 			e);
-		return NULL;
 	}
+	
+	return apUsage;
 }
 
 bool ServerConnection::UndeleteDirectory(int64_t theDirectoryId) {
