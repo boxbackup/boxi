@@ -55,7 +55,8 @@ ServerFileVersion::ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry)
 
 void RestoreSpec::Add(const RestoreSpecEntry& rNewEntry)
 {
-	for (RestoreSpec::Iterator i = mEntries.begin(); i != mEntries.end(); i++)
+	for (RestoreSpecEntry::Iterator i = mEntries.begin(); 
+		i != mEntries.end(); i++)
 	{
 		if (i->IsSameAs(rNewEntry))
 			return;
@@ -66,7 +67,7 @@ void RestoreSpec::Add(const RestoreSpecEntry& rNewEntry)
 
 void RestoreSpec::Remove(const RestoreSpecEntry& rOldEntry)
 {
-	for (RestoreSpec::Iterator i = mEntries.begin(); i != mEntries.end(); i++)
+	for (RestoreSpecEntry::Iterator i = mEntries.begin(); i != mEntries.end(); i++)
 	{
 		if (i->IsSameAs(rOldEntry))
 		{
@@ -215,8 +216,8 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 		mIncluded       = FALSE;
 	}
 
-	const RestoreSpec::Vector& entries = mrRestoreSpec.GetEntries();
-	for (RestoreSpec::Vector::const_iterator i = entries.begin(); 
+	const RestoreSpecEntry::Vector& entries = mrRestoreSpec.GetEntries();
+	for (RestoreSpecEntry::ConstIterator i = entries.begin(); 
 		i != entries.end(); i++)
 	{
 		if (i->GetNode() == mpCacheNode)
@@ -237,9 +238,14 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 		// this node is not included, but if it contains one that is,
 		// we should show a partial icon instead of an empty one
 
-		wxString thisNodePathWithSlash = GetFullPath() + wxT("/");
+		wxString thisNodePathWithSlash = GetFullPath();
+		if (! thisNodePathWithSlash.Mid(
+			thisNodePathWithSlash.Length() - 1, 1).IsSameAs(_("/")))
+		{
+			thisNodePathWithSlash.Append(_("/"));
+		}
 		
-		for (RestoreSpec::Vector::const_iterator i = entries.begin(); 
+		for (RestoreSpecEntry::ConstIterator i = entries.begin(); 
 			i != entries.end(); i++)
 		{
 			wxString entryPath = i->GetNode()->GetFullPath();
@@ -346,8 +352,8 @@ RestoreFilesPanel::RestoreFilesPanel
 	RestoreSpecChangeListener* pListener,
 	wxPanel*          pPanelToShowOnClose
 )
-:	wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 
-		wxTAB_TRAVERSAL, wxT("RestoreFilesPanel")),
+:	wxPanel(pParent, ID_Restore_Files_Panel, wxDefaultPosition, 
+		wxDefaultSize, wxTAB_TRAVERSAL, wxT("RestoreFilesPanel")),
 	mpMainFrame(pMainFrame),
 	mpPanelToShowOnClose(pPanelToShowOnClose),
 	mpListener(pListener)

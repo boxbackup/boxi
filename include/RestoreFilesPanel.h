@@ -202,6 +202,11 @@ class ServerCache
 
 class RestoreSpecEntry
 {
+	public:
+	typedef std::vector<RestoreSpecEntry> Vector;
+	typedef Vector::iterator Iterator;
+	typedef Vector::const_iterator ConstIterator;
+		
 	private:
 	ServerCacheNode* mpNode;
 	bool mInclude;
@@ -224,17 +229,12 @@ class RestoreSpecEntry
 
 class RestoreSpec
 {
-	public:
-	typedef std::vector<RestoreSpecEntry> Vector;
-	typedef Vector::iterator Iterator;
-	typedef Vector::const_iterator ConstIterator;
-		
 	private:
-	Vector mEntries;
+	RestoreSpecEntry::Vector mEntries;
 	
 	public:
 	RestoreSpec() { }
-	const Vector& GetEntries() const { return mEntries; }
+	const RestoreSpecEntry::Vector& GetEntries() const { return mEntries; }
 	void Add   (const RestoreSpecEntry& rNewEntry);
 	void Remove(const RestoreSpecEntry& rOldEntry);
 };
