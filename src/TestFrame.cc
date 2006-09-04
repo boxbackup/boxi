@@ -33,14 +33,21 @@
 #include <cppunit/TestSuite.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#define TLS_CLASS_IMPLEMENTATION_CPP
+
+#include "SandBox.h"
+#include "Box.h"
 #include "MainFrame.h"
 #include "SetupWizard.h"
 #include "SslConfig.h"
 #include "TestFrame.h"
 #include "TestBackup.h"
 #include "TestBackupConfig.h"
+#include "TestRestore.h"
 #include "TestConfig.h"
 #include "TestWizard.h"
+
+#undef TLS_CLASS_IMPLEMENTATION_CPP
 
 DECLARE_EVENT_TYPE(CREATE_WINDOW_COMMAND, -1)
 DECLARE_EVENT_TYPE(TEST_FINISHED_EVENT,   -1)
@@ -506,8 +513,9 @@ class GuiTestSuite : public CppUnit::TestFixture
 			) \
 		)
 		
-		ADD_TEST(TestBackup);
-		ADD_TEST(TestBackupConfig);
+		ADD_TEST(TestRestore);
+		// ADD_TEST(TestBackup);
+		// ADD_TEST(TestBackupConfig);
 		// ADD_TEST(TestOpenWizard);
 		// ADD_TEST(TestWizard);
 		// ADD_TEST(TestConfig);
