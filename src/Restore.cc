@@ -74,7 +74,7 @@
 #include "Utils.h"
 #undef NDEBUG
 
-#include "ServerConnection.h"
+#include "Restore.h"
 
 #define MAX_BYTES_WRITTEN_BETWEEN_RESTORE_INFO_SAVES (128*1024)
 
@@ -230,15 +230,6 @@ public:
 	std::string mNextLevelLocalName;
 };
 
-// parameters structure
-typedef struct
-{
-	ProgressCallbackFunc *pProgressCallback;
-	void* pProgressUserData;
-	bool RestoreDeleted;
-	std::string mRestoreResumeInfoFilename;
-	RestoreResumeInfo mResumeInfo;
-} RestoreParams;
 
 
 
@@ -250,15 +241,17 @@ typedef struct
 //		Created: 23/11/03
 //
 // --------------------------------------------------------------------------
-static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t DirectoryID, std::string &rLocalDirectoryName,
-	RestoreParams &Params, RestoreResumeInfo &rLevel)
+void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t DirectoryID, std::string &rLocalDirectoryName,
+	RestoreParams &rParams, RestoreResumeInfo &rLevel)
 {
 	// If we're resuming... check that we haven't got a next level to look at
 	if(rLevel.mpNextLevel != 0)
 	{
 		// Recurse immediately
-		std::string localDirname(rLocalDirectoryName + DIRECTORY_SEPARATOR_ASCHAR + rLevel.mNextLevelLocalName);
-		BackupClientRestoreDir(rConnection, rLevel.mNextLevelID, localDirname, Params, *rLevel.mpNextLevel);
+		std::string localDirname(rLocalDirectoryName + 
+			DIRECTORY_SEPARATOR_ASCHAR + rLevel.mNextLevelLocalName);
+		BackupClientRestoreDir(rConnection, rLevel.mNextLevelID, 
+			localDirname, rParams, *rLevel.mpNextLevel);
 		
 		// Add it to the list of done itmes
 		rLevel.mRestoredObjects.insert(rLevel.mNextLevelID);
@@ -268,7 +261,10 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 	}
 	
 	// Save the resumption information
-	Params.mResumeInfo.Save(Params.mRestoreResumeInfoFilename);
+	if (rParams.mpResumeInfo)
+	{
+		rParams.mpResumeInfo->Save(rParams.mRestoreResumeInfoFilename);
+	}
 
 	// Create the local directory (if not already done) -- path and owner set later, just use restrictive owner mode
 	switch(ObjectExists(rLocalDirectoryName.c_str()))
@@ -304,8 +300,12 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 	// Fetch the directory listing from the server -- getting a list of files which is approparite to the restore type
 	rConnection.QueryListDirectory(
 			DirectoryID,
-			Params.RestoreDeleted?(BackupProtocolClientListDirectory::Flags_Deleted):(BackupProtocolClientListDirectory::Flags_INCLUDE_EVERYTHING),
-			BackupProtocolClientListDirectory::Flags_OldVersion | (Params.RestoreDeleted?(0):(BackupProtocolClientListDirectory::Flags_Deleted)),
+			rParams.mRestoreDeleted
+			?(BackupProtocolClientListDirectory::Flags_Deleted)
+			:(BackupProtocolClientListDirectory::Flags_INCLUDE_EVERYTHING),
+			BackupProtocolClientListDirectory::Flags_OldVersion |
+			( rParams.mRestoreDeleted
+			  ? 0 : BackupProtocolClientListDirectory::Flags_Deleted ),
 			true /* want attributes */);
 
 	// Retrieve the directory from the stream following
@@ -360,9 +360,12 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 				}
 				
 				// Progress display?
-				if(Params.pProgressCallback)
-					Params.pProgressCallback(RS_FINISH_FILE, localFilename,
-						Params.pProgressUserData);
+				if (rParams.mpProgressCallback)
+				{
+					rParams.mpProgressCallback(
+						RS_FINISH_FILE, localFilename,
+						rParams.mpProgressUserData);
+				}
 
 				// Add it to the list of done itmes
 				rLevel.mRestoredObjects.insert(en->GetObjectID());
@@ -377,7 +380,13 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 					if(bytesWrittenSinceLastRestoreInfoSave > MAX_BYTES_WRITTEN_BETWEEN_RESTORE_INFO_SAVES)
 					{
 						// Save the restore info, in case it's needed later
-						Params.mResumeInfo.Save(Params.mRestoreResumeInfoFilename);
+						if (rParams.mpResumeInfo)
+						{
+							rParams.mpResumeInfo->Save
+							(
+								rParams.mRestoreResumeInfoFilename
+							);
+						}
 						bytesWrittenSinceLastRestoreInfoSave = 0;
 					}
 				}
@@ -386,10 +395,10 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 	}
 
 	// Make sure the restore info has been saved	
-	if(bytesWrittenSinceLastRestoreInfoSave != 0)
+	if(bytesWrittenSinceLastRestoreInfoSave != 0 && rParams.mpResumeInfo)
 	{
 		// Save the restore info, in case it's needed later
-		Params.mResumeInfo.Save(Params.mRestoreResumeInfoFilename);
+		rParams.mpResumeInfo->Save(rParams.mRestoreResumeInfoFilename);
 		bytesWrittenSinceLastRestoreInfoSave = 0;
 	}
 
@@ -401,17 +410,23 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 		while((en = i.Next(BackupStoreDirectory::Entry::Flags_Dir)) != 0)
 		{
 			// Check ID hasn't already been done
-			if(rLevel.mRestoredObjects.find(en->GetObjectID()) == rLevel.mRestoredObjects.end())
+			if(rLevel.mRestoredObjects.find(en->GetObjectID()) == 
+				rLevel.mRestoredObjects.end())
 			{
 				// Local name
 				BackupStoreFilenameClear nm(en->GetName());
-				std::string localDirname(rLocalDirectoryName + DIRECTORY_SEPARATOR_ASCHAR + nm.GetClearFilename());
+				std::string localDirname(rLocalDirectoryName + 
+					DIRECTORY_SEPARATOR_ASCHAR + 
+					nm.GetClearFilename());
 				
 				// Add the level for the next entry
-				RestoreResumeInfo &rnextLevel(rLevel.AddLevel(en->GetObjectID(), nm.GetClearFilename()));
+				RestoreResumeInfo &rnextLevel(rLevel.AddLevel(
+					en->GetObjectID(), nm.GetClearFilename()));
 				
 				// Recurse
-				BackupClientRestoreDir(rConnection, en->GetObjectID(), localDirname, Params, rnextLevel);
+				BackupClientRestoreDir(rConnection, 
+					en->GetObjectID(), localDirname, 
+					rParams, rnextLevel);
 				
 				// Remove the level for the above call
 				rLevel.RemoveLevel();
@@ -458,11 +473,12 @@ int ServerConnection::Restore(
 {
 	// Parameter block
 	RestoreParams params;
-	params.pProgressCallback = pProgressCallback;
-	params.pProgressUserData = pProgressUserData;
-	params.RestoreDeleted = RestoreDeleted;
+	params.mpProgressCallback = pProgressCallback;
+	params.mpProgressUserData = pProgressUserData;
+	params.mRestoreDeleted = RestoreDeleted;
 	params.mRestoreResumeInfoFilename = LocalDirectoryName;
 	params.mRestoreResumeInfoFilename += ".boxbackupresume";
+	params.mpResumeInfo = new RestoreResumeInfo;		
 
 	// Target exists?
 	int targetExistance = ObjectExists(LocalDirectoryName);
@@ -479,7 +495,7 @@ int ServerConnection::Restore(
 		}
 		
 		// Attempt to load the resume info file
-		if(!params.mResumeInfo.Load(params.mRestoreResumeInfoFilename))
+		if(!params.mpResumeInfo->Load(params.mRestoreResumeInfoFilename))
 		{
 			// failed -- bad file, so things have gone a bit wrong
 			return Restore_TargetExists;
@@ -499,7 +515,7 @@ int ServerConnection::Restore(
 	// Restore the directory
 	std::string localName(LocalDirectoryName);
 	BackupClientRestoreDir(*mpConnection, DirectoryID, localName, params, 
-		params.mResumeInfo);
+		*params.mpResumeInfo);
 
 	// Undelete the directory on the server?
 	if(RestoreDeleted && UndeleteAfterRestoreDeleted)
@@ -511,5 +527,7 @@ int ServerConnection::Restore(
 	// Delete the resume information file
 	::unlink(params.mRestoreResumeInfoFilename.c_str());
 
+	delete params.mpResumeInfo;
+	
 	return Restore_Complete;
 }
