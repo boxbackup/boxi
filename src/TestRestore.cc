@@ -481,24 +481,71 @@ void TestRestore::RunTest()
 	);
 	CPPUNIT_ASSERT(pRestoreProgressPanel);
 
-	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown());	
+	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown());
+	MessageBoxSetResponse(BM_RESTORE_FAILED_INVALID_DESTINATION_PATH, wxOK);
+	ClickButtonWaitEvent(ID_Restore_Panel, ID_Function_Start_Button);
+	MessageBoxCheckFired(); \
+	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown());
+
+	wxRadioButton* pNewLocRadio = wxDynamicCast
+	(
+		pRestorePanel->FindWindow(ID_Restore_Panel_New_Location_Radio), 
+		wxRadioButton
+	);
+	CPPUNIT_ASSERT(pNewLocRadio);
+	ClickRadioWaitEvent(pNewLocRadio);
+	
+	wxTextCtrl* pNewLocText = wxDynamicCast
+	(
+		pRestorePanel->FindWindow(ID_Restore_Panel_New_Location_Text), 
+		wxTextCtrl
+	);
+	CPPUNIT_ASSERT(pNewLocText);
+	wxFileName restoreDest(mBaseDir.GetFullPath(), _("restore"));
+	SetTextCtrlValue(pNewLocText, restoreDest.GetFullPath());
+
+	wxListBox* pRestoreErrorList = wxDynamicCast
+	(
+		pRestoreProgressPanel->FindWindow(ID_BackupProgress_ErrorList), 
+		wxListBox
+	);
+	CPPUNIT_ASSERT(pRestoreErrorList);
+	CPPUNIT_ASSERT_EQUAL(0, pRestoreErrorList->GetCount());
+
+	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown());
 	ClickButtonWaitEvent(ID_Restore_Panel, ID_Function_Start_Button);
 	CPPUNIT_ASSERT(pRestoreProgressPanel->IsShown());
-	
+	if (pRestoreErrorList->GetCount() != 1)
+	{
+		wxString msg = pRestoreErrorList->GetString(
+			pRestoreErrorList->GetCount() - 1);
+		wxCharBuffer buf = msg.mb_str(wxConvLibc);
+		CPPUNIT_ASSERT_MESSAGE(buf.data(), 
+			1 == pRestoreErrorList->GetCount());
+	}
+	CPPUNIT_ASSERT_EQUAL(1, pRestoreErrorList->GetCount());
+	CPPUNIT_ASSERT_EQUAL(wxString(_("Restore Finished")),
+		pRestoreErrorList->GetString(0));
+	ClickButtonWaitEvent(ID_Restore_Progress_Panel, wxID_CANCEL);
+	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown());
+
 	CPPUNIT_ASSERT_EQUAL(wxString(_("1")), 
 		pRestoreProgressPanel->GetNumFilesTotalString());
-	CPPUNIT_ASSERT_EQUAL(wxString(_("1")), 
+	CPPUNIT_ASSERT_EQUAL(wxString(_("18 kB")), 
 		pRestoreProgressPanel->GetNumBytesTotalString());
 	CPPUNIT_ASSERT_EQUAL(wxString(_("1")), 
 		pRestoreProgressPanel->GetNumFilesDoneString());
-	CPPUNIT_ASSERT_EQUAL(wxString(_("1")), 
+	CPPUNIT_ASSERT_EQUAL(wxString(_("18 kB")), 
 		pRestoreProgressPanel->GetNumBytesDoneString());
 	CPPUNIT_ASSERT_EQUAL(wxString(_("0")), 
 		pRestoreProgressPanel->GetNumFilesRemainingString());
-	CPPUNIT_ASSERT_EQUAL(wxString(_("0")), 
+	CPPUNIT_ASSERT_EQUAL(wxString(_("0 B")), 
 		pRestoreProgressPanel->GetNumBytesRemainingString());
 	CPPUNIT_ASSERT_EQUAL(1, pRestoreProgressPanel->GetProgressPos());
 	CPPUNIT_ASSERT_EQUAL(1, pRestoreProgressPanel->GetProgressMax());
+	
+	CPPUNIT_ASSERT(restoreDest.FileExists());
+	CPPUNIT_ASSERT(wxRemoveFile(restoreDest.GetFullPath()));
 	
 	DeleteRecursive(mTestDataDir);
 	CPPUNIT_ASSERT(mStoreConfigFileName.FileExists());
