@@ -173,6 +173,89 @@ RestoreProgressPanel::RestoreProgressPanel(
 	SetSizer(pMainSizer);
 }
 
+class wxLogListBox : public wxLog
+{
+	private:
+	wxListBox* mpTarget;
+	wxLog* mpOldTarget;
+	
+	public:
+	wxLogListBox(wxListBox* pTarget)
+	: wxLog(), mpTarget(pTarget), mpOldTarget(wxLog::GetActiveTarget()) 
+	{
+		wxLog::SetActiveTarget(this);		
+	}
+	virtual ~wxLogListBox() { wxLog::SetActiveTarget(mpOldTarget); }
+	
+	virtual void DoLog(wxLogLevel level, const wxChar *msg, time_t timestamp)
+	{
+		wxString msgOut;
+		
+		switch(level)
+		{
+			case wxLOG_FatalError:
+				msgOut = _("Fatal: "); break;
+			case wxLOG_Error:
+				msgOut = _("Error: "); break;
+			case wxLOG_Warning:
+				msgOut = _("Warning: "); break;
+			case wxLOG_Message:
+				msgOut = _("Message: "); break;
+			case wxLOG_Status: 
+				msgOut = _("Status: "); break;
+			case wxLOG_Info:
+				msgOut = _("Info: "); break;
+			case wxLOG_Debug:
+				msgOut = _("Debug: "); break;
+			case wxLOG_Trace:
+				msgOut = _("Trace: "); break;
+			default:
+				msgOut.Printf(_("Unknown (level %d): "), level);
+		}
+		
+		msgOut.Append(msg);
+		mpTarget->Append(msgOut);
+	}
+};
+
+wxFileName RestoreProgressPanel::MakeLocalPath(wxFileName base, wxString serverPath)
+{
+	wxLogListBox logTo(mpErrorList);
+	
+	if (!serverPath.StartsWith(_("/")))
+	{
+		return wxFileName();
+	}
+	serverPath = serverPath.Mid(1);
+	
+	wxFileName outName(base.GetFullPath(), wxEmptyString);
+	
+	for (int index = serverPath.Find('/'); index != -1; 
+		index = serverPath.Find('/'))
+	{
+		if (index <= 0)
+		{
+			return wxFileName();
+		}
+		
+		outName.AppendDir(serverPath.Mid(0, index));
+		if (!outName.DirExists() && !wxMkdir(outName.GetFullPath()))
+		{
+			return wxFileName();
+		}
+		
+		serverPath = serverPath.Mid(index + 1);
+	}
+		
+	outName.SetFullName(serverPath);	
+	if (!outName.IsOk())
+	{
+		return wxFileName();
+	}
+	
+	return outName;	
+}
+
 void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName dest)
 {
 	RestoreSpec spec(rSpec);
@@ -220,6 +303,17 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 	}
 	
 	BackupClientCryptoKeys_Setup(keysFile.c_str());
+
+	{
+		wxLogListBox logTo(mpErrorList);
+		if (!wxMkdir(dest.GetFullPath()))
+		{
+			ReportRestoreFatalError(BM_RESTORE_FAILED_TO_CREATE_OBJECT,
+				wxT("Error: cannot start restore: "
+				"cannot create the destination directory"));
+			return;
+		}
+	}
 	
 	mNumFilesCounted = 0;
 	mNumBytesCounted = 0;
@@ -283,9 +377,20 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 			if (i->IsInclude())
 			{
 				ServerCacheNode* pNode = i->GetNode();
-				succeeded = RestoreFilesRecursive(spec, pNode, 
-					pNode->GetParent()->GetMostRecent()->GetBoxFileId(),
-					dest, blockSize);
+				wxFileName restoreDest = MakeLocalPath(dest, 
+					pNode->GetFullPath());
+				
+				if (restoreDest.IsOk())
+				{
+					succeeded = RestoreFilesRecursive(spec, pNode, 
+						pNode->GetParent()->GetMostRecent()->GetBoxFileId(),
+						restoreDest, blockSize);
+				}
+				else
+				{
+					succeeded = false;
+				}
+				
 			}
 			
 			if (!succeeded) break;
