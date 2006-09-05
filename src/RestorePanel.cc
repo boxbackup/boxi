@@ -148,6 +148,14 @@ void RestorePanel::OnClickStartButton(wxCommandEvent& rEvent)
 			_("Boxi Error"), wxOK | wxICON_ERROR, this);
 		return;
 	}
+
+	if (dest.DirExists() || dest.FileExists())
+	{
+		wxGetApp().ShowMessageBox(BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS,
+			_("Cannot start restore: the destination path already exists"),
+			_("Boxi Error"), wxOK | wxICON_ERROR, this);
+		return;
+	}
 	
 	mpMainFrame->ShowPanel(mpProgressPanel);
 	wxYield();
