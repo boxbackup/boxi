@@ -282,10 +282,12 @@ class RestoreFilesPanel : public wxPanel
 	void SetViewOldFlag    (bool NewValue);
 	void SetViewDeletedFlag(bool NewValue);
 	// void RefreshItem(RestoreTreeNode* pItem);
-	const RestoreSpec& GetRestoreSpec() { return mRestoreSpec; }
 	
 	private:
-	ClientConfig*		mpConfig;
+	friend class RestorePanel;
+	RestoreSpec& GetRestoreSpec() { return mRestoreSpec; }
+	
+	ClientConfig*       mpConfig;
 	RestoreTreeCtrl*    mpTreeCtrl;
 	// wxListView*		theServerFileList;
 	/*
@@ -297,9 +299,9 @@ class RestoreFilesPanel : public wxPanel
 	int					mListSortColumn;
 	bool		  		mListSortReverse;
 	*/
-	RestoreTreeNode* 	mpTreeRoot;
-	RestoreTreeNode* 	mpGlobalSelection;
-	ServerSettings		mServerSettings;
+	RestoreTreeNode*    mpTreeRoot;
+	RestoreTreeNode*    mpGlobalSelection;
+	ServerSettings      mServerSettings;
 	ServerConnection*   mpServerConnection;
 	BackupProtocolClientAccountUsage* mpUsage;
 	ServerCache*        mpCache;
