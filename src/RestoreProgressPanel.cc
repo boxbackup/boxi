@@ -544,7 +544,7 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 		if (i->GetNode() == pNode && ! i->IsInclude())
 		{
 			// excluded, stop here.
-			return false;
+			return true;
 		}
 	}
 	
