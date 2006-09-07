@@ -218,36 +218,69 @@ class wxLogListBox : public wxLog
 	}
 };
 
-wxFileName RestoreProgressPanel::MakeLocalPath(wxFileName base, wxString serverPath)
+wxFileName RestoreProgressPanel::MakeLocalPath(wxFileName base, 
+	ServerCacheNode* pTargetNode)
 {
 	wxLogListBox logTo(mpErrorList);
 	
-	if (!serverPath.StartsWith(_("/")))
+	wxString remainingPath = pTargetNode->GetFullPath();
+	
+	if (!remainingPath.StartsWith(_("/")))
 	{
 		return wxFileName();
 	}
-	serverPath = serverPath.Mid(1);
-	
+	remainingPath = remainingPath.Mid(1);
+
+	wxString currentPath;
 	wxFileName outName(base.GetFullPath(), wxEmptyString);
 	
-	for (int index = serverPath.Find('/'); index != -1; 
-		index = serverPath.Find('/'))
+	for (int index = remainingPath.Find('/'); index != -1; 
+		index = remainingPath.Find('/'))
 	{
 		if (index <= 0)
 		{
 			return wxFileName();
 		}
 		
-		outName.AppendDir(serverPath.Mid(0, index));
+		wxString pathComponent = remainingPath.Mid(0, index);
+		outName.AppendDir(pathComponent);
 		if (!outName.DirExists() && !wxMkdir(outName.GetFullPath()))
 		{
 			return wxFileName();
 		}
 		
-		serverPath = serverPath.Mid(index + 1);
+		currentPath.Append(_("/"));
+		currentPath.Append(pathComponent);
+		remainingPath = remainingPath.Mid(index + 1);
+		
+		// Find the server cache node corresponding to the
+		// directory we just created, and restore its attributes.
+		ServerCacheNode* pCurrentNode = NULL;
+		
+		for (pCurrentNode = pTargetNode; 
+			pCurrentNode->GetParent() != pCurrentNode && 
+			!(pCurrentNode->GetFullPath().IsSameAs(currentPath));
+			pCurrentNode = pCurrentNode->GetParent())
+		{ ; }
+
+		// make sure that we found one		
+		if (!(pCurrentNode->GetFullPath().IsSameAs(currentPath)))
+		{
+			return wxFileName();
+		}
+		
+		// retrieve most recent attributes, and apply them
+		ServerFileVersion* pVersion = pCurrentNode->GetMostRecent();
+		if (!pVersion)
+		{
+			return wxFileName();
+		}
+		wxCharBuffer namebuf = outName.GetFullPath()
+			.mb_str();
+		pVersion->GetAttributes().WriteAttributes(namebuf.data());
 	}
 		
-	outName.SetFullName(serverPath);	
+	outName.SetFullName(remainingPath);	
 	if (!outName.IsOk())
 	{
 		return wxFileName();
@@ -405,7 +438,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 			{
 				ServerCacheNode* pNode = i->GetNode();
 				wxFileName restoreDest = MakeLocalPath(dest, 
-					pNode->GetFullPath());
+					pNode);
 				
 				if (restoreDest.IsOk())
 				{

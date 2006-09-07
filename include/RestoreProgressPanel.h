@@ -199,7 +199,7 @@ class RestoreProgressPanel
 	bool RestoreFilesRecursive(const RestoreSpec& rSpec, 
 		ServerCacheNode* pNode,	int64_t parentId, wxFileName localName, 
 		int blockSize);
-	wxFileName MakeLocalPath(wxFileName base, wxString serverPath);
+	wxFileName MakeLocalPath(wxFileName base, ServerCacheNode* pNode);
 
 	DECLARE_EVENT_TABLE()
 };
