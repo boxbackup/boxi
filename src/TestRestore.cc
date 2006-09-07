@@ -59,7 +59,9 @@
 #include "FileTree.h"
 #include "Restore.h"
 #include "ServerConnection.h"
+#include "RestorePanel.h"
 #include "RestoreProgressPanel.h"
+#include "RestoreFilesPanel.h"
 
 #undef TLS_CLASS_IMPLEMENTATION_CPP
 
@@ -350,6 +352,51 @@ void CompareFiles(const wxFileName& first, const wxFileName& second)
 	}
 }
 
+static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root, 
+	wxString path)
+{
+	wxTreeItemId none;
+	
+	wxString pathComponent;
+	int indexOfSlash = path.Find(_("/"));
+	if (indexOfSlash == -1)
+	{
+		pathComponent = path;
+		path = wxEmptyString;
+	}
+	else
+	{
+		CPPUNIT_ASSERT(indexOfSlash > 0);
+		pathComponent = path.Mid(0, indexOfSlash);
+		path = path.Mid(indexOfSlash + 1);
+	}
+	CPPUNIT_ASSERT(pathComponent.Length() > 0);
+	
+	pTreeCtrl->Expand(root);
+	
+	wxTreeItemIdValue cookie;
+	for (wxTreeItemId entry = pTreeCtrl->GetFirstChild(root, cookie);
+		entry.IsOk(); entry = pTreeCtrl->GetNextChild(root, cookie))
+	{
+		if (pTreeCtrl->GetItemText(entry).IsSameAs(pathComponent))
+		{
+			if (path.Length() == 0)
+			{
+				// this is it
+				return entry;
+			}
+			else
+			{
+				// it's below this item
+				return GetItemIdFromPath(pTreeCtrl, entry,
+					path);
+			}
+		}
+	}
+	
+	return none;
+}
+
 void TestRestore::RunTest()
 {
 	const Configuration &rClientConfig(*mapClientConfig);
@@ -419,9 +466,9 @@ void TestRestore::RunTest()
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(3, 4);
 	
-	wxPanel* pRestorePanel = wxDynamicCast
+	RestorePanel* pRestorePanel = wxDynamicCast
 	(
-		mpMainFrame->FindWindow(ID_Restore_Panel), wxPanel
+		mpMainFrame->FindWindow(ID_Restore_Panel), RestorePanel
 	);
 	CPPUNIT_ASSERT(pRestorePanel);
 
@@ -623,6 +670,79 @@ void TestRestore::RunTest()
 		sub23);
 	DeleteRecursive(sub23);
 	CPPUNIT_ASSERT(wxRemoveFile(df9834_dsfRestored.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
+	
+	// check that the restore spec contains what we expect
+	{
+		RestoreSpec& rRestoreSpec(pRestorePanel->GetRestoreSpec());
+		const RestoreSpecEntry::Vector entries = rRestoreSpec.GetEntries();
+		CPPUNIT_ASSERT_EQUAL((size_t)2, entries.size());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/df9834.dsf")),
+			entries[0].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(entries[0].IsInclude());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23")),
+			entries[1].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(entries[1].IsInclude());
+		
+		rRestoreSpec.Remove(entries[0]);
+	}
+	
+	// create a weird configuration, with an item included under
+	// another included item (i.e. double included)
+	{
+		wxTreeItemId sub23 = GetItemIdFromPath(pRestoreTree, loc, 
+			_("sub23"));
+		CPPUNIT_ASSERT(sub23.IsOk());
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
+			pRestoreTree->GetItemImage(sub23));
+		
+		wxTreeItemId dhsfdss = GetItemIdFromPath(pRestoreTree, loc, 
+			_("sub23/dhsfdss"));
+		CPPUNIT_ASSERT(dhsfdss.IsOk());
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(),
+			pRestoreTree->GetItemImage(dhsfdss));
+		
+		ActivateTreeItemWaitEvent(pRestoreTree, sub23);
+		CPPUNIT_ASSERT_EQUAL(images.GetEmptyImageId(),
+			pRestoreTree->GetItemImage(sub23));
+		CPPUNIT_ASSERT_EQUAL(images.GetEmptyImageId(),
+			pRestoreTree->GetItemImage(dhsfdss));
+		
+		ActivateTreeItemWaitEvent(pRestoreTree, dhsfdss);
+		CPPUNIT_ASSERT_EQUAL(images.GetPartialImageId(),
+			pRestoreTree->GetItemImage(sub23));
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
+			pRestoreTree->GetItemImage(dhsfdss));
+
+		ActivateTreeItemWaitEvent(pRestoreTree, sub23);
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
+			pRestoreTree->GetItemImage(sub23));
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
+			pRestoreTree->GetItemImage(dhsfdss));
+	}
+
+	{
+		RestoreSpec& rRestoreSpec(pRestorePanel->GetRestoreSpec());
+		const RestoreSpecEntry::Vector entries = rRestoreSpec.GetEntries();
+		CPPUNIT_ASSERT_EQUAL((size_t)2, entries.size());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23")),
+			entries[0].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(entries[0].IsInclude());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23/dhsfdss")),
+			entries[1].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(entries[1].IsInclude());
+	}
+	
+	// check that restore works as expected
+	CHECK_RESTORE_OK(12, "106 kB");
+	
+	CPPUNIT_ASSERT(restoreDest.DirExists());
+	CPPUNIT_ASSERT(sub23.DirExists());
+	CPPUNIT_ASSERT(!df9834_dsfRestored.FileExists());
+	CompareExpectNoDifferences(rClientConfig, mTlsContext, _("testdata/sub23"),
+		sub23);
+	DeleteRecursive(sub23);
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
 	
