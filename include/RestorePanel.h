@@ -58,6 +58,10 @@ class RestorePanel : public FunctionPanel, RestoreSpecChangeListener
 	virtual void OnRestoreSpecChange();
 	
 	private:
+	friend class TestRestore;	
+	// for use in unit tests only!
+	RestoreSpec& GetRestoreSpec() { return mpFilesPanel->GetRestoreSpec(); }
+	
 	RestoreProgressPanel* mpProgressPanel;
 	RestoreFilesPanel* mpFilesPanel;
 	wxRadioButton* mpOldLocRadio;
