@@ -718,7 +718,7 @@ void TestRestore::RunTest()
 		ActivateTreeItemWaitEvent(pRestoreTree, sub23);
 		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
 			pRestoreTree->GetItemImage(sub23));
-		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(),
 			pRestoreTree->GetItemImage(dhsfdss));
 	}
 

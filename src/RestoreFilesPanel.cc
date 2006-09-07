@@ -234,7 +234,7 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 	else
 	{
 		mpMatchingEntry = NULL;
-		mIncluded       = FALSE;
+		mIncluded       = false;
 	}
 
 	const RestoreSpecEntry::Vector& entries = mrRestoreSpec.GetEntries();
@@ -280,7 +280,9 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 	}
 	else if (mpMatchingEntry->IsInclude())
 	{
-		if (matchesParent)
+		// hide redundant includes, i.e. pretend that they
+		// don't exist, and show a grey tick instead.
+		if (matchesParent || pParentNode->mIncluded)
 		{
 			iconId = rImageList.GetCheckedGreyImageId();
 		}
@@ -291,7 +293,9 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 	}
 	else 
 	{
-		if (matchesParent)
+		// hide redundant excludes, i.e. pretend that they
+		// don't exist, and show a grey cross instead.
+		if (matchesParent || !(pParentNode->mIncluded))
 		{
 			iconId = rImageList.GetCrossedGreyImageId();
 		}
