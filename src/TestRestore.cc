@@ -784,6 +784,74 @@ void TestRestore::RunTest()
 	DeleteRecursive(sub23);
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
+
+	// include a file and a dir inside the excluded dir, check that
+	// both are restored properly.
+	{
+		wxTreeItemId bfdlink_h = GetItemIdFromPath(pRestoreTree, dhsfdss, 
+			_("bfdlink.h"));
+		CPPUNIT_ASSERT(bfdlink_h.IsOk());
+		CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(),
+			pRestoreTree->GetItemImage(bfdlink_h));
+	
+		ActivateTreeItemWaitEvent(pRestoreTree, bfdlink_h);
+		CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(),
+			pRestoreTree->GetItemImage(dhsfdss));
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
+			pRestoreTree->GetItemImage(bfdlink_h));
+
+		wxTreeItemId dfsfd = GetItemIdFromPath(pRestoreTree, dhsfdss, 
+			_("dfsfd"));
+		CPPUNIT_ASSERT(dfsfd.IsOk());
+		CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(),
+			pRestoreTree->GetItemImage(dfsfd));
+	
+		ActivateTreeItemWaitEvent(pRestoreTree, dfsfd);
+		CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(),
+			pRestoreTree->GetItemImage(dhsfdss));
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
+			pRestoreTree->GetItemImage(dfsfd));
+
+		wxTreeItemId a_out_h = GetItemIdFromPath(pRestoreTree, dfsfd, 
+			_("a.out.h"));
+		CPPUNIT_ASSERT(a_out_h.IsOk());
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(),
+			pRestoreTree->GetItemImage(a_out_h));
+	}
+
+	{
+		RestoreSpec& rRestoreSpec(pRestorePanel->GetRestoreSpec());
+		const RestoreSpecEntry::Vector entries = rRestoreSpec.GetEntries();
+		CPPUNIT_ASSERT_EQUAL((size_t)5, entries.size());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23")),
+			entries[0].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(entries[0].IsInclude());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23/dhsfdss")),
+			entries[1].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(entries[1].IsInclude());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23/dhsfdss")),
+			entries[2].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(!(entries[2].IsInclude()));
+		CPPUNIT_ASSERT_EQUAL(
+			wxString(_("/testdata/sub23/dhsfdss/bfdlink.h")),
+			entries[3].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(entries[3].IsInclude());
+		CPPUNIT_ASSERT_EQUAL(
+			wxString(_("/testdata/sub23/dhsfdss/dfsfd")),
+			entries[4].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(entries[4].IsInclude());
+	}
+	
+	// check that restore works as expected
+	CHECK_RESTORE_OK(10, "96 kB");
+	
+	CPPUNIT_ASSERT(restoreDest.DirExists());
+	CPPUNIT_ASSERT(sub23.DirExists());
+	CompareExpectDifferences(rClientConfig, mTlsContext, _("testdata/sub23"),
+		sub23, 3, 0);
+	DeleteRecursive(sub23);
+	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
 	
 	DeleteRecursive(mTestDataDir);
 	CPPUNIT_ASSERT(mStoreConfigFileName.FileExists());
