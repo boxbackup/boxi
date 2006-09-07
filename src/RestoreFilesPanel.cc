@@ -68,6 +68,21 @@ void RestoreSpec::Add(const RestoreSpecEntry& rNewEntry)
 			return;
 	}
 	
+	wxString newNodePath = rNewEntry.GetNode()->GetFullPath();
+	
+	// not present, add in correct position
+	for (RestoreSpecEntry::Iterator i = mEntries.begin(); 
+		i != mEntries.end(); i++)
+	{
+		if (i->GetNode()->GetFullPath().Cmp(newNodePath) > 0)
+		{
+			mEntries.insert(i, rNewEntry);
+			return;
+		}	
+	}
+
+	// no entry is greater than (should come after) this one,
+	// so place at end of list.	
 	mEntries.push_back(rNewEntry);
 }
 
