@@ -241,7 +241,9 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 	for (RestoreSpecEntry::ConstIterator i = entries.begin(); 
 		i != entries.end(); i++)
 	{
-		if (i->GetNode() == mpCacheNode)
+		// hide redundant entries (i->IsInclude() == mIncluded), 
+		// i.e. pretend that they don't exist
+		if (i->GetNode() == mpCacheNode && i->IsInclude() != mIncluded)
 		{
 			mpMatchingEntry = &(*i);
 			mIncluded = i->IsInclude();
@@ -280,9 +282,7 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 	}
 	else if (mpMatchingEntry->IsInclude())
 	{
-		// hide redundant includes, i.e. pretend that they
-		// don't exist, and show a grey tick instead.
-		if (matchesParent || pParentNode->mIncluded)
+		if (matchesParent)
 		{
 			iconId = rImageList.GetCheckedGreyImageId();
 		}
@@ -291,11 +291,9 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 			iconId = rImageList.GetCheckedImageId();
 		}
 	}
-	else 
+	else
 	{
-		// hide redundant excludes, i.e. pretend that they
-		// don't exist, and show a grey cross instead.
-		if (matchesParent || !(pParentNode->mIncluded))
+		if (matchesParent)
 		{
 			iconId = rImageList.GetCrossedGreyImageId();
 		}

@@ -688,36 +688,37 @@ void TestRestore::RunTest()
 		rRestoreSpec.Remove(entries[0]);
 	}
 	
+	wxTreeItemId sub23id = GetItemIdFromPath(pRestoreTree, loc, 
+		_("sub23"));
+	CPPUNIT_ASSERT(sub23id.IsOk());
+	CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
+		pRestoreTree->GetItemImage(sub23id));
+	
+	wxTreeItemId dhsfdss = GetItemIdFromPath(pRestoreTree, loc, 
+		_("sub23/dhsfdss"));
+	CPPUNIT_ASSERT(dhsfdss.IsOk());
+	CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(),
+		pRestoreTree->GetItemImage(dhsfdss));
+
 	// create a weird configuration, with an item included under
 	// another included item (i.e. double included)
 	{
-		wxTreeItemId sub23 = GetItemIdFromPath(pRestoreTree, loc, 
-			_("sub23"));
-		CPPUNIT_ASSERT(sub23.IsOk());
-		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
-			pRestoreTree->GetItemImage(sub23));
 		
-		wxTreeItemId dhsfdss = GetItemIdFromPath(pRestoreTree, loc, 
-			_("sub23/dhsfdss"));
-		CPPUNIT_ASSERT(dhsfdss.IsOk());
-		CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(),
-			pRestoreTree->GetItemImage(dhsfdss));
-		
-		ActivateTreeItemWaitEvent(pRestoreTree, sub23);
+		ActivateTreeItemWaitEvent(pRestoreTree, sub23id);
 		CPPUNIT_ASSERT_EQUAL(images.GetEmptyImageId(),
-			pRestoreTree->GetItemImage(sub23));
+			pRestoreTree->GetItemImage(sub23id));
 		CPPUNIT_ASSERT_EQUAL(images.GetEmptyImageId(),
 			pRestoreTree->GetItemImage(dhsfdss));
 		
 		ActivateTreeItemWaitEvent(pRestoreTree, dhsfdss);
 		CPPUNIT_ASSERT_EQUAL(images.GetPartialImageId(),
-			pRestoreTree->GetItemImage(sub23));
+			pRestoreTree->GetItemImage(sub23id));
 		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
 			pRestoreTree->GetItemImage(dhsfdss));
 
-		ActivateTreeItemWaitEvent(pRestoreTree, sub23);
+		ActivateTreeItemWaitEvent(pRestoreTree, sub23id);
 		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
-			pRestoreTree->GetItemImage(sub23));
+			pRestoreTree->GetItemImage(sub23id));
 		CPPUNIT_ASSERT_EQUAL(images.GetCheckedGreyImageId(),
 			pRestoreTree->GetItemImage(dhsfdss));
 	}
@@ -742,6 +743,44 @@ void TestRestore::RunTest()
 	CPPUNIT_ASSERT(!df9834_dsfRestored.FileExists());
 	CompareExpectNoDifferences(rClientConfig, mTlsContext, _("testdata/sub23"),
 		sub23);
+	DeleteRecursive(sub23);
+	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
+
+	// create a weirder configuration, with double include and the
+	// included item also excluded. The include should be ignored,
+	// and the exclude used.
+	{
+		ActivateTreeItemWaitEvent(pRestoreTree, dhsfdss);
+		CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(),
+			pRestoreTree->GetItemImage(sub23id));
+		CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(),
+			pRestoreTree->GetItemImage(dhsfdss));
+	}
+
+	{
+		RestoreSpec& rRestoreSpec(pRestorePanel->GetRestoreSpec());
+		const RestoreSpecEntry::Vector entries = rRestoreSpec.GetEntries();
+		CPPUNIT_ASSERT_EQUAL((size_t)3, entries.size());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23")),
+			entries[0].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(entries[0].IsInclude());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23/dhsfdss")),
+			entries[1].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(entries[1].IsInclude());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23/dhsfdss")),
+			entries[2].GetNode()->GetFullPath());
+		CPPUNIT_ASSERT(!(entries[2].IsInclude()));
+	}
+	
+	// check that restore works as expected
+	CHECK_RESTORE_OK(8, "76 kB");
+	
+	CPPUNIT_ASSERT(restoreDest.DirExists());
+	CPPUNIT_ASSERT(sub23.DirExists());
+	CPPUNIT_ASSERT(!df9834_dsfRestored.FileExists());
+	CompareExpectDifferences(rClientConfig, mTlsContext, _("testdata/sub23"),
+		sub23, 1, 0);
 	DeleteRecursive(sub23);
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
