@@ -354,10 +354,33 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 		for (RestoreSpecEntry::ConstIterator i = entries.begin();
 			i != entries.end(); i++)
 		{
+			// Duplicate entries may be removed from the list
+			// by CountFilesRecursive, so check whether the
+			// current entry has been removed, and if so, skip it.
+			RestoreSpecEntry::Vector newEntries = spec.GetEntries();
+			bool foundEntry = false;
+			
+			for (RestoreSpecEntry::ConstIterator j = newEntries.begin();
+				j != newEntries.end(); j++)
+			{
+				if (j->IsSameAs(*i))
+				{
+					foundEntry = true;
+					break;
+				}
+			}
+			
+			if (!foundEntry)
+			{
+				// no longer in the list, skip it.
+				continue;
+			}
+			
 			if (i->IsInclude())
 			{
 				ServerCacheNode* pNode = i->GetNode();
-				CountFilesRecursive(spec, pNode, blockSize);
+				CountFilesRecursive(spec, pNode, pNode, 
+					blockSize);
 			}
 		}
 		
@@ -367,6 +390,10 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 
 		mpSummaryText->SetLabel(_("Restoring files"));
 		wxYield();
+		
+		// Entries may have been changed by removing duplicates
+		// in CountFilesRecursive. Reload the list.
+		entries = spec.GetEntries();
 		
 		bool succeeded = false;
 		
@@ -448,34 +475,48 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 
 void RestoreProgressPanel::CountFilesRecursive
 (
-	const RestoreSpec& rSpec, ServerCacheNode* pNode, int blockSize
+	RestoreSpec& rSpec, ServerCacheNode* pRootNode, 
+	ServerCacheNode* pCurrentNode, int blockSize
 )
 {
 	// stop if requested
 	if (mRestoreStopRequested) return;
 		
-	ServerFileVersion* pVersion = pNode->GetMostRecent();
+	ServerFileVersion* pVersion = pCurrentNode->GetMostRecent();
 	
 	RestoreSpecEntry::Vector specs = rSpec.GetEntries();
+
 	for (RestoreSpecEntry::Iterator i = specs.begin();
 		i != specs.end(); i++)
 	{
-		if (i->GetNode() == pNode && ! i->IsInclude())
+		if (i->GetNode() == pCurrentNode)
 		{
-			// excluded, stop here.
-			return;
+			if (i->IsInclude() && pCurrentNode != pRootNode)
+			{
+				// Redundant entry in include list.
+				// Remove it to prevent double restoring.
+				rSpec.Remove(*i);
+			}
+			else if (!i->IsInclude())
+			{
+				// excluded, stop here.
+				return;
+			}
 		}
 	}
 	
 	if (pVersion->IsDirectory())
 	{
-		const ServerCacheNode::Vector* pChildren = pNode->GetChildren();
+		const ServerCacheNode::Vector* pChildren = 
+			pCurrentNode->GetChildren();
+		
 		if (pChildren)
 		{
 			for (ServerCacheNode::ConstIterator i = pChildren->begin();
 				i != pChildren->end(); i++)
 			{
-				CountFilesRecursive(rSpec, *i, blockSize);
+				CountFilesRecursive(rSpec, pRootNode, *i, 
+					blockSize);
 			}
 		}
 	}

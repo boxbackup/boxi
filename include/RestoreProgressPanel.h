@@ -193,8 +193,9 @@ class RestoreProgressPanel
 		}
 	}
 	
-	void CountFilesRecursive(const RestoreSpec& rSpec, 
-		ServerCacheNode* pNode, int blockSize);
+	void CountFilesRecursive(RestoreSpec& rSpec, 
+		ServerCacheNode* pRootNode, 
+		ServerCacheNode* pCurrentNode, int blockSize);
 	bool RestoreFilesRecursive(const RestoreSpec& rSpec, 
 		ServerCacheNode* pNode,	int64_t parentId, wxFileName localName, 
 		int blockSize);
