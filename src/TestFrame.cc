@@ -26,6 +26,7 @@
  */
 
 // #include <wx/thread.h>
+#include <wx/spinctrl.h>
 #include <wx/treectrl.h>
 
 #include <cppunit/SourceLine.h>
@@ -426,6 +427,47 @@ void TestThread::Entry2()
 }
 */
 
+wxLogAsserter::wxLogAsserter()
+: wxLog(), mpOldTarget(wxLog::GetActiveTarget()) 
+{
+	wxLog::SetActiveTarget(this);		
+}
+
+wxLogAsserter::~wxLogAsserter() { wxLog::SetActiveTarget(mpOldTarget); }
+	
+void wxLogAsserter::DoLog(wxLogLevel level, const wxChar *msg, time_t timestamp)
+{
+	wxString msgOut;
+	
+	switch(level)
+	{
+		case wxLOG_FatalError:
+			msgOut = _("Fatal: "); break;
+		case wxLOG_Error:
+			msgOut = _("Error: "); break;
+		case wxLOG_Warning:
+			msgOut = _("Warning: "); break;
+		case wxLOG_Message:
+			msgOut = _("Message: "); break;
+		case wxLOG_Status: 
+			msgOut = _("Status: "); break;
+		case wxLOG_Info:
+			msgOut = _("Info: "); break;
+		case wxLOG_Debug:
+			msgOut = _("Debug: "); break;
+		case wxLOG_Trace:
+			msgOut = _("Trace: "); break;
+		default:
+			msgOut.Printf(_("Unknown (level %d): "), level);
+	}
+	
+	wxCharBuffer buf = msgOut.mb_str();
+	CPPUNIT_ASSERT_MESSAGE(buf.data(), false);
+}
+
+GuiTestBase::GuiTestBase() 
+: CppUnit::TestCase("GuiTestBase") { }
+
 class GuiStarter : public TestSetUpDecorator
 {
 	public:
@@ -468,6 +510,10 @@ class GuiStarter : public TestSetUpDecorator
 		pBoxiApp->SetTestRunner(this);
 
 		WxGuiTestHelper::SetShowModalDialogsNonModalFlag(true);
+		
+		// ensure that log messages result in test failures too,
+		// instead of modal dialogs that halt test execution.
+		wxLogAsserter log;
 		
 		#if defined (WIN32)
 			#if !defined (__BUILTIN__)
@@ -671,8 +717,12 @@ void GuiTestBase::SetTextCtrlValue(wxTextCtrl* pTextCtrl, const wxString& rValue
 	pTextCtrl->SetValue(rValue);
 }
 
-	void SetSelection(wxListBox* pListCtrl, int value);
-	void SetSelection(wxChoice*  pListCtrl, int value);
+void GuiTestBase::SetSpinCtrlValue(wxSpinCtrl* pSpinCtrl, int newValue)
+{
+	assert(pSpinCtrl);
+	assert(pSpinCtrl->IsEnabled());
+	pSpinCtrl->SetValue(newValue);
+}
 
 void GuiTestBase::SetSelection(wxListBox* pListCtrl, int value)
 {
@@ -695,6 +745,20 @@ void GuiTestBase::SetSelection(wxChoice* pChoiceCtrl, int value)
 	click.SetInt(value);
 	pChoiceCtrl->ProcessEvent(click);
 }
+
+void GuiTestBase::CheckBoxWaitEvent(wxCheckBox* pCheckBox, bool newValue)
+{
+	assert(pCheckBox);
+	assert(pCheckBox->IsEnabled());
+	assert(pCheckBox->GetValue() != newValue);
+	pCheckBox->SetValue(newValue);
+	wxCommandEvent click(wxEVT_COMMAND_CHECKBOX_CLICKED, pCheckBox->GetId());
+	click.SetEventObject(pCheckBox);
+	click.SetInt(newValue);
+	pCheckBox->ProcessEvent(click);
+	assert(pCheckBox->GetValue() == newValue);
+}
+
 
 MainFrame* GuiTestBase::GetMainFrame()
 {

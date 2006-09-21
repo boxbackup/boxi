@@ -130,6 +130,17 @@ namespace CppUnit
 	};
 }
 
+class wxLogAsserter : public wxLog
+{
+	private:
+	wxLog* mpOldTarget;
+	
+	public:
+	wxLogAsserter();
+	virtual ~wxLogAsserter();
+	virtual void DoLog(wxLogLevel level, const wxChar *msg, time_t timestamp);
+};
+
 #define MessageBoxSetResponse(messageId, response) \
 	wxGetApp().ExpectMessageBox(messageId, response, CPPUNIT_SOURCELINE())
 
@@ -138,7 +149,7 @@ namespace CppUnit
 class GuiTestBase : public CppUnit::TestCase
 {
 	public: 
-	GuiTestBase() : CppUnit::TestCase("GuiTestBase") { }
+	GuiTestBase();
 	virtual ~GuiTestBase() { }
 	virtual void RunTest() = 0;
 		
@@ -158,8 +169,10 @@ class GuiTestBase : public CppUnit::TestCase
 	void ExpandTreeItemWaitEvent  (wxTreeCtrl* pTree, wxTreeItemId& rItem);
 	void CollapseTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem);
 	void SetTextCtrlValue(wxTextCtrl* pTextCtrl, const wxString& rValue);
+	void SetSpinCtrlValue(wxSpinCtrl* pTextCtrl, int newValue);
 	void SetSelection(wxListBox* pListCtrl,   int value);
 	void SetSelection(wxChoice*  pChoiceCtrl, int value);
+	void CheckBoxWaitEvent(wxCheckBox* pCheckBox, bool newValue = true);
 	
 	MainFrame* GetMainFrame();
 	wxWindow*  FindWindow(wxWindowID id) 
@@ -170,6 +183,7 @@ class GuiTestBase : public CppUnit::TestCase
 	
 	private:
 	wxCommandEvent GetButtonClickEvent(wxWindow* pWindow);
+	wxLogAsserter mLogToCppUnit;
 
 	public:	
 	void tearDown()
@@ -196,7 +210,7 @@ class TestWithConfig : public GuiTestBase
 	ClientConfig* mpConfig;
 	
 	public:
-	TestWithConfig() : mpConfig(NULL) { }
+	TestWithConfig() : GuiTestBase(), mpConfig(NULL) { }
 	virtual void tearDown()
 	{
 		if (mpConfig) mpConfig->Reset();
