@@ -231,13 +231,15 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 	CPPUNIT_ASSERT(zipFis.Ok());
 	wxZipInputStream zipInput(zipFis);
 	
-	for (std::auto_ptr<wxZipEntry> apEntry(zipInput.GetNextEntry());
-		apEntry.get() != NULL; apEntry.reset(zipInput.GetNextEntry()))
+	std::vector<wxZipEntry*> entries;
+	
+	for (wxZipEntry* pEntry = zipInput.GetNextEntry();
+		pEntry != NULL; pEntry = zipInput.GetNextEntry())
 	{
 		wxFileName outName = MakeAbsolutePath(rDestDir, 
-			apEntry->GetInternalName());
+			pEntry->GetInternalName());
 
-		if (apEntry->IsDir())
+		if (pEntry->IsDir())
 		{
 			CPPUNIT_ASSERT(!outName.FileExists());
 			if (!outName.DirExists())
@@ -263,22 +265,58 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 			CPPUNIT_ASSERT(outName.FileExists());
 			
 			wxFile outFile(outName.GetFullPath());
-			CPPUNIT_ASSERT_EQUAL(apEntry->GetSize(), 
+			CPPUNIT_ASSERT_EQUAL(pEntry->GetSize(), 
 				outFile.Length());
 		}
 		
+		entries.push_back(pEntry);
+	}
+	
+	for (std::vector<wxZipEntry*>::reverse_iterator ipEntry = entries.rbegin();
+		ipEntry != entries.rend(); ipEntry++)
+	{	
+		wxZipEntry* pEntry = *ipEntry;
+		
 		if (restoreTimes)
 		{
-			wxDateTime time = apEntry->GetDateTime();
+			wxDateTime time = pEntry->GetDateTime();
 			struct timeval tvs[2];
 			tvs[0].tv_sec  = time.GetTicks();
 			tvs[0].tv_usec = 0;
 			tvs[1].tv_sec  = time.GetTicks();
 			tvs[1].tv_usec = 0;
-			wxCharBuffer buf = outName.GetFullPath().mb_str(wxConvLibc);
+
+			wxFileName outName = MakeAbsolutePath(rDestDir, 
+				pEntry->GetInternalName());
+			wxCharBuffer buf = outName.GetFullPath().mb_str();
 			CPPUNIT_ASSERT(::utimes(buf.data(), tvs) == 0);
 		}
+		
+		delete pEntry;
 	}
+}
+
+std::auto_ptr<wxZipEntry> FindZipEntry(const wxFileName& rZipFile, 
+	const wxString& rFileName)
+{
+	CPPUNIT_ASSERT(rZipFile.FileExists());
+	wxFileInputStream zipFis(rZipFile.GetFullPath());
+	CPPUNIT_ASSERT(zipFis.Ok());
+	wxZipInputStream zipInput(zipFis);
+	
+	std::auto_ptr<wxZipEntry> apEntry;
+	
+	for (apEntry.reset(zipInput.GetNextEntry());
+		apEntry.get() != NULL; 
+		apEntry.reset(zipInput.GetNextEntry()))
+	{
+		if (apEntry->GetInternalName().IsSameAs(rFileName))
+		{
+			break;
+		}
+	}
+	
+	return apEntry;
 }
 
 int BlockSizeOfDiscSet(int DiscSet)
@@ -1558,63 +1596,7 @@ void TestBackup::RunTest()
 		CHECK_BACKUP_OK();
 		CHECK_COMPARE_LOC_OK(3, 4);
 	}
-	
-	// try a restore
-	/*
-	{
-		wxPanel* pRestorePanel = wxDynamicCast
-		(
-			pMainFrame->FindWindow(ID_Restore_Panel), wxPanel
-		);
-		CPPUNIT_ASSERT(pRestorePanel);
-	
-		CPPUNIT_ASSERT(!pRestorePanel->IsShown());	
-		ClickButtonWaitEvent(ID_Main_Frame, ID_General_Restore_Button);
-		CPPUNIT_ASSERT(pRestorePanel->IsShown());
 		
-		wxListBox* pLocsList = wxDynamicCast
-		(
-			pRestorePanel->FindWindow(ID_Function_Source_List), wxListBox
-		);
-		CPPUNIT_ASSERT(pLocsList);
-		CPPUNIT_ASSERT_EQUAL(0, pLocsList->GetCount());
-		
-		wxPanel* pRestoreFilesPanel = wxDynamicCast
-		(
-			pMainFrame->FindWindow(ID_Restore_Files_Panel), wxPanel
-		);
-		CPPUNIT_ASSERT(pRestoreFilesPanel);
-
-		CPPUNIT_ASSERT(!pRestoreFilesPanel->IsShown());	
-		ClickButtonWaitEvent(ID_Restore_Panel, ID_Function_Source_Button);
-		CPPUNIT_ASSERT(pRestoreFilesPanel->IsShown());
-		
-		wxTreeCtrl* pRestoreTree = wxDynamicCast
-		(
-			pRestoreFilesPanel->FindWindow(ID_Server_File_Tree), 
-			wxTreeCtrl
-		);
-		CPPUNIT_ASSERT(pRestoreTree);
-		
-		wxTreeItemId rootId = pRestoreTree->GetRoot();
-		CPPUNIT_ASSERT(rootId.IsOk());
-		CPPUNIT_ASSERT_EQUAL(wxString(_("Server root")),
-			pRestoreTree->GetItemText(rootId));
-		pRestoreTree->Expand(rootId);
-		CPPUNIT_ASSERT_EQUAL(1, pRestoreTree->GetChildrenCount(rootId), 
-			false);
-			
-		wxTreeItemIdValue cookie;
-		wxTreeItemId loc = pRestoreTree->GetFirstChild(rootId, cookie);
-		CPPUNIT_ASSERT(loc.IsOk());
-		CPPUNIT_ASSERT_EQUAL(wxString(_("testdata")),
-			pRestoreTree->GetItemText(loc));
-		pRestoreTree->Expand(loc);
-		
-		
-	}
-	*/
-	
 	// try a restore
 	{
 		BackupStoreDirectory dir;

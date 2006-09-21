@@ -152,6 +152,10 @@ class StoreServer
 void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 	bool restoreTimes = false);
 
+class wxZipEntry;
+std::auto_ptr<wxZipEntry> FindZipEntry(const wxFileName& rZipFile, 
+	const wxString& rFileName);
+
 void CompareBackup(const Configuration& rClientConfig, 
 	TLSContext& rTlsContext, BackupQueries::CompareParams& rParams,
 	const wxString& rRemoteDir, const wxFileName& rLocalPath);
