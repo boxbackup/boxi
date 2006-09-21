@@ -36,6 +36,8 @@
 
 class RestoreProgressPanel;
 class DirSelButton;
+class wxDatePickerCtrl;
+class wxSpinCtrl;
 
 /** 
  * RestorePanel
@@ -64,17 +66,21 @@ class RestorePanel : public FunctionPanel, RestoreSpecChangeListener
 	
 	RestoreProgressPanel* mpProgressPanel;
 	RestoreFilesPanel* mpFilesPanel;
-	wxRadioButton* mpOldLocRadio;
-	wxRadioButton* mpNewLocRadio;
+	// wxRadioButton* mpOldLocRadio;
+	// wxRadioButton* mpNewLocRadio;
 	wxTextCtrl*    mpNewLocText;
 	DirSelButton*  mpNewLocButton;
-	wxCheckBox*    mpOverwriteCheck;
-	wxCheckBox*    mpRestoreDirsCheck;
+	wxCheckBox*    mpToDateCheckBox;
+	wxDatePickerCtrl* mpDatePicker;
+	wxSpinCtrl*    mpHourSpin;
+	wxSpinCtrl*    mpMinSpin;
+	// wxCheckBox*    mpRestoreDirsCheck;
 
 	virtual void Update();
 	virtual void OnClickSourceButton(wxCommandEvent& rEvent);
 	virtual void OnClickStartButton (wxCommandEvent& rEvent);
-	void OnRadioButtonClick (wxCommandEvent& rEvent);
+	void OnCheckBoxClick(wxCommandEvent& rEvent);
+	void OnClickToDateCheckBox(wxCommandEvent& rEvent);
 	void UpdateEnabledState();
 	
 	DECLARE_EVENT_TABLE()

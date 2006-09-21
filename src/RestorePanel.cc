@@ -25,9 +25,11 @@
  * YOU MUST NOT REMOVE THIS ATTRIBUTION!
  */
 
-#include <wx/statbox.h>
-#include <wx/listbox.h>
 #include <wx/button.h>
+#include <wx/datectrl.h>
+#include <wx/listbox.h>
+#include <wx/spinctrl.h>
+#include <wx/statbox.h>
 
 #include "main.h"
 
@@ -40,7 +42,9 @@
 #include "RestoreProgressPanel.h"
 
 BEGIN_EVENT_TABLE(RestorePanel, FunctionPanel)
-	EVT_RADIOBUTTON(wxID_ANY, RestorePanel::OnRadioButtonClick)
+	EVT_CHECKBOX(ID_Restore_Panel_To_Date_Checkbox, 
+		RestorePanel::OnClickToDateCheckBox)
+	EVT_CHECKBOX(wxID_ANY, RestorePanel::OnCheckBoxClick)
 END_EVENT_TABLE()
 
 RestorePanel::RestorePanel
@@ -59,19 +63,21 @@ RestorePanel::RestorePanel
 	mpProgressPanel->Hide();
 	
 	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to restore"));
-	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Restore &Destination"));
+	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Restore &destination"));
 
+	/*
 	mpOldLocRadio = new wxRadioButton(this, wxID_ANY, 
 		wxT("&Original Locations"),	wxDefaultPosition, wxDefaultSize, 
 		wxRB_GROUP);
 	mpDestBox->Add(mpOldLocRadio, 0, wxGROW | wxALL, 8);
+	*/
 
 	wxSizer* mpNewDestSizer = new wxBoxSizer(wxHORIZONTAL);
-	mpDestBox->Add(mpNewDestSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	mpDestBox->Add(mpNewDestSizer, 0, wxGROW | wxALL, 8);
 	
-	mpNewLocRadio = new wxRadioButton(this, ID_Restore_Panel_New_Location_Radio, 
-		wxT("&New Location:"), wxDefaultPosition, wxDefaultSize, 0);
-	mpNewDestSizer->Add(mpNewLocRadio, 0, wxGROW, 0);
+	wxStaticText* pNewLocLabel = new wxStaticText(this, wxID_ANY, 
+		_("&New location:"), wxDefaultPosition, wxDefaultSize, 0);
+	mpNewDestSizer->Add(pNewLocLabel, 0, wxALIGN_CENTER, 0);
 
 	mpNewLocText = new wxTextCtrl(this, ID_Restore_Panel_New_Location_Text, 
 		wxT(""));
@@ -80,6 +86,35 @@ RestorePanel::RestorePanel
 	mpNewLocButton = new DirSelButton(this, wxID_ANY, mpNewLocText);
 	mpNewDestSizer->Add(mpNewLocButton, 0, wxGROW | wxLEFT, 4);
 
+	wxBoxSizer* pDateSelSizer = new wxBoxSizer(wxHORIZONTAL);
+	mpDestBox->Add(pDateSelSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+
+	mpToDateCheckBox = new wxCheckBox(this, 
+		ID_Restore_Panel_To_Date_Checkbox, _("Restore &to date:"));
+	pDateSelSizer->Add(mpToDateCheckBox, 0, wxGROW, 0);
+	
+	mpDatePicker = new wxDatePickerCtrl(this, ID_Restore_Panel_Date_Picker);
+	pDateSelSizer->Add(mpDatePicker, 1, wxGROW | wxLEFT, 8);
+	
+	wxStaticText* pAtLabel = new wxStaticText(this, wxID_ANY, 
+		_("&at"), wxDefaultPosition, wxDefaultSize, 0);
+	pDateSelSizer->Add(pAtLabel, 0, wxALIGN_CENTER | wxLEFT, 8);
+
+	mpHourSpin = new wxSpinCtrl(this, ID_Restore_Panel_Hour_Spin, 
+		wxEmptyString, wxDefaultPosition, wxDefaultSize, 
+		wxSP_ARROW_KEYS | wxSP_WRAP, 0, 23);
+	pDateSelSizer->Add(mpHourSpin, 0, wxGROW | wxLEFT, 8);
+
+	wxStaticText* pColonLabel = new wxStaticText(this, wxID_ANY, 
+		_("&:"), wxDefaultPosition, wxDefaultSize, 0);
+	pDateSelSizer->Add(pColonLabel, 0, wxALIGN_CENTER | wxLEFT, 4);
+
+	mpMinSpin = new wxSpinCtrl(this, ID_Restore_Panel_Min_Spin, 
+		wxEmptyString, wxDefaultPosition, wxDefaultSize, 
+		wxSP_ARROW_KEYS | wxSP_WRAP, 0, 59);
+	pDateSelSizer->Add(mpMinSpin, 0, wxGROW | wxLEFT, 4);
+
+	/*
 	mpRestoreDirsCheck = new wxCheckBox(this, wxID_ANY, 
 		wxT("Restore d&irectory structure"));
 	mpDestBox->Add(mpRestoreDirsCheck, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
@@ -87,6 +122,7 @@ RestorePanel::RestorePanel
 	mpOverwriteCheck = new wxCheckBox(this, wxID_ANY, 
 		wxT("O&verwrite existing files"));
 	mpDestBox->Add(mpOverwriteCheck, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	*/
 	
 	mpSourceEditButton->SetLabel(wxT("&Select Files"));
 	mpStartButton     ->SetLabel(wxT("Start &Restore"));
@@ -116,7 +152,7 @@ void RestorePanel::Update()
 	for (RestoreSpecEntry::ConstIterator pEntry = rEntries.begin();
 		pEntry != rEntries.end(); pEntry++)
 	{
-		wxString path = pEntry->GetNode()->GetFullPath();
+		wxString path = pEntry->GetNode().GetFullPath();
 		wxString entry;
 		entry.Printf(wxT("%s %s"), (pEntry->IsInclude() ? wxT("+") : wxT("-")),
 			path.c_str());
@@ -162,13 +198,27 @@ void RestorePanel::OnClickStartButton(wxCommandEvent& rEvent)
 	mpProgressPanel->StartRestore(mpFilesPanel->GetRestoreSpec(), dest);
 }
 
-void RestorePanel::OnRadioButtonClick(wxCommandEvent& rEvent)
+void RestorePanel::OnCheckBoxClick(wxCommandEvent& rEvent)
 {
 	UpdateEnabledState();
 }
 
 void RestorePanel::UpdateEnabledState()
 {
+	if (mpToDateCheckBox->GetValue())
+	{
+		mpDatePicker->Enable();
+		mpHourSpin  ->Enable();
+		mpMinSpin   ->Enable();
+	}
+	else
+	{
+		mpDatePicker->Disable();
+		mpHourSpin  ->Disable();
+		mpMinSpin   ->Disable();
+	}
+	
+	/*
 	if (mpOldLocRadio->GetValue())
 	{
 		mpNewLocText  ->Disable();
@@ -181,4 +231,14 @@ void RestorePanel::UpdateEnabledState()
 		mpNewLocButton->Enable();
 		mpRestoreDirsCheck->Enable();
 	}
+	*/
+}
+
+void RestorePanel::OnClickToDateCheckBox(wxCommandEvent& rEvent)
+{
+	wxDateTime now = wxDateTime::Now();
+	mpDatePicker->SetValue(now);
+	mpHourSpin  ->SetValue(now.GetHour());
+	mpMinSpin   ->SetValue(now.GetMinute());
+	UpdateEnabledState();
 }
