@@ -50,6 +50,7 @@ ServerConnection::ServerConnection(ClientConfig* pConfig)
 	mpConnection = NULL;
 	mIsConnected = FALSE;
 	mIsWritable = FALSE;
+	mConnectionIndex = 0;
 }
 
 ServerConnection::~ServerConnection()
@@ -103,6 +104,7 @@ bool ServerConnection::Connect(bool Writable)
 	if (result) {
 		mIsConnected = TRUE;
 		mIsWritable = Writable;
+		mConnectionIndex++;
 	} else {
 		mIsConnected = FALSE;
 		mIsWritable  = FALSE;

@@ -61,6 +61,7 @@ class ServerConnection {
 	bool Connect(bool Writable);
 	void Disconnect();
 	bool IsConnected() { return mIsConnected; }
+	int GetConnectionIndex() { return mConnectionIndex; }
 	
 	int Restore(int64_t DirectoryID, 
 		const char *LocalDirectoryName, 
@@ -101,11 +102,12 @@ class ServerConnection {
 	const char * ErrorString(int type, int subtype);
 
 	private:
-	bool                    mIsConnected;
-	bool					mIsWritable;
-	SocketStreamTLS*        mpSocket;
-	BackupProtocolClient*   mpConnection;
-	ClientConfig*           mpConfig;
+	bool                  mIsConnected;
+	int                   mConnectionIndex;
+	bool                  mIsWritable;
+	SocketStreamTLS*      mpSocket;
+	BackupProtocolClient* mpConnection;
+	ClientConfig*         mpConfig;
 	
 	bool Connect2(bool Writable);
 };
