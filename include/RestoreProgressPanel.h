@@ -77,6 +77,9 @@ class RestoreProgressPanel
 	int GetProgressPos() { return mpProgressGauge->GetValue(); }
 
 	private:
+	friend class TestRestore;
+	int GetConnectionIndex() { return mpConnection->GetConnectionIndex(); }
+	
 	ClientConfig*     mpConfig;
 	ServerConnection* mpConnection;
 	TLSContext        mTlsContext;
@@ -197,8 +200,8 @@ class RestoreProgressPanel
 		ServerCacheNode* pRootNode, 
 		ServerCacheNode* pCurrentNode, int blockSize);
 	bool RestoreFilesRecursive(const RestoreSpec& rSpec, 
-		ServerCacheNode* pNode,	int64_t parentId, wxFileName localName, 
-		int blockSize);
+		ServerCacheNode* pNode, int64_t parentId, 
+		wxFileName localName, int blockSize);
 	wxFileName MakeLocalPath(wxFileName base, ServerCacheNode* pNode);
 
 	DECLARE_EVENT_TABLE()

@@ -221,8 +221,6 @@ class wxLogListBox : public wxLog
 wxFileName RestoreProgressPanel::MakeLocalPath(wxFileName base, 
 	ServerCacheNode* pTargetNode)
 {
-	wxLogListBox logTo(mpErrorList);
-	
 	wxString remainingPath = pTargetNode->GetFullPath();
 	
 	if (!remainingPath.StartsWith(_("/")))
@@ -275,9 +273,12 @@ wxFileName RestoreProgressPanel::MakeLocalPath(wxFileName base,
 		{
 			return wxFileName();
 		}
-		wxCharBuffer namebuf = outName.GetFullPath()
-			.mb_str();
-		pVersion->GetAttributes().WriteAttributes(namebuf.data());
+
+		if (pVersion->HasAttributes())
+		{
+			wxCharBuffer namebuf = outName.GetFullPath().mb_str();
+			pVersion->GetAttributes().WriteAttributes(namebuf.data());
+		}
 	}
 		
 	outName.SetFullName(remainingPath);	
@@ -292,6 +293,7 @@ wxFileName RestoreProgressPanel::MakeLocalPath(wxFileName base,
 void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName dest)
 {
 	RestoreSpec spec(rSpec);
+	wxLogListBox logTo(mpErrorList);
 	
 	mpErrorList->Clear();
 
@@ -338,7 +340,6 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 	BackupClientCryptoKeys_Setup(keysFile.c_str());
 
 	{
-		wxLogListBox logTo(mpErrorList);
 		if (!wxMkdir(dest.GetFullPath()))
 		{
 			ReportRestoreFatalError(BM_RESTORE_FAILED_TO_CREATE_OBJECT,
@@ -411,7 +412,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 			
 			if (i->IsInclude())
 			{
-				ServerCacheNode* pNode = i->GetNode();
+				ServerCacheNode* pNode = &(i->GetNode());
 				CountFilesRecursive(spec, pNode, pNode, 
 					blockSize);
 			}
@@ -430,21 +431,37 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 		
 		bool succeeded = false;
 		
-		// Go through the records agains, this time syncing them
-		for (RestoreSpecEntry::ConstIterator i = entries.begin();
+		// Go through the records again, this time syncing them
+		for (RestoreSpecEntry::Iterator i = entries.begin();
 			i != entries.end(); i++)
 		{
 			if (i->IsInclude())
 			{
-				ServerCacheNode* pNode = i->GetNode();
+				ServerCacheNode& rNode(i->GetNode());
 				wxFileName restoreDest = MakeLocalPath(dest, 
-					pNode);
+					&rNode);
 				
 				if (restoreDest.IsOk())
 				{
-					succeeded = RestoreFilesRecursive(spec, pNode, 
-						pNode->GetParent()->GetMostRecent()->GetBoxFileId(),
-						restoreDest, blockSize);
+					ServerCacheNode* pParentNode =
+						rNode.GetParent();
+					int64_t parentId = -1; // invalid
+					
+					if (pParentNode == NULL)
+					{
+						// restoring the root directory.
+						// parentId is ignored for 
+						// directories, which is good
+						// because we don't have one!
+					}
+					else
+					{
+						parentId = pParentNode->GetMostRecent()->GetBoxFileId();
+					}
+					
+					succeeded = RestoreFilesRecursive(spec, 
+						&rNode, parentId, restoreDest, 
+						blockSize);
 				}
 				else
 				{
@@ -516,13 +533,18 @@ void RestoreProgressPanel::CountFilesRecursive
 	if (mRestoreStopRequested) return;
 		
 	ServerFileVersion* pVersion = pCurrentNode->GetMostRecent();
+	if (!pVersion)
+	{
+		// no version available, cannot restore
+		return;
+	}
 	
 	RestoreSpecEntry::Vector specs = rSpec.GetEntries();
 
 	for (RestoreSpecEntry::Iterator i = specs.begin();
 		i != specs.end(); i++)
 	{
-		if (i->GetNode() == pCurrentNode)
+		if (&(i->GetNode()) == pCurrentNode)
 		{
 			if (i->IsInclude() && pCurrentNode != pRootNode)
 			{
@@ -538,19 +560,28 @@ void RestoreProgressPanel::CountFilesRecursive
 		}
 	}
 	
+	if (pVersion->IsDeleted())
+	{
+		// ignore deleted files for now. fixme.
+		return;
+	}
+	
 	if (pVersion->IsDirectory())
 	{
-		const ServerCacheNode::Vector* pChildren = 
+		ServerCacheNode::SafeVector* pChildren = 
 			pCurrentNode->GetChildren();
+		wxASSERT(pChildren);
 		
-		if (pChildren)
+		if (!pChildren)
 		{
-			for (ServerCacheNode::ConstIterator i = pChildren->begin();
-				i != pChildren->end(); i++)
-			{
-				CountFilesRecursive(rSpec, pRootNode, *i, 
-					blockSize);
-			}
+			return;
+		}
+		
+		for (ServerCacheNode::Iterator i = pChildren->begin();
+			i != pChildren->end(); i++)
+		{
+			CountFilesRecursive(rSpec, pRootNode, &(*i), 
+				blockSize);
 		}
 	}
 	else
@@ -574,55 +605,103 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 	for (RestoreSpecEntry::Iterator i = specs.begin();
 		i != specs.end(); i++)
 	{
-		if (i->GetNode() == pNode && ! i->IsInclude())
+		if (&(i->GetNode()) != pNode)
+		{
+			// no match
+			continue;
+		}
+		
+		if (! i->IsInclude())
 		{
 			// excluded, stop here.
 			return true;
 		}
+		
+		// Must be included. If the user explicitly included a file
+		// and we can't find it, then we must report an error.
+		// Otherwise, silently ignore it (!).
+
+		if (!pVersion)
+		{
+			// no version available, cannot restore this file
+			wxString msg;
+			msg.Printf(_("Failed to restore '%s': not found on server"),
+				pNode->GetFullPath().c_str());
+			mpErrorList->Append(msg);
+			return false;
+		}
 	}
 	
-	if (localName.FileExists() || localName.DirExists())
+	if (!pVersion)
 	{
-		wxString msg;
-		msg.Printf(_("Error: failed to finish restore: "
-			"object already exists: '%s'"), 
-			localName.GetFullPath().c_str());
-		ReportRestoreFatalError(
-			BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS, msg);
-		return false;
+		// no version available, cannot restore this file
+		return true;
 	}
 
-	wxCharBuffer namebuf = localName.GetFullPath().mb_str(wxConvLibc);
-		
-	if (pVersion->IsDirectory())
+	// The restore root directory always exists, because we just created it.
+	// In the special case of restoring the root, don't complain about it.
+	if (!pNode->IsRoot())
 	{
-		if (!wxMkdir(localName.GetFullPath()))
+		if (localName.FileExists() || localName.DirExists())
 		{
 			wxString msg;
 			msg.Printf(_("Error: failed to finish restore: "
-				"cannot create directory: '%s'"), 
+				"object already exists: '%s'"), 
 				localName.GetFullPath().c_str());
 			ReportRestoreFatalError(
-				BM_RESTORE_FAILED_TO_CREATE_OBJECT, msg);
+				BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS, msg);
+			return false;
+		}
+	}
+	
+	wxCharBuffer namebuf = localName.GetFullPath().mb_str(wxConvLibc);
+		
+	if (pVersion->IsDeleted())
+	{
+		// ignore deleted files for now. fixme.
+		return true;
+	}
+	
+	if (pVersion->IsDirectory())
+	{
+		// And don't try to create the root a second time.
+		if (!pNode->IsRoot())
+		{
+			if (!wxMkdir(localName.GetFullPath()))
+			{
+				wxString msg;
+				msg.Printf(_("Error: failed to finish restore: "
+					"cannot create directory: '%s'"), 
+					localName.GetFullPath().c_str());
+				ReportRestoreFatalError(
+					BM_RESTORE_FAILED_TO_CREATE_OBJECT, msg);
+				return false;
+			}
+
+			if (pVersion->HasAttributes())
+			{
+				pVersion->GetAttributes().WriteAttributes(namebuf.data());
+			}
+		}
+		
+		ServerCacheNode::SafeVector* pChildren = pNode->GetChildren();
+		wxASSERT(pChildren);
+		
+		if (!pChildren)
+		{
 			return false;
 		}
 		
-		pVersion->GetAttributes().WriteAttributes(namebuf.data());
-			 
-		const ServerCacheNode::Vector* pChildren = pNode->GetChildren();
-		if (pChildren)
+		for (ServerCacheNode::Iterator i = pChildren->begin();
+			i != pChildren->end(); i++)
 		{
-			for (ServerCacheNode::ConstIterator i = pChildren->begin();
-				i != pChildren->end(); i++)
+			wxFileName childName(localName.GetFullPath(),
+				i->GetFileName());
+			if (!RestoreFilesRecursive(rSpec, &(*i), 
+				pVersion->GetBoxFileId(), childName, 
+				blockSize))
 			{
-				wxFileName childName(localName.GetFullPath(),
-					(*i)->GetFileName());
-				if (!RestoreFilesRecursive(rSpec, *i, 
-					pVersion->GetBoxFileId(), childName, 
-					blockSize))
-				{
-					return false;
-				}
+				return false;
 			}
 		}
 	}
