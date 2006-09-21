@@ -84,6 +84,10 @@ Fix abort on clicking Add Exclusion with no path entered
 =item *
 Convert the std::strings in Location.h to wxStrings
 
+=item *
+Fix inability to select socket and PID file that don't exist using
+file selection dialog
+
 =back
 
-Last updated: 2005-11-23 by Chris Wilson.
+Last updated: 2006-09-10 by Chris Wilson.
