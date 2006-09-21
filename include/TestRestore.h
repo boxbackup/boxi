@@ -31,7 +31,7 @@
 class TestRestore : public TestWithConfig
 {
 	public:
-	TestRestore() { }
+	TestRestore();
 	virtual void RunTest();
 	static CppUnit::Test *suite();
 	virtual void setUp();
