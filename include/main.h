@@ -119,6 +119,12 @@ enum {
 	
 	ID_Restore_Panel_New_Location_Radio,
 	ID_Restore_Panel_New_Location_Text,
+	ID_Restore_Panel_To_Date_Checkbox,
+	ID_Restore_Panel_Date_Picker,
+	ID_Restore_Panel_Hour_Spin,
+	ID_Restore_Panel_Min_Spin,
+	ID_Restore_Panel_Restore_Later_Checkbox,
+	ID_Restore_Panel_Restore_Deleted_Checkbox,
 };
 
 typedef enum
