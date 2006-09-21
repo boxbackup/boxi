@@ -68,13 +68,13 @@ void RestoreSpec::Add(const RestoreSpecEntry& rNewEntry)
 			return;
 	}
 	
-	wxString newNodePath = rNewEntry.GetNode()->GetFullPath();
+	wxString newNodePath = rNewEntry.GetNode().GetFullPath();
 	
 	// not present, add in correct position
 	for (RestoreSpecEntry::Iterator i = mEntries.begin(); 
 		i != mEntries.end(); i++)
 	{
-		if (i->GetNode()->GetFullPath().Cmp(newNodePath) > 0)
+		if (i->GetNode().GetFullPath().Cmp(newNodePath) > 0)
 		{
 			mEntries.insert(i, rNewEntry);
 			return;
@@ -101,21 +101,21 @@ void RestoreSpec::Remove(const RestoreSpecEntry& rOldEntry)
 class RestoreTreeNode : public FileNode 
 {
 	private:
-	ServerCacheNode*   mpCacheNode;
-	ServerSettings*    mpServerSettings;
-	const RestoreSpec& mrRestoreSpec;
-	const RestoreSpecEntry* mpMatchingEntry;
-	bool               mIncluded;
+	ServerCacheNode&         mrCacheNode;
+	ServerSettings*          mpServerSettings;
+	const RestoreSpec&       mrRestoreSpec;
+	const RestoreSpecEntry*  mpMatchingEntry;
+	bool                     mIncluded;
 	
 	public:
 	RestoreTreeNode
 	(
-		ServerCacheNode* pCacheNode,
-		ServerSettings* pServerSettings, 
+		ServerCacheNode&   rCacheNode,
+		ServerSettings*    pServerSettings, 
 		const RestoreSpec& rRestoreSpec
 	) 
 	:	FileNode        (),
-		mpCacheNode     (pCacheNode),
+		mrCacheNode     (rCacheNode),
 		mpServerSettings(pServerSettings),
 		mrRestoreSpec   (rRestoreSpec),
 		mpMatchingEntry (NULL),
@@ -125,10 +125,10 @@ class RestoreTreeNode : public FileNode
 	RestoreTreeNode
 	(
 		RestoreTreeNode* pParent, 
-		ServerCacheNode* pCacheNode
+		ServerCacheNode& rCacheNode
 	)
 	:	FileNode(pParent),
-		mpCacheNode     (pCacheNode),
+		mrCacheNode     (rCacheNode),
 		mpServerSettings(pParent->mpServerSettings),
 		mrRestoreSpec   (pParent->mrRestoreSpec),
 		mpMatchingEntry (NULL),
@@ -137,22 +137,36 @@ class RestoreTreeNode : public FileNode
 
 	// bool ShowChildren(wxListCtrl *targetList);
 
-	ServerCacheNode* GetCacheNode() const { return mpCacheNode; }
+	ServerCacheNode& GetCacheNode() const { return mrCacheNode; }
 	
 	virtual const wxString& GetFileName() const 
-	{ return mpCacheNode->GetFileName(); }
+	{ return mrCacheNode.GetFileName(); }
 	
 	virtual const wxString& GetFullPath() const 
-	{ return mpCacheNode->GetFullPath(); }
+	{ return mrCacheNode.GetFullPath(); }
 
 	const bool IsDirectory() const 
 	{ 
-		return mpCacheNode->GetMostRecent()->IsDirectory();
+		if (mrCacheNode.GetMostRecent())
+		{
+			return mrCacheNode.GetMostRecent()->IsDirectory();
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	const bool IsDeleted() const 
 	{ 
-		return mpCacheNode->GetMostRecent()->IsDirectory();
+		if (mrCacheNode.GetMostRecent())
+		{
+			return mrCacheNode.GetMostRecent()->IsDeleted();
+		}
+		else
+		{
+			return true;
+		}
 	}
 	
 	const RestoreSpecEntry* GetMatchingEntry() const { return mpMatchingEntry; }
@@ -169,14 +183,14 @@ bool RestoreTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive)
 	// delete any existing children of the parent
 	pTreeCtrl->DeleteChildren(GetId());
 	
-	const ServerCacheNode::Vector* pChildren = mpCacheNode->GetChildren();
-	
+	ServerCacheNode::SafeVector* pChildren = mrCacheNode.GetChildren();
+	wxASSERT(pChildren);
 	if (!pChildren)
 	{
-		return FALSE;
+		return false;
 	}
 
-	for (ServerCacheNode::ConstIterator i = pChildren->begin(); 
+	for (ServerCacheNode::Iterator i = pChildren->begin(); 
 		i != pChildren->end(); i++)
 	{
 		RestoreTreeNode *pNewNode = new RestoreTreeNode(this, *i);
@@ -188,9 +202,14 @@ bool RestoreTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive)
 		if (pNewNode->IsDeleted())
 		{
 			pTreeCtrl->SetItemTextColour(newId, 
-				wxTheColourDatabase->Find(wxT("GREY")));
+				wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
 		}
-			
+		else
+		{
+			pTreeCtrl->SetItemTextColour(newId, 
+				wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT));
+		}
+
 		if (pNewNode->IsDirectory())
 		{
 			if (recursive) 
@@ -198,12 +217,12 @@ bool RestoreTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive)
 				bool result = pNewNode->_AddChildrenSlow(pTreeCtrl, false);
 				if (!result)
 				{
-					return FALSE;
+					return false;
 				}
 			} 
 			else 
 			{
-				pTreeCtrl->SetItemHasChildren(newId, TRUE);
+				pTreeCtrl->SetItemHasChildren(newId, true);
 			}
 		}
 	}
@@ -243,7 +262,8 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 	{
 		// hide redundant entries (i->IsInclude() == mIncluded), 
 		// i.e. pretend that they don't exist
-		if (i->GetNode() == mpCacheNode && i->IsInclude() != mIncluded)
+		if (&(i->GetNode()) == &mrCacheNode && 
+			i->IsInclude() != mIncluded)
 		{
 			mpMatchingEntry = &(*i);
 			mIncluded = i->IsInclude();
@@ -271,7 +291,7 @@ int RestoreTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 		for (RestoreSpecEntry::ConstIterator i = entries.begin(); 
 			i != entries.end(); i++)
 		{
-			wxString entryPath = i->GetNode()->GetFullPath();
+			wxString entryPath = i->GetNode().GetFullPath();
 			if (entryPath.StartsWith(thisNodePathWithSlash) &&
 				i->IsInclude())
 			{
@@ -377,6 +397,7 @@ RestoreFilesPanel::RestoreFilesPanel
 )
 :	wxPanel(pParent, ID_Restore_Files_Panel, wxDefaultPosition, 
 		wxDefaultSize, wxTAB_TRAVERSAL, wxT("RestoreFilesPanel")),
+	mCache(pServerConnection),
 	mpMainFrame(pMainFrame),
 	mpPanelToShowOnClose(pPanelToShowOnClose),
 	mpListener(pListener)
@@ -384,7 +405,6 @@ RestoreFilesPanel::RestoreFilesPanel
 	mpConfig = pConfig;
 	// mpStatusBar = pMainFrame->GetStatusBar();
 	mpServerConnection = pServerConnection;
-	mpCache = new ServerCache(pServerConnection);
 	
 	wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
 	SetSizer(topSizer);
@@ -395,7 +415,7 @@ RestoreFilesPanel::RestoreFilesPanel
 	topSizer->Add(theServerSplitter, 1, wxGROW | wxALL, 8);
 	*/
 	
-	mpTreeRoot = new RestoreTreeNode(mpCache->GetRoot(), 
+	mpTreeRoot = new RestoreTreeNode(mCache.GetRoot(), 
 		&mServerSettings, mRestoreSpec);
 
 	mpTreeCtrl = new RestoreTreeCtrl(this, ID_Server_File_Tree,
@@ -799,12 +819,12 @@ int TreeNodeCompare(const RestoreTreeNode **a, const RestoreTreeNode **b)
 }
 */
 
-const ServerCacheNode::Vector* ServerCacheNode::GetChildren()
+ServerCacheNode::SafeVector* ServerCacheNode::GetChildren()
 {
-	if (mCached)
-		return &mChildren;
-	
-	FreeChildren();
+	if (mCached && mConnectionIndex == mpServerConnection->GetConnectionIndex())
+	{
+		return &mChildrenSafe;
+	}
 	
 	ServerFileVersion* pMostRecent = GetMostRecent();
 	if (!pMostRecent)
@@ -824,10 +844,21 @@ const ServerCacheNode::Vector* ServerCacheNode::GetChildren()
 		return NULL;
 	}
 	
-	WX_DECLARE_STRING_HASH_MAP( ServerCacheNode*, FileTable );
+	WX_DECLARE_STRING_HASH_MAP(ServerCacheNode*, FileTable);
 	FileTable lFileTable;
 	
-	// create new nodes for all real, current children of this node
+	// add all existing nodes to the hash table, and clear all existing 
+	// versions, which must not be held across connections by our users.
+	for (ServerCacheNode::Iterator pChild = mChildren.begin();
+		pChild != mChildren.end(); pChild++)
+	{
+		pChild->mVersions.clear();
+		pChild->mpMostRecent = NULL;
+		lFileTable[pChild->GetFileName()] = &(*pChild);
+	}
+	
+	// create new nodes for all unique names that did not exist before,
+	// and new versions for every directory entry.
 	BackupStoreDirectory::Iterator i(dir);
 	BackupStoreDirectory::Entry *en = 0;
 	
@@ -837,11 +868,12 @@ const ServerCacheNode::Vector* ServerCacheNode::GetChildren()
 		ServerCacheNode* pChildNode = lFileTable[name];
 		if (pChildNode == NULL)
 		{
-			pChildNode = new ServerCacheNode(this, en);
+			ServerCacheNode newChildNode(*this, en);
+			mChildren.push_back(newChildNode);
+			pChildNode = &(mChildren.back());
 			lFileTable[name] = pChildNode;
-			mChildren.push_back(pChildNode);
 		}
-		pChildNode->mVersions.push_back(new ServerFileVersion(en));
+		pChildNode->mVersions.push_back(ServerFileVersion(en));
 	}
 	
 	// ListDirectory always gives us attributes
@@ -849,23 +881,28 @@ const ServerCacheNode::Vector* ServerCacheNode::GetChildren()
 	pMostRecent->SetAttributes(BackupClientFileAttributes(dirAttrBlock));
 	
 	mCached = true;
-	return &mChildren;
+	mConnectionIndex = mpServerConnection->GetConnectionIndex();
+	
+	return &mChildrenSafe;
 }
 
 ServerFileVersion* ServerCacheNode::GetMostRecent()
 {
-	wxMutexLocker lock(mMutex);
-	
 	if (mpMostRecent) 
+	{
 		return mpMostRecent;
+	}
 	
-	for (ServerFileVersion::Vector::const_iterator i = mVersions.begin(); 
+	for (ServerFileVersion::Iterator i = mVersions.begin(); 
 		i != mVersions.end(); i++)
 	{
-		if (mpMostRecent == NULL ||
-			mpMostRecent->GetDateTime().IsEarlierThan((*i)->GetDateTime()))
+		if (mpMostRecent == NULL)
 		{
-			mpMostRecent = *i;
+			mpMostRecent = &(*i);
+		}
+		else if (mpMostRecent->GetBoxFileId() <	i->GetBoxFileId())
+		{
+			mpMostRecent = &(*i);
 		}
 	}
 	
@@ -951,4 +988,42 @@ void RestoreFilesPanel::OnCloseButtonClick(wxCommandEvent& rEvent)
 {
 	Hide();
 	mpMainFrame->ShowPanel(mpPanelToShowOnClose);
+}
+
+ServerFileVersion::ServerFileVersion(const ServerFileVersion& rToCopy)
+: mBoxFileId   (rToCopy.mBoxFileId),
+  mIsDirectory (rToCopy.mIsDirectory),
+  mIsDeleted   (rToCopy.mIsDeleted),
+  mpConfig     (rToCopy.mpConfig),
+  mFlags       (rToCopy.mFlags),
+  mSizeInBlocks(rToCopy.mSizeInBlocks),
+  mDateTime    (rToCopy.mDateTime),
+  mCached      (false)
+{
+	if (rToCopy.mapAttributes.get())
+	{
+		mapAttributes.reset(new BackupClientFileAttributes
+			(*rToCopy.mapAttributes.get()));
+	}
+}
+
+ServerFileVersion& ServerFileVersion::operator=
+(const ServerFileVersion& rToCopy)
+{
+	mBoxFileId    = rToCopy.mBoxFileId;
+	mIsDirectory  = rToCopy.mIsDirectory;
+	mIsDeleted    = rToCopy.mIsDeleted;
+	mpConfig      = rToCopy.mpConfig;
+	mFlags        = rToCopy.mFlags;
+	mSizeInBlocks = rToCopy.mSizeInBlocks;
+	mDateTime     = rToCopy.mDateTime;
+	mCached       = false;
+
+	if (rToCopy.mapAttributes.get())
+	{
+		mapAttributes.reset(new BackupClientFileAttributes
+			(*rToCopy.mapAttributes.get()));
+	}
+	
+	return *this;
 }

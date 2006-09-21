@@ -56,19 +56,20 @@ class ServerSettings {
 class ServerFileVersion 
 {
 	public:
-	typedef std::vector<ServerFileVersion*> Vector;
+	typedef std::vector<ServerFileVersion> Vector;
 	typedef Vector::iterator Iterator;
+	typedef Vector::const_iterator ConstIterator;
 	
 	private:
-	int64_t            mBoxFileId;
-	bool               mIsDirectory;
-	bool               mIsDeleted;
-	ClientConfig*      mpConfig;
-	int16_t            mFlags;
-	int64_t            mSizeInBlocks;
-	// bool            mHasAttributes;
-	wxDateTime         mDateTime;
-	bool               mCached;
+	int64_t       mBoxFileId;
+	bool          mIsDirectory;
+	bool          mIsDeleted;
+	ClientConfig* mpConfig;
+	int16_t       mFlags;
+	int64_t       mSizeInBlocks;
+	// bool       mHasAttributes;
+	wxDateTime    mDateTime;
+	bool          mCached;
 	std::auto_ptr<BackupClientFileAttributes> mapAttributes;
 	
 	public:
@@ -82,7 +83,10 @@ class ServerFileVersion
 		mCached       = false;
 	}
 	ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry);
-
+	ServerFileVersion(const ServerFileVersion& rToCopy);
+	ServerFileVersion& ServerFileVersion::operator=
+		(const ServerFileVersion& rToCopy);
+	
 	const wxDateTime& GetDateTime()   const { return mDateTime; }
 	int64_t           GetBoxFileId()  const { return mBoxFileId; }
 	int64_t           GetSizeBlocks() const { return mSizeInBlocks; }
@@ -90,21 +94,35 @@ class ServerFileVersion
 	bool IsDeleted()                  const { return mIsDeleted; }
 	void SetDeleted(bool value = true) { mIsDeleted   = value; }
 	bool HasAttributes()              const { return mapAttributes.get(); }
-	BackupClientFileAttributes GetAttributes() const { return *mapAttributes; }
+	BackupClientFileAttributes GetAttributes() const 
+	{
+		return *mapAttributes; // silent clone		
+	}
+
 	void SetAttributes(const BackupClientFileAttributes& rAttribs)
 	{
 		mapAttributes.reset(new BackupClientFileAttributes(rAttribs));
 	}
-	
-	private:
 };
 
 class ServerCacheNode 
 {
 	public:
-	typedef std::vector<ServerCacheNode*> Vector;
+	typedef std::vector<ServerCacheNode> Vector;
 	typedef Vector::iterator       Iterator;
 	typedef Vector::const_iterator ConstIterator;
+	
+	class SafeVector
+	{
+		private:
+		std::vector<ServerCacheNode>& mrRealVector;
+		public:
+		SafeVector(std::vector<ServerCacheNode>& rRealVector)
+		: mrRealVector(rRealVector) { }
+		ServerCacheNode::Iterator begin() { return mrRealVector.begin(); }
+		ServerCacheNode::Iterator end()   { return mrRealVector.end(); }
+	};
+			
 
 	private:
 	wxString                  mFileName;
@@ -115,47 +133,78 @@ class ServerCacheNode
 	ServerCacheNode*          mpParentNode;
 	bool                      mCached;
 	ServerConnection*         mpServerConnection;
+	int                       mConnectionIndex;
 	wxMutex                   mMutex;
+	SafeVector                mChildrenSafe;
 	
 	public:
 	ServerCacheNode(ServerConnection* pServerConnection) 
+	: mFileName         (wxT("")),
+	  mFullPath         (wxT("/")),
+	  mpMostRecent      (NULL),
+	  mpParentNode      (NULL),
+	  mCached           (false),
+	  mpServerConnection(pServerConnection),
+	  mConnectionIndex  (pServerConnection->GetConnectionIndex()),
+	  mChildrenSafe     (mChildren)
 	{
-		ServerFileVersion* pDummyRootVersion = 
-			new ServerFileVersion();
-		mVersions.push_back(pDummyRootVersion);
-		mFileName    = wxT("");
-		mFullPath    = wxT("/");
-		mpParentNode = NULL;
-		mpMostRecent = NULL;
-		mCached      = FALSE;
-		mpServerConnection = pServerConnection;
+		ServerFileVersion dummyRootVersion; 
+		mVersions.push_back(dummyRootVersion);
 	}
-	ServerCacheNode(ServerCacheNode* pParent, 
-		BackupStoreDirectory::Entry* pDirEntry)
+	
+	ServerCacheNode
+	(
+		ServerCacheNode& rParent, 
+		BackupStoreDirectory::Entry* pDirEntry
+	)
+	: mFileName         (GetDecryptedName(pDirEntry)),
+	  mpMostRecent      (NULL),
+	  mpParentNode      (&rParent),
+	  mCached           (false),
+	  mpServerConnection(rParent.mpServerConnection),
+	  mConnectionIndex  (mpServerConnection->GetConnectionIndex()),
+	  mChildrenSafe     (mChildren)
 	{ 
-		mFileName    = GetDecryptedName(pDirEntry);
-		if (pParent->IsRoot())
+		if (rParent.IsRoot())
 		{
 			mFullPath.Printf(wxT("/%s"), mFileName.c_str());
 		}
 		else
 		{
 			mFullPath.Printf(wxT("%s/%s"), 
-				pParent->GetFullPath().c_str(), 
+				rParent.GetFullPath().c_str(), 
 				mFileName.c_str());
 		}
-		mpParentNode = pParent;
-		mpMostRecent = NULL;
-		mCached      = FALSE;
-		mpServerConnection = pParent->mpServerConnection;
 	}
-	~ServerCacheNode() { 
-		wxMutexLocker lock(mMutex);
-		FreeVersions(); 
-		FreeChildren(); 
+	
+	ServerCacheNode(const ServerCacheNode& rToCopy)
+	: mFileName         (rToCopy.mFileName),
+	  mFullPath         (rToCopy.mFullPath),
+	  mVersions         (rToCopy.mVersions),
+	  mpMostRecent      (rToCopy.mpMostRecent),
+	  mChildren         (rToCopy.mChildren),
+	  mpParentNode      (rToCopy.mpParentNode),
+	  mCached           (rToCopy.mCached),
+	  mpServerConnection(rToCopy.mpServerConnection),
+	  mConnectionIndex  (rToCopy.mConnectionIndex),
+	  mChildrenSafe     (mChildren)
+	{ }
+	
+	ServerCacheNode& ServerCacheNode::operator=(const ServerCacheNode& rToCopy)
+	{
+		mFileName          = rToCopy.mFileName;
+	  	mFullPath          = rToCopy.mFullPath;
+	  	mVersions          = rToCopy.mVersions;
+	  	mpMostRecent       = rToCopy.mpMostRecent;
+	  	mChildren          = rToCopy.mChildren;
+	  	mpParentNode       = rToCopy.mpParentNode;
+	  	mCached            = rToCopy.mCached;
+	  	mpServerConnection = rToCopy.mpServerConnection;
+	  	mConnectionIndex   = rToCopy.mConnectionIndex;
+		return *this;
 	}
-
-	wxString GetDecryptedName(BackupStoreDirectory::Entry* pDirEntry)
+	
+	static wxString GetDecryptedName(BackupStoreDirectory::Entry* pDirEntry)
 	{
 		BackupStoreFilenameClear clear(pDirEntry->GetName());
 		wxString name(clear.GetClearFilename().c_str(), wxConvLibc);
@@ -168,31 +217,11 @@ class ServerCacheNode
 	const wxString&    GetFullPath()      const { return mFullPath; }
 	ServerCacheNode*   GetParent()        const { return mpParentNode; }
 	const ServerFileVersion::Vector& GetVersions();
-	const ServerCacheNode::Vector*   GetChildren();
+	SafeVector*        GetChildren();
+
 	wxMutex&           GetLock() { return mMutex; }
 	
 	ServerFileVersion* GetMostRecent();
-	
-	private:
-	// Only call these with a lock held!
-	void FreeVersions() 
-	{
-		for (ServerFileVersion::Iterator i = mVersions.begin(); 
-			i != mVersions.end(); i++)
-		{
-			delete *i;
-		}
-		mVersions.clear();
-	}		
-	void FreeChildren() 
-	{
-		for (ServerCacheNode::Iterator i = mChildren.begin(); 
-			i != mChildren.end(); i++)
-		{
-			delete *i;
-		}
-		mChildren.clear();
-	}		
 };
 
 class ServerCache
@@ -205,7 +234,7 @@ class ServerCache
 	: mRoot(pServerConnection)
 	{ }
 	
-	ServerCacheNode* GetRoot() { return &mRoot; }
+	ServerCacheNode& GetRoot() { return mRoot; }
 };
 
 class RestoreSpecEntry
@@ -220,13 +249,13 @@ class RestoreSpecEntry
 	bool mInclude;
 
 	public:
-	RestoreSpecEntry(ServerCacheNode* pNode, bool lInclude)
+	RestoreSpecEntry(ServerCacheNode& rNode, bool lInclude)
+	: mpNode(&rNode)
 	{
-		mpNode = pNode;
 		mInclude = lInclude;
 	}
 	
-	ServerCacheNode* GetNode() const { return mpNode; }
+	ServerCacheNode& GetNode() const { return *mpNode; }
 	bool IsInclude() const { return mInclude; }
 	bool IsSameAs(const RestoreSpecEntry& rOther) const
 	{
@@ -270,7 +299,6 @@ class RestoreFilesPanel : public wxPanel
 		RestoreSpecChangeListener* pListener,
 		wxPanel*          pPanelToShowOnClose
 	);
-	~RestoreFilesPanel() { delete mpCache; }
 	
 	void RestoreProgress(RestoreState State, std::string& rFileName);
 	/*
@@ -304,7 +332,7 @@ class RestoreFilesPanel : public wxPanel
 	ServerSettings      mServerSettings;
 	ServerConnection*   mpServerConnection;
 	BackupProtocolClientAccountUsage* mpUsage;
-	ServerCache*        mpCache;
+	ServerCache         mCache;
 	RestoreSpec         mRestoreSpec;
 	MainFrame*          mpMainFrame;
 	wxPanel*            mpPanelToShowOnClose;
