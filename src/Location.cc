@@ -92,7 +92,7 @@ void MyExcludeList::AddEntry(const MyExcludeEntry& rNewEntry)
 void MyExcludeList::ReplaceEntry(const MyExcludeEntry& rOldEntry, 
 	const MyExcludeEntry& rNewEntry) 
 {
-	std::vector<MyExcludeEntry>::iterator current;
+	std::list<MyExcludeEntry>::iterator current;
 	for (current = mEntries.begin(); 
 		current != mEntries.end() && !current->IsSameAs(rOldEntry); current++) 
 		{ }
@@ -107,7 +107,7 @@ void MyExcludeList::ReplaceEntry(const MyExcludeEntry& rOldEntry,
 /*
 void MyExcludeList::RemoveEntry(int target) 
 {
-	std::vector<MyExcludeEntry>::iterator current;
+	std::list<MyExcludeEntry>::iterator current;
 	for (current = mEntries.begin();
 		current != mEntries.end() && target != 0;
 		current++, target--) { }
@@ -125,7 +125,7 @@ void MyExcludeList::RemoveEntry(int target)
 
 void MyExcludeList::RemoveEntry(const MyExcludeEntry& rOldEntry) 
 {
-	std::vector<MyExcludeEntry>::iterator current;
+	std::list<MyExcludeEntry>::iterator current;
 	for (current = mEntries.begin(); 
 		current != mEntries.end() && !current->IsSameAs(rOldEntry); current++) 
 		{ }
@@ -142,7 +142,7 @@ void MyExcludeList::RemoveEntry(const MyExcludeEntry& rOldEntry)
 
 MyExcludeEntry* MyExcludeList::UnConstEntry(const MyExcludeEntry& rEntry)
 {
-	std::vector<MyExcludeEntry>::iterator current;
+	std::list<MyExcludeEntry>::iterator current;
 	for (current = mEntries.begin(); 
 		current != mEntries.end() && !current->IsSameAs(rEntry); current++) 
 		{ }
@@ -169,7 +169,7 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 	wxLogDebug(wxT(" checking whether %s is excluded..."), 
 		rLocalFileName.c_str());
 	
-	const std::vector<MyExcludeEntry>& rExcludeList =
+	const std::list<MyExcludeEntry>& rExcludeList =
 		mExcluded.GetEntries();
 
 	// inherit default state from parent
@@ -220,7 +220,7 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 	{
 		// wxLogDebug(wxT(" pass %d"), pass);
 
-		typedef std::vector<MyExcludeEntry>::const_iterator iterator;
+		typedef std::list<MyExcludeEntry>::const_iterator iterator;
 		
 		for (iterator pEntry = rExcludeList.begin();
 			pEntry != rExcludeList.end(); pEntry++)
@@ -332,7 +332,7 @@ ExcludeList* Location::GetBoxExcludeList(bool listDirs) const
 	ExcludeList *pInclude = new ExcludeList;
 	pExclude->SetAlwaysIncludeList(pInclude);
 	
-	typedef const std::vector<MyExcludeEntry> tMyExcludeEntries;
+	typedef const std::list<MyExcludeEntry> tMyExcludeEntries;
 	tMyExcludeEntries& rEntries(mExcluded.GetEntries());
 	
 	try

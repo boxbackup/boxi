@@ -156,6 +156,11 @@ class Location;
 
 class MyExcludeEntry 
 {
+	public:
+	typedef std::list<MyExcludeEntry> List;
+	typedef List::iterator            Iterator;
+	typedef List::const_iterator      ConstIterator;
+
 	private:
 	MyExcludeType* mpType;
 	std::string mValue;
@@ -226,7 +231,7 @@ class LocationChangeListener
 class MyExcludeList 
 {
 	private:
-	std::vector<MyExcludeEntry> mEntries;
+	MyExcludeEntry::List mEntries;
 	LocationChangeListener* mpListener;
 
 	public:
@@ -238,27 +243,19 @@ class MyExcludeList
 	MyExcludeList(const MyExcludeList& rToCopy)
 	: mpListener(rToCopy.mpListener)
 	{
-		for (size_t i = 0; i < rToCopy.mEntries.size(); i++) 
-		{
-			MyExcludeEntry e(rToCopy.mEntries[i]);
-			mEntries.push_back(e);
-		}
+		mEntries = rToCopy.mEntries;
 	}
 	void CopyFrom(const MyExcludeList& rToCopy)
 	{
-		mEntries.clear();
-		for (size_t i = 0; i < rToCopy.mEntries.size(); i++) 
-		{
-			MyExcludeEntry e(rToCopy.mEntries[i]);
-			mEntries.push_back(e);
-		}
+		mEntries = rToCopy.mEntries;
+
 		if (mpListener)
 		{
 			mpListener->OnExcludeListChange(this);
 		}
 	}
 	
-	const std::vector<MyExcludeEntry>& GetEntries() const { return mEntries; }
+	const MyExcludeEntry::List& GetEntries() const { return mEntries; }
 	void AddEntry(const MyExcludeEntry& rNewEntry);
 	void ReplaceEntry(const MyExcludeEntry& rOldEntry, const MyExcludeEntry& rNewEntry);
 	// void RemoveEntry(int index);
@@ -266,22 +263,36 @@ class MyExcludeList
 	MyExcludeEntry* UnConstEntry(const MyExcludeEntry& rEntry);
 	bool IsSameAs(const MyExcludeList& rOther) const
 	{
-		const std::vector<MyExcludeEntry>& rOtherEntries = rOther.GetEntries();
-		if (rOtherEntries.size() != mEntries.size()) return FALSE;
-		
-		for (size_t i = 0; i < mEntries.size(); i++) 
+		const MyExcludeEntry::List& rOtherEntries = 
+			rOther.GetEntries();
+
+		MyExcludeEntry::ConstIterator myPos, otherPos;
+
+		for 
+		(
+			myPos     = mEntries.begin(), 
+			otherPos  = rOtherEntries.begin();
+			myPos    != mEntries.end() &&
+			otherPos != rOtherEntries.end();
+			myPos++, otherPos++
+		)
 		{
-			if (! mEntries[i].IsSameAs(rOtherEntries[i]))
+			if (!(myPos->IsSameAs(*otherPos)))
 			{
-				return FALSE;
+				return false;
 			}
 		}
+
+		if (myPos != mEntries.end() || otherPos != rOtherEntries.end())
+		{
+			return false;
+		}
 		
-		return TRUE;
+		return true;
 	}
 	
-	void addConfigList(const Configuration& conf, const std::string& keyName, 
-		MyExcludeType& type);
+	void addConfigList(const Configuration& conf, 
+		const std::string& keyName, MyExcludeType& type);
 	void addSeparatedList(const std::string& entries, MyExcludeType& type);
 	void SetListener(LocationChangeListener* pListener)
 	{ mpListener = pListener; }
@@ -289,6 +300,11 @@ class MyExcludeList
 
 class Location
 {
+	public:
+	typedef std::list<Location>  List;
+	typedef List::iterator       Iterator;
+	typedef List::const_iterator ConstIterator;
+
 	private:
 	wxString mName;
 	wxString mPath;
