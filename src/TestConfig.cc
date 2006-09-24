@@ -66,10 +66,27 @@ void TestConfig::RunTest()
 		wxString in = configFileName.GetFullPath();
 		dialog.SetPath(configFileName.GetFullPath());
 		dialog.SetFilename(configFileName.GetFullName());
-		wxString out = dialog.GetPath();
+
+		wxFileName fn(dialog.GetDirectory(), dialog.GetFilename());
+		wxString out = fn.GetFullPath();
 		CPPUNIT_ASSERT_EQUAL(in, out);
 	}
-	
+
+	// check that test hooks work OK
+	{
+		wxFileDialog dialog(
+			NULL, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
+			_("Box Backup client configuration file|bbackupd.conf"), 
+			wxSAVE | wxOVERWRITE_PROMPT, wxDefaultPosition);
+		wxString in = configFileName.GetFullPath();
+		wxGetApp().ExpectFileDialog(in);
+		CPPUNIT_ASSERT(wxGetApp().ShowFileDialog(dialog) == wxID_OK);
+
+		wxFileName fn(dialog.GetDirectory(), dialog.GetFilename());
+		wxString out = fn.GetFullPath();
+		CPPUNIT_ASSERT_EQUAL(in, out);
+	}
+
 	// bug in GTK file chooser widget
 	// http://bugzilla.gnome.org/show_bug.cgi?id=340835
 	/*
