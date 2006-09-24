@@ -29,6 +29,7 @@
 #include <wx/file.h>
 #include <wx/filename.h>
 #include <wx/treectrl.h>
+#include <wx/volume.h>
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
 
@@ -113,19 +114,26 @@ void DeleteRecursive(const wxFileName& rPath)
 {
 	if (rPath.DirExists())
 	{
-		wxDir dir(rPath.GetFullPath());
-		CPPUNIT_ASSERT(dir.IsOpened());
-		
-		wxString file;
-		if (dir.GetFirst(&file))
 		{
-			do
+			wxDir dir(rPath.GetFullPath());
+			CPPUNIT_ASSERT(dir.IsOpened());
+			
+			wxString file;
+			if (dir.GetFirst(&file))
 			{
-				wxFileName filename(rPath.GetFullPath(), file);
-				DeleteRecursive(filename);
+				do
+				{
+					wxFileName filename(
+						rPath.GetFullPath(), file);
+					DeleteRecursive(filename);
+				}
+				while (dir.GetNext(&file));
 			}
-			while (dir.GetNext(&file));
 		}
+
+		// Make sure wxDir is out of scope, so that the
+		// directory is closed, otherwise we can't delete
+		// it on Win32.
 		
 		wxCharBuffer buf = rPath.GetFullPath().mb_str(wxConvLibc);
 		CPPUNIT_ASSERT_MESSAGE(buf.data(), wxRmdir(rPath.GetFullPath()));
@@ -142,6 +150,11 @@ void TestBackupConfig::RunTest()
 	// create a working directory
 	wxFileName tempDir;
 	tempDir.AssignTempFileName(wxT("boxi-tempdir-"));
+
+	// On Windows, the temporary file name may use short names, 
+	// which breaks access via the tree control. So fix it now.
+	tempDir = wxFileName(tempDir.GetLongPath());
+
 	CPPUNIT_ASSERT(wxRemoveFile(tempDir.GetFullPath()));
 	CPPUNIT_ASSERT(wxMkdir     (tempDir.GetFullPath(), 0700));
 	CPPUNIT_ASSERT(tempDir.DirExists());
@@ -191,8 +204,14 @@ void TestBackupConfig::RunTest()
 
 	wxTreeItemId rootId = pTree->GetRootItem();
 	wxString rootLabel  = pTree->GetItemText(rootId);
+
+	#ifdef WIN32
+	CPPUNIT_ASSERT_EQUAL((std::string)"My Computer", 
+		(std::string)rootLabel.mb_str(wxConvLibc).data());
+	#else
 	CPPUNIT_ASSERT_EQUAL((std::string)"/ (local root)", 
 		(std::string)rootLabel.mb_str(wxConvLibc).data());
+	#endif
 	
 	FileImageList images;
 	CPPUNIT_ASSERT_EQUAL(images.GetEmptyImageId(), 
@@ -299,24 +318,36 @@ void TestBackupConfig::RunTest()
 	CPPUNIT_ASSERT(pExcludeDelButton);
 
 	// test that creating a location using the tree adds entries 
-	// to the locations and excludes list boxes
-	ActivateTreeItemWaitEvent(pTree, rootId);
-	CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-	CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
-	CPPUNIT_ASSERT_EQUAL((wxString)_("/ -> root"), pLocationsListBox  ->GetString(0));
-	CPPUNIT_ASSERT_EQUAL((wxString)_("/ -> root"), pExcludeLocsListBox->GetString(0));
+	// to the locations and excludes list boxes (except on Win32,
+	// where it represents My Computer and can't be selected)
 
-	MessageBoxSetResponse(BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, wxNO);
 	ActivateTreeItemWaitEvent(pTree, rootId);
-	MessageBoxCheckFired();
-	CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
-	CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
 
-	MessageBoxSetResponse(BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, wxYES);
-	ActivateTreeItemWaitEvent(pTree, rootId);
-	MessageBoxCheckFired();
-	CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetCount());
-	CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
+	#ifdef WIN32
+		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
+	#else
+		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/ -> root"), 
+			pLocationsListBox  ->GetString(0));
+		CPPUNIT_ASSERT_EQUAL((wxString)_("/ -> root"), 
+			pExcludeLocsListBox->GetString(0));
+
+		MessageBoxSetResponse(BM_BACKUP_FILES_DELETE_LOCATION_QUESTION,
+			wxNO);
+		ActivateTreeItemWaitEvent(pTree, rootId);
+		MessageBoxCheckFired();
+		CPPUNIT_ASSERT_EQUAL(1, pLocationsListBox  ->GetCount());
+		CPPUNIT_ASSERT_EQUAL(1, pExcludeLocsListBox->GetCount());
+
+		MessageBoxSetResponse(BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, 
+			wxYES);
+		ActivateTreeItemWaitEvent(pTree, rootId);
+		MessageBoxCheckFired();
+		CPPUNIT_ASSERT_EQUAL(0, pLocationsListBox  ->GetCount());
+		CPPUNIT_ASSERT_EQUAL(0, pExcludeLocsListBox->GetCount());
+	#endif
 
 	wxFileName testDataDir(tempDir.GetFullPath(), _("testdata"));
 	CPPUNIT_ASSERT(testDataDir.Mkdir(0700));
@@ -340,6 +371,18 @@ void TestBackupConfig::RunTest()
 		
 		wxArrayString testDataDirPathDirs = testDataDir.GetDirs();
 		testDataDirPathDirs.Add(testDataDir.GetName());
+
+		#ifdef WIN32
+		if (! testDataDir.GetVolume().IsSameAs(wxEmptyString))
+		{
+			wxString volshort = testDataDir.GetVolume();
+			volshort.Append(_(":\\"));
+			wxFSVolumeBase volume(volshort);
+			wxCharBuffer buf = volshort.mb_str();
+			CPPUNIT_ASSERT_MESSAGE(buf.data(), volume.IsOk());
+			testDataDirPathDirs.Insert(volume.GetDisplayName(), 0);
+		}
+		#endif
 		
 		for (size_t i = 0; i < testDataDirPathDirs.Count(); i++)
 		{
