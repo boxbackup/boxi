@@ -2,8 +2,8 @@
  *            TestBackup.h
  *
  *  Sat Aug 12 14:01:01 2006
- *  Copyright  2006  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -37,15 +37,14 @@
 #include "BackupQueries.h"
 #include "BoxPortsAndFiles.h"
 
-#include "TestFrame.h"
+#include "TestWithServer.h"
 
 class BackupStoreAccountDatabase;
 class BackupStoreAccounts;
 
-class TestBackup : public TestWithConfig
+class TestBackup : public TestWithServer
 {
 	public:
-	TestBackup() { }
 	virtual void RunTest();
 	static CppUnit::Test *suite();
 };

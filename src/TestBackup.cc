@@ -635,322 +635,15 @@ void SetFileTime(const char* filename, time_t creationTime /* not used */,
 #endif
 
 void TestBackup::RunTest()
-{
-	// create a working directory
-	wxFileName tempDir;
-	tempDir.AssignTempFileName(wxT("boxi-tempdir-"));
-	CPPUNIT_ASSERT(wxRemoveFile(tempDir.GetFullPath()));
-	CPPUNIT_ASSERT(wxMkdir     (tempDir.GetFullPath(), 0700));
-	CPPUNIT_ASSERT(tempDir.DirExists());
-	
-	// create a directory to hold config files for the tests
-	wxFileName confDir(tempDir.GetFullPath(), _("conf"));
-	CPPUNIT_ASSERT(wxMkdir(confDir.GetFullPath(), 0700));
-	CPPUNIT_ASSERT(confDir.DirExists());
-	
-	// create a directory to hold bbstored's store temporarily
-	wxFileName storeDir(tempDir.GetFullPath(), _("store"));
-	CPPUNIT_ASSERT(wxMkdir(storeDir.GetFullPath(), 0700));
-	CPPUNIT_ASSERT(storeDir.DirExists());
-
-	// create raidfile.conf for the store daemon
-	wxFileName raidConf(confDir.GetFullPath(), _("raidfile.conf"));
-	CPPUNIT_ASSERT(!raidConf.FileExists());
-	
-	{
-		wxFileName storeDir0(storeDir.GetFullPath(), _("0_0"));
-		CPPUNIT_ASSERT(wxMkdir(storeDir0.GetFullPath(), 0700));
-		CPPUNIT_ASSERT(storeDir0.DirExists());
-	
-		wxFileName storeDir1(storeDir.GetFullPath(), _("0_1"));
-		CPPUNIT_ASSERT(wxMkdir(storeDir1.GetFullPath(), 0700));
-		CPPUNIT_ASSERT(storeDir1.DirExists());
-	
-		wxFileName storeDir2(storeDir.GetFullPath(), _("0_2"));
-		CPPUNIT_ASSERT(wxMkdir(storeDir2.GetFullPath(), 0700));
-		CPPUNIT_ASSERT(storeDir2.DirExists());
-	
-		wxFile raidConfFile;
-		CPPUNIT_ASSERT(raidConfFile.Create(raidConf.GetFullPath()));
-		
-		CPPUNIT_ASSERT(raidConfFile.Write(_("disc0\n")));
-		CPPUNIT_ASSERT(raidConfFile.Write(_("{\n")));
-		CPPUNIT_ASSERT(raidConfFile.Write(_("\tSetNumber = 0\n")));
-		CPPUNIT_ASSERT(raidConfFile.Write(_("\tBlockSize = 2048\n")));
-
-		CPPUNIT_ASSERT(raidConfFile.Write(_("\tDir0 = ")));
-		CPPUNIT_ASSERT(raidConfFile.Write(storeDir0.GetFullPath()));
-		CPPUNIT_ASSERT(raidConfFile.Write(_("\n")));
-
-		CPPUNIT_ASSERT(raidConfFile.Write(_("\tDir1 = ")));
-		CPPUNIT_ASSERT(raidConfFile.Write(storeDir1.GetFullPath()));
-		CPPUNIT_ASSERT(raidConfFile.Write(_("\n")));
-		
-		CPPUNIT_ASSERT(raidConfFile.Write(_("\tDir2 = ")));
-		CPPUNIT_ASSERT(raidConfFile.Write(storeDir2.GetFullPath()));
-		CPPUNIT_ASSERT(raidConfFile.Write(_("\n")));
-
-		CPPUNIT_ASSERT(raidConfFile.Write(_("}\n")));
-		raidConfFile.Close();
-	}
-	
-	// create accounts.txt for the store daemon
-	wxFileName accountsDb(confDir.GetFullPath(), _("accounts.txt"));
-	CPPUNIT_ASSERT(!accountsDb.FileExists());
-	
-	{
-		wxFile accountsDbFile;
-		CPPUNIT_ASSERT(accountsDbFile.Create(accountsDb.GetFullPath()));
-	}
-	
-	// create bbstored.conf for the store daemon
-	wxFileName storeConfigFileName(confDir.GetFullPath(), _("bbstored.conf"));
-	
-	{
-		wxFile storeConfigFile;
-		CPPUNIT_ASSERT(storeConfigFile.Create(storeConfigFileName.GetFullPath()));
-		
-		CPPUNIT_ASSERT(raidConf.FileExists());
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("RaidFileConf = ")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(raidConf.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
-		
-		wxFileName accountsDb(confDir.GetFullPath(), _("accounts.txt"));
-		CPPUNIT_ASSERT(accountsDb.FileExists());
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("AccountDatabase = ")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(accountsDb.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
-		
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("TimeBetweenHousekeeping = 900\n")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("Server\n")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("{\n")));
-	
-		wxFileName pidFile(confDir.GetFullPath(), _("bbstored.pid"));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tPidFile = ")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(pidFile.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
-	
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tListenAddresses = inet:0.0.0.0\n")));
-		
-		wxFileName serverCert(MakeAbsolutePath(
-			_("../test/config/bbstored/server-cert.pem")));
-		CPPUNIT_ASSERT(serverCert.FileExists());
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tCertificateFile = ")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(serverCert.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
-	
-		wxFileName serverKey(MakeAbsolutePath(
-			_("../test/config/bbstored/server-key.pem")));
-		CPPUNIT_ASSERT(serverKey.FileExists());
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tPrivateKeyFile = ")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(serverKey.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
-	
-		wxFileName clientCA(MakeAbsolutePath(
-			_("../test/config/bbstored/client-ca.pem")));
-		CPPUNIT_ASSERT(clientCA.FileExists());
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tTrustedCAsFile = ")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(clientCA.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("}\n")));
-	
-		storeConfigFile.Close();
-	}
-
-	{
-		wxString command = _("../boxbackup/release/bin/bbstoreaccounts"
-			"/bbstoreaccounts -c ");
-		command.Append(storeConfigFileName.GetFullPath());
-		command.Append(_(" create 2 0 100M 200M"));
-		
-		long result = wxExecute(command, wxEXEC_SYNC);
-		if (result != 0)
-		{
-			wxCharBuffer buf = command.mb_str(wxConvLibc);
-			printf("Failed to execute command '%s': error %d\n",
-				buf.data(), (int)result);
-			CPPUNIT_ASSERT_EQUAL(0, (int)result);
-		}
-	}
-
-	// create a directory to hold the data that we will be backing up	
-	wxFileName testDataDir(tempDir.GetFullPath(), _("testdata"));
-	CPPUNIT_ASSERT(testDataDir.Mkdir(0700));
-	
-	MainFrame* pMainFrame = GetMainFrame();
-	CPPUNIT_ASSERT(pMainFrame);
-	
-	mpConfig = pMainFrame->GetConfig();
-	CPPUNIT_ASSERT(mpConfig);
-	
-	StoreServer server(storeConfigFileName.GetFullPath());
-	server.Start();
-
-	pMainFrame->DoFileOpen(MakeAbsolutePath(
-		_("../test/config/bbackupd.conf")).GetFullPath());
-	wxString msg;
-	bool isOk = mpConfig->Check(msg);
-
-	if (!isOk)
-	{
-		wxCharBuffer buf = msg.mb_str(wxConvLibc);
-		CPPUNIT_ASSERT_MESSAGE(buf.data(), isOk);
-	}
-	
-	ServerConnection conn(mpConfig);
-	TLSContext tls;
-	
-	isOk = conn.InitTlsContext(tls, msg);
-	if (!isOk)
-	{
-		wxCharBuffer buf = msg.mb_str(wxConvLibc);
-		CPPUNIT_ASSERT_MESSAGE(buf.data(), isOk);
-	}
-	
-	BackupStoreDirectory dir;
-
-	CPPUNIT_ASSERT(conn.ListDirectory(
-		BackupProtocolClientListDirectory::RootDirectory,
-		BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING,
-		dir));
-	
-	conn.Disconnect();
-	
-	BackupStoreDirectory::Iterator i(dir);
-	BackupStoreDirectory::Entry *en;
-	bool hasEntries = false;
-	
-	while((en = i.Next()) != 0)
-	{
-		BackupStoreFilenameClear clear(en->GetName());
-		printf("Unexpected dir entry: %s\n", 
-			clear.GetClearFilename().c_str());
-		hasEntries = true;
-	}
-
-	CPPUNIT_ASSERT(!hasEntries);
-	
-	wxPanel* pBackupPanel = wxDynamicCast
-	(
-		pMainFrame->FindWindow(ID_Backup_Panel), wxPanel
-	);
-	CPPUNIT_ASSERT(pBackupPanel);
-
-	CPPUNIT_ASSERT(!pBackupPanel->IsShown());	
-	ClickButtonWaitEvent(ID_Main_Frame, ID_General_Backup_Button);
-	CPPUNIT_ASSERT(pBackupPanel->IsShown());
-	
-	// makes tests faster
-	mpConfig->MinimumFileAge.Set(0);
-	
-	Location* pTestDataLocation = NULL;
-	
+{	
 	{
 		wxFileName spaceTestZipFile(_("../test/data/spacetest1.zip"));
 		CPPUNIT_ASSERT(spaceTestZipFile.FileExists());
-		Unzip(spaceTestZipFile, testDataDir);
-
-		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
-		
-		Location testDirLoc(_("testdata"), testDataDir.GetFullPath(),
-			mpConfig);
-		mpConfig->AddLocation(testDirLoc);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
-			mpConfig->GetLocations().size());
-		pTestDataLocation = mpConfig->GetLocation(testDirLoc);
-		CPPUNIT_ASSERT(pTestDataLocation);
-
-		MyExcludeList& rExcludes = pTestDataLocation->GetExcludeList();
-
-		#define ADD_ENTRY(type, path) \
-		rExcludes.AddEntry(MyExcludeEntry(theExcludeTypes[type], path))
-		
-		ADD_ENTRY(ETI_EXCLUDE_FILE, MakeAbsolutePath(testDataDir,_("excluded_1")).GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_FILE, MakeAbsolutePath(testDataDir,_("excluded_2")).GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("\\.excludethis$"));
-		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("EXCLUDE"));
-		ADD_ENTRY(ETI_ALWAYS_INCLUDE_FILE, MakeAbsolutePath(testDataDir,_("dont.excludethis")).GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_DIR, MakeAbsolutePath(testDataDir,_("exclude_dir")).GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_DIR, MakeAbsolutePath(testDataDir,_("exclude_dir_2")).GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, _("not_this_dir"));
-		ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, _("ALWAYSINCLUDE"));
-		
-		#undef ADD_ENTRY
-
-		CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+		Unzip(spaceTestZipFile, mTestDataDir);
 	}
-
-	// helps with debugging
-	wxFileName configFile(confDir.GetFullPath(), _("bbackupd.conf"));
-	mpConfig->Save(configFile.GetFullPath());
-	CPPUNIT_ASSERT(configFile.FileExists());
-
-	wxPanel* pBackupProgressPanel = wxDynamicCast
-	(
-		pMainFrame->FindWindow(ID_Backup_Progress_Panel), wxPanel
-	);
-	CPPUNIT_ASSERT(pBackupProgressPanel);
-	CPPUNIT_ASSERT(!pBackupProgressPanel->IsShown());
-
-	wxListBox* pBackupErrorList = wxDynamicCast
-	(
-		pBackupProgressPanel->FindWindow(ID_BackupProgress_ErrorList), 
-		wxListBox
-	);
-	CPPUNIT_ASSERT(pBackupErrorList);
-	CPPUNIT_ASSERT_EQUAL(0, pBackupErrorList->GetCount());
-			
-	wxButton* pBackupStartButton = wxDynamicCast
-	(
-		pBackupPanel->FindWindow(ID_Function_Start_Button), wxButton
-	);
-	CPPUNIT_ASSERT(pBackupStartButton);
-
-	wxButton* pBackupProgressCloseButton = wxDynamicCast
-	(
-		pBackupProgressPanel->FindWindow(wxID_CANCEL), wxButton
-	);
-	CPPUNIT_ASSERT(pBackupProgressCloseButton);
 
 	// TODO: test BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION
 	
-	#define CHECK_BACKUP() \
-	ClickButtonWaitEvent(pBackupStartButton); \
-	CPPUNIT_ASSERT(pBackupProgressPanel->IsShown()); \
-	CPPUNIT_ASSERT(pMainFrame->IsTopPanel(pBackupProgressPanel)); \
-	ClickButtonWaitEvent(pBackupProgressCloseButton); \
-	CPPUNIT_ASSERT(!pBackupProgressPanel->IsShown());
-
-	#define CHECK_BACKUP_ERROR(message) \
-	MessageBoxSetResponse(message, wxOK); \
-	CHECK_BACKUP(); \
-	MessageBoxCheckFired(); \
-	CPPUNIT_ASSERT(pBackupErrorList->GetCount() > 0);
-
-	#define CHECK_BACKUP_OK(message) \
-	CHECK_BACKUP(); \
-	if (pBackupErrorList->GetCount() > 0) \
-	{ \
-		wxCharBuffer buf = pBackupErrorList->GetString(0).mb_str(wxConvLibc); \
-		CPPUNIT_ASSERT_MESSAGE(buf.data(), pBackupErrorList->GetCount() > 0); \
-	}
-
-	#define CHECK_COMPARE_OK() \
-	CompareExpectNoDifferences(rClientConfig, tlsContext, _("testdata"), \
-		testDataDir);
-
-	#define CHECK_COMPARE_FAILS(diffs, modified) \
-	CompareExpectDifferences(rClientConfig, tlsContext, _("testdata"), \
-		testDataDir, diffs, modified);
-
-	#define CHECK_COMPARE_LOC_OK(exdirs, exfiles) \
-	CompareLocationExpectNoDifferences(rClientConfig, tlsContext, \
-		"testdata", exdirs, exfiles);
-
-	#define CHECK_COMPARE_LOC_FAILS(diffs, modified, exdirs, exfiles) \
-	CompareLocationExpectDifferences(rClientConfig, tlsContext, "testdata", \
-		diffs, modified, exdirs, exfiles);
-
 	{
 		#define CHECK_PROPERTY(property, message) \
 		CHECK_BACKUP_ERROR(message); \
@@ -977,9 +670,9 @@ void TestBackup::RunTest()
 		#undef CHECK_UNSET_PROPERTY
 		#undef CHECK_PROPERTY
 
-		server.Stop();
+		mapServer->Stop();
 		CHECK_BACKUP_ERROR(BM_BACKUP_FAILED_CONNECT_FAILED);
-		server.Start();
+		mapServer->Start();
 
 		/*
 		TODO: write tests for:
@@ -988,33 +681,16 @@ void TestBackup::RunTest()
 		*/
 	}
 
-	mpConfig->Save(configFile.GetFullPath());
-	CPPUNIT_ASSERT(configFile.FileExists());
-	
 	std::auto_ptr<Configuration> apClientConfig;
 	{
 		std::string errs;
-		wxCharBuffer buf = configFile.GetFullPath().mb_str(wxConvLibc);
+		wxCharBuffer buf = mClientConfigFile.GetFullPath().mb_str();
 		apClientConfig = Configuration::LoadAndVerify(buf.data(), 
 			&BackupDaemonConfigVerify, errs);
 		CPPUNIT_ASSERT(apClientConfig.get());
 		CPPUNIT_ASSERT(errs.empty());
 	}
 	const Configuration &rClientConfig(*apClientConfig);
-
-	// Setup and connect
-	// 1. TLS context
-	SSLLib::Initialise();
-	// Read in the certificates creating a TLS context
-	TLSContext tlsContext;
-	std::string certFile(rClientConfig.GetKeyValue("CertificateFile"));
-	std::string keyFile(rClientConfig.GetKeyValue("PrivateKeyFile"));
-	std::string caFile(rClientConfig.GetKeyValue("TrustedCAsFile"));
-	tlsContext.Initialise(false /* as client */, 
-		certFile.c_str(), keyFile.c_str(), caFile.c_str());
-	
-	// Initialise keys
-	BackupClientCryptoKeys_Setup(rClientConfig.GetKeyValue("KeysFile").c_str());
 
 	// before the first backup, there should be differences
 	CHECK_COMPARE_LOC_FAILS(1, 0, 0, 0);
@@ -1023,61 +699,27 @@ void TestBackup::RunTest()
 
 	// and afterwards, there should be no differences any more
 	CHECK_COMPARE_LOC_OK(0, 0);
-
-	// check that attributes are backed up and compared correctly - later
-	/*
-	{
-		wxFileName testFileName = MakeAbsolutePath(testDataDir, 
-			_("spacetest/f1"));
-		CPPUNIT_ASSERT(testFileName.FileExists());
-		wxCharBuffer namebuf = testFileName.GetFullPath().mb_str(wxConvLibc);
-		std::string cmd = "echo foo > ";
-		cmd += namebuf.data();
-		CPPUNIT_ASSERT(system(cmd.c_str()) == 0);
-		
-		CHECK_BACKUP_OK();
-		
-		// make one of the files read-only, expect a compare failure
-		#ifdef WIN32
-		wxString cmd = _("attrib +r ");
-		cmd.Append(testFileName);
-		wxCharBuffer cmdbuf = cmd.mb_str(wxConvLibc);
-		int compareReturnValue = ::system(cmdbuf.data());
-		CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
-		#else
-		CPPUNIT_ASSERT_EQUAL(0, chmod(namebuf.data(), 0000));
-		#endif
-		
-		CHECK_COMPARE_LOC_FAILS(1, 0, 0, 0);
-		CPPUNIT_ASSERT_EQUAL(0, chmod(namebuf.data(), 0644));
-		CHECK_COMPARE_LOC_OK(0, 0);
-	}
-	*/
 	
-	// ensure that the mod time of newly created files 
-	// is later than the last backup.
-	// sleep(1);
-
 	// Set limit to something very small
 	{
 		// About 28 blocks will be used at this point (14 files in RAID)
 		CPPUNIT_ASSERT_EQUAL((int64_t)28, 
-			GetAccountInfo(server.GetConfiguration())->GetBlocksUsed());
+			GetAccountInfo(mapServer->GetConfiguration())->GetBlocksUsed());
 
 		// Backup will fail if the size used is greater than 
 		// soft limit + 1/3 of (hard - soft). 
 		// Set small values for limits accordingly.
-		SetLimit(server.GetConfiguration(), 2, "10B", "40B");
+		SetLimit(mapServer->GetConfiguration(), 2, "10B", "40B");
 
 		// Unpack some more files
 		wxFileName spaceTestZipFile(_("../test/data/spacetest2.zip"));
 		CPPUNIT_ASSERT(spaceTestZipFile.FileExists());
-		Unzip(spaceTestZipFile, testDataDir);
+		Unzip(spaceTestZipFile, mTestDataDir);
 
 		// Delete a file and a directory
-		CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(testDataDir,
+		CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(mTestDataDir,
 			_("spacetest/d1/f3")).GetFullPath()));
-		DeleteRecursive(MakeAbsolutePath(testDataDir, 
+		DeleteRecursive(MakeAbsolutePath(mTestDataDir, 
 			_("spacetest/d3/d4")));
 	}
 	
@@ -1094,18 +736,18 @@ void TestBackup::RunTest()
 	// the deleted file and directory should have been deleted on the store,
 	// but the locally changed files should not have been uploaded
 	CPPUNIT_ASSERT_EQUAL((int64_t)28, 
-			GetAccountInfo(server.GetConfiguration())->GetBlocksUsed());
+			GetAccountInfo(mapServer->GetConfiguration())->GetBlocksUsed());
 	CHECK_COMPARE_LOC_FAILS(2, 0, 0, 0);
 	
 	// set the limits back
-	SetLimit(server.GetConfiguration(), 2, "1000B", "2000B");
+	SetLimit(mapServer->GetConfiguration(), 2, "1000B", "2000B");
 	
 	// unpack some more test files
 	{
 		wxFileName baseFilesZipFile(MakeAbsolutePath(
 			_("../test/data/test_base.zip")).GetFullPath());
 		CPPUNIT_ASSERT(baseFilesZipFile.FileExists());
-		Unzip(baseFilesZipFile, testDataDir);
+		Unzip(baseFilesZipFile, mTestDataDir);
 	}
 	
 	// run a backup
@@ -1115,13 +757,13 @@ void TestBackup::RunTest()
 	CHECK_COMPARE_LOC_OK(0, 0);
 	
 	// Delete a file
-	CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(testDataDir, 
+	CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(mTestDataDir, 
 		_("x1/dsfdsfs98.fd")).GetFullPath()));
 	
 	#ifndef WIN32
 	{
 		// New symlink
-		wxCharBuffer buf = wxFileName(testDataDir.GetFullPath(),
+		wxCharBuffer buf = wxFileName(mTestDataDir.GetFullPath(),
 			_("symlink-to-dir")).GetFullPath().mb_str(wxConvLibc);
 		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
 	}
@@ -1131,7 +773,7 @@ void TestBackup::RunTest()
 	{
 		// Check that the file is over the diffing threshold in the 
 		// bbackupd.conf file
-		wxFileName bigFileName(MakeAbsolutePath(testDataDir, _("f45.df")));
+		wxFileName bigFileName(MakeAbsolutePath(mTestDataDir, _("f45.df")));
 		wxFile bigFile(bigFileName.GetFullPath(), wxFile::read_write);
 		CPPUNIT_ASSERT(bigFile.Length() > 1024);
 		
@@ -1150,15 +792,15 @@ void TestBackup::RunTest()
 	#ifndef WIN32
 	{
 		// Delete symlink
-		wxCharBuffer buf = wxFileName(testDataDir.GetFullPath(),
+		wxCharBuffer buf = wxFileName(mTestDataDir.GetFullPath(),
 			_("symlink-to-dir")).GetFullPath().mb_str(wxConvLibc);
 		CPPUNIT_ASSERT(::unlink(buf.data()) == 0);
 	}
 	#endif
 	
-	CPPUNIT_ASSERT(wxMkdir(MakeAbsolutePath(testDataDir, 
+	CPPUNIT_ASSERT(wxMkdir(MakeAbsolutePath(mTestDataDir, 
 		_("symlink-to-dir")).GetFullPath(), 0755));
-	wxFileName dirTestDirName(MakeAbsolutePath(testDataDir, 
+	wxFileName dirTestDirName(MakeAbsolutePath(mTestDataDir, 
 		_("x1/dir-to-file")));
 	CPPUNIT_ASSERT(wxMkdir(dirTestDirName.GetFullPath(), 0755));
 	// NOTE: create a file within the directory to avoid deletion by the 
@@ -1245,13 +887,13 @@ void TestBackup::RunTest()
 
 	// case which went wrong: rename a tracked file over a deleted file
 	#ifdef WIN32
-	CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(testDataDir, 
+	CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(mTestDataDir, 
 		_("x1/dsfdsfs98.fd"))));
 	#endif
 	
 	CPPUNIT_ASSERT(wxRenameFile(
-		MakeAbsolutePath(testDataDir, _("df9834.dsf")).GetFullPath(),
-		MakeAbsolutePath(testDataDir, _("x1/dsfdsfs98.fd")).GetFullPath()));
+		MakeAbsolutePath(mTestDataDir, _("df9834.dsf")).GetFullPath(),
+		MakeAbsolutePath(mTestDataDir, _("x1/dsfdsfs98.fd")).GetFullPath()));
 
 	// Run another backup and check that it works
 	CHECK_BACKUP_OK();
@@ -1259,14 +901,14 @@ void TestBackup::RunTest()
 
 	// Move that file back
 	CPPUNIT_ASSERT(wxRenameFile(
-		MakeAbsolutePath(testDataDir, _("x1/dsfdsfs98.fd")).GetFullPath(),
-		MakeAbsolutePath(testDataDir, _("df9834.dsf")).GetFullPath()));
+		MakeAbsolutePath(mTestDataDir, _("x1/dsfdsfs98.fd")).GetFullPath(),
+		MakeAbsolutePath(mTestDataDir, _("df9834.dsf")).GetFullPath()));
 
 	// Add some more files. Because we restore the original
 	// time stamps, these files will look very old to the daemon.
 	// Lucky it'll upload them then!
 	wxFileName test2ZipFile(MakeAbsolutePath(_("../test/data/test2.zip")));
-	Unzip(test2ZipFile, testDataDir, true);
+	Unzip(test2ZipFile, mTestDataDir, true);
 
 	// Run another backup and check that it works
 	CHECK_BACKUP_OK();
@@ -1274,7 +916,7 @@ void TestBackup::RunTest()
 
 	// Then modify an existing file
 	{
-		wxFileName fileToUpdate(MakeAbsolutePath(testDataDir,
+		wxFileName fileToUpdate(MakeAbsolutePath(mTestDataDir,
 			_("sub23/rand.h")));
 		wxFile f(fileToUpdate.GetFullPath(), wxFile::read_write);
 		CPPUNIT_ASSERT(f.IsOpened());
@@ -1297,7 +939,7 @@ void TestBackup::RunTest()
 	{
 		// Add some files and directories which are marked as excluded
 		wxFileName zipExcludeTest(MakeAbsolutePath(_("../test/data/testexclude.zip")));
-		Unzip(zipExcludeTest, testDataDir, true);
+		Unzip(zipExcludeTest, mTestDataDir, true);
 	}
 	
 	// backup should still work
@@ -1313,7 +955,7 @@ void TestBackup::RunTest()
 	// into the store, and the included files did
 	{
 		SocketStreamTLS socket;
-		socket.Open(tlsContext, Socket::TypeINET, 
+		socket.Open(mTlsContext, Socket::TypeINET, 
 			rClientConfig.GetKeyValue("StoreHostname").c_str(), 
 			BOX_PORT_BBSTORED);
 		BackupProtocolClient connection(socket);
@@ -1374,11 +1016,11 @@ void TestBackup::RunTest()
 	{
 		// Check that read errors are reported neatly
 		// Dir and file which can't be read
-		wxFileName unreadableDir = MakeAbsolutePath(testDataDir, 
+		wxFileName unreadableDir = MakeAbsolutePath(mTestDataDir, 
 			_("sub23/read-fail-test-dir"));
 		CPPUNIT_ASSERT(wxMkdir(unreadableDir.GetFullPath(), 0000));
 		
-		wxFileName unreadableFile = MakeAbsolutePath(testDataDir,
+		wxFileName unreadableFile = MakeAbsolutePath(mTestDataDir,
 			_("read-fail-test-file"));
 		wxFile f;
 		CPPUNIT_ASSERT(f.Create(unreadableFile.GetFullPath(), false, 
@@ -1388,19 +1030,19 @@ void TestBackup::RunTest()
 		CHECK_COMPARE_LOC_FAILS(2, 0, 3, 4);
 
 		// Check that it was reported correctly
-		CPPUNIT_ASSERT_EQUAL(3, pBackupErrorList->GetCount());
+		CPPUNIT_ASSERT_EQUAL(3, mpBackupErrorList->GetCount());
 		wxString msg;
 		
 		msg.Printf(_("Failed to send file '%s': Access denied"), 
 			unreadableFile.GetFullPath().c_str());
-		CPPUNIT_ASSERT_EQUAL(msg, pBackupErrorList->GetString(0));
+		CPPUNIT_ASSERT_EQUAL(msg, mpBackupErrorList->GetString(0));
 		
 		msg.Printf(_("Failed to list directory '%s': Access denied"), 
 			unreadableDir.GetFullPath().c_str());
-		CPPUNIT_ASSERT_EQUAL(msg, pBackupErrorList->GetString(1));
+		CPPUNIT_ASSERT_EQUAL(msg, mpBackupErrorList->GetString(1));
 		
 		CPPUNIT_ASSERT_EQUAL(wxString(_("Backup Finished")), 
-			pBackupErrorList->GetString(2));
+			mpBackupErrorList->GetString(2));
 		
 		CPPUNIT_ASSERT(wxRmdir(unreadableDir.GetFullPath()));
 		CPPUNIT_ASSERT(wxRemoveFile(unreadableFile.GetFullPath()));
@@ -1413,7 +1055,7 @@ void TestBackup::RunTest()
 		mpConfig->MinimumFileAge.Set(5);
 		
 		wxFile f;
-		CPPUNIT_ASSERT(f.Create(MakeAbsolutePath(testDataDir, 
+		CPPUNIT_ASSERT(f.Create(MakeAbsolutePath(mTestDataDir, 
 			_("continuous-update")).GetFullPath()));
 		
 		// too new
@@ -1428,11 +1070,11 @@ void TestBackup::RunTest()
 	}
 
 	// Delete a directory
-	DeleteRecursive(MakeAbsolutePath(testDataDir, _("x1")));
+	DeleteRecursive(MakeAbsolutePath(mTestDataDir, _("x1")));
 	
 	// Change attributes on an original file.
 	{
-		wxCharBuffer buf = MakeAbsolutePath(testDataDir, _("df9834.dsf"))
+		wxCharBuffer buf = MakeAbsolutePath(mTestDataDir, _("df9834.dsf"))
 			.GetFullPath().mb_str(wxConvLibc);
 		CPPUNIT_ASSERT(::chmod(buf.data(), 0423) == 0);
 	}
@@ -1442,7 +1084,7 @@ void TestBackup::RunTest()
 
 	// check that attributes are backed up and compared correctly
 	{
-		wxFileName testFileName = MakeAbsolutePath(testDataDir, 
+		wxFileName testFileName = MakeAbsolutePath(mTestDataDir, 
 			_("f1.dat"));
 		wxCharBuffer buf = testFileName.GetFullPath().mb_str(wxConvLibc);
 
@@ -1526,7 +1168,7 @@ void TestBackup::RunTest()
 		// Don't use the timestamp flag this time, so they have 
 		// a recent modification time.
 		wxFileName zipTest3(MakeAbsolutePath(_("../test/data/test3.zip")));
-		Unzip(zipTest3, testDataDir, false);
+		Unzip(zipTest3, mTestDataDir, false);
 	}
 
 	CHECK_BACKUP_OK();
@@ -1534,9 +1176,9 @@ void TestBackup::RunTest()
 
 	{
 		// Rename directory
-		wxFileName from = MakeAbsolutePath(testDataDir,
+		wxFileName from = MakeAbsolutePath(mTestDataDir,
 			_("sub23/dhsfdss"));
-		wxFileName to = MakeAbsolutePath(testDataDir,
+		wxFileName to = MakeAbsolutePath(mTestDataDir,
 			_("renamed-dir"));
 		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
 			to.GetFullPath()));
@@ -1546,24 +1188,24 @@ void TestBackup::RunTest()
 		
 		// Rename some files -- one under the threshold, others above
 		/*
-		from = MakeAbsolutePath(testDataDir,
+		from = MakeAbsolutePath(mTestDataDir,
 			_("continousupdate"));
-		to = MakeAbsolutePath(testDataDir,
+		to = MakeAbsolutePath(mTestDataDir,
 			_("continousupdate-ren"));
 		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
 			to.GetFullPath()));
 		*/
 
-		from = MakeAbsolutePath(testDataDir,
+		from = MakeAbsolutePath(mTestDataDir,
 			_("df324"));
-		to = MakeAbsolutePath(testDataDir,
+		to = MakeAbsolutePath(mTestDataDir,
 			_("df324-ren"));
 		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
 			to.GetFullPath()));
 
-		from = MakeAbsolutePath(testDataDir,
+		from = MakeAbsolutePath(mTestDataDir,
 			_("sub23/find2perl"));
-		to = MakeAbsolutePath(testDataDir,
+		to = MakeAbsolutePath(mTestDataDir,
 			_("find2perl-ren"));
 		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
 			to.GetFullPath()));
@@ -1576,7 +1218,7 @@ void TestBackup::RunTest()
 
 		{
 			// Create a new file
-			wxFileName fn = MakeAbsolutePath(testDataDir, 
+			wxFileName fn = MakeAbsolutePath(mTestDataDir, 
 				_("sub23/in-the-future"));
 			wxFile f;
 			CPPUNIT_ASSERT(f.Create(fn.GetFullPath()));
@@ -1601,39 +1243,36 @@ void TestBackup::RunTest()
 	{
 		BackupStoreDirectory dir;
 
-		CPPUNIT_ASSERT(conn.ListDirectory(
+		CPPUNIT_ASSERT(mapConn->ListDirectory(
 			BackupProtocolClientListDirectory::RootDirectory,
 			BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING,
 			dir));
 		int64_t testId = SearchDir(dir, "testdata");
 		CPPUNIT_ASSERT(testId);
 
-		wxFileName restoreDir(tempDir.GetFullPath(), _("restore"));
-		CPPUNIT_ASSERT(!restoreDir.DirExists());
-		// CPPUNIT_ASSERT(wxMkdir(restoreDir.GetFullPath()));
+		wxFileName remStoreDir(mBaseDir.GetFullPath(), _("restore"));
+		CPPUNIT_ASSERT(!remStoreDir.DirExists());
+		// CPPUNIT_ASSERT(wxMkdir(remStoreDir.GetFullPath()));
 		
-		wxCharBuffer buf = restoreDir.GetFullPath().mb_str(wxConvLibc);
-		CPPUNIT_ASSERT_EQUAL((int)Restore_Complete, conn.Restore(
+		wxCharBuffer buf = remStoreDir.GetFullPath().mb_str(wxConvLibc);
+		CPPUNIT_ASSERT_EQUAL((int)Restore_Complete, mapConn->Restore(
 			testId, buf.data(), NULL, NULL, false, false, false));
 
-		conn.Disconnect();
+		mapConn->Disconnect();
 		
-		CompareExpectNoDifferences(rClientConfig, tlsContext, 
-			_("testdata"), restoreDir);
+		CompareExpectNoDifferences(rClientConfig, mTlsContext, 
+			_("testdata"), remStoreDir);
 			
-		DeleteRecursive(restoreDir);
+		DeleteRecursive(remStoreDir);
 	}
 	
 	// clean up
-	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
-	mpConfig->RemoveLocation(*pTestDataLocation);
-	CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
-	DeleteRecursive(testDataDir);
-	CPPUNIT_ASSERT(wxRemoveFile(storeConfigFileName.GetFullPath()));
-	CPPUNIT_ASSERT(wxRemoveFile(accountsDb.GetFullPath()));
-	CPPUNIT_ASSERT(wxRemoveFile(raidConf.GetFullPath()));
-	CPPUNIT_ASSERT(wxRemoveFile(configFile.GetFullPath()));		
-	CPPUNIT_ASSERT(confDir.Rmdir());
-	DeleteRecursive(storeDir);
-	CPPUNIT_ASSERT(tempDir.Rmdir());
+	DeleteRecursive(mTestDataDir);
+	CPPUNIT_ASSERT(wxRemoveFile(mStoreConfigFileName.GetFullPath()));
+	CPPUNIT_ASSERT(wxRemoveFile(mAccountsFile.GetFullPath()));
+	CPPUNIT_ASSERT(wxRemoveFile(mRaidConfigFile.GetFullPath()));
+	CPPUNIT_ASSERT(wxRemoveFile(mClientConfigFile.GetFullPath()));		
+	CPPUNIT_ASSERT(mConfDir.Rmdir());
+	DeleteRecursive(mStoreDir);
+	CPPUNIT_ASSERT(mBaseDir.Rmdir());
 }
