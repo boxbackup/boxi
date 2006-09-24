@@ -2,8 +2,8 @@
  *            ClientInfoPanel.h
  *
  *  Tue Mar  1 00:16:48 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -33,15 +33,22 @@
 
 class ClientInfoPanel : public wxPanel, public ConfigChangeListener {
 	public:
-	ClientInfoPanel(ClientConfig *config,
+	ClientInfoPanel
+	(
+		ClientConfig *config,
 		wxWindow* parent, 
 		wxWindowID id = -1,
 		const wxPoint& pos = wxDefaultPosition, 
 		const wxSize& size = wxDefaultSize,
 		long style = wxTAB_TRAVERSAL, 
-		const wxString& name = wxT("ClientInfoPanel"));
+		const wxString& name = wxT("ClientInfoPanel")
+	);
 	~ClientInfoPanel() { }
 	void Reload();
+	void AddToNotebook(wxNotebook* pNotebook)
+	{
+		pNotebook->AddPage(this, wxT("Configuration"));
+	}
 	
 	private:
 	ClientConfig*  mpConfig;
