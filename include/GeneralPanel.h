@@ -30,6 +30,7 @@
 class BackupPanel;
 class ClientConfig;
 class ClientInfoPanel;
+class ComparePanel;
 class MainFrame;
 class RestorePanel;
 class ServerConnection;
@@ -46,8 +47,6 @@ class GeneralPanel : public wxPanel
 	GeneralPanel
 	(
 		MainFrame* pMainFrame,
-		BackupPanel* pBackupPanel,
-		ClientInfoPanel* pConfigPanel,
 		ClientConfig* pConfig,
 		ServerConnection* pServerConnection,
 		wxWindow* pParent
@@ -56,15 +55,17 @@ class GeneralPanel : public wxPanel
 	void AddToNotebook(wxNotebook* pNotebook);
 		
 	private:
-	MainFrame*    mpMainFrame;
-	BackupPanel*  mpBackupPanel;
-	RestorePanel* mpRestorePanel;
+	MainFrame*       mpMainFrame;
+	BackupPanel*     mpBackupPanel;
+	RestorePanel*    mpRestorePanel;
+	ComparePanel*    mpComparePanel;
 	ClientInfoPanel* mpConfigPanel;
-	ClientConfig* mpConfig;
-	SetupWizard*  mpWizard;
+	ClientConfig*    mpConfig;
+	SetupWizard*     mpWizard;
 	
 	void OnBackupButtonClick(wxCommandEvent& event);
 	void OnRestoreButtonClick(wxCommandEvent& event);
+	void OnCompareButtonClick(wxCommandEvent& event);
 	void OnSetupWizardButtonClick(wxCommandEvent& event);
 	void OnSetupAdvancedButtonClick(wxCommandEvent& event);
 	void OnIdle(wxIdleEvent& event);

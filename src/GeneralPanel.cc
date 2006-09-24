@@ -3,7 +3,7 @@
  *
  *  Mon Apr  4 20:36:25 2005
  *  Copyright 2005-2006 Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -29,6 +29,7 @@
 
 #include "BackupPanel.h"
 #include "ClientInfoPanel.h"
+#include "ComparePanel.h"
 #include "GeneralPanel.h"
 #include "MainFrame.h"
 #include "RestorePanel.h"
@@ -47,8 +48,6 @@ END_EVENT_TABLE()
 GeneralPanel::GeneralPanel
 (
 	MainFrame* pMainFrame,
-	BackupPanel* pBackupPanel,
-	ClientInfoPanel* pConfigPanel,
 	ClientConfig* pConfig,
 	ServerConnection* pServerConnection,
 	wxWindow* pParent
@@ -56,8 +55,6 @@ GeneralPanel::GeneralPanel
 :	wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 
 		wxTAB_TRAVERSAL, wxT("General Panel")),
 	mpMainFrame(pMainFrame),
-	mpBackupPanel(pBackupPanel),
-	mpConfigPanel(pConfigPanel),
 	mpConfig(pConfig)
 {
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
@@ -65,6 +62,14 @@ GeneralPanel::GeneralPanel
 
 	/* setup */
 	
+	mpConfigPanel = new ClientInfoPanel
+	(
+		mpConfig,
+		pParent, 
+		ID_Client_Panel
+	);
+	mpConfigPanel->Hide();
+
 	wxStaticBoxSizer* pSetupBox = new wxStaticBoxSizer(wxHORIZONTAL,
 		this, wxT("Setup"));
 	pMainSizer->Add(pSetupBox, 0, wxGROW | wxALL, 8);
@@ -85,6 +90,16 @@ GeneralPanel::GeneralPanel
 
 	/* backup */
 	
+	mpBackupPanel = new BackupPanel
+	(
+		mpConfig,
+		mpConfigPanel,
+		mpMainFrame,
+		pParent
+	);
+	mpConfig->AddListener(mpBackupPanel);
+	mpBackupPanel->Hide();
+
 	wxStaticBoxSizer* pBackupBox = new wxStaticBoxSizer(wxHORIZONTAL,
 		this, wxT("Backup"));
 	pMainSizer->Add(pBackupBox, 0, wxGROW | wxALL, 8);
@@ -100,12 +115,14 @@ GeneralPanel::GeneralPanel
 
 	/* restore */
 	
-	mpRestorePanel = new RestorePanel(
+	mpRestorePanel = new RestorePanel
+	(
 		mpConfig,
 		mpConfigPanel,
 		pMainFrame,
 		pServerConnection,
-		pParent);
+		pParent
+	);
 	mpRestorePanel->Hide();
 
 	wxStaticBoxSizer* pRestoreBox = new wxStaticBoxSizer(wxHORIZONTAL,
@@ -122,7 +139,17 @@ GeneralPanel::GeneralPanel
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
 
 	/* compare */
-	
+
+	mpComparePanel = new ComparePanel
+	(
+		mpConfig,
+		mpConfigPanel,
+		pMainFrame,
+		pServerConnection,
+		pParent
+	);
+	mpComparePanel->Hide();
+
 	wxStaticBoxSizer* pCompareBox = new wxStaticBoxSizer(wxHORIZONTAL,
 		this, wxT("Compare"));
 	pMainSizer->Add(pCompareBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
@@ -142,9 +169,10 @@ GeneralPanel::GeneralPanel
 void GeneralPanel::AddToNotebook(wxNotebook* pNotebook)
 {
 	pNotebook->AddPage(this,           wxT("General"));
-	pNotebook->AddPage(mpConfigPanel,  wxT("Configuration"));
+	mpConfigPanel ->AddToNotebook(pNotebook);
 	mpBackupPanel ->AddToNotebook(pNotebook);
 	mpRestorePanel->AddToNotebook(pNotebook);
+	mpComparePanel->AddToNotebook(pNotebook);
 }
 
 void GeneralPanel::OnBackupButtonClick(wxCommandEvent& event)
