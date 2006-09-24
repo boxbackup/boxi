@@ -76,7 +76,7 @@ class ClientConfig :
 	bool Save(const wxString& rConfigFileName);
 	void Reset();
 
-	const std::vector<Location>& GetLocations() { return mLocations; }
+	const Location::List& GetLocations() { return mLocations; }
 	void AddLocation    (const Location& rNewLocation);
 	void ReplaceLocation(int index, const Location& rNewLocation);
 	void RemoveLocation (int index);
@@ -106,11 +106,11 @@ class ClientConfig :
 	private:
 	wxString mConfigFileName;
 	std::auto_ptr<Configuration> mapConfig;
-	std::vector<Location> mLocations;
+	Location::List mLocations;
 	std::vector<ConfigChangeListener*> mListeners;
 	
-	static std::vector<Location> GetConfigurationLocations(
-		const Configuration& conf);
+	static Location::List GetConfigurationLocations
+		(const Configuration& conf);
 
 	/*
 	wxString ConvertCygwinPathToWindows(const char *cygPath);

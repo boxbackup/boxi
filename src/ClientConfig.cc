@@ -89,24 +89,26 @@ ClientConfig::ClientConfig(const wxString& rConfigFileName)
 #undef INIT_PROP_EMPTY
 #undef INIT_PROP
 
-std::vector<Location> ClientConfig::GetConfigurationLocations(
+Location::List ClientConfig::GetConfigurationLocations(
 	const Configuration& conf)
 {
 	const Configuration& rLocations = 
 		conf.GetSubConfiguration("BackupLocations");
-	std::vector<Location> locs;
+	Location::List locs;
 
-	for(std::list<std::pair<std::string, Configuration> >::const_iterator i = 
-		rLocations.mSubConfigurations.begin();
+	for (std::list<std::pair<std::string, Configuration> >::const_iterator 
+		i  = rLocations.mSubConfigurations.begin();
 		i != rLocations.mSubConfigurations.end(); 
 		i++)
 	{
 		std::string name = i->first;
 		std::string path = i->second.GetKeyValue("Path");
 		
-		Location loc(
+		Location loc
+		(
 			wxString(name.c_str(), wxConvLibc), 
-			wxString(path.c_str(), wxConvLibc), NULL);
+			wxString(path.c_str(), wxConvLibc), NULL
+		);
 
 		MyExcludeList ex(i->second, NULL);
 		loc.SetExcludeList(ex);
@@ -182,7 +184,7 @@ void ClientConfig::Load(const wxString& rConfigFileName)
 
 	mLocations = GetConfigurationLocations(*mapConfig);
 	
-	for (std::vector<Location>::iterator i = mLocations.begin();
+	for (Location::Iterator i = mLocations.begin();
 		i != mLocations.end(); i++)
 	{
 		i->SetListener(this);
@@ -198,18 +200,37 @@ void ClientConfig::AddLocation(const Location& rNewLoc)
 	NotifyListeners();
 }
 
-void ClientConfig::ReplaceLocation(int index, const Location& rNewLoc) 
+void ClientConfig::ReplaceLocation(int target, const Location& rNewLoc) 
 {
-	mLocations[index] = rNewLoc;
-	NotifyListeners();
+	Location::Iterator current;
+	int i;
+
+	for 
+	(
+		current  = mLocations.begin(), i = 0;
+		current != mLocations.end() && i < target; 
+		current++, i++
+	) { }
+
+	if (i == target)
+	{
+		*current = rNewLoc;
+		NotifyListeners();
+	}
 }
 
-void ClientConfig::RemoveLocation(int target) {
-	std::vector<Location>::iterator current = mLocations.begin();
+void ClientConfig::RemoveLocation(int target) 
+{
+	Location::Iterator current;
 	int i;
-	for (i = 0; i < target; i++) {
-		current++;
-	}
+
+	for 
+	(
+		current  = mLocations.begin(), i = 0;
+		current != mLocations.end() && i < target; 
+		current++, i++
+	) { }
+
 	if (i == target)
 	{
 		mLocations.erase(current);
@@ -217,24 +238,26 @@ void ClientConfig::RemoveLocation(int target) {
 	}
 }
 
-void ClientConfig::RemoveLocation(const Location& rOldLocation) {
-	std::vector<Location>::iterator current;
+void ClientConfig::RemoveLocation(const Location& rOldLocation) 
+{
+	Location::Iterator current;
 	
 	for (current = mLocations.begin(); 
-		current != mLocations.end() && !current->IsSameAs(rOldLocation); 
+		current != mLocations.end();
 		current++)
-		{ }
-	
-	if (current->IsSameAs(rOldLocation))
-	{
-		mLocations.erase(current);
-		NotifyListeners();
+	{ 
+		if (current->IsSameAs(rOldLocation))
+		{
+			mLocations.erase(current);
+			NotifyListeners();
+			return;
+		}
 	}
 }
 
 Location* ClientConfig::GetLocation(const Location& rConstLocation)
 {
-	for (std::vector<Location>::iterator pLoc = mLocations.begin();
+	for (Location::Iterator pLoc = mLocations.begin();
 		pLoc != mLocations.end(); pLoc++)
 	{
 		if (pLoc->IsSameAs(rConstLocation))
@@ -242,12 +265,13 @@ Location* ClientConfig::GetLocation(const Location& rConstLocation)
 			return &(*pLoc);
 		}
 	}
+
 	return NULL;
 }
 
 Location* ClientConfig::GetLocation(const wxString& rName)
 {
-	for (std::vector<Location>::iterator pLoc = mLocations.begin();
+	for (Location::Iterator pLoc = mLocations.begin();
 		pLoc != mLocations.end(); pLoc++)
 	{
 		if (pLoc->GetName().IsSameAs(rName))
@@ -255,6 +279,7 @@ Location* ClientConfig::GetLocation(const wxString& rName)
 			return &(*pLoc);
 		}
 	}
+
 	return NULL;
 }
 
@@ -436,10 +461,10 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 		file.Write(buffer);
 	}
 	
-	const std::vector<Location>& rLocations = GetLocations();
+	const Location::List& rLocations = GetLocations();
 	file.Write(wxT("BackupLocations\n{\n"));
 	
-	for (std::vector<Location>::const_iterator pLocation = rLocations.begin();
+	for (Location::ConstIterator pLocation = rLocations.begin();
 		pLocation != rLocations.end(); pLocation++) 
 	{
 		buffer.Printf(wxT("\t%s\n\t{\n\t\tPath = %s\n"),
@@ -447,11 +472,12 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 			pLocation->GetPath().c_str());
 		file.Write(buffer);
 		
-		const std::vector<MyExcludeEntry>& rEntries = 
+		const MyExcludeEntry::List& rEntries = 
 			pLocation->GetExcludeList().GetEntries();
 		
-		for (std::vector<MyExcludeEntry>::const_iterator pEntry = rEntries.begin();
-			pEntry != rEntries.end(); pEntry++) {
+		for (MyExcludeEntry::ConstIterator pEntry = rEntries.begin();
+			pEntry != rEntries.end(); pEntry++) 
+		{
 			buffer.Printf(wxT("\t\t%s\n"), 
 				wxString(pEntry->ToString().c_str(), wxConvLibc).c_str());
 			file.Write(buffer);
@@ -517,26 +543,30 @@ bool ClientConfig::IsClean()
 	#undef STR_PROP_SUBCONF
 	#undef PROP
 
-	std::vector<Location> oldLocs;
+	Location::List oldLocs;
 	
 	if (mapConfig.get())
 	{
 		oldLocs = GetConfigurationLocations(*mapConfig);
 	}
 	
-	if (oldLocs.size() != mLocations.size())
+	Location::Iterator pOld, pNew;
+	for 
+	(
+		pOld  = oldLocs.begin(), pNew  = mLocations.begin();
+		pOld != oldLocs.end() && pNew != mLocations.end();
+		pOld++, pNew++
+	)
 	{
-		return false;
-	}
-	
-	for (size_t i = 0; i < mLocations.size(); i++) 
-	{
-		Location pOld = oldLocs[i];
-		Location pNew = mLocations[i];
-		if (!pNew.IsSameAs(pOld))
+		if (!pNew->IsSameAs(*pOld))
 		{
 			return false;
 		}
+	}
+
+	if (pOld != oldLocs.end() || pNew != mLocations.end())
+	{
+		return false;
 	}
 	
 	return true;
