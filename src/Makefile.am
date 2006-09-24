@@ -10,7 +10,6 @@ INCLUDES = \
 
 AM_CXXFLAGS =\
 	 -DBOXI\
-	-DPLATFORM_$(shell uname -s | tr a-z A-Z) \
 	 -Wall\
 	 -g
 
@@ -74,5 +73,5 @@ boxi_LDFLAGS =
 
 boxi_LDADD =  \
 	$(WX_LIBS)\
-	 ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbackupd/CommandSocketManager.o ../boxbackup/release/bin/bbstored/BBStoreDHousekeeping.o ../boxbackup/release/bin/bbstored/HousekeepStoreAccount.o ../boxbackup/release/bin/bbstored/BackupContext.o ../boxbackup/release/bin/bbstored/BackupCommands.o ../boxbackup/release/bin/bbstored/autogen_BackupProtocolServer.o ../boxbackup/release/bin/bbstored/BackupStoreDaemon.o ../boxbackup/release/bin/bbackupquery/BackupQueries.o ../boxbackup/release/bin/bbackupquery/autogen_Documentation.o ../boxbackup/release/lib/backupstore/backupstore.a ../boxbackup/release/lib/raidfile/raidfile.a ../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a -lz
+	 ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbstored/BBStoreDHousekeeping.o ../boxbackup/release/bin/bbstored/HousekeepStoreAccount.o ../boxbackup/release/bin/bbstored/BackupContext.o ../boxbackup/release/bin/bbstored/BackupCommands.o ../boxbackup/release/bin/bbstored/autogen_BackupProtocolServer.o ../boxbackup/release/bin/bbstored/BackupStoreDaemon.o ../boxbackup/release/bin/bbackupquery/BackupQueries.o ../boxbackup/release/bin/bbackupquery/autogen_Documentation.o ../boxbackup/release/lib/backupstore/backupstore.a ../boxbackup/release/lib/raidfile/raidfile.a ../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/win32/win32.a -lz
 
