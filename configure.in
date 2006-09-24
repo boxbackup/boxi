@@ -1,9 +1,11 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl Created by Anjuta - will be overwritten
-dnl If you don't want it to overwrite it,
-dnl 	Please disable it in the Anjuta project configuration
 
 AC_INIT(configure.in)
+
+touch install-sh
+AC_CANONICAL_SYSTEM
+test -s install-sh || rm install-sh
+
 AM_INIT_AUTOMAKE(boxi, 0.1.0)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
@@ -17,16 +19,16 @@ AC_CHECK_HEADERS([execinfo.h netinet/in.h regex.h sys/types.h sys/xattr.h])
 AC_PROG_CPP
 AC_PROG_CXX
 
-GETTEXT_PACKAGE=boxi
-AC_SUBST(GETTEXT_PACKAGE)
-AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Package name for gettext])
+dnl GETTEXT_PACKAGE=boxi
+dnl AC_SUBST(GETTEXT_PACKAGE)
+dnl AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Package name for gettext])
 
 dnl Languages which your application supports
-ALL_LINGUAS=""
-AM_GLIB_GNU_GETTEXT
+dnl ALL_LINGUAS=""
+dnl AM_GLIB_GNU_GETTEXT
 
 AM_PROG_LIBTOOL
-AM_GNU_GETTEXT
+dnl AM_GNU_GETTEXT
 
 AM_OPTIONS_WXCONFIG
 AM_PATH_WXCONFIG(2.3.2, wxWin=1)
@@ -85,14 +87,24 @@ AM_PATH_CPPUNIT(1.10.0,,[AC_MSG_ERROR([[CppUnit 1.10 or higher is required]])])
 CXXFLAGS="$CXXFLAGS $CPPUNIT_CFLAGS"
 LIBS="$LIBS $CPPUNIT_LIBS"
 
-# Box Backup dependencies
-AC_CHECK_DECLS([INFTIM],,, [[#include <poll.h>]])
+# Check for regular expression libraries
+AC_CHECK_HEADER([regex.h], [have_regex_h=yes])
+
+if test "$have_regex_h" = "yes"; then
+  AC_DEFINE([HAVE_REGEX_H], [1], [Define to 1 if regex.h is available])
+  AC_SEARCH_LIBS([regcomp], ["pcreposix -lpcre"], [], [AC_MSG_ERROR(Boxi requires regular expressions)])
+fi
 
 # extract boxbackup in release build
 if ! (
 	cd boxbackup || exit 1
 	./bootstrap || exit 1 # PATCH IN RELEASE
-	./configure $ax_check_ssl_headers $ax_check_ssl_lib || exit 1
+	echo "Configuring Box Backup with" \
+		$ax_check_ssl_headers $ax_check_ssl_lib \
+		--target=${target_cpu}-${target_vendor}-${target_os}
+	./configure $ax_check_ssl_headers $ax_check_ssl_lib \
+		--target=${target_cpu}-${target_vendor}-${target_os} \
+		|| exit 1
 	mv Makefile Makefile.in || exit 1
 ); then
 	echo "Failed to configure Box Backup, aborting!"
