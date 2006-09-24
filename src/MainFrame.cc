@@ -3,7 +3,7 @@
  *
  *  Sun Jan 22 22:36:58 2006
  *  Copyright 2006 Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -69,29 +69,8 @@ MainFrame::MainFrame
 	
 	mpTopNotebook = new wxNotebook(this, ID_Top_Notebook);
 
-	mpClientConfigPanel = new ClientInfoPanel(
-		mpConfig,
-		mpTopNotebook, 
-		ID_Client_Panel);
-	mpClientConfigPanel->Hide();
-	
-	BackupProgressPanel *pBackupProgressPanel = new BackupProgressPanel(
-		mpConfig, mpServerConnection, 
-		mpTopNotebook, ID_Backup_Progress_Panel);
-	pBackupProgressPanel->Hide();
-	
-	BackupPanel *pBackupPanel = new BackupPanel(
-		mpConfig,
-		mpClientConfigPanel,
-		this,
-		mpTopNotebook,
-		pBackupProgressPanel);
-	mpConfig->AddListener(pBackupPanel);
-	pBackupPanel->Hide();
-	
 	GeneralPanel* pGeneralPanel = new GeneralPanel(this, 
-		pBackupPanel, mpClientConfigPanel, mpConfig, mpServerConnection, 
-		mpTopNotebook);
+		mpConfig, mpServerConnection, mpTopNotebook);
 		
 	pGeneralPanel->AddToNotebook(mpTopNotebook);
 	
@@ -102,25 +81,6 @@ MainFrame::MainFrame
 		mpTopNotebook,
 		-1);
 	mpTopNotebook->AddPage(pBackupDaemonPanel, wxT("Backup Process"));
-	*/
-
-	/*
-	theBackupFilesPanel = new BackupFilesPanel(
-		mpConfig,
-		mpServerConnection,
-		theTopNotebook, 
-		ID_Backup_Files_Panel);
-	theTopNotebook->AddPage(theBackupFilesPanel, wxT("Local Files"));
-	*/
-	
-	/*
-	mpRestorePanel = new RestorePanel(
-		mpConfig,
-		mpServerConnection, 
-		mpTopNotebook, 
-		mpStatusBar, 
-		ID_Restore_Files_Panel);
-	mpTopNotebook->AddPage(mpRestorePanel, wxT("Restore"));
 	*/
 	
 	wxMenu *menuFile = new wxMenu;

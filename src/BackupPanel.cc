@@ -41,13 +41,16 @@ BackupPanel::BackupPanel
 	ClientConfig*    pConfig,
 	ClientInfoPanel* pClientConfigPanel,
 	MainFrame*       pMainFrame,
-	wxWindow*        pParent,
-	BackupProgressPanel* pProgressPanel
+	wxWindow*        pParent
 )
 :	FunctionPanel(wxT("Backup Panel"), pConfig, pClientConfigPanel, 
-		pMainFrame, pParent, ID_Backup_Panel),
-	mpProgressPanel(pProgressPanel)
+		pMainFrame, pParent, ID_Backup_Panel)
 {
+	mpProgressPanel = new BackupProgressPanel(pConfig, 
+		mpMainFrame->GetConnection(), 
+		pParent, ID_Backup_Progress_Panel);
+	mpProgressPanel->Hide();
+	
 	mpLocationsPanel = new BackupLocationsPanel(pConfig, pParent, 
 		mpMainFrame, this, ID_Backup_Files_Panel);
 	mpLocationsPanel->Hide();

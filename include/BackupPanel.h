@@ -35,6 +35,9 @@
 
 class BackupLocationsPanel;
 class BackupProgressPanel;
+	
+class wxNotebook;
+class wxStaticText;
 
 /** 
  * BackupPanel
@@ -49,8 +52,7 @@ class BackupPanel : public FunctionPanel
 		ClientConfig*    pConfig,
 		ClientInfoPanel* pClientConfigPanel,
 		MainFrame*       pMainFrame,
-		wxWindow*        pParent,
-		BackupProgressPanel* pProgressPanel
+		wxWindow*        pParent
 	);
 	
 	void AddToNotebook(wxNotebook* pNotebook);
