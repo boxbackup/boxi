@@ -206,7 +206,7 @@ typedef struct
 //		Created: 23/11/03
 //
 // --------------------------------------------------------------------------
-static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t DirectoryID, std::string &rLocalDirectoryName,
+static int BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t DirectoryID, std::string &rLocalDirectoryName,
 	RestoreParams &Params, RestoreResumeInfo &rLevel)
 {
 	// If we're resuming... check that we haven't got a next level to look at
@@ -222,12 +222,11 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 		// Remove the level for the recursed directory
 		rLevel.RemoveLevel();		
 	}
-	
-	// Save the resumption information
-	Params.mResumeInfo.Save(Params.mRestoreResumeInfoFilename);
 
 	// Create the local directory (if not already done) -- path and owner set later, just use restrictive owner mode
-	switch(ObjectExists(rLocalDirectoryName.c_str()))
+	int exists = ObjectExists(rLocalDirectoryName.c_str());
+
+	switch(exists)
 	{
 		case ObjectExists_Dir:
 			// Do nothing
@@ -244,15 +243,72 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 			}
 			// follow through to... (no break)
 		case ObjectExists_NoObject:
-			if(::mkdir(rLocalDirectoryName.c_str(), S_IRWXU) != 0)
-			{
-				THROW_EXCEPTION(CommonException, OSFileError);
-			}
 			break;
 		default:
 			ASSERT(false);
 			break;
 	}
+
+	std::string parentDirectoryName(rLocalDirectoryName);
+	if(parentDirectoryName[parentDirectoryName.size() - 1] == 
+		DIRECTORY_SEPARATOR_ASCHAR)
+	{
+		parentDirectoryName.resize(parentDirectoryName.size() - 1);
+	}
+
+	int lastSlash = parentDirectoryName.rfind(DIRECTORY_SEPARATOR_ASCHAR);
+
+	if(lastSlash == std::string::npos)
+	{
+		// might be a forward slash separator, 
+		// especially in the unit tests!
+		lastSlash = parentDirectoryName.rfind('/');
+	}
+
+	if(lastSlash != std::string::npos)
+	{
+		// the target directory is a deep path, remove the last
+		// directory name and check that the resulting parent
+		// exists, otherwise the restore should fail.
+		parentDirectoryName.resize(lastSlash);
+		switch(ObjectExists(parentDirectoryName.c_str()))
+		{
+			case ObjectExists_Dir:
+				// this is fine, do nothing
+				break;
+
+			case ObjectExists_File:
+				fprintf(stderr, "Failed to restore: '%s' "
+					"is a file, but should be a "
+					"directory.\n", 
+					parentDirectoryName.c_str());
+				return Restore_TargetPathNotFound;
+
+			case ObjectExists_NoObject:
+				fprintf(stderr, "Failed to restore: "
+					"parent '%s' of target directory "
+					"does not exist.\n",
+					parentDirectoryName.c_str());
+				return Restore_TargetPathNotFound;
+
+			default:
+				fprintf(stderr, "Failed to restore: "
+					"unknown result from "
+					"ObjectExists('%s').\n",
+					parentDirectoryName.c_str());
+				return Restore_UnknownError;
+		}
+	}
+
+	if((exists == ObjectExists_NoObject ||
+		exists == ObjectExists_File) && 
+		::mkdir(rLocalDirectoryName.c_str(), S_IRWXU) != 0)
+	{
+		THROW_EXCEPTION(CommonException, OSFileError);
+	}
+	
+	// Save the resumption information
+	Params.mResumeInfo.Save(Params.mRestoreResumeInfoFilename);
 	
 	// Fetch the directory listing from the server -- getting a list of files which is approparite to the restore type
 	rConnection.QueryListDirectory(
@@ -347,7 +403,7 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 	}
 
 	
-	// Recuse to directories
+	// Recurse to directories
 	{
 		BackupStoreDirectory::Iterator i(dir);
 		BackupStoreDirectory::Entry *en = 0;
@@ -364,7 +420,14 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 				RestoreResumeInfo &rnextLevel(rLevel.AddLevel(en->GetObjectID(), nm.GetClearFilename()));
 				
 				// Recurse
-				BackupClientRestoreDir(rConnection, en->GetObjectID(), localDirname, Params, rnextLevel);
+				int result = BackupClientRestoreDir(
+					rConnection, en->GetObjectID(), 
+					localDirname, Params, rnextLevel);
+
+				if (result != Restore_Complete)
+				{
+					return result;
+				}
 				
 				// Remove the level for the above call
 				rLevel.RemoveLevel();
@@ -373,7 +436,9 @@ static void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Di
 				rLevel.mRestoredObjects.insert(en->GetObjectID());
 			}
 		}
-	}	
+	}
+
+	return Restore_Complete;
 }
 
 
@@ -444,7 +509,12 @@ int BackupClientRestore(BackupProtocolClient &rConnection, int64_t DirectoryID, 
 	
 	// Restore the directory
 	std::string localName(LocalDirectoryName);
-	BackupClientRestoreDir(rConnection, DirectoryID, localName, params, params.mResumeInfo);
+	int result = BackupClientRestoreDir(rConnection, DirectoryID, 
+		localName, params, params.mResumeInfo);
+	if (result != Restore_Complete)
+	{
+		return result;
+	}
 
 	// Undelete the directory on the server?
 	if(RestoreDeleted && UndeleteAfterRestoreDeleted)

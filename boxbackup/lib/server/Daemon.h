@@ -84,3 +84,4 @@ private:
 									{"User", 0, ConfigTest_LastEntry, 0}
 
 #endif // DAEMON__H
+

@@ -21,11 +21,17 @@
 
 #define PLATFORM_DEV_NULL			"/dev/null"
 
+#ifdef _MSC_VER
+#include "BoxConfig-MSVC.h"
+#include "BoxVersion.h"
+#else
 #include "BoxConfig.h"
+#endif
 
 #ifdef WIN32
 	// need msvcrt version 6.1 or higher for _gmtime64()
 	// must define this before importing <sys/types.h>
+	#undef  __MSVCRT_VERSION__
 	#define __MSVCRT_VERSION__ 0x0601
 #endif
 
@@ -40,8 +46,8 @@
 	#endif
 #endif
 
-// Slight hack; disable interception on Darwin within raidfile test
-#ifdef __APPLE__
+// Slight hack; disable interception in raidfile test on Darwin and Windows
+#if defined __APPLE__ || defined WIN32
 	// TODO: Replace with autoconf test
 	#define PLATFORM_CLIB_FNS_INTERCEPTION_IMPOSSIBLE
 #endif
@@ -97,8 +103,6 @@
 	#define HAVE_U_INT16_T
 	#define HAVE_U_INT32_T
 	#define HAVE_U_INT64_T
-
-	typedef int pid_t;
 #endif // WIN32 && !__MINGW32__
 
 // Define missing types
@@ -136,6 +140,11 @@
 
 #if !HAVE_DECL_INFTIM
 	#define INFTIM -1
+#endif
+
+// for Unix compatibility with Windows :-)
+#if !HAVE_DECL_O_BINARY
+	#define O_BINARY 0
 #endif
 
 #ifdef WIN32

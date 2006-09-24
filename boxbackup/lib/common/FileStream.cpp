@@ -8,9 +8,6 @@
 // --------------------------------------------------------------------------
 
 #include "Box.h"
-
-#include <errno.h>
-
 #include "FileStream.h"
 #include "CommonException.h"
 
@@ -26,17 +23,17 @@
 // --------------------------------------------------------------------------
 FileStream::FileStream(const char *Filename, int flags, int mode)
 #ifdef WIN32
-: mOSFileHandle(::openfile(Filename, flags, mode)),
+	: mOSFileHandle(::openfile(Filename, flags, mode)),
 #else
-: mOSFileHandle(::open(Filename, flags, mode)),
+	: mOSFileHandle(::open(Filename, flags, mode)),
 #endif
-  mIsEOF(false)
+	  mIsEOF(false)
 {
-	#ifdef WIN32
-	if(mOSFileHandle == 0)			
-	#else
+#ifdef WIN32
+	if(mOSFileHandle == INVALID_HANDLE_VALUE)
+#else
 	if(mOSFileHandle < 0)
-	#endif
+#endif
 	{
 		MEMLEAKFINDER_NOT_A_LEAK(this);
 		
@@ -53,17 +50,16 @@ FileStream::FileStream(const char *Filename, int flags, int mode)
 			THROW_EXCEPTION(CommonException, OSFileOpenError)
 		}
 	}
-	
-	#ifdef WIN32
+#ifdef WIN32
 	this->fileName = Filename;
-	#endif
+#endif
 }
 
 
 // --------------------------------------------------------------------------
 //
 // Function
-//		Name:    FileStream::FileStream(int)
+//		Name:    FileStream::FileStream(tOSFileHandle)
 //		Purpose: Constructor, using existing file descriptor
 //		Created: 2003/08/28
 //
@@ -72,11 +68,18 @@ FileStream::FileStream(tOSFileHandle FileDescriptor)
 	: mOSFileHandle(FileDescriptor),
 	  mIsEOF(false)
 {
+#ifdef WIN32
+	if(mOSFileHandle == INVALID_HANDLE_VALUE)
+#else
 	if(mOSFileHandle < 0)
+#endif
 	{
 		MEMLEAKFINDER_NOT_A_LEAK(this);
 		THROW_EXCEPTION(CommonException, OSFileOpenError)
 	}
+#ifdef WIN32
+	this->fileName = "HANDLE";
+#endif
 }
 
 #if 0
@@ -356,3 +359,4 @@ bool FileStream::StreamClosed()
 {
 	return mIsEOF;
 }
+

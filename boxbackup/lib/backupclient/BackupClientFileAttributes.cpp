@@ -642,6 +642,7 @@ void BackupClientFileAttributes::WriteAttributes(const char *Filename) const
 	}
 	
 	// If working as root, set user IDs
+	#ifndef WIN32
 	if(::geteuid() == 0)
 	{
 		#ifndef HAVE_LCHOWN
@@ -661,6 +662,7 @@ void BackupClientFileAttributes::WriteAttributes(const char *Filename) const
 			}
 		#endif
 	}
+	#endif
 
 	if(static_cast<int>(xattrOffset+sizeof(u_int32_t))<=mpClearAttributes->GetSize())
 	{
@@ -679,10 +681,24 @@ void BackupClientFileAttributes::WriteAttributes(const char *Filename) const
 	{
 		// Work out times as timevals
 		struct timeval times[2];
+
+		#ifdef WIN32
+		BoxTimeToTimeval(box_ntoh64(pattr->ModificationTime), 
+			times[1]);
+		BoxTimeToTimeval(box_ntoh64(pattr->AttrModificationTime), 
+			times[0]);
+		// Because stat() returns the creation time in the ctime
+		// field under Windows, and this gets saved in the 
+		// AttrModificationTime field of the serialised attributes,
+		// we subvert the first parameter of emu_utimes() to allow
+		// it to be reset to the right value on the restored file.
+		#else
 		BoxTimeToTimeval(modtime, times[1]);
 		// Copy access time as well, why not, got to set it to something
 		times[0] = times[1];
-		// Attr modification time will be changed anyway, nothing that can be done about it
+		// Attr modification time will be changed anyway, 
+		// nothing that can be done about it
+		#endif
 		
 		// Try to apply
 		if(::utimes(Filename, times) != 0)

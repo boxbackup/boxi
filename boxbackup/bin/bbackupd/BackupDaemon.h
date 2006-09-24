@@ -22,6 +22,8 @@
 #include "Socket.h"
 #include "SocketListen.h"
 #include "SocketStream.h"
+#include "CommandSocketManager.h"
+
 #ifdef WIN32
 	#include "WinNamedPipeStream.h"
 #endif
@@ -43,17 +45,20 @@ class Archive;
 //		Created: 2003/10/08
 //
 // --------------------------------------------------------------------------
-class BackupDaemon : public Daemon, CommandListener, LocationResolver,
-	RunStatusProvider, SysadminNotifier, ProgressNotifier
+class BackupDaemon : public Daemon, LocationResolver, RunStatusProvider,
+	SysadminNotifier, ProgressNotifier
 {
 public:
 	BackupDaemon();
 	~BackupDaemon();
 
 private:
-	// methods below do partial (specialized) serialization of client state only
-	void SerializeStoreObjectInfo(int64_t aClientStoreMarker, box_time_t theLastSyncTime, box_time_t theNextSyncTime) const;
-	bool DeserializeStoreObjectInfo(int64_t & aClientStoreMarker, box_time_t & theLastSyncTime, box_time_t & theNextSyncTime);
+	// methods below do partial (specialized) serialization of 
+	// client state only
+	bool SerializeStoreObjectInfo(int64_t aClientStoreMarker, 
+		box_time_t theLastSyncTime, box_time_t theNextSyncTime) const;
+	bool DeserializeStoreObjectInfo(int64_t & aClientStoreMarker, 
+		box_time_t & theLastSyncTime, box_time_t & theNextSyncTime);
 	bool DeleteStoreObjectInfo() const;
 	BackupDaemon(const BackupDaemon &);
 public:
@@ -100,6 +105,10 @@ private:
 
 	void SetState(state_t State);
 	
+	void WaitOnCommandSocket(box_time_t RequiredDelay, bool &DoSyncFlagOut, bool &SyncIsForcedOut);
+	void CloseCommandConnection();
+	void SendSyncStartOrFinish(bool SendStart);
+	
 	void TouchFileInWorkingDir(const char *Filename);
 
 	void DeleteUnusedRootDirEntries(BackupClientContext &rContext);
@@ -139,9 +148,28 @@ private:
 	std::vector<BackupClientInodeToIDMap *> mCurrentIDMaps;
 	std::vector<BackupClientInodeToIDMap *> mNewIDMaps;
 	
-  	// Using a socket?
- 	CommandSocketManager *mpCommandSocketInfo;
-
+	// For the command socket
+	class CommandSocketInfo
+	{
+	public:
+		CommandSocketInfo();
+		~CommandSocketInfo();
+	private:
+		CommandSocketInfo(const CommandSocketInfo &);	// no copying
+		CommandSocketInfo &operator=(const CommandSocketInfo &);
+	public:
+#ifdef WIN32
+		WinNamedPipeStream mListeningSocket;
+#else
+		SocketListen<SocketStream, 1 /* listen backlog */> mListeningSocket;
+		std::auto_ptr<SocketStream> mpConnectedSocket;
+#endif
+		IOStreamGetLine *mpGetLine;
+	};
+	
+	// Using a socket?
+	CommandSocketInfo *mpCommandSocketInfo;
+	
 	// Stop notifications being repeated.
 	bool mNotificationsSent[NotifyEvent__MAX + 1];
 
@@ -149,14 +177,6 @@ private:
 	box_time_t mDeleteUnusedRootDirEntriesAfter;	// time to delete them
 	std::vector<std::pair<int64_t,std::string> > mUnusedRootDirEntries;
 
- 	bool mSyncRequested;
- 	bool mSyncForced;
- 
- 	void SetReloadConfigWanted() { this->Daemon::SetReloadConfigWanted(); }
- 	void SetTerminateWanted()    { this->Daemon::SetTerminateWanted(); }
- 	void SetSyncRequested()      { mSyncRequested = true; }
- 	void SetSyncForced()         { mSyncForced    = true; }
- 	
  	bool StopRun() { return this->Daemon::StopRun(); }
  
  	/* ProgressNotifier implementation */
@@ -232,6 +252,12 @@ private:
 #ifdef WIN32
 	public:
 	void RunHelperThread(void);
+
+	private:
+	bool mDoSyncFlagOut, mSyncIsForcedOut;
+	HANDLE mhMessageToSendEvent, mhCommandReceivedEvent;
+	CRITICAL_SECTION mMessageQueueLock;
+	std::vector<std::string> mMessageList;
 #endif
 };
 

@@ -56,11 +56,13 @@ public:
 	void CloseConnection();
 	void SendSyncStartOrFinish(bool SendStart);
 	void SendStateUpdate(state_t newState);
+	bool HasReceivedCommandConn() { return mReceivedCommandConn; }
 
 private:
 	CommandSocketManager(const CommandSocketManager &);	// no copying
 	CommandSocketManager &operator=(const CommandSocketManager &);
 
+	friend class BackupDaemon;
 #ifdef WIN32
 	WinNamedPipeStream mListeningSocket;
 #else
@@ -72,6 +74,7 @@ private:
 	CommandListener* mpListener;
 	Configuration mConf;
 	state_t mState;
+	bool mReceivedCommandConn;
 };
 
 #endif // COMMANDSOCKETMANAGER__H

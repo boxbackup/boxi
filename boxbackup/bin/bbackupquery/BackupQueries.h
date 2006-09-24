@@ -73,6 +73,7 @@ public:
 		bool mIgnoreExcludes;
 		int mDifferences;
 		int mDifferencesExplainedByModTime;
+		int mUncheckedFiles;
 		int mExcludedDirs;
 		int mExcludedFiles;
 		const ExcludeList *mpExcludeFiles;

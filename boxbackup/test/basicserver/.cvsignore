@@ -1,9 +1,0 @@
-Makefile
-_main.cpp
-_t
-_t-gdb
-autogen_TestProtocolServer.cpp
-autogen_TestProtocolServer.h
-autogen_TestProtocolClient.cpp
-autogen_TestProtocolClient.h
-Makefile

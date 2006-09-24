@@ -40,16 +40,12 @@ private:
 	BackupStoreDaemon(const BackupStoreDaemon &rToCopy);
 public:
 
-	// For BackupContext to communicate with housekeeping process
-	virtual void SendMessageToHousekeepingProcess(const void *Msg, int MsgLen)
+	// For BackupContext to comminicate with housekeeping process
+	void SendMessageToHousekeepingProcess(const void *Msg, int MsgLen)
 	{
+		#ifndef WIN32
 		mInterProcessCommsSocket.Write(Msg, MsgLen);
-	}
-
-	// make this inherited protected method public	
-	bool LoadConfigurationFile(const std::string& rFilename)
-	{
-		return Daemon::LoadConfigurationFile(rFilename);
+		#endif
 	}
 
 protected:
@@ -65,9 +61,11 @@ protected:
 
 	const ConfigurationVerify *GetConfigVerify() const;
 	
+#ifndef WIN32	
 	// Housekeeping functions
 	void HousekeepingProcess();
 	bool CheckForInterProcessMsg(int AccountNum = 0, int MaximumWaitTime = 0);
+#endif
 
 	void LogConnectionStats(const char *commonName, const SocketStreamTLS &s);
 
@@ -76,11 +74,21 @@ private:
 	BackupStoreAccounts *mpAccounts;
 	bool mExtendedLogging;
 	bool mHaveForkedHousekeeping;
-	bool mIsHousekeepingProcess;
 	
+#ifdef WIN32
+	bool mHousekeepingInited;
+	virtual void OnIdle();
+#else
 	SocketStream mInterProcessCommsSocket;
 	IOStreamGetLine mInterProcessComms;
+	bool mIsHousekeepingProcess;
+#endif
+
+	void HousekeepingInit();
+	void RunHousekeepingIfNeeded();
+	int64_t mLastHousekeepingRun;
 };
 
 
 #endif // BACKUPSTOREDAEMON__H
+

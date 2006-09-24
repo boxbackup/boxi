@@ -26,25 +26,37 @@ if test "x$GXX" = "xyes"; then
   # Use -rdynamic if we have gcc. This is needed for backtrace
   AC_SUBST([LDADD_RDYNAMIC], ['-rdynamic'])
 fi
-AC_PATH_PROG([PERL], [perl], [no])
-if test "x$PERL" != "xno"; then
-  AC_DEFINE_UNQUOTED([PERL_EXECUTABLE], ["$PERL"], [Location of the perl executable])
-else
-  AC_MSG_ERROR([[perl executable was not found]])
-fi
 
+AC_PATH_PROG([PERL], [perl], [AC_MSG_ERROR([[perl executable was not found]])])
+
+case $target_os in
+mingw*) 
+	AC_DEFINE_UNQUOTED([PERL_EXECUTABLE], ["perl"], [Command to run Perl])
+	PERL_NATIVE=perl
+	AC_SUBST([PERL_NATIVE])
+	;;
+*)
+	AC_DEFINE_UNQUOTED([PERL_EXECUTABLE], ["$PERL"], 
+		[Location of the perl executable])
+	;;
+esac
 
 ### Checks for libraries.
 
-if test "$target_os" != "mingw32" -a "$target_os" != "winnt"; then
+case $target_os in
+mingw32*) ;;
+winnt)    ;;
+*)
   AC_SEARCH_LIBS([nanosleep], [rt], [ac_have_nanosleep=yes],
                  [AC_MSG_ERROR([[cannot find a short sleep function (nanosleep)]])])
-fi
+	;;
+esac
+
 AC_CHECK_LIB([z], [zlibVersion],, [AC_MSG_ERROR([[cannot find zlib]])])
 VL_LIB_READLINE([have_libreadline=yes], [have_libreadline=no])
 
 ## Check for Berkely DB. Restrict to certain versions
-AX_PATH_BDB(, [
+AX_PATH_BDB([1.x or 4.1], [
   LIBS="$BDB_LIBS $LIBS"
   LDFLAGS="$BDB_LDFLAGS $LDFLAGS"
   CPPFLAGS="$CPPFLAGS $BDB_CPPFLAGS"
@@ -79,21 +91,27 @@ Upgrade or read the documentation for alternatives]])
 
 ### Checks for header files.
 
-if test "$target_os" != "mingw32"; then
+case $target_os in
+mingw32*) ;;
+winnt*)   ;;
+*)
   AC_HEADER_DIRENT
-fi
+  ;;
+esac
 
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([execinfo.h process.h pwd.h regex.h signal.h])
+AC_CHECK_HEADERS([execinfo.h process.h pwd.h signal.h])
 AC_CHECK_HEADERS([syslog.h time.h])
 AC_CHECK_HEADERS([netinet/in.h])
 AC_CHECK_HEADERS([sys/param.h sys/socket.h sys/time.h sys/types.h sys/wait.h])
-AC_CHECK_HEADERS([sys/xattr.h])
-AC_CHECK_HEADERS([sys/endian.h asm/byteorder.h])
+AC_CHECK_HEADERS([sys/uio.h sys/xattr.h])
 
-if test "$ac_cv_header_regex_h" = "yes"; then
-  AC_SEARCH_LIBS([regcomp], [pcreposix])
+AC_CHECK_HEADER([regex.h], [have_regex_h=yes])
+
+if test "$have_regex_h" = "yes"; then
+  AC_DEFINE([HAVE_REGEX_H], [1], [Define to 1 if regex.h is available])
+  AC_SEARCH_LIBS([regcomp], ["pcreposix -lpcre"])
 fi
 
 ### Checks for typedefs, structures, and compiler characteristics.
@@ -117,23 +135,27 @@ AC_CHECK_MEMBERS([struct sockaddr_in.sin_len],,, [[
   ]])
 AC_CHECK_DECLS([INFTIM],,, [[#include <poll.h>]])
 AC_CHECK_DECLS([SO_PEERCRED],,, [[#include <sys/socket.h>]])
+AC_CHECK_DECLS([O_BINARY],,,[[#include <fcntl.h>]])
 AC_HEADER_TIME
 AC_STRUCT_TM
 AX_CHECK_DIRENT_D_TYPE
 AC_SYS_LARGEFILE
-AX_CHECK_LLONG_MINMAX
 AX_CHECK_DEFINE_PRAGMA
 if test "x$ac_cv_c_bigendian" != "xyes"; then
   AX_BSWAP64
 fi
-if test "$target_os" != "mingw32"; then
+
+case $target_os in
+mingw32*) ;;
+winnt*)   ;;
+*)
   AX_RANDOM_DEVICE
-fi
-AX_CHECK_MOUNT_POINT(,[
-  if test "$target_os" != "mingw32" -a "$target_os" != "winnt"; then
+  AX_CHECK_MOUNT_POINT(,[
     AC_MSG_ERROR([[cannot work out how to discover mount points on your platform]])
-  fi
   ])
+;;
+esac
+
 AX_CHECK_MALLOC_WORKAROUND
 
 
@@ -171,13 +193,19 @@ AC_CACHE_CHECK([if we have large file support enabled], [have_large_file_support
 AC_CHECK_FUNCS([flock])
 AC_CHECK_DECLS([O_EXLOCK],,, [[#include <fcntl.h>]])
 AC_CHECK_DECLS([F_SETLK],,, [[#include <fcntl.h>]])
+
+case $target_os in
+mingw32*) ;;
+winnt*)   ;;
+*)
 if test "x$ac_cv_func_flock" != "xyes" && \
    test "x$ac_cv_have_decl_O_EXLOCK" != "xyes" && \
-   test "x$ac_cv_have_decl_F_SETLK" != "xyes" && \
-   test "$target_os" != "mingw32" -a "$target_os" != "winnt"
+   test "x$ac_cv_have_decl_F_SETLK" != "xyes"
 then
   AC_MSG_ERROR([[cannot work out how to do file locking on your platform]])
 fi
+;;
+esac
 
 ## Get tmpdir
 temp_directory_name="/tmp"
@@ -222,9 +250,11 @@ AX_CONFIG_SCRIPTS([bin/bbackupd/bbackupd-config
                    lib/server/makeprotocol.pl
                    runtest.pl
                    test/backupstorefix/testfiles/testbackupstorefix.pl
+                   test/bbackupd/testfiles/bbackupd.conf
                    test/bbackupd/testfiles/extcheck1.pl
                    test/bbackupd/testfiles/extcheck2.pl
-                   test/bbackupd/testfiles/notifyscript.pl])
+                   test/bbackupd/testfiles/notifyscript.pl
+                   test/bbackupd/testfiles/syncallowscript.pl])
 # TODO: Need to do contrib/cygwin/install-cygwin-service.pl but location varies
 AC_OUTPUT
 
@@ -239,6 +269,7 @@ A summary of the build configuration is below. Box Backup will function
 without these features, but will work better where they are present. Refer
 to the documentation for more information on each feature.
 
+Regular expressions: $have_regex_h
 Large files:         $have_large_file_support
 Berkeley DB:         $ax_path_bdb_ok
 Readline:            $have_libreadline

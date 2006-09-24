@@ -3,7 +3,47 @@
 #if ! defined EMU_INCLUDE && defined WIN32
 #define EMU_INCLUDE
 
-#define _INO_T_DEFINED
+// basic types, may be required by other headers since we
+// don't include sys/types.h
+
+#ifdef __MINGW32__
+	#include <stdint.h>
+#else // MSVC
+	typedef unsigned __int64 u_int64_t;
+	typedef unsigned __int64 uint64_t;
+	typedef          __int64 int64_t;
+	typedef unsigned __int32 uint32_t;
+	typedef unsigned __int32 u_int32_t;
+	typedef          __int32 int32_t;
+	typedef unsigned __int16 uint16_t;
+	typedef          __int16 int16_t;
+	typedef unsigned __int8  uint8_t;
+	typedef          __int8  int8_t;
+#endif
+
+// emulated types, present on MinGW but not MSVC or vice versa
+
+#ifdef __MINGW32__
+	typedef uint32_t u_int32_t;
+#else
+	typedef unsigned int mode_t;
+	typedef unsigned int pid_t;
+
+	// must define _INO_T_DEFINED before including <sys/types.h>
+	// to replace it with our own.
+	typedef u_int64_t _ino_t;
+	#define _INO_T_DEFINED
+#endif
+
+// set up to include the necessary parts of Windows headers
+
+#define WIN32_LEAN_AND_MEAN
+
+#ifndef __MSVCRT_VERSION__
+#define __MSVCRT_VERSION__ 0x0601
+#endif
+
+// Windows headers
 
 #include <winsock2.h>
 #include <fcntl.h>
@@ -18,6 +58,8 @@
 #include <time.h>
 
 #include <string>
+
+// emulated functions
 
 #define gmtime_r( _clock, _result ) \
 	( *(_result) = *gmtime( (_clock) ), \
@@ -50,8 +92,8 @@ inline int geteuid(void)
 struct passwd {
 	char *pw_name;
 	char *pw_passwd;
-	uid_t pw_uid;
-	gid_t pw_gid;
+	int pw_uid;
+	int pw_gid;
 	time_t pw_change;
 	char *pw_class;
 	char *pw_gecos;
@@ -89,14 +131,6 @@ inline struct passwd * getpwnam(const char * name)
 	#define S_ISDIR(x) (S_IFDIR & x)
 #endif
 
-inline int utimes(const char * Filename, timeval[])
-{
-	//again I am guessing this is quite important to
-	//be functioning, as large restores would be a problem
-
-	//indicate success
-	return 0;
-}
 inline int chown(const char * Filename, u_int32_t uid, u_int32_t gid)
 {
 	//important - this needs implementing
@@ -116,23 +150,20 @@ inline int chown(const char * Filename, u_int32_t uid, u_int32_t gid)
 int   emu_chdir (const char* pDirName);
 int   emu_unlink(const char* pFileName);
 char* emu_getcwd(char* pBuffer, int BufSize);
+int   emu_utimes(const char* pName, const struct timeval[]);
+int   emu_chmod (const char* pName, mode_t mode);
+
+#define utimes(buffer, times) emu_utimes(buffer, times)
 
 #ifdef _MSC_VER
-	inline int emu_chmod(const char * Filename, int mode)
-	{
-		// indicate success
-		return 0;
-	}
-
-	#define chmod(file, mode)    emu_chmod(file, mode)
-	#define chdir(directory)     emu_chdir(directory)
-	#define unlink(file)         emu_unlink(file)
-	#define getcwd(buffer, size) emu_getcwd(buffer, size)
+	#define chmod(file, mode)     emu_chmod(file, mode)
+	#define chdir(directory)      emu_chdir(directory)
+	#define unlink(file)          emu_unlink(file)
+	#define getcwd(buffer, size)  emu_getcwd(buffer, size)
 #else
-	inline int chmod(const char * Filename, int mode)
+	inline int chmod(const char * pName, mode_t mode)
 	{
-		// indicate success
-		return 0;
+		return emu_chmod(pName, mode);
 	}
 
 	inline int chdir(const char* pDirName)
@@ -184,59 +215,7 @@ inline int getuid(void)
 
 // MinGW provides a getopt implementation
 #ifndef __MINGW32__
-
-// this will need to be implemented if we see fit that command line
-// options are going to be used! (probably then:)
-// where the calling function looks for the parsed parameter
-extern char *optarg;
-
-// optind looks like an index into the string - how far we have moved along
-extern int optind;
-extern char nextchar;
-
-inline int getopt(int count, char * const * args, const char * tolookfor)
-{
-	if (optind >= count) return -1;
-
-	std::string str((const char *)args[optind]);
-	std::string interestin(tolookfor);
-	int opttolookfor = 0;
-	int index = -1;
-	// just initialize the string - just in case it is used.
-	// optarg[0] = 0;
-	std::string opt;
-
-	if (count == 0) return -1;
-
-	do 
-	{
-		if (index != -1)
-		{
-			str = str.substr(index+1, str.size());
-		}
-
-		index = (int)str.find('-');
-
-		if (index == -1) return -1;
-
-		opt = str[1];
-
-		optind ++;
-		str = args[optind];
-	}
-	while ((opttolookfor = (int)interestin.find(opt)) == -1);
-
-	if (interestin[opttolookfor+1] == ':') 
-	{
-
-		// strcpy(optarg, str.c_str());
-		optarg = args[optind];
-		optind ++;
-	}
-
-	// indicate we have finished
-	return opt[0];
-}
+#include "getopt.h"
 #endif // !__MINGW32__
 
 #define timespec timeval
@@ -252,23 +231,7 @@ struct itimerval
 #define tv_nsec tv_usec 
 
 #ifndef __MINGW32__
-	typedef unsigned __int64 u_int64_t;
-	typedef unsigned __int64 uint64_t;
-	typedef __int64 int64_t;
-	typedef unsigned __int32 uint32_t;
-	typedef unsigned __int32 u_int32_t;
-	typedef __int32 int32_t;
-	typedef unsigned __int16 uint16_t;
-	typedef __int16 int16_t;
-	typedef unsigned __int8 uint8_t;
-	typedef __int8 int8_t;
-
 	typedef int socklen_t;
-#endif
-
-// I (re-)defined here for the moment; has to be removed later !!! 
-#ifndef BOX_VERSION
-#define BOX_VERSION "0.09hWin32"
 #endif
 
 #define S_IRGRP S_IWRITE
@@ -282,10 +245,6 @@ struct itimerval
 #define S_ISLNK(x) ( false )
 
 #define vsnprintf _vsnprintf
-
-#ifndef __MINGW32__
-typedef unsigned int mode_t;
-#endif
 
 int emu_mkdir(const char* pPathName);
 
@@ -301,9 +260,14 @@ inline int strcasecmp(const char *s1, const char *s2)
 }
 #endif
 
+#ifdef _DIRENT_H_
+#error You must not include MinGW's dirent.h!
+#endif
+
 struct dirent
 {
 	char *d_name;
+	unsigned long d_type;
 };
 
 struct DIR
@@ -326,26 +290,12 @@ HANDLE openfile(const char *filename, int flags, int mode);
 #define LOG_WARNING 4
 #define LOG_ERR 3
 #define LOG_PID 0
+#define LOG_LOCAL5 0
 #define LOG_LOCAL6 0
 
-extern HANDLE gSyslogH;
-void MyReportEvent(LPCTSTR *szMsg, DWORD errinfo);
-inline void openlog(const char * daemonName, int, int)
-{
-	gSyslogH = RegisterEventSource(
-		NULL,  // uses local computer 
-		daemonName);    // source name
-	if (gSyslogH == NULL) 
-	{
-	}
-}
-
-inline void closelog(void)
-{
-	DeregisterEventSource(gSyslogH); 
-}
-
-void syslog(int loglevel, const char *fmt, ...);
+void openlog (const char * daemonName, int, int);
+void closelog(void);
+void syslog  (int loglevel, const char *fmt, ...);
 
 #ifndef __MINGW32__
 #define strtoll _strtoi64
@@ -410,39 +360,15 @@ struct stat {
 	time_t st_mtime;
 	time_t st_ctime;
 };
-
-#ifndef __MINGW32__
-typedef u_int64_t _ino_t;
-#endif
 #endif
 
 int emu_stat(const char * name, struct stat * st);
 int emu_fstat(HANDLE file, struct stat * st);
 int statfs(const char * name, struct statfs * s);
 
-//need this for converstions
-inline time_t ConvertFileTimeToTime_t(FILETIME *fileTime)
-{
-	SYSTEMTIME stUTC;
-	struct tm timeinfo;
-
-	// Convert the last-write time to local time.
-	FileTimeToSystemTime(fileTime, &stUTC);
-	// SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
-
-	memset(&timeinfo, 0, sizeof(timeinfo));	
-	timeinfo.tm_sec = stUTC.wSecond;
-	timeinfo.tm_min = stUTC.wMinute;
-	timeinfo.tm_hour = stUTC.wHour;
-	timeinfo.tm_mday = stUTC.wDay;
-	timeinfo.tm_wday = stUTC.wDayOfWeek;
-	timeinfo.tm_mon = stUTC.wMonth - 1;
-	// timeinfo.tm_yday = ...;
-	timeinfo.tm_year = stUTC.wYear - 1900;
-
-	time_t retVal = mktime(&timeinfo) - _timezone;
-	return retVal;
-}
+// need this for conversions
+time_t ConvertFileTimeToTime_t(FILETIME *fileTime);
+bool   ConvertTime_tToFileTime(const time_t from, FILETIME *pTo);
 
 #ifdef _MSC_VER
 	#define stat(filename,  struct) emu_stat (filename, struct)
@@ -469,14 +395,15 @@ bool EnableBackupRights( void );
 bool ConvertUtf8ToConsole(const char* pString, std::string& rDest);
 bool ConvertConsoleToUtf8(const char* pString, std::string& rDest);
 
-//
-// MessageId: MSG_ERR_EXIST
-// MessageText:
-//  Box Backup.
-//
-#define MSG_ERR_EXIST                         ((DWORD)0xC0000004L)
-
 // replacement for _cgetws which requires a relatively recent C runtime lib
 int console_read(char* pBuffer, size_t BufferSize);
+
+struct iovec {
+	void *iov_base;   /* Starting address */
+	size_t iov_len;   /* Number of bytes */
+};
+
+int readv (int filedes, const struct iovec *vector, size_t count);
+int writev(int filedes, const struct iovec *vector, size_t count);
 
 #endif // !EMU_INCLUDE && WIN32

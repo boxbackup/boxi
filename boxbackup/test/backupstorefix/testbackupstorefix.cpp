@@ -29,6 +29,7 @@
 #include "RaidFileException.h"
 #include "StoreStructure.h"
 #include "BackupStoreFileWire.h"
+#include "ServerControl.h"
 
 #include "MemLeakFindOn.h"
 
@@ -64,23 +65,15 @@ int discSetNum = 0;
 std::map<std::string, int32_t> nameToID;
 std::map<int32_t, bool> objectIsDir;
 
+#ifdef WIN32
+#define RUN_CHECK	\
+	::system("..\\..\\bin\\bbstoreaccounts\\bbstoreaccounts -c testfiles/bbstored.conf check 01234567"); \
+	::system("..\\..\\bin\\bbstoreaccounts\\bbstoreaccounts -c testfiles/bbstored.conf check 01234567 fix");
+#else
 #define RUN_CHECK	\
 	::system("../../bin/bbstoreaccounts/bbstoreaccounts -c testfiles/bbstored.conf check 01234567"); \
 	::system("../../bin/bbstoreaccounts/bbstoreaccounts -c testfiles/bbstored.conf check 01234567 fix");
-
-// Wait a given number of seconds for something to complete
-void wait_for_operation(int seconds)
-{
-	printf("waiting: ");
-	fflush(stdout);
-	for(int l = 0; l < seconds; ++l)
-	{
-		sleep(1);
-		printf(".");
-		fflush(stdout);
-	}
-	printf("\n");
-}
+#endif
 
 // Get ID of an object given a filename
 int32_t getID(const char *name)
@@ -138,6 +131,7 @@ void CorruptObject(const char *name, int start, const char *rubbish)
 	w.Write(rubbish, rubbish_len);
 	// Copy rest of file
 	r->CopyStreamTo(w);
+	r->Close();
 	// Commit
 	w.Commit(true /* convert now */);
 }
@@ -300,11 +294,20 @@ int test(int argc, const char *argv[])
 	rcontroller.Initialise("testfiles/raidfile.conf");
 
 	// Create an account
+#ifdef WIN32
+	TEST_THAT_ABORTONFAIL(::system("..\\..\\bin\\bbstoreaccounts\\bbstoreaccounts -c testfiles/bbstored.conf create 01234567 0 10000B 20000B") == 0);
+#else
 	TEST_THAT_ABORTONFAIL(::system("../../bin/bbstoreaccounts/bbstoreaccounts -c testfiles/bbstored.conf create 01234567 0 10000B 20000B") == 0);
 	TestRemoteProcessMemLeaks("bbstoreaccounts.memleaks");
+#endif
 
 	// Start the bbstored server
+#ifdef WIN32
+	int pid = LaunchServer("..\\..\\bin\\bbstored\\bbstored testfiles/bbstored.conf", "testfiles/bbstored.pid");
+#else
 	int pid = LaunchServer("../../bin/bbstored/bbstored testfiles/bbstored.conf", "testfiles/bbstored.pid");
+#endif
+
 	TEST_THAT(pid != -1 && pid != 0);
 	if(pid > 0)
 	{
@@ -314,7 +317,9 @@ int test(int argc, const char *argv[])
 		// Run the perl script to create the initial directories
 		TEST_THAT_ABORTONFAIL(::system(PERL_EXECUTABLE " testfiles/testbackupstorefix.pl init") == 0);
 
-		int bbackupd_pid = LaunchServer("../../bin/bbackupd/bbackupd testfiles/bbackupd.conf", "testfiles/bbackupd.pid");
+		int bbackupd_pid = LaunchServer(BBACKUPD
+			" testfiles/bbackupd.conf", "testfiles/bbackupd.pid");
+
 		TEST_THAT(bbackupd_pid != -1 && bbackupd_pid != 0);
 		if(bbackupd_pid > 0)
 		{
@@ -322,15 +327,23 @@ int test(int argc, const char *argv[])
 			TEST_THAT(ServerIsAlive(bbackupd_pid));
 	
 			// Create a nice store directory
-			wait_for_operation(30);
+			wait_for_operation(14);
 
 			// That'll do nicely, stop the server	
+			#ifdef WIN32
+			terminate_bbackupd(bbackupd_pid);
+			// implicit check for memory leaks
+			#else
 			TEST_THAT(KillServer(bbackupd_pid));
 			TestRemoteProcessMemLeaks("bbackupd.memleaks");
+			#endif
 		}
 		
 		// Generate a list of all the object IDs
-		TEST_THAT_ABORTONFAIL(::system("../../bin/bbackupquery/bbackupquery -q -c testfiles/bbackupd.conf \"list -r\" quit > testfiles/initial-listing.txt") == 0);
+		TEST_THAT_ABORTONFAIL(::system(BBACKUPQUERY " -q "
+			"-c testfiles/bbackupd.conf \"list -r\" quit "
+			"> testfiles/initial-listing.txt") == 0);
+
 		// And load it in
 		{
 			FILE *f = ::fopen("testfiles/initial-listing.txt", "r");
@@ -358,19 +371,24 @@ int test(int argc, const char *argv[])
 			del.Delete();
 		}
 		{
-			// Add a suprious file
+			// Add a spurious file
 			RaidFileWrite random(discSetNum, storeRoot + "randomfile");
 			random.Open();
 			random.Write("test", 4);
 			random.Commit(true);
 		}
+
 		// Fix it
 		RUN_CHECK
+
 		// Check everything is as it was
-		TEST_THAT(::system(PERL_EXECUTABLE " testfiles/testbackupstorefix.pl check 0") == 0);
+		TEST_THAT(::system(PERL_EXECUTABLE 
+			" testfiles/testbackupstorefix.pl check 0") == 0);
+
 		// Check the random file doesn't exist
 		{
-			TEST_THAT(!RaidFileRead::FileExists(discSetNum, storeRoot + "01/randomfile"));
+			TEST_THAT(!RaidFileRead::FileExists(discSetNum, 
+				storeRoot + "01/randomfile"));
 		}
 
 		// ------------------------------------------------------------------------------------------------		
@@ -410,6 +428,8 @@ int test(int argc, const char *argv[])
 					file_BlockIndexEntry e[2];
 				} h;
 				TEST_THAT(file->Read(&h, sizeof(h)) == sizeof(h));
+				file->Close();
+
 				// Modify
 				TEST_THAT(box_ntoh64(h.hdr.mOtherFileID) == 0);
 				TEST_THAT(box_ntoh64(h.hdr.mNumBlocks) >= 2);
@@ -432,7 +452,7 @@ int test(int argc, const char *argv[])
 		}
 		
 		// ------------------------------------------------------------------------------------------------		
-		::printf("  === Delete directory, change container ID of another, duplicate entry in dir, supurious file size, delete file\n");
+		::printf("  === Delete directory, change container ID of another, duplicate entry in dir, spurious file size, delete file\n");
 		{
 			BackupStoreDirectory dir;
 			LoadDirectory("Test1/foreomizes/stemptinevidate/ict", dir);
@@ -440,7 +460,7 @@ int test(int argc, const char *argv[])
 			SaveDirectory("Test1/foreomizes/stemptinevidate/ict", dir);
 		}
 		int64_t duplicatedID = 0;
-		int64_t notSupriousFileSize = 0;
+		int64_t notSpuriousFileSize = 0;
 		{
 			BackupStoreDirectory dir;
 			LoadDirectory("Test1/cannes/ict/peep", dir);
@@ -458,7 +478,7 @@ int test(int argc, const char *argv[])
 				BackupStoreDirectory::Iterator i(dir);
 				BackupStoreDirectory::Entry *en = i.Next(BackupStoreDirectory::Entry::Flags_File);
 				TEST_THAT(en != 0);
-				notSupriousFileSize = en->GetSizeInBlocks();
+				notSpuriousFileSize = en->GetSizeInBlocks();
 				en->SetSizeInBlocks(3473874);
 				TEST_THAT(en->GetSizeInBlocks() == 3473874);
 			}
@@ -497,7 +517,7 @@ int test(int argc, const char *argv[])
 				BackupStoreDirectory::Iterator i(dir);
 				BackupStoreDirectory::Entry *en = i.Next(BackupStoreDirectory::Entry::Flags_File);
 				TEST_THAT(en != 0);
-				TEST_THAT(en->GetSizeInBlocks() == notSupriousFileSize);
+				TEST_THAT(en->GetSizeInBlocks() == notSpuriousFileSize);
 			}
 		}
 
@@ -572,7 +592,9 @@ int test(int argc, const char *argv[])
 		// ------------------------------------------------------------------------------------------------		
 		// Stop server
 		TEST_THAT(KillServer(pid));
+#ifndef WIN32
 		TestRemoteProcessMemLeaks("bbstored.memleaks");
+#endif
 	}
 
 	return 0;

@@ -56,9 +56,13 @@ public:
 		return "generic-stream-server";
 	}
 
+	#ifdef WIN32
+	virtual void OnIdle() { }
+	#endif
+
 	virtual void Run()
 	{
-		// Set process title as appropraite
+		// Set process title as appropriate
 		SetProcessTitle(ForkToHandleRequests?"server":"idle");
 	
 		// Handle exceptions and child task quitting gracefully.
@@ -120,7 +124,7 @@ public:
 	{
 		try
 		{
-			// Wait object with a timeout of 10 seconds, 
+			// Wait object with a timeout of 1 second, 
 			// which is a reasonable time to wait before
 			// cleaning up finished child processes.
 			WaitForEvent connectionWait(1000);
@@ -222,6 +226,7 @@ public:
 					if(connection.get())
 					{
 						// Since this is a template parameter, the if() will be optimised out by the compiler
+						#ifndef WIN32 // no fork on Win32
 						if(ForkToHandleRequests)
 						{
 							pid_t pid = ::fork();
@@ -262,14 +267,20 @@ public:
 						}
 						else
 						{
+						#endif // !WIN32
 							// Just handle in this connection
 							SetProcessTitle("handling");
 							HandleConnection(*connection);
 							SetProcessTitle("idle");										
+						#ifndef WIN32
 						}
+						#endif // !WIN32
 					}
 				}
-				
+
+				#ifdef WIN32
+				OnIdle();
+				#else // !WIN32
 				// Clean up child processes (if forking daemon)
 				if(ForkToHandleRequests)
 				{
@@ -284,6 +295,7 @@ public:
 						}
 					} while(p > 0);
 				}
+				#endif // !WIN32
 			}
 		}
 		catch(...)
@@ -308,7 +320,11 @@ protected:
 	// depends on the forking model in case someone changes it later.
 	bool WillForkToHandleRequests()
 	{
+		#ifdef WIN32
+		return false;
+		#else
 		return ForkToHandleRequests;
+		#endif // WIN32
 	}
 
 private:
@@ -345,3 +361,6 @@ private:
 #include "MemLeakFindOff.h"
 
 #endif // SERVERSTREAM__H
+
+
+

@@ -1,7 +1,0 @@
-autogen_CommonException.cpp
-autogen_CommonException.h
-autogen_ConversionException.cpp
-autogen_ConversionException.h
-Makefile
-config.h
-config.h.in

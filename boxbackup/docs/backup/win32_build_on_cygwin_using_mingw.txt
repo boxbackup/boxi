@@ -37,8 +37,7 @@ Configure PCRE for MinGW compilation, and build and install it:
 	export CFLAGS="-mno-cygwin"
 	./configure
 	make winshared
-	cp .libs/pcreposix.dll /bin
-	cp .libs/pcreposix.dll.a /usr/i686-pc-mingw32/lib
+	cp .libs/libpcre.a .libs/libpcreposix.a /usr/i686-pc-mingw32/lib
 	cp pcreposix.h /usr/i686-pc-mingw32/include/regex.h
 
 Now unpack the Box Backup sources, enter the source directory,

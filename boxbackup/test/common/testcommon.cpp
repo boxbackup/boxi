@@ -24,6 +24,8 @@
 #include "CommonException.h"
 #include "Conversion.h"
 #include "autogen_ConversionException.h"
+#include "CollectInBufferStream.h"
+#include "Archive.h"
 
 #include "MemLeakFindOn.h"
 
@@ -546,24 +548,104 @@ int test(int argc, const char *argv[])
 			TEST_CHECK_THROWS(elist.AddRegexEntries(std::string("[a-d]+\\.reg$" "\x01" "EXCLUDE" "\x01" "^exclude$")), CommonException, RegexNotSupportedOnThisPlatform);
 			TEST_THAT(elist.SizeOfRegexList() == 0);
 		#endif
+
+		#ifdef WIN32
+		#define CASE_SENSITIVE false
+		#else
+		#define CASE_SENSITIVE true
+		#endif
+
 		// Try some matches!
 		TEST_THAT(elist.IsExcluded(std::string("Definite1")) == true);
 		TEST_THAT(elist.IsExcluded(std::string("/dir/DefNumberTwo")) == true);
 		TEST_THAT(elist.IsExcluded(std::string("ThingDefThree")) == true);
 		TEST_THAT(elist.IsExcluded(std::string("AnotherDef")) == true);
 		TEST_THAT(elist.IsExcluded(std::string("dir/DefNumberTwo")) == false);
+
+		// Try some case insensitive matches,
+		// that should pass on Win32 and fail elsewhere
+		TEST_THAT(elist.IsExcluded("DEFINITe1") 
+			== !CASE_SENSITIVE);
+		TEST_THAT(elist.IsExcluded("/Dir/DefNumberTwo") 
+			== !CASE_SENSITIVE);
+		TEST_THAT(elist.IsExcluded("thingdefthree") 
+			== !CASE_SENSITIVE);
+
 		#ifdef HAVE_REGEX_H
 			TEST_THAT(elist.IsExcluded(std::string("b.reg")) == true);
+			TEST_THAT(elist.IsExcluded(std::string("B.reg")) == !CASE_SENSITIVE);
+			TEST_THAT(elist.IsExcluded(std::string("b.Reg")) == !CASE_SENSITIVE);
 			TEST_THAT(elist.IsExcluded(std::string("e.reg")) == false);
-			TEST_THAT(elist.IsExcluded(std::string("b.Reg")) == false);
-			TEST_THAT(elist.IsExcluded(std::string("DEfinite1")) == false);
+			TEST_THAT(elist.IsExcluded(std::string("e.Reg")) == false);
+			TEST_THAT(elist.IsExcluded(std::string("DEfinite1")) == !CASE_SENSITIVE);
 			TEST_THAT(elist.IsExcluded(std::string("DEXCLUDEfinite1")) == true);
-			TEST_THAT(elist.IsExcluded(std::string("DEfinitexclude1")) == false);
+			TEST_THAT(elist.IsExcluded(std::string("DEfinitexclude1")) == !CASE_SENSITIVE);
 			TEST_THAT(elist.IsExcluded(std::string("exclude")) == true);
+			TEST_THAT(elist.IsExcluded(std::string("ExcludE")) == !CASE_SENSITIVE);
 		#endif
+
+		#undef CASE_SENSITIVE
 	}
 
 	test_conversions();
+
+	// test that we can use Archive and CollectInBufferStream
+	// to read and write arbitrary types to a memory buffer
+
+	{
+		CollectInBufferStream buffer;
+		ASSERT(buffer.GetPosition() == 0);
+
+		{
+			Archive archive(buffer, 0);
+			ASSERT(buffer.GetPosition() == 0);
+
+			archive.Write((bool) true);
+			archive.Write((bool) false);
+			archive.Write((int) 0x12345678);
+			archive.Write((int) 0x87654321);
+			archive.Write((int64_t)  0x0badfeedcafebabeLL);
+			archive.Write((uint64_t) 0xfeedfacedeadf00dLL);
+			archive.Write((uint8_t)  0x01);
+			archive.Write((uint8_t)  0xfe);
+			archive.Write(std::string("hello world!"));
+			archive.Write(std::string("goodbye cruel world!"));
+		}
+
+		CollectInBufferStream buf2;
+		buf2.Write(buffer.GetBuffer(), buffer.GetSize());
+		TEST_THAT(buf2.GetPosition() == buffer.GetSize());
+
+		buf2.SetForReading();
+		TEST_THAT(buf2.GetPosition() == 0);
+
+		{
+			Archive archive(buf2, 0);
+			TEST_THAT(buf2.GetPosition() == 0);
+
+			bool b;
+			archive.Read(b); TEST_THAT(b == true);
+			archive.Read(b); TEST_THAT(b == false);
+
+			int i;
+			archive.Read(i); TEST_THAT(i == 0x12345678);
+			archive.Read(i); TEST_THAT((unsigned int)i == 0x87654321);
+
+			uint64_t i64;
+			archive.Read(i64); TEST_THAT(i64 == 0x0badfeedcafebabeLL);
+			archive.Read(i64); TEST_THAT(i64 == 0xfeedfacedeadf00dLL);
+
+			uint8_t i8;
+			archive.Read(i8); TEST_THAT(i8 == 0x01);
+			archive.Read(i8); TEST_THAT(i8 == 0xfe);
+
+			std::string s;
+			archive.Read(s); TEST_THAT(s == "hello world!");
+			archive.Read(s); TEST_THAT(s == "goodbye cruel world!");
+
+			TEST_THAT(!buf2.StreamDataLeft());
+		}
+	}
 
 	return 0;
 }

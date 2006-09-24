@@ -21,8 +21,6 @@
 class Archive;
 class BackupClientContext;
 class BackupDaemon;
-class CommandSocketManager;
-
 
 // --------------------------------------------------------------------------
 //
@@ -176,7 +174,6 @@ public:
 		int32_t mDiffingUploadSizeThreshold;
 		BackupClientContext &mrContext;
 		bool mReadErrorsOnFilesystemObjects;
-		CommandSocketManager* mpCommandSocket;
 	
 		// Member variables modified by syncing process
 		box_time_t mUploadAfterThisTimeInTheFuture;

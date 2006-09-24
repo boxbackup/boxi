@@ -97,6 +97,33 @@ void BackupClientDirectoryRecord::DeleteSubDirectories()
 // --------------------------------------------------------------------------
 //
 // Function
+//		Name:    MakeFullPath(const std::string& rDir, const std::string& rFile)
+//		Purpose: Combine directory and file name
+//		Created: 2006/08/10
+//
+// --------------------------------------------------------------------------
+static std::string MakeFullPath(const std::string& rDir, 
+	const std::string& rFile)
+{
+	std::string result;
+
+	if (rDir.size() > 0 && 
+		rDir[rDir.size()-1] == DIRECTORY_SEPARATOR_ASCHAR)
+	{
+		result = rDir + rFile;
+	}
+	else
+	{
+		result = rDir + DIRECTORY_SEPARATOR + rFile;
+	}
+
+	return result;
+}
+
+
+// --------------------------------------------------------------------------
+//
+// Function
 //		Name:    BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::SyncParams &, int64_t, const std::string &, bool)
 //		Purpose: Syncronise, recusively, a local directory with the server.
 //		Created: 2003/10/08
@@ -105,12 +132,6 @@ void BackupClientDirectoryRecord::DeleteSubDirectories()
 void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::SyncParams &rParams, int64_t ContainingDirectoryID,
 	const std::string &rLocalPath, bool ThisDirHasJustBeenCreated)
 {
-	rParams.GetProgressNotifier().NotifyScanDirectory(this, rLocalPath);
-	
-	// Check for connections and commands on the command socket
-	if (rParams.mpCommandSocket)
-		rParams.mpCommandSocket->Wait(0);
-	
 	// Signal received by daemon?
 	if(rParams.StopRun())
 	{
@@ -227,9 +248,11 @@ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::Syn
 				}
 
 				// Stat file to get info
-				filename = rLocalPath + DIRECTORY_SEPARATOR + 
-					en->d_name;
+				filename = MakeFullPath(rLocalPath, en->d_name);
 
+				#ifdef WIN32
+				int type = en->d_type;
+				#else
 				if(::lstat(filename.c_str(), &st) != 0)
 				{
 					// Report the error (logs and 
@@ -246,6 +269,8 @@ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::Syn
 				}
 
 				int type = st.st_mode & S_IFMT;
+				#endif
+
 				if(type == S_IFREG || type == S_IFLNK)
 				{
 					// File or symbolic link
@@ -276,11 +301,30 @@ void BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::Syn
 				}
 				else
 				{
+					#ifdef WIN32
+					::syslog(LOG_ERR, "Unknown file type: "
+						"%d (%s)", type, 
+						filename.c_str());
+					#endif
 					continue;
 				}
 				
 				// Here if the object is something to back up (file, symlink or dir, not excluded)
 				// So make the information for adding to the checksum
+				
+				#ifdef WIN32
+				if(::lstat(filename.c_str(), &st) != 0)
+				{
+					// Report the error (logs and 
+					// eventual email to administrator)
+					SetErrorWhenReadingFilesystemObject(
+						rParams, filename.c_str());
+
+					// Ignore this entry for now.
+					continue;
+				}
+				#endif
+
 				checksum_info.mModificationTime = FileModificationTime(st);
 				checksum_info.mAttributeModificationTime = FileAttrModificationTime(st);
 				checksum_info.mSize = st.st_size;
@@ -536,7 +580,7 @@ bool BackupClientDirectoryRecord::UpdateItems(BackupClientDirectoryRecord::SyncP
 		f != rFiles.end(); ++f)
 	{
 		// Filename of this file
-		std::string filename(rLocalPath + DIRECTORY_SEPARATOR + *f);
+		std::string filename(MakeFullPath(rLocalPath, *f));
 
 		// Get relevant info about file
 		box_time_t modTime = 0;
@@ -671,34 +715,75 @@ bool BackupClientDirectoryRecord::UpdateItems(BackupClientDirectoryRecord::SyncP
 		// Need to update?
 		//
 		// Condition for upload:
-		//    modifiction time within sync period
+		//    modification time within sync period
 		//    if it's been seen before but not uploaded, is the time from this first sight longer than the MaxUploadWait
 		//	  and if we know about it from a directory listing, that it hasn't got the same upload time as on the store
-		if(
-			(
-				// Check the file modified within the acceptable time period we're checking
-				// If the file isn't on the server, the acceptable time starts at zero.
-				// Check pDirOnStore and en, because if we didn't download a directory listing,
-				// pDirOnStore will be zero, but we know it's on the server.
-				( ((pDirOnStore != 0 && en == 0) || (modTime >= rParams.mSyncPeriodStart)) && modTime < rParams.mSyncPeriodEnd)
 
-				// However, just in case things are continually modified, we check the first seen time.
-				// The two compares of syncPeriodEnd and pendingFirstSeenTime are because the values are unsigned.
-				|| (pendingFirstSeenTime != 0 &&
-					(rParams.mSyncPeriodEnd > pendingFirstSeenTime)
-						&& ((rParams.mSyncPeriodEnd - pendingFirstSeenTime) > rParams.mMaxUploadWait))
+		bool doUpload = false;
 
-				// Then make sure that if files are added with a time less than the sync period start
-				// (which can easily happen on file server), it gets uploaded. The directory contents checksum
-				// will pick up the fact it has been added, so the store listing will be available when this happens.
-				|| ((modTime <= rParams.mSyncPeriodStart) && (en != 0) && (en->GetModificationTime() != modTime))
-				
-				// And just to catch really badly off clocks in the future for file server clients,
-				// just upload the file if it's madly in the future.
-				|| (modTime > rParams.mUploadAfterThisTimeInTheFuture)
-			)			
-			// But even then, only upload it if the mod time locally is different to that on the server.
-			&& (en == 0 || en->GetModificationTime() != modTime))
+		// Only upload a file if the mod time locally is 
+		// different to that on the server.
+
+		if (en == 0 || en->GetModificationTime() != modTime)
+		{
+			// Check the file modified within the acceptable time period we're checking
+			// If the file isn't on the server, the acceptable time starts at zero.
+			// Check pDirOnStore and en, because if we didn't download a directory listing,
+			// pDirOnStore will be zero, but we know it's on the server.
+			if (modTime < rParams.mSyncPeriodEnd)
+			{
+				if (pDirOnStore != 0 && en == 0)
+				{
+					doUpload = true;
+				}
+				else if (modTime >= rParams.mSyncPeriodStart)
+				{
+					doUpload = true;
+				}
+			}
+
+			// However, just in case things are continually 
+			// modified, we check the first seen time.
+			// The two compares of syncPeriodEnd and 
+			// pendingFirstSeenTime are because the values 
+			// are unsigned.
+
+			if (!doUpload && 
+				pendingFirstSeenTime != 0 &&
+				rParams.mSyncPeriodEnd > pendingFirstSeenTime &&
+				(rParams.mSyncPeriodEnd - pendingFirstSeenTime) 
+				> rParams.mMaxUploadWait)
+			{
+				doUpload = true;
+			}
+
+			// Then make sure that if files are added with a 
+			// time less than the sync period start
+			// (which can easily happen on file server), it 
+			// gets uploaded. The directory contents checksum
+			// will pick up the fact it has been added, so the 
+			// store listing will be available when this happens.
+
+			if (!doUpload &&
+				modTime <= rParams.mSyncPeriodStart && 
+				en != 0 && 
+				en->GetModificationTime() != modTime)
+			{
+				doUpload = true;
+			}
+
+			// And just to catch really badly off clocks in 
+			// the future for file server clients,
+			// just upload the file if it's madly in the future.
+
+			if (!doUpload && modTime > 
+				rParams.mUploadAfterThisTimeInTheFuture)
+			{
+				doUpload = true;
+			}
+		}
+
+		if (doUpload)
 		{
 			// Make sure we're connected -- must connect here so we know whether
 			// the storage limit has been exceeded, and hence whether or not
@@ -855,7 +940,7 @@ bool BackupClientDirectoryRecord::UpdateItems(BackupClientDirectoryRecord::SyncP
 		d != rDirs.end(); ++d)
 	{
 		// Get the local filename
-		std::string dirname(rLocalPath + DIRECTORY_SEPARATOR + *d);		
+		std::string dirname(MakeFullPath(rLocalPath, *d));
 	
 		// See if it's in the listing (if we have one)
 		BackupStoreFilenameClear storeFilename(*d);
@@ -1072,7 +1157,13 @@ bool BackupClientDirectoryRecord::UpdateItems(BackupClientDirectoryRecord::SyncP
 					BackupClientDirectoryRecord *rec = e->second;
 					mSubDirectories.erase(e);
 					delete rec;
-					TRACE2("Deleted directory record for %s/%s\n", rLocalPath.c_str(), dirname.GetClearFilename().c_str());
+
+					std::string name = MakeFullPath(
+						rLocalPath, 
+						dirname.GetClearFilename());
+
+					TRACE1("Deleted directory record for "
+						"%s\n", name.c_str());
 				}				
 			}
 		}
@@ -1124,8 +1215,6 @@ void BackupClientDirectoryRecord::RemoveDirectoryInPlaceOfFile(SyncParams &rPara
 int64_t BackupClientDirectoryRecord::UploadFile(BackupClientDirectoryRecord::SyncParams &rParams, const std::string &rFilename, const BackupStoreFilename &rStoreFilename,
 			int64_t FileSize, box_time_t ModificationTime, box_time_t AttributesHash, bool NoPreviousVersionOnServer)
 {
-	rParams.GetProgressNotifier().NotifyFileUploading(this, rFilename);
-	
 	// Get the connection
 	BackupProtocolClient &connection(rParams.mrContext.GetConnection());
 
