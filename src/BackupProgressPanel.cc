@@ -26,9 +26,12 @@
  */
 
 #include <errno.h>
-#include <mntent.h>
 #include <stdio.h>
 #include <regex.h>
+
+#ifdef HAVE_MNTENT_H
+	#include <mntent.h>
+#endif
 
 #include <wx/statbox.h>
 #include <wx/listbox.h>
@@ -279,8 +282,6 @@ void BackupProgressPanel::StartBackup()
 	params.mMaxFileTimeInFuture = SecondsToBoxTime(
 		(uint32_t)maxFileTimeInFutureSecs);
 	
-	params.mpCommandSocket = NULL;
-	
 	// Calculate the sync period of files to examine
 	box_time_t syncPeriodStart = 0;
 	box_time_t syncPeriodEnd = GetCurrentBoxTime() - minimumFileAge;
@@ -343,7 +344,12 @@ void BackupProgressPanel::StartBackup()
 	mpNumBytesRemaining->SetValue(wxT(""));
 	Layout();
 	wxYield();
-	
+
+	#ifdef WIN32
+	// init our own timer for file diff timeouts
+	InitTimer();
+	#endif
+
 	try 
 	{
 		SetupLocations(clientContext);
@@ -455,6 +461,10 @@ void BackupProgressPanel::StartBackup()
 		ReportBackupFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR,
 			wxT("Unknown error"));
 	}	
+
+	#ifdef WIN32
+	FiniTimer();
+	#endif
 
 	// Touch a file to record times in filesystem
 	{
@@ -744,10 +754,9 @@ void BackupProgressPanel::SetupLocations(BackupClientContext &rClientContext)
 
 	// Then... go through each of the entries in the configuration,
 	// making sure there's a directory created for it.
-	typedef const std::vector<Location> tLocations;
-	tLocations& rLocations = mpConfig->GetLocations();
+	const Location::List& rLocations = mpConfig->GetLocations();
 	
-	for (tLocations::const_iterator pLocation = rLocations.begin();
+	for (Location::ConstIterator pLocation = rLocations.begin();
 		pLocation != rLocations.end(); pLocation++)
 	{
 		TRACE0("new location\n");
@@ -773,13 +782,13 @@ void BackupProgressPanel::SetupLocations(BackupClientContext &rClientContext)
 
 				// BSD style statfs -- includes mount point, which is nice.
 				struct statfs s;
-				if(::statfs(ploc->mPath.c_str(), &s) != 0)
+				if(::statfs(pLocRecord->mPath.c_str(), &s) != 0)
 				{
 					THROW_EXCEPTION(CommonException, OSFileError)
 				}
 
 				// Where the filesystem is mounted
-				std::string mountName(s.f_mntonname);
+				std::string mountName((char *)&(s.f_mntonname));
 
 #else // !HAVE_STRUCT_STATFS_F_MNTONNAME && !WIN32
 
