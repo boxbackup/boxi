@@ -85,8 +85,8 @@ void BackupPanel::AddToNotebook(wxNotebook* pNotebook)
 void BackupPanel::Update()
 {
 	mpSourceList->Clear();
-	const std::vector<Location>& rLocations = mpConfig->GetLocations();
-	for (std::vector<Location>::const_iterator pLoc = rLocations.begin();
+	const Location::List& rLocations = mpConfig->GetLocations();
+	for (Location::ConstIterator pLoc = rLocations.begin();
 		pLoc != rLocations.end(); pLoc++)
 	{
 		mpSourceList->Append(pLoc->GetPath());
