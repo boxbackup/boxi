@@ -25,32 +25,115 @@
 #ifndef _COMPAREPANEL_H
 #define _COMPAREPANEL_H
 
-#include <wx/wx.h>
-#include <wx/treectrl.h>
-#include <wx/listctrl.h>
-#include <wx/datetime.h>
- 
-#include "ClientConfig.h"
-#include "ServerConnection.h"
+#include <wx/filename.h>
 
-class ComparePanel : public wxPanel {
+#include "FunctionPanel.h"
+
+class CompareFilesPanel;
+class CompareProgressPanel;
+class DirSelButton;
+class ServerCacheNode;
+class ServerConnection;
+class wxFileName;
+class wxNotebook;
+class wxRadioButton;
+class wxTextCtrl;
+
+class CompareSpecEntry
+{
 	public:
-	ComparePanel(
-		ClientConfig *config,
-		ServerConnection* pConnection,
-		wxWindow* parent, wxWindowID id = -1,
-		const wxPoint& pos = wxDefaultPosition, 
-		const wxSize& size = wxDefaultSize,
-		long style = wxTAB_TRAVERSAL, 
-		const wxString& name = "Compare");
+	typedef std::list<CompareSpecEntry> List;
+	typedef List::iterator Iterator;
+	typedef List::const_iterator ConstIterator;
+		
+	private:
+	wxFileName       mLocalFile;
+	ServerCacheNode* mpRemoteFile;
+	bool             mInclude;
+
+	public:
+	CompareSpecEntry(const wxFileName& rLocalFile, 
+		ServerCacheNode* pRemoteFile, bool lInclude)
+	: mLocalFile(rLocalFile),
+	  mpRemoteFile(pRemoteFile),
+	  mInclude(lInclude)
+	{ }
+
+	wxFileName       GetLocalFile()  const { return mLocalFile; }
+	ServerCacheNode& GetRemoteFile() const { return *mpRemoteFile; }
+	bool IsInclude() const { return mInclude; }
+	bool IsSameAs(const CompareSpecEntry& rOther) const
+	{
+		return mLocalFile.SameAs(rOther.mLocalFile) && 
+			mpRemoteFile == rOther.mpRemoteFile &&
+			mInclude == rOther.mInclude;
+	}
+};
+
+class CompareSpec
+{
+	private:
+	CompareSpecEntry::List mEntries;
+	bool mCompareWithOriginalLocations;
+	wxFileName mCompareWithNewLocation;
+	
+	public:
+	CompareSpec() { }
+	const CompareSpecEntry::List& GetEntries() const { return mEntries; }
+	void Add   (const CompareSpecEntry& rNewEntry);
+	void Remove(const CompareSpecEntry& rOldEntry);
+	
+	void SetCompareWithOriginalLocations(bool newValue) 
+	{ mCompareWithOriginalLocations = newValue; }
+	void SetCompareWithNewLocation(const wxFileName& rNewValue)
+	{ mCompareWithNewLocation = rNewValue; }
+	
+	bool       GetCompareWithOriginalLocations() const 
+	{ return mCompareWithOriginalLocations; }
+	wxFileName GetCompareWithNewLocation() const 
+	{ return mCompareWithNewLocation; }
+};
+
+class CompareSpecChangeListener
+{
+	public:
+	virtual void OnCompareSpecChange() = 0;
+	virtual ~CompareSpecChangeListener() { }
+};
+
+class ComparePanel : public FunctionPanel, CompareSpecChangeListener
+{
+	public:
+	ComparePanel
+	(
+		ClientConfig*     pConfig,
+		ClientInfoPanel*  pClientConfigPanel,
+		MainFrame*        pMainFrame,
+		ServerConnection* pServerConnection,
+		wxWindow*         pParent
+	);
+	
+	void AddToNotebook(wxNotebook* pNotebook);
+	virtual void OnCompareSpecChange();
 	
 	private:
-	ClientConfig*     mpConfig;
-	ServerConnection* mpServerConnection;
-	wxListCtrl*       mpCompareList;
-	wxTextCtrl*       mpCompareThreadStateCtrl;
+	friend class TestCompare;
+	CompareSpec mCompareSpec;
+	// for use in unit tests only!
+	CompareSpec& GetCompareSpec() { return mCompareSpec; }
+	
+	CompareProgressPanel* mpProgressPanel;
+	CompareFilesPanel* mpFilesPanel;
+	wxRadioButton* mpOldLocRadio;
+	wxRadioButton* mpNewLocRadio;
+	wxTextCtrl*    mpNewLocText;
+	DirSelButton*  mpNewLocButton;
 
-	void UpdateCompareThreadStateCtrl();
+	virtual void Update();
+	virtual void OnClickSourceButton(wxCommandEvent& rEvent);
+	virtual void OnClickStartButton (wxCommandEvent& rEvent);
+	void UpdateEnabledState();
+	void UpdateCompareSpec();
 	
 	DECLARE_EVENT_TABLE()
 };

@@ -27,51 +27,162 @@
 #include <wx/filename.h>
 
 #include "ComparePanel.h"
+#include "ParamPanel.h"
 
-BEGIN_EVENT_TABLE(ComparePanel, wxPanel)
+BEGIN_EVENT_TABLE(ComparePanel, FunctionPanel)
 END_EVENT_TABLE()
 
-ComparePanel::ComparePanel(
-	ClientConfig *pConfig,
+ComparePanel::ComparePanel
+(
+	ClientConfig*     pConfig,
+	ClientInfoPanel*  pClientConfigPanel,
+	MainFrame*        pMainFrame,
 	ServerConnection* pServerConnection,
-	wxWindow* parent, 
-	wxWindowID id,
-	const wxPoint& pos, 
-	const wxSize& size,
-	long style, 
-	const wxString& name)
-	: wxPanel(parent, id, pos, size, style, name)
+	wxWindow*         pParent
+)
+: FunctionPanel(wxT("Compare Panel"), pConfig, pClientConfigPanel, 
+	pMainFrame, pParent, ID_Compare_Panel)
 {
-	mpConfig = pConfig;
-	mpServerConnection = pServerConnection;
-	
-	wxSizer* pMainSizer = new wxBoxSizer( wxVERTICAL );
-	
-	wxSizer* pParamSizer = new wxGridSizer(2, 4, 4);
-	pMainSizer->Add(pParamSizer, 0, wxGROW | wxALL, 8);
-	
-	mpCompareThreadStateCtrl = new wxTextCtrl(this, -1, wxT(""));
-	::AddParam(this, wxT("Current state:"), mpCompareThreadStateCtrl,
-		false, pParamSizer);
+	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to compare"));
+	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Compare &with"));
 
-	wxSizer* pButtonSizer = new wxBoxSizer(wxHORIZONTAL);
-	pMainSizer->Add(pButtonSizer, 0, 
-		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-	
-	wxButton* pCompareButton = new wxButton(this, ID_Compare_Button,
-		wxT("Compare"));
-	pButtonSizer->Add(pCompareButton);
+	mpOldLocRadio = new wxRadioButton(this, 
+		ID_Compare_Panel_Old_Location_Radio, 
+		wxT("&Original Locations"),
+		wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	mpDestBox->Add(mpOldLocRadio, 0, wxGROW | wxALL, 8);
 
-	mpCompareList = new wxListCtrl(this, ID_Compare_List, wxDefaultPosition,
-		wxDefaultSize, wxLC_REPORT | wxSUNKEN_BORDER);
-	pMainSizer->Add(mpCompareList, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	wxSizer* mpNewDestSizer = new wxBoxSizer(wxHORIZONTAL);
+	mpDestBox->Add(mpNewDestSizer, 0, wxGROW | wxALL, 8);
 	
-	SetSizer( pMainSizer );
-	pMainSizer->SetSizeHints( this );
-		
-	UpdateCompareThreadStateCtrl();
+	mpNewLocRadio = new wxRadioButton(this, 
+		ID_Compare_Panel_New_Location_Radio, 
+		_("&New location:"), 
+		wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	mpNewDestSizer->Add(mpNewLocRadio, 0, wxALIGN_CENTER, 0);
+
+	mpNewLocText = new wxTextCtrl(this, ID_Compare_Panel_New_Location_Text, 
+		wxT(""));
+	mpNewDestSizer->Add(mpNewLocText, 1, wxGROW | wxLEFT, 8);
+	
+	mpNewLocButton = new DirSelButton(this, 
+		ID_Compare_Panel_New_Location_Button, mpNewLocText);
+	mpNewDestSizer->Add(mpNewLocButton, 0, wxGROW | wxLEFT, 4);
+	
+	mpSourceEditButton->SetLabel(wxT("&Select Files"));
+	mpStartButton     ->SetLabel(wxT("Start &Compare"));
+
+	/*
+	mpFilesPanel = new CompareFilesPanel(pConfig, 
+		pServerConnection, pMainFrame, pParent, this, this);
+	mpFilesPanel->Hide();
+
+	mpProgressPanel = new RestoreProgressPanel(pConfig, pServerConnection,
+		pParent, ID_Restore_Progress_Panel);
+	mpProgressPanel->Hide();
+	*/
+
+	// Update();
+	UpdateEnabledState();
+	
+	mpConfig->AddListener(this);
 }
 
-void ComparePanel::UpdateCompareThreadStateCtrl()
+void ComparePanel::OnCompareSpecChange()
 {
+	Update();
+}
+
+void ComparePanel::Update()
+{
+	/*
+	mpSourceList->Clear();
+	
+	const RestoreSpecEntry::Vector rEntries = 
+		mpFilesPanel->GetRestoreSpec().GetEntries();
+	
+	for (RestoreSpecEntry::ConstIterator pEntry = rEntries.begin();
+		pEntry != rEntries.end(); pEntry++)
+	{
+		wxString path = pEntry->GetNode().GetFullPath();
+		wxString entry;
+		entry.Printf(wxT("%s %s"), (pEntry->IsInclude() ? wxT("+") : wxT("-")),
+			path.c_str());
+		mpSourceList->Append(entry);
+	}
+	*/
+}
+
+void ComparePanel::AddToNotebook(wxNotebook* pNotebook)
+{
+	pNotebook->AddPage(this, wxT("Compare"));
+	// pNotebook->AddPage(mpFilesPanel, wxT("Compare Files"));
+	// pNotebook->AddPage(mpProgressPanel, wxT("Compare Progress"));
+}
+
+void ComparePanel::OnClickSourceButton(wxCommandEvent& rEvent)
+{
+	// mpMainFrame->ShowPanel(mpFilesPanel);
+}
+
+void ComparePanel::OnClickStartButton(wxCommandEvent& rEvent)
+{
+	/*
+	wxFileName dest(mpNewLocText->GetValue());
+	
+	if (!dest.IsOk())
+	{
+		wxGetApp().ShowMessageBox(BM_RESTORE_FAILED_INVALID_DESTINATION_PATH,
+			_("Cannot start restore: the destination path is not set"),
+			_("Boxi Error"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+
+	if (dest.DirExists() || dest.FileExists())
+	{
+		wxGetApp().ShowMessageBox(BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS,
+			_("Cannot start restore: the destination path already exists"),
+			_("Boxi Error"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+	
+	mpMainFrame->ShowPanel(mpProgressPanel);
+	wxYield();
+	mpProgressPanel->StartRestore(mpFilesPanel->GetRestoreSpec(), dest);
+	*/
+}
+
+void ComparePanel::UpdateEnabledState()
+{
+	/*
+	if (mpOldLocRadio->GetValue())
+	{
+		mpNewLocText  ->Disable();
+		mpNewLocButton->Disable();
+		mpRestoreDirsCheck->Disable();
+	}
+	else if (mpNewLocRadio->GetValue())
+	{
+		mpNewLocText  ->Enable();
+		mpNewLocButton->Enable();
+		mpRestoreDirsCheck->Enable();
+	}
+	*/
+	
+	UpdateCompareSpec();
+}
+
+void ComparePanel::UpdateCompareSpec()
+{
+	/*
+	RestoreSpec& rSpec = mpFilesPanel->GetRestoreSpec();
+	rSpec.SetRestoreToDateEnabled(mpToDateCheckBox->GetValue());
+	
+	wxDateTime epoch = mpDatePicker->GetValue();
+	epoch.SetHour  (mpHourSpin->GetValue());
+	epoch.SetMinute(mpMinSpin ->GetValue());
+	epoch.SetSecond(0);
+	epoch.SetMillisecond(0);
+	rSpec.SetRestoreToDate(epoch);
+	*/
 }
