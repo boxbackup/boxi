@@ -35,6 +35,7 @@
 #include <wx/wx.h>
 #include <wx/cmdline.h>
 #include <wx/filename.h>
+#include <wx/image.h>
 
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/CompilerOutputter.h>
@@ -107,6 +108,21 @@ int main(int argc, char **argv)
 	{
 		g_argc = argc;
 		g_argv = argv;
+
+		#ifdef WIN32
+		// Under win32 we must initialise the Winsock library
+		// before using sockets
+
+		WSADATA info;
+
+		if (WSAStartup(0x0101, &info) == SOCKET_ERROR)
+		{
+			// will not run without sockets
+			::fprintf(stderr, "Failed to initialise "
+				"Windows Sockets");
+			return 1;
+		}
+		#endif
 		
 		CppUnit::TestResult controller;
 		
@@ -132,6 +148,10 @@ int main(int argc, char **argv)
 		runner.run(controller, "");
 		
 		outputter.write();
+
+		#ifdef WIN32
+		WSACleanup();
+		#endif
 		
 		return result.wasSuccessful() ? 0 : 1;
 	}
@@ -141,9 +161,11 @@ int main(int argc, char **argv)
 	}
 }
 
+#ifndef WIN32
 void sigpipe_handler(int signum) {
 	signal(SIGPIPE, sigpipe_handler);
 }
+#endif
 
 bool BoxiApp::OnInit()
 {
@@ -168,7 +190,9 @@ bool BoxiApp::OnInit()
 		mConfigFileName = cmdParser.GetParam();
 	}
 
+	#ifndef WIN32
 	signal(SIGPIPE, sigpipe_handler);	
+	#endif
 
 	/*
 	if (cmdParser.Found(wxT("t")))
@@ -257,7 +281,11 @@ int BoxiApp::ShowFileDialog(wxFileDialog& rDialog)
 	wxASSERT(mExpectingFileDialog);
 	mExpectingFileDialog = false;
 	rDialog.SetPath(mExpectedFileDialogResult);
-	rDialog.SetFilename(wxFileName(mExpectedFileDialogResult).GetFullName());
+
+	wxFileName fn(mExpectedFileDialogResult);
+	rDialog.SetPath     (fn.GetPath());
+	rDialog.SetDirectory(fn.GetPath());
+	rDialog.SetFilename (fn.GetFullName());
 
 	return wxID_OK;
 }
