@@ -47,6 +47,7 @@ enum {
 	ID_Backup_Files_Panel,
 	ID_Backup_Files_Tree,
 	ID_Restore_Files_Panel,
+	ID_Compare_Files_Panel,
 	ID_Client_Panel,
 	ID_Backup_Panel,
 	ID_Restore_Panel,
@@ -125,6 +126,11 @@ enum {
 	ID_Restore_Panel_Min_Spin,
 	ID_Restore_Panel_Restore_Later_Checkbox,
 	ID_Restore_Panel_Restore_Deleted_Checkbox,
+	
+	ID_Compare_Panel_Old_Location_Radio,
+	ID_Compare_Panel_New_Location_Radio,
+	ID_Compare_Panel_New_Location_Text,
+	ID_Compare_Panel_New_Location_Button,
 };
 
 typedef enum
