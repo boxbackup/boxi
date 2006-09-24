@@ -116,32 +116,7 @@ class RestoreProgressPanel
 		wxYield();
 	}
 	
-	wxString FormatNumBytes(int64_t bytes)
-	{
-		wxString units = wxT("B");
-		
-		if (bytes > 1024)
-		{
-			bytes >>= 10;
-			units = wxT("kB");
-		}
-		
-		if (bytes > 1024)
-		{
-			bytes >>= 10;
-			units = wxT("MB");
-		}
-
-		if (bytes > 1024)
-		{
-			bytes >>= 10;
-			units = wxT("GB");
-		}
-
-		wxString str;		
-		str.Printf(wxT("%lld %s"), bytes, units.c_str());
-		return str;
-	}
+	wxString FormatNumBytes(int64_t bytes);
 	
 	void NotifyMoreFilesCounted(size_t numAdditionalFiles, 
 		int64_t numAdditionalBytes)

@@ -26,7 +26,6 @@
  */
 
 #include <errno.h>
-#include <mntent.h>
 #include <stdio.h>
 #include <regex.h>
 
@@ -759,3 +758,35 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 	
 	return true;
 }
+
+wxString RestoreProgressPanel::FormatNumBytes(int64_t bytes)
+{
+	wxString units = wxT("B");
+	
+	if (bytes > 1024)
+	{
+		bytes >>= 10;
+		units = wxT("kB");
+	}
+	
+	if (bytes > 1024)
+	{
+		bytes >>= 10;
+		units = wxT("MB");
+	}
+
+	if (bytes > 1024)
+	{
+		bytes >>= 10;
+		units = wxT("GB");
+	}
+
+	wxString str;		
+	#ifdef WIN32
+	str.Printf(wxT("%I64d %s"), bytes, units.c_str());
+	#else
+	str.Printf(wxT("%lld %s"), bytes, units.c_str());
+	#endif
+	return str;
+}
+
