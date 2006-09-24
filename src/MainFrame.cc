@@ -253,7 +253,9 @@ void MainFrame::DoFileSaveAs2()
 	if (wxGetApp().ShowFileDialog(saveFileDialog) != wxID_OK)
 		return;
 
-	mpConfig->Save(saveFileDialog.GetPath());
+	wxFileName fn(saveFileDialog.GetDirectory(), 
+		saveFileDialog.GetFilename());
+	mpConfig->Save(fn.GetFullPath());
 }
 
 void MainFrame::OnFileQuit(wxCommandEvent& event) {
