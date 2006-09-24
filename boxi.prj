@@ -112,7 +112,9 @@ module.include.files=\
 	TestBackupConfig.h\
 	Restore.h\
 	TestRestore.h\
-	RestoreProgressPanel.h
+	RestoreProgressPanel.h\
+	TestWithServer.h\
+	TestCompare.h
 
 module.source.name=src
 module.source.type=
@@ -166,7 +168,9 @@ module.source.files=\
 	TestBackup.cc\
 	TestBackupConfig.cc\
 	TestRestore.cc\
-	RestoreProgressPanel.cc
+	RestoreProgressPanel.cc\
+	TestWithServer.cc\
+	TestCompare.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=

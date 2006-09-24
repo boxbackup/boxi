@@ -55,5 +55,7 @@ src/TestBackup.cc
 src/TestBackupConfig.cc
 src/TestRestore.cc
 src/RestoreProgressPanel.cc
+src/TestWithServer.cc
+src/TestCompare.cc
 
 

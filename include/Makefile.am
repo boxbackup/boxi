@@ -38,6 +38,8 @@ boxi_include_DATA = \
 	TestBackupConfig.h\
 	Restore.h\
 	TestRestore.h\
-	RestoreProgressPanel.h
+	RestoreProgressPanel.h\
+	TestWithServer.h\
+	TestCompare.h
 
 EXTRA_DIST = $(boxi_include_DATA)
