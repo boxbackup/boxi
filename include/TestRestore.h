@@ -25,61 +25,13 @@
 #ifndef _TESTRESTORE_H
 #define _TESTRESTORE_H
 
-#include "TestFrame.h"
-#include "ServerConnection.h"
+#include "TestWithServer.h"
 
-class TestRestore : public TestWithConfig
+class TestRestore : public TestWithServer
 {
 	public:
-	TestRestore();
-	virtual void RunTest();
 	static CppUnit::Test *suite();
-	virtual void setUp();
-	virtual void tearDown();
-	
-	private:
-	wxFileName mBaseDir, mConfDir, mStoreDir, mTestDataDir,
-		mStoreConfigFileName, mAccountsFile, mRaidConfigFile,
-		mClientConfigFile;
-	Location* mpTestDataLocation;
-	MainFrame* mpMainFrame;
-	std::auto_ptr<StoreServer> mapServer;
-	std::auto_ptr<ServerConnection> mapConn;
-	std::auto_ptr<Configuration> mapClientConfig;
-	TLSContext mTlsContext;
+	virtual void RunTest();
 };
-
-#define CHECK_BACKUP() \
-	ClickButtonWaitEvent(ID_Backup_Panel, ID_Function_Start_Button);
-
-#define CHECK_BACKUP_ERROR(message) \
-	MessageBoxSetResponse(message, wxOK); \
-	CHECK_BACKUP(); \
-	MessageBoxCheckFired(); \
-	CPPUNIT_ASSERT(pBackupErrorList->GetCount() > 0);
-
-#define CHECK_BACKUP_OK(message) \
-	CHECK_BACKUP(); \
-	if (pBackupErrorList->GetCount() > 0) \
-	{ \
-		wxCharBuffer buf = pBackupErrorList->GetString(0).mb_str(wxConvLibc); \
-		CPPUNIT_ASSERT_MESSAGE(buf.data(), pBackupErrorList->GetCount() > 0); \
-	}
-
-#define CHECK_COMPARE_OK() \
-	CompareExpectNoDifferences(rClientConfig, mTlsContext, _("testdata"), \
-		mTestDataDir);
-
-#define CHECK_COMPARE_FAILS(diffs, modified) \
-	CompareExpectDifferences(rClientConfig, mTlsContext, _("testdata"), \
-		mTestDataDir, diffs, modified);
-
-#define CHECK_COMPARE_LOC_OK(exdirs, exfiles) \
-	CompareLocationExpectNoDifferences(rClientConfig, mTlsContext, \
-		"testdata", exdirs, exfiles);
-
-#define CHECK_COMPARE_LOC_FAILS(diffs, modified, exdirs, exfiles) \
-	CompareLocationExpectDifferences(rClientConfig, mTlsContext, "testdata", \
-		diffs, modified, exdirs, exfiles);
 
 #endif /* _TESTRESTORE_H */
