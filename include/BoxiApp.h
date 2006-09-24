@@ -42,7 +42,10 @@ class BoxiApp : public wxApp
 	: wxApp(), 
 	  mpTestRunner(NULL), 
 	  mExpectingFileDialog(false),
-	  mTesting(false)
+	  mTesting(false),
+	  mExpectedMessageId(BM_UNKNOWN),
+	  mExpectedMessageResponse(-1),
+	  mHaveConfigFile(false)
 	{ }
 	virtual ~BoxiApp() { }
 	
