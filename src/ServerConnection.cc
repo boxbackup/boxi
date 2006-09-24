@@ -390,8 +390,6 @@ const char * ServerConnection::ErrorString(int type, int subtype)
 			return "Does not exist in directory";
 		case BackupProtocolClientError::Err_PatchConsistencyError:		
 			return "Patch consistency error";
-		case BackupProtocolClientError::Err_RaidFileDoesntExist:
-			return "Data corrupt on server (RAID file not found)";
 		default:
 			mErrorMessage.Printf(
 				wxT("Unknown protocol error: %d/%d"), 
