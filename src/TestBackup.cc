@@ -252,8 +252,9 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 		{
 			// CPPUNIT_ASSERT(!outName.FileExists());
 			CPPUNIT_ASSERT(!outName.DirExists());
-		
-			wxFileOutputStream outFos(outName.GetFullPath());
+	
+			wxString outNameString(outName.GetFullPath());
+			wxFFileOutputStream outFos(outNameString);
 			CPPUNIT_ASSERT(outFos.Ok());
 
 			outFos.Write(zipInput);
@@ -265,8 +266,9 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 			CPPUNIT_ASSERT(outName.FileExists());
 			
 			wxFile outFile(outName.GetFullPath());
-			CPPUNIT_ASSERT_EQUAL(pEntry->GetSize(), 
-				outFile.Length());
+			wxCharBuffer buf = outName.GetFullPath().mb_str();
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(),
+				pEntry->GetSize(), outFile.Length());
 		}
 		
 		entries.push_back(pEntry);
@@ -694,7 +696,7 @@ void TestBackup::RunTest()
 
 	// before the first backup, there should be differences
 	CHECK_COMPARE_LOC_FAILS(1, 0, 0, 0);
-	
+
 	CHECK_BACKUP_OK();
 
 	// and afterwards, there should be no differences any more
@@ -888,7 +890,7 @@ void TestBackup::RunTest()
 	// case which went wrong: rename a tracked file over a deleted file
 	#ifdef WIN32
 	CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(mTestDataDir, 
-		_("x1/dsfdsfs98.fd"))));
+		_("x1/dsfdsfs98.fd")).GetFullPath()));
 	#endif
 	
 	CPPUNIT_ASSERT(wxRenameFile(
@@ -1099,7 +1101,7 @@ void TestBackup::RunTest()
 		// make one of the files read-only, expect a compare failure
 		#ifdef WIN32
 		wxString cmd = _("attrib +r ");
-		cmd.Append(testFileName);
+		cmd.Append(testFileName.GetFullPath());
 		wxCharBuffer cmdbuf = cmd.mb_str(wxConvLibc);
 		int compareReturnValue = ::system(cmdbuf.data());
 		CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
@@ -1112,7 +1114,7 @@ void TestBackup::RunTest()
 		// set it back, expect no failures
 		#ifdef WIN32
 		cmd = _("attrib -r ");
-		cmd.Append(testFileName);
+		cmd.Append(testFileName.GetFullPath());
 		cmdbuf = cmd.mb_str(wxConvLibc);
 		compareReturnValue = ::system(cmdbuf.data());
 		CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
