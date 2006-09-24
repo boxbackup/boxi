@@ -43,6 +43,8 @@
 
 class MainFrame;
 class TestCase;
+class wxDatePickerCtrl;
+class wxDateTime;
 
 class TestFrame : public wxFrame
 {
@@ -170,6 +172,8 @@ class GuiTestBase : public CppUnit::TestCase
 	void CollapseTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem);
 	void SetTextCtrlValue(wxTextCtrl* pTextCtrl, const wxString& rValue);
 	void SetSpinCtrlValue(wxSpinCtrl* pTextCtrl, int newValue);
+	void SetDatePickerValue(wxDatePickerCtrl* pPicker, 
+		const wxDateTime& rNewValue);
 	void SetSelection(wxListBox* pListCtrl,   int value);
 	void SetSelection(wxChoice*  pChoiceCtrl, int value);
 	void CheckBoxWaitEvent(wxCheckBox* pCheckBox, bool newValue = true);
@@ -183,7 +187,6 @@ class GuiTestBase : public CppUnit::TestCase
 	
 	private:
 	wxCommandEvent GetButtonClickEvent(wxWindow* pWindow);
-	wxLogAsserter mLogToCppUnit;
 
 	public:	
 	void tearDown()

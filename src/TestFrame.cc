@@ -2,8 +2,8 @@
  *            TestFrame.cc
  *
  *  Sun Jan 22 22:37:04 2006
- *  Copyright  2006  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -26,6 +26,8 @@
  */
 
 // #include <wx/thread.h>
+#include <wx/datectrl.h>
+#include <wx/dateevt.h>
 #include <wx/spinctrl.h>
 #include <wx/treectrl.h>
 
@@ -44,6 +46,7 @@
 #include "TestFrame.h"
 #include "TestBackup.h"
 #include "TestBackupConfig.h"
+#include "TestCompare.h"
 #include "TestRestore.h"
 #include "TestConfig.h"
 #include "TestWizard.h"
@@ -511,10 +514,6 @@ class GuiStarter : public TestSetUpDecorator
 
 		WxGuiTestHelper::SetShowModalDialogsNonModalFlag(true);
 		
-		// ensure that log messages result in test failures too,
-		// instead of modal dialogs that halt test execution.
-		wxLogAsserter log;
-		
 		#if defined (WIN32)
 			#if !defined (__BUILTIN__)
 				::wxEntry (GetModuleHandle (NULL), NULL, NULL, SW_SHOWNORMAL);
@@ -559,8 +558,9 @@ class GuiTestSuite : public CppUnit::TestFixture
 			) \
 		)
 		
-		ADD_TEST(TestRestore);
 		// ADD_TEST(TestBackup);
+		// ADD_TEST(TestRestore);
+		ADD_TEST(TestCompare);
 		// ADD_TEST(TestBackupConfig);
 		// ADD_TEST(TestOpenWizard);
 		// ADD_TEST(TestWizard);
@@ -722,6 +722,21 @@ void GuiTestBase::SetSpinCtrlValue(wxSpinCtrl* pSpinCtrl, int newValue)
 	assert(pSpinCtrl);
 	assert(pSpinCtrl->IsEnabled());
 	pSpinCtrl->SetValue(newValue);
+	
+	wxSpinEvent spin(wxEVT_COMMAND_SPINCTRL_UPDATED, pSpinCtrl->GetId());
+	spin.SetPosition(newValue);
+	spin.SetEventObject(pSpinCtrl);
+	pSpinCtrl->ProcessEvent(spin);
+}
+
+void GuiTestBase::SetDatePickerValue(wxDatePickerCtrl* pPicker, 
+	const wxDateTime& rNewValue)
+{
+	assert(pPicker);
+	assert(pPicker->IsEnabled());
+	pPicker->SetValue(rNewValue);
+	wxDateEvent pick(pPicker, rNewValue, wxEVT_DATE_CHANGED);
+	pPicker->ProcessEvent(pick);	
 }
 
 void GuiTestBase::SetSelection(wxListBox* pListCtrl, int value)
