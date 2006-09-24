@@ -27,6 +27,7 @@
 
 #include <wx/button.h>
 #include <wx/datectrl.h>
+#include <wx/dateevt.h>
 #include <wx/listbox.h>
 #include <wx/spinctrl.h>
 #include <wx/statbox.h>
@@ -45,6 +46,12 @@ BEGIN_EVENT_TABLE(RestorePanel, FunctionPanel)
 	EVT_CHECKBOX(ID_Restore_Panel_To_Date_Checkbox, 
 		RestorePanel::OnClickToDateCheckBox)
 	EVT_CHECKBOX(wxID_ANY, RestorePanel::OnCheckBoxClick)
+	EVT_DATE_CHANGED(ID_Restore_Panel_Date_Picker, 
+		RestorePanel::OnChangeRestoreToDate)
+	EVT_SPINCTRL(ID_Restore_Panel_Hour_Spin, 
+		RestorePanel::OnChangeRestoreToTime)
+	EVT_SPINCTRL(ID_Restore_Panel_Min_Spin,  
+		RestorePanel::OnChangeRestoreToTime)
 END_EVENT_TABLE()
 
 RestorePanel::RestorePanel
@@ -232,6 +239,8 @@ void RestorePanel::UpdateEnabledState()
 		mpRestoreDirsCheck->Enable();
 	}
 	*/
+	
+	UpdateRestoreSpec();
 }
 
 void RestorePanel::OnClickToDateCheckBox(wxCommandEvent& rEvent)
@@ -241,4 +250,27 @@ void RestorePanel::OnClickToDateCheckBox(wxCommandEvent& rEvent)
 	mpHourSpin  ->SetValue(now.GetHour());
 	mpMinSpin   ->SetValue(now.GetMinute());
 	UpdateEnabledState();
+}
+
+void RestorePanel::OnChangeRestoreToDate(wxDateEvent& rEvent)
+{
+	UpdateRestoreSpec();
+}
+
+void RestorePanel::UpdateRestoreSpec()
+{
+	RestoreSpec& rSpec = mpFilesPanel->GetRestoreSpec();
+	rSpec.SetRestoreToDateEnabled(mpToDateCheckBox->GetValue());
+	
+	wxDateTime epoch = mpDatePicker->GetValue();
+	epoch.SetHour  (mpHourSpin->GetValue());
+	epoch.SetMinute(mpMinSpin ->GetValue());
+	epoch.SetSecond(0);
+	epoch.SetMillisecond(0);
+	rSpec.SetRestoreToDate(epoch);
+}
+
+void RestorePanel::OnChangeRestoreToTime(wxSpinEvent& rEvent)
+{
+	UpdateRestoreSpec();
 }

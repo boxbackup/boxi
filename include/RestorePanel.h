@@ -38,6 +38,8 @@ class RestoreProgressPanel;
 class DirSelButton;
 class wxDatePickerCtrl;
 class wxSpinCtrl;
+class wxDateEvent;
+class wxSpinEvent;
 
 /** 
  * RestorePanel
@@ -81,7 +83,10 @@ class RestorePanel : public FunctionPanel, RestoreSpecChangeListener
 	virtual void OnClickStartButton (wxCommandEvent& rEvent);
 	void OnCheckBoxClick(wxCommandEvent& rEvent);
 	void OnClickToDateCheckBox(wxCommandEvent& rEvent);
+	void OnChangeRestoreToDate(wxDateEvent& rEvent);
+	void OnChangeRestoreToTime(wxSpinEvent& rEvent);
 	void UpdateEnabledState();
+	void UpdateRestoreSpec();
 	
 	DECLARE_EVENT_TABLE()
 };
