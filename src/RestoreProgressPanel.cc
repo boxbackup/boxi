@@ -523,6 +523,39 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 	mpStopCloseButton->SetLabel(wxT("Close"));
 }
 
+ServerFileVersion* RestoreProgressPanel::GetVersionToRestore
+	(ServerCacheNode* pFile, const RestoreSpec& rSpec)
+{
+	if (!rSpec.GetRestoreToDateEnabled())
+	{
+		// easy case first
+		return pFile->GetMostRecent();
+	}
+	
+	wxDateTime epoch = rSpec.GetRestoreToDate();
+	ServerFileVersion::SafeVector& rVersions = pFile->GetVersions();
+	ServerFileVersion* pVersion = NULL;
+
+	for (ServerFileVersion::Iterator i = rVersions.begin();
+		i != rVersions.end(); i++)
+	{
+		if (i->GetDateTime().IsLaterThan(epoch))
+		{
+			continue;
+		}
+		
+		if (pVersion != NULL && i->GetDateTime().IsEarlierThan(
+			pVersion->GetDateTime()))
+		{
+			continue;
+		}
+		
+		pVersion = &(*i);
+	}
+	
+	return pVersion;
+}
+
 void RestoreProgressPanel::CountFilesRecursive
 (
 	RestoreSpec& rSpec, ServerCacheNode* pRootNode, 
@@ -532,7 +565,7 @@ void RestoreProgressPanel::CountFilesRecursive
 	// stop if requested
 	if (mRestoreStopRequested) return;
 		
-	ServerFileVersion* pVersion = pCurrentNode->GetMostRecent();
+	ServerFileVersion* pVersion = GetVersionToRestore(pCurrentNode, rSpec);
 	if (!pVersion)
 	{
 		// no version available, cannot restore
@@ -599,7 +632,7 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 	// stop if requested
 	if (mRestoreStopRequested) return false;
 		
-	ServerFileVersion* pVersion = pNode->GetMostRecent();
+	ServerFileVersion* pVersion = GetVersionToRestore(pNode, rSpec);
 	
 	RestoreSpecEntry::Vector specs = rSpec.GetEntries();
 	for (RestoreSpecEntry::Iterator i = specs.begin();

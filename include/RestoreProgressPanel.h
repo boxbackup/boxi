@@ -196,6 +196,8 @@ class RestoreProgressPanel
 		}
 	}
 	
+	ServerFileVersion* GetVersionToRestore(ServerCacheNode* pFile,
+		const RestoreSpec& rSpec);
 	void CountFilesRecursive(RestoreSpec& rSpec, 
 		ServerCacheNode* pRootNode, 
 		ServerCacheNode* pCurrentNode, int blockSize);
