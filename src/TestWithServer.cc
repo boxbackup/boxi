@@ -71,6 +71,7 @@ void TestWithServer::setUp()
 {
 	// create a working directory
 	mBaseDir.AssignTempFileName(wxT("boxi-test-tempdir-"));
+	CPPUNIT_ASSERT(mBaseDir.FileExists());
 	CPPUNIT_ASSERT(wxRemoveFile(mBaseDir.GetFullPath()));
 	CPPUNIT_ASSERT(wxMkdir     (mBaseDir.GetFullPath(), 0700));
 	CPPUNIT_ASSERT(mBaseDir.DirExists());
@@ -82,6 +83,7 @@ void TestWithServer::setUp()
 	
 	// create a directory to hold bbstored's store temporarily
 	mStoreDir = wxFileName(mBaseDir.GetFullPath(), _("store"));
+	CPPUNIT_ASSERT(!mStoreDir.DirExists());
 	CPPUNIT_ASSERT(wxMkdir(mStoreDir.GetFullPath(), 0700));
 	CPPUNIT_ASSERT(mStoreDir.DirExists());
 
@@ -162,7 +164,7 @@ void TestWithServer::setUp()
 		CPPUNIT_ASSERT(storeConfigFile.Write(pidFile.GetFullPath()));
 		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
 	
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tListenAddresses = inet:0.0.0.0\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tListenAddresses = inet:127.0.0.1\n")));
 		
 		wxFileName serverCert(MakeAbsolutePath(
 			_("../test/config/bbstored/server-cert.pem")));
@@ -366,7 +368,7 @@ void TestWithServer::CompareFiles(const wxFileName& first,
 	char buffer1[4096], buffer2[sizeof(buffer1)];
 	for (int pos = 0; pos < a.Length(); pos += sizeof(buffer1))
 	{
-		int toread = sizeof(buffer1);
+		size_t toread = sizeof(buffer1);
 		if (toread > a.Length() - pos)
 		{
 			toread = a.Length() - pos;
@@ -584,7 +586,10 @@ void TestWithServer::CompareDirsInternal(wxFileName file1, wxFileName file2,
 
 void TestWithServer::tearDown()
 {
-	mpMainFrame->GetConnection()->Disconnect();
+	if (mpMainFrame)
+	{
+		mpMainFrame->GetConnection()->Disconnect();
+	}
 	
 	if (mapServer.get())
 	{
