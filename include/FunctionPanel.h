@@ -25,11 +25,14 @@
 #ifndef _FUNCTIONPANEL_H
 #define _FUNCTIONPANEL_H
 
-#include <wx/wx.h>
-
 #include "ClientConfig.h"
 class ClientInfoPanel;
 class MainFrame;
+
+class wxButton;
+class wxListBox;
+class wxSizer;
+class wxStaticBoxSizer;
 
 class FunctionPanel 
 : public wxPanel, public ConfigChangeListener 

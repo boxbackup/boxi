@@ -23,6 +23,7 @@
  */
  
 
+#include <wx/sizer.h>
 #include <wx/statbox.h>
 #include <wx/listbox.h>
 #include <wx/button.h>
