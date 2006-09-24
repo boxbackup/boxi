@@ -1,0 +1,21 @@
+Building for Windows Native using Cygwin
+========================================
+
+Install Cygwin, Zlib, OpenSSL and PCRE as described in 
+boxbackup/docs/backup/win32_build_on_cygwin_using_mingw.txt
+
+Download wxMSW-2.6.3.tar.gz. Untar and configure as follows:
+
+	export CC="gcc -mno-cygwin -mthreads"
+	export CXX="g++ -mno-cygwin -mthreads"
+	./configure --enable-unicode --enable-shared --disable-static \
+		--disable-optimise --enable-debug --enable-debug_gdb \
+		--with-msw --without-expat --target=i686-pc-mingw32
+	make
+	make install
+
+Add C:\Cygwin\usr\local\bin to your Windows PATH environment variable.
+
+Download and install CPPUNIT.
+
+Download and untar Boxi. Run ./configure-mingw.txt.
