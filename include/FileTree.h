@@ -25,6 +25,7 @@
 #ifndef _FILETREE_H
 #define _FILETREE_H
 
+#include <wx/image.h>
 #include <wx/imaglist.h>
 #include <wx/mstream.h>
 #include <wx/treectrl.h>
