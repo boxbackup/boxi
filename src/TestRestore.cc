@@ -298,7 +298,8 @@ void TestRestore::RunTest()
 	
 	RestoreProgressPanel* pRestoreProgressPanel = wxDynamicCast
 	(
-		mpMainFrame->FindWindow(ID_Restore_Progress_Panel), RestoreProgressPanel
+		mpMainFrame->FindWindow(ID_Restore_Progress_Panel), 
+		RestoreProgressPanel
 	);
 	CPPUNIT_ASSERT(pRestoreProgressPanel);
 
