@@ -59,6 +59,17 @@ class ServerFileVersion
 	typedef std::vector<ServerFileVersion> Vector;
 	typedef Vector::iterator Iterator;
 	typedef Vector::const_iterator ConstIterator;
+
+	class SafeVector
+	{
+		private:
+		std::vector<ServerFileVersion>& mrRealVector;
+		public:
+		SafeVector(std::vector<ServerFileVersion>& rRealVector)
+		: mrRealVector(rRealVector) { }
+		ServerFileVersion::Iterator begin() { return mrRealVector.begin(); }
+		ServerFileVersion::Iterator end()   { return mrRealVector.end(); }
+	};		
 	
 	private:
 	int64_t       mBoxFileId;
@@ -81,6 +92,7 @@ class ServerFileVersion
 		mFlags        = 0;
 		mSizeInBlocks = 0;
 		mCached       = false;
+		mDateTime     = wxDateTime((time_t)0);
 	}
 	ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry);
 	ServerFileVersion(const ServerFileVersion& rToCopy);
@@ -121,8 +133,7 @@ class ServerCacheNode
 		: mrRealVector(rRealVector) { }
 		ServerCacheNode::Iterator begin() { return mrRealVector.begin(); }
 		ServerCacheNode::Iterator end()   { return mrRealVector.end(); }
-	};
-			
+	};		
 
 	private:
 	wxString                  mFileName;
@@ -135,7 +146,8 @@ class ServerCacheNode
 	ServerConnection*         mpServerConnection;
 	int                       mConnectionIndex;
 	wxMutex                   mMutex;
-	SafeVector                mChildrenSafe;
+	ServerCacheNode::SafeVector   mChildrenSafe;
+	ServerFileVersion::SafeVector mVersionsSafe;
 	
 	public:
 	ServerCacheNode(ServerConnection* pServerConnection) 
@@ -146,7 +158,8 @@ class ServerCacheNode
 	  mCached           (false),
 	  mpServerConnection(pServerConnection),
 	  mConnectionIndex  (pServerConnection->GetConnectionIndex()),
-	  mChildrenSafe     (mChildren)
+	  mChildrenSafe     (mChildren),
+	  mVersionsSafe     (mVersions)
 	{
 		ServerFileVersion dummyRootVersion; 
 		mVersions.push_back(dummyRootVersion);
@@ -163,7 +176,8 @@ class ServerCacheNode
 	  mCached           (false),
 	  mpServerConnection(rParent.mpServerConnection),
 	  mConnectionIndex  (mpServerConnection->GetConnectionIndex()),
-	  mChildrenSafe     (mChildren)
+	  mChildrenSafe     (mChildren),
+	  mVersionsSafe     (mVersions)
 	{ 
 		if (rParent.IsRoot())
 		{
@@ -187,7 +201,8 @@ class ServerCacheNode
 	  mCached           (rToCopy.mCached),
 	  mpServerConnection(rToCopy.mpServerConnection),
 	  mConnectionIndex  (rToCopy.mConnectionIndex),
-	  mChildrenSafe     (mChildren)
+	  mChildrenSafe     (mChildren),
+	  mVersionsSafe     (mVersions)
 	{ }
 	
 	ServerCacheNode& ServerCacheNode::operator=(const ServerCacheNode& rToCopy)
@@ -216,12 +231,11 @@ class ServerCacheNode
 	const wxString&    GetFileName()      const { return mFileName; }
 	const wxString&    GetFullPath()      const { return mFullPath; }
 	ServerCacheNode*   GetParent()        const { return mpParentNode; }
-	const ServerFileVersion::Vector& GetVersions();
-	SafeVector*        GetChildren();
+	ServerFileVersion::SafeVector& GetVersions() { return mVersionsSafe; }
+	ServerFileVersion*             GetMostRecent();
+	ServerCacheNode::SafeVector*   GetChildren();
 
-	wxMutex&           GetLock() { return mMutex; }
-	
-	ServerFileVersion* GetMostRecent();
+	wxMutex&           GetLock() { return mMutex; }	
 };
 
 class ServerCache
@@ -268,12 +282,20 @@ class RestoreSpec
 {
 	private:
 	RestoreSpecEntry::Vector mEntries;
+	bool mRestoreToDateEnabled;
+	wxDateTime mRestoreToDate;
 	
 	public:
 	RestoreSpec() { }
 	const RestoreSpecEntry::Vector& GetEntries() const { return mEntries; }
 	void Add   (const RestoreSpecEntry& rNewEntry);
 	void Remove(const RestoreSpecEntry& rOldEntry);
+	void SetRestoreToDateEnabled(bool newValue) 
+	{ mRestoreToDateEnabled = newValue; }
+	void SetRestoreToDate(const wxDateTime& rNewValue)
+	{ mRestoreToDate = rNewValue; }
+	bool       GetRestoreToDateEnabled() const { return mRestoreToDateEnabled; }
+	wxDateTime GetRestoreToDate       () const { return mRestoreToDate; }
 };
 
 class RestoreSpecChangeListener
