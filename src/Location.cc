@@ -220,9 +220,8 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 	{
 		// wxLogDebug(wxT(" pass %d"), pass);
 
-		typedef std::list<MyExcludeEntry>::const_iterator iterator;
-		
-		for (iterator pEntry = rExcludeList.begin();
+		for (MyExcludeEntry::ConstIterator 
+			pEntry  = rExcludeList.begin();
 			pEntry != rExcludeList.end(); pEntry++)
 		{
 			ExcludeMatch match = pEntry->GetMatch();
@@ -332,12 +331,12 @@ ExcludeList* Location::GetBoxExcludeList(bool listDirs) const
 	ExcludeList *pInclude = new ExcludeList;
 	pExclude->SetAlwaysIncludeList(pInclude);
 	
-	typedef const std::list<MyExcludeEntry> tMyExcludeEntries;
-	tMyExcludeEntries& rEntries(mExcluded.GetEntries());
+	const MyExcludeEntry::List& rEntries(mExcluded.GetEntries());
 	
 	try
 	{
-		for (tMyExcludeEntries::const_iterator pEntry = rEntries.begin();
+		for (MyExcludeEntry::ConstIterator 
+			pEntry  = rEntries.begin();
 			pEntry != rEntries.end(); pEntry++)
 		{
 			if (listDirs && (pEntry->GetFileDir() == EFD_FILE))
