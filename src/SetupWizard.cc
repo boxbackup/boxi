@@ -795,6 +795,7 @@ class CertRequestPage : public FileSavingPage
 
 	bool CreateNewFileImpl()
 	{
+		/*
 		wxString msg;
 		std::auto_ptr<SslConfig> apConfig(SslConfig::Get(&msg));
 		if (!apConfig.get())
@@ -808,7 +809,7 @@ class CertRequestPage : public FileSavingPage
 			"x509_extensions");
 		if (pExtensions) 
 		{
-			/* Check syntax of file */
+			// Check syntax of file
 			X509V3_CTX ctx;
 			X509V3_set_ctx_test(&ctx);
 			X509V3_set_nconf(&ctx, apConfig->GetConf());
@@ -832,6 +833,8 @@ class CertRequestPage : public FileSavingPage
 		{
 			ERR_clear_error();
 		}
+		*/
+		std::auto_ptr<SslConfig> apConfig;
 		
 		if(!ASN1_STRING_set_default_mask_asc("nombstr")) 
 		{
@@ -841,6 +844,7 @@ class CertRequestPage : public FileSavingPage
 			return FALSE;
 		}
 
+		wxString msg;
 		EVP_PKEY* pKey = LoadKey(mKeyFileName, &msg);
 		if (!pKey)
 		{
@@ -933,7 +937,8 @@ class CertRequestPage : public FileSavingPage
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
-		
+	
+		/*	
 		X509V3_CTX ext_ctx;
 		X509V3_set_ctx(&ext_ctx, NULL, NULL, pRequest, NULL, 0);
 		X509V3_set_nconf(&ext_ctx, rapConfig->GetConf());
@@ -962,6 +967,7 @@ class CertRequestPage : public FileSavingPage
 		{
 			ERR_clear_error();
 		}
+		*/
 
 		const EVP_MD* pDigestAlgo = EVP_get_digestbyname("sha1");
 		if (!pDigestAlgo)
