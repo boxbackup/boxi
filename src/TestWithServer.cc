@@ -373,8 +373,8 @@ void TestWithServer::CompareFiles(const wxFileName& first,
 		{
 			toread = a.Length() - pos;
 		}
-		CPPUNIT_ASSERT_EQUAL(toread, a.Read(buffer1, toread));
-		CPPUNIT_ASSERT_EQUAL(toread, b.Read(buffer2, toread));
+		CPPUNIT_ASSERT_EQUAL((ssize_t)toread, a.Read(buffer1, toread));
+		CPPUNIT_ASSERT_EQUAL((ssize_t)toread, b.Read(buffer2, toread));
 		CPPUNIT_ASSERT_EQUAL(0, memcmp(buffer1, buffer2, toread));
 	}
 }
