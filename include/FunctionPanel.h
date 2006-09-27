@@ -25,7 +25,10 @@
 #ifndef _FUNCTIONPANEL_H
 #define _FUNCTIONPANEL_H
 
+#include <wx/panel.h>
+
 #include "ClientConfig.h"
+
 class ClientInfoPanel;
 class MainFrame;
 
