@@ -28,11 +28,18 @@
 #include <wx/app.h>
 #include <wx/filedlg.h>
 
-#include <cppunit/SourceLine.h>
+// #include <cppunit/SourceLine.h>
 
 #include "main.h"
 
 class TestSetUpDecorator;
+
+class wxFileDialog;
+
+namespace CppUnit
+{
+	class SourceLine;
+}
 
 class BoxiApp : public wxApp
 {
