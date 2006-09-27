@@ -3,7 +3,7 @@
  *
  *  Mon Feb 28 23:38:27 2005
  *  Copyright 2005-2006 Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
