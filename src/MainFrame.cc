@@ -69,10 +69,9 @@ MainFrame::MainFrame
 	
 	mpTopNotebook = new wxNotebook(this, ID_Top_Notebook);
 
-	GeneralPanel* pGeneralPanel = new GeneralPanel(this, 
-		mpConfig, mpServerConnection, mpTopNotebook);
-		
-	pGeneralPanel->AddToNotebook(mpTopNotebook);
+	mpGeneralPanel = new GeneralPanel(this, mpConfig, mpServerConnection, 
+		mpTopNotebook);
+	mpGeneralPanel->AddToNotebook(mpTopNotebook);
 	
 	/*
 	wxPanel* pBackupDaemonPanel = new BackupDaemonPanel(
@@ -186,7 +185,7 @@ void MainFrame::DoFileOpen(const wxString& path)
 		return;
 	}		
 	
-	mpClientConfigPanel->Reload();
+	mpGeneralPanel->RefreshConfig();
 
 	UpdateTitle();
 	mpConfig->AddListener(this);
