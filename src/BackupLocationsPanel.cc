@@ -119,7 +119,8 @@ bool BackupTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive)
 	pTreeCtrl->DeleteChildren(GetId());
 
 	FileNameArray entries;
-	
+
+#ifdef WIN32
 	// root node is My Computer, contains a list of drives
 	if (GetParentNode() == NULL && mFullPath.IsSameAs(wxEmptyString))
 	{
@@ -132,7 +133,7 @@ bool BackupTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive)
 	}
 	else
 	{
-
+#endif // WIN32
 		wxDir dir(mFullPath);
 		
 		if (!dir.IsOpened())
@@ -153,7 +154,9 @@ bool BackupTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive)
 			entries.Add(fn);
 			doContinue = dir.GetNext(&theCurrentFileName);
 		}
+#ifdef WIN32
 	}
+#endif
 
 	for (size_t i = 0; i < entries.GetCount(); i++)
 	{
@@ -164,11 +167,14 @@ bool BackupTreeNode::_AddChildrenSlow(wxTreeCtrl* pTreeCtrl, bool recursive)
 			fileNameObject.GetFullPath());
 		
 		wxString label = fileNameObject.GetFullName();
+
+		#ifdef WIN32
 		if (label.IsSameAs(wxEmptyString))
 		{
 			wxFSVolumeBase vol(fileNameObject.GetFullPath());
 			label = vol.GetDisplayName();
 		}
+		#endif
 
 		wxTreeItemId newId = pTreeCtrl->AppendItem(GetId(),
 			label, -1, -1, pNewNode);
