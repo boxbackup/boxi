@@ -25,10 +25,9 @@
 #ifndef _SETUPWIZARDPANEL_H
 #define _SETUPWIZARDPANEL_H
 
-#include <wx/wx.h>
 #include <wx/wizard.h>
 
-#include "ClientConfig.h"
+class ClientConfig;
 
 typedef enum
 {
