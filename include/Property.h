@@ -2,8 +2,8 @@
  *            Property.h
  *
  *  Mon Feb 28 23:36:29 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
