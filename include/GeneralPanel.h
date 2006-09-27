@@ -25,7 +25,7 @@
 #ifndef _GENERAL_PANEL_H
 #define _GENERAL_PANEL_H
 
-#include <wx/wx.h>
+#include <wx/panel.h>
 
 class BackupPanel;
 class ClientConfig;
@@ -35,6 +35,8 @@ class MainFrame;
 class RestorePanel;
 class ServerConnection;
 class SetupWizard;
+
+class wxNotebook;
 
 /** 
  * GeneralPanel
@@ -53,6 +55,7 @@ class GeneralPanel : public wxPanel
 	);
 
 	void AddToNotebook(wxNotebook* pNotebook);
+	void RefreshConfig() { mpConfigPanel->Reload(); }
 		
 	private:
 	MainFrame*       mpMainFrame;
