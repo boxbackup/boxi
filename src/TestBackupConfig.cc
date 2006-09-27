@@ -59,11 +59,11 @@
 #include "main.h"
 #include "BoxiApp.h"
 #include "ClientConfig.h"
+#include "FileTree.h"
 #include "MainFrame.h"
 #include "SetupWizard.h"
 #include "SslConfig.h"
 #include "TestBackupConfig.h"
-#include "FileTree.h"
 
 #include "ServerConnection.h"
 
