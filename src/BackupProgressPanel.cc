@@ -29,10 +29,6 @@
 #include <stdio.h>
 #include <regex.h>
 
-#ifdef HAVE_MNTENT_H
-	#include <mntent.h>
-#endif
-
 #include <wx/statbox.h>
 #include <wx/listbox.h>
 #include <wx/button.h>
@@ -56,6 +52,10 @@
 #include "Utils.h"
 #undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #undef NDEBUG
+
+#ifdef HAVE_MNTENT_H
+	#include <mntent.h>
+#endif
 
 #include "main.h"
 #include "BackupProgressPanel.h"
