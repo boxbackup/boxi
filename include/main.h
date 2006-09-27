@@ -28,9 +28,9 @@
 // #include <stdlib.h>
 // #include "dmalloc.h"
 
-#include <wx/panel.h>
-
 #define BOXI_VERSION "0.1.1"
+
+#include "wx/defs.h" // for wxID_HIGHEST
 
 enum {
 	ID_Main_Frame = wxID_HIGHEST + 1,
@@ -196,6 +196,12 @@ typedef enum
 	BM_RESTORE_FAILED_TO_CREATE_OBJECT,
 }
 message_t;
+
+#include <wx/string.h>
+
+class wxPanel;
+class wxWindow;
+class wxSizer;
 
 void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor, 
 	bool growToFit, wxSizer *sizer);
