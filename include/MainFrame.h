@@ -2,8 +2,8 @@
  *            MainFrame.h
  *
  *  Sun Jan 22 22:35:37 2006
- *  Copyright  2006  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -25,17 +25,22 @@
 #ifndef _MAINFRAME_H
 #define _MAINFRAME_H
 
-#include <wx/wx.h>
+#include <wx/frame.h>
 
 #include "ClientConfig.h"
 
 class ClientConfig;
-class ServerConnection;
 class ClientInfoPanel;
+class GeneralPanel;
+class ServerConnection;
+class TestInterface;
+
+// class wxCloseEvent;
+// class wxCommandEvent;
 class wxMenu;
 class wxNotebook;
+// class wxSizeEvent;
 class wxStatusBar;
-class TestInterface;
 
 class MainFrame : public wxFrame, public ConfigChangeListener 
 {
@@ -83,8 +88,8 @@ class MainFrame : public wxFrame, public ConfigChangeListener
 	// wxString       mConfigFileName;
 	ClientConfig*     mpConfig;
 	ServerConnection* mpServerConnection;
+	GeneralPanel*     mpGeneralPanel;
 	wxNotebook*       mpTopNotebook;
-	ClientInfoPanel*  mpClientConfigPanel;
 	wxMenu*           mpViewMenu;
 	TestInterface*    mpTestInterface;
 
