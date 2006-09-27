@@ -2,8 +2,8 @@
  *            TestBackupConfig.h
  *
  *  Sat Aug 12 14:01:01 2006
- *  Copyright  2006  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
