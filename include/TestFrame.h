@@ -199,10 +199,23 @@ class GuiTestBase : public CppUnit::TestCase
 				wxTopLevelWindows.Item(i)->GetData();
 			CloseWindow(pOpenWindow);
 		}
-		
-		while (wxTopLevelWindows.GetCount() > 0)
+	
+		try
+		{	
+			while (wxTopLevelWindows.GetCount() > 0)
+			{
+				CPPUNIT_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
+			}
+		}
+		catch (std::exception &e)
 		{
-			CPPUNIT_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
+			printf("Caught exception %s in GuiTestBase::tearDown\n",
+				e.what());
+		}
+		catch (...)
+		{
+			printf("Caught unknown exception in "
+				"GuiTestBase::tearDown\n");
 		}
 	}	
 };
