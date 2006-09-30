@@ -36,6 +36,16 @@ class TestWithServer : public TestWithConfig
 	virtual void setUp();
 	virtual void tearDown();
 	virtual ~TestWithServer() { }
+	TestWithServer()
+	: TestWithConfig        (),
+	  mpTestDataLocation    (NULL),
+	  mpMainFrame           (NULL),
+	  mpBackupPanel         (NULL),
+	  mpBackupProgressPanel (NULL),
+	  mpBackupErrorList     (NULL),
+	  mpBackupStartButton   (NULL),
+	  mpBackupProgressCloseButton (NULL)
+	{ }
 	
 	protected:
 	wxFileName mBaseDir, mConfDir, mStoreDir, mTestDataDir,
