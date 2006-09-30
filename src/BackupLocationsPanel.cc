@@ -381,14 +381,23 @@ class BackupTreeCtrl : public FileTree
 		wxWindowID id,
 		BackupTreeNode* pRootNode,
 		const wxString& rRootLabel
-	)
-	: FileTree(pParent, id, pRootNode, rRootLabel)
-	{ }
+	);
 	
 	private:
 	virtual int OnCompareItems(const wxTreeItemId& item1, 
 		const wxTreeItemId& item2);
 };
+
+BackupTreeCtrl::BackupTreeCtrl
+(
+	ClientConfig* pConfig,
+	wxWindow* pParent, 
+	wxWindowID id,
+	BackupTreeNode* pRootNode,
+	const wxString& rRootLabel
+)
+: FileTree(pParent, id, pRootNode, rRootLabel)
+{ }
 
 int BackupTreeCtrl::OnCompareItems
 (
