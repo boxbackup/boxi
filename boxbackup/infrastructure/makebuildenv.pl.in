@@ -38,15 +38,8 @@ unless(-d 'local')
 my %env_flags;
 
 my $windows_include_path = "";
-if ($target_windows)
-{
-	$module_dependency{"lib/common"} = ["lib/win32"];
-	push @implicit_deps, "lib/win32";
-}
-else
-{
-	# $env_flags{'IGNORE_lib/win32'} = 1;
-}
+$module_dependency{"lib/common"} = ["lib/win32"];
+push @implicit_deps, "lib/win32";
 
 # print "Flag: $_\n" for(keys %env_flags);
 
