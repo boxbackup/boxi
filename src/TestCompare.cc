@@ -145,7 +145,103 @@ void TestCompare::RunTest()
 	CPPUNIT_ASSERT(!pComparePanel->IsShown());	
 	ClickButtonWaitEvent(ID_Main_Frame, ID_General_Compare_Button);
 	CPPUNIT_ASSERT(pComparePanel->IsShown());
+
+	wxRadioButton* pCompareAllRadio = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_All_Locs_Radio), 
+		wxRadioButton
+	);
+	CPPUNIT_ASSERT(pCompareAllRadio);
+	CPPUNIT_ASSERT(pCompareAllRadio->GetValue());
+
+	wxRadioButton* pCompareOneRadio = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_One_Loc_Radio), 
+		wxRadioButton
+	);
+	CPPUNIT_ASSERT(pCompareOneRadio);
+	CPPUNIT_ASSERT(!pCompareOneRadio->GetValue());
+
+	wxChoice* pCompareOneLocChoice = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_One_Loc_Choice), 
+		wxChoice
+	);
+	CPPUNIT_ASSERT(pCompareOneLocChoice);
+	CPPUNIT_ASSERT(!pCompareOneLocChoice->IsEnabled());
+	CPPUNIT_ASSERT_EQUAL(1, pCompareOneLocChoice->GetCount());
+	CPPUNIT_ASSERT_EQUAL(0, pCompareOneLocChoice->GetSelection());
 	
+	wxString testLabel;
+	testLabel.Printf(wxT("%s -> %s"), mpTestDataLocation->GetName().c_str(),
+		mpTestDataLocation->GetPath().c_str());
+
+	wxRadioButton* pCompareDirRadio = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_Dir_Radio), 
+		wxRadioButton
+	);
+	CPPUNIT_ASSERT(pCompareDirRadio);
+	CPPUNIT_ASSERT(!pCompareDirRadio->GetValue());
+
+	ClickRadioWaitEvent(pCompareOneRadio);
+	CPPUNIT_ASSERT(pCompareOneLocChoice->IsEnabled());
+	ClickRadioWaitEvent(pCompareAllRadio);
+	CPPUNIT_ASSERT(!pCompareOneLocChoice->IsEnabled());
+	ClickRadioWaitEvent(pCompareOneRadio);
+	CPPUNIT_ASSERT(pCompareOneLocChoice->IsEnabled());
+
+	CPPUNIT_ASSERT_EQUAL(1, pCompareOneLocChoice->GetCount());
+	CPPUNIT_ASSERT_EQUAL(0, pCompareOneLocChoice->GetSelection());
+	
+	RemoveDefaultLocation();
+	CPPUNIT_ASSERT_EQUAL(0, pCompareOneLocChoice->GetCount());
+	CPPUNIT_ASSERT_EQUAL(wxNOT_FOUND, pCompareOneLocChoice->GetSelection());
+	
+	SetupDefaultLocation();
+	CPPUNIT_ASSERT_EQUAL(1, pCompareOneLocChoice->GetCount());
+	CPPUNIT_ASSERT_EQUAL(0, pCompareOneLocChoice->GetSelection());
+	
+	wxTextCtrl* pCompareDirLocalText = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_Dir_Local_Path_Text), 
+		wxTextCtrl
+	);
+	CPPUNIT_ASSERT(pCompareDirLocalText);
+	CPPUNIT_ASSERT(!pCompareDirLocalText->IsEnabled());
+
+	wxButton* pCompareDirLocalButton = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_Dir_Local_Path_Button), 
+		wxButton
+	);
+	CPPUNIT_ASSERT(pCompareDirLocalButton);
+	CPPUNIT_ASSERT(!pCompareDirLocalButton->IsEnabled());
+
+	wxTextCtrl* pCompareDirRemoteText = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_Dir_Remote_Path_Text), 
+		wxTextCtrl
+	);
+	CPPUNIT_ASSERT(pCompareDirRemoteText);
+	CPPUNIT_ASSERT(!pCompareDirRemoteText->IsEnabled());
+
+	wxButton* pCompareDirRemoteButton = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_Dir_Remote_Path_Button), 
+		wxButton
+	);
+	CPPUNIT_ASSERT(pCompareDirRemoteButton);
+	CPPUNIT_ASSERT(!pCompareDirRemoteButton->IsEnabled());
+
+	ClickRadioWaitEvent(pCompareDirRadio);
+	CPPUNIT_ASSERT(pCompareDirLocalText->IsEnabled());
+	CPPUNIT_ASSERT(pCompareDirLocalButton->IsEnabled());
+	CPPUNIT_ASSERT(pCompareDirRemoteText->IsEnabled());
+	CPPUNIT_ASSERT(pCompareDirRemoteButton->IsEnabled());
+	CPPUNIT_ASSERT(!pCompareOneLocChoice->IsEnabled());
+
+	/*
 	wxListBox* pLocsList = wxDynamicCast
 	(
 		pComparePanel->FindWindow(ID_Function_Source_List), wxListBox
@@ -197,16 +293,17 @@ void TestCompare::RunTest()
 		Unzip(test3ZipFile, mTestDataDir, true);
 	}
 
+	wxTreeCtrl* pCompareTree = wxDynamicCast
+	(
+		pCompareFilesPanel->FindWindow(ID_Server_File_Tree), 
+		wxTreeCtrl
+	);
+	CPPUNIT_ASSERT(pCompareTree);
+	*/
+	
 	/*	
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(3, 4);
-	
-	wxTreeCtrl* pRestoreTree = wxDynamicCast
-	(
-		pRestoreFilesPanel->FindWindow(ID_Server_File_Tree), 
-		wxTreeCtrl
-	);
-	CPPUNIT_ASSERT(pRestoreTree);
 	
 	wxTreeItemId rootId = pRestoreTree->GetRootItem();
 	CPPUNIT_ASSERT(rootId.IsOk());
