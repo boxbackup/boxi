@@ -3,7 +3,7 @@
  *
  *  Mon Apr  4 20:35:39 2005
  *  Copyright 2005-2006 Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -25,9 +25,6 @@
 #ifndef _BACKUP_PROGRESS_PANEL_H
 #define _BACKUP_PROGRESS_PANEL_H
 
-#include <wx/wx.h>
-#include <wx/thread.h>
-
 #include "SandBox.h"
 
 #define NDEBUG
@@ -41,6 +38,7 @@
 #include "BoxiApp.h"
 #include "ClientConfig.h"
 #include "ClientConnection.h"
+#include "ProgressPanel.h"
 
 /** 
  * BackupProgressPanel
@@ -50,18 +48,16 @@
 class ServerConnection;
 
 class BackupProgressPanel 
-: public wxPanel, LocationResolver, RunStatusProvider, SysadminNotifier,
+: public ProgressPanel, LocationResolver, RunStatusProvider, SysadminNotifier,
 	ProgressNotifier
 {
 	public:
-	BackupProgressPanel(
+	BackupProgressPanel
+	(
 		ClientConfig*     pConfig,
 		ServerConnection* pConnection,
-		wxWindow* parent, wxWindowID id = -1,
-		const wxPoint& pos = wxDefaultPosition, 
-		const wxSize& size = wxDefaultSize,
-		long style = wxTAB_TRAVERSAL, 
-		const wxString& name = wxT("Backup Progress Panel"));
+		wxWindow*         pParent
+	);
 
 	void StartBackup();
 
@@ -88,17 +84,6 @@ class BackupProgressPanel
 	ClientConfig*     mpConfig;
 	ServerConnection* mpConnection;
 	TLSContext        mTlsContext;
-	wxListBox*        mpErrorList;
-	wxStaticText*     mpSummaryText;
-	wxStaticText*     mpCurrentText;
-	wxTextCtrl*       mpNumFilesDone;
-	wxTextCtrl*       mpNumFilesRemaining;
-	wxTextCtrl*       mpNumFilesTotal;
-	wxTextCtrl*       mpNumBytesDone;
-	wxTextCtrl*       mpNumBytesRemaining;
-	wxTextCtrl*       mpNumBytesTotal;
-	wxButton*         mpStopCloseButton;
-	wxGauge*          mpProgressGauge;
 	bool              mStorageLimitExceeded;
 	bool              mBackupRunning;
 	bool              mBackupStopRequested;
@@ -111,15 +96,6 @@ class BackupProgressPanel
 	std::vector<std::string> mIDMapMounts;
 	std::vector<BackupClientInodeToIDMap *> mCurrentIDMaps;
 	std::vector<BackupClientInodeToIDMap *> mNewIDMaps;
-
-	size_t  mNumFilesCounted;
-	int64_t mNumBytesCounted;
-
-	size_t  mNumFilesUploaded;
-	int64_t mNumBytesUploaded;
-
-	size_t  mNumFilesSynchronised;
-	int64_t mNumBytesSynchronised;
 
 	/* LocationResolver interface */
 	virtual bool FindLocationPathName(const std::string &rLocationName, 
@@ -164,10 +140,11 @@ class BackupProgressPanel
 		wxString msg;
 		msg.Printf(wxT("Scanning directory '%s'"), 
 			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
-		mpCurrentText->SetLabel(msg);
+		SetCurrentText(msg);
 		Layout();
 		wxYield();
 	}
+
 	virtual void NotifyDirStatFailed(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
@@ -180,6 +157,7 @@ class BackupProgressPanel
 		mpErrorList->Append(msg);
 		wxYield();
 	}
+
 	virtual void NotifyFileStatFailed(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
@@ -187,6 +165,7 @@ class BackupProgressPanel
 	{
 		NotifyFileReadFailed(pDirRecord, rLocalPath, rErrorMsg);
 	}
+
 	virtual void NotifyDirListFailed(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
@@ -199,6 +178,7 @@ class BackupProgressPanel
 		mpErrorList->Append(msg);
 		wxYield();
 	}
+
 	virtual void NotifyFileReadFailed(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
@@ -211,6 +191,7 @@ class BackupProgressPanel
 		mpErrorList->Append(msg);
 		wxYield();
 	}
+
 	virtual void NotifyFileModifiedInFuture(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath)
@@ -222,6 +203,7 @@ class BackupProgressPanel
 		mpErrorList->Append(msg);
 		wxYield();
 	}
+
 	virtual void NotifyFileSkippedServerFull(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath)
@@ -232,6 +214,7 @@ class BackupProgressPanel
 		mpErrorList->Append(msg);
 		wxYield();
 	}
+
 	virtual void NotifyFileUploadException(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
@@ -253,6 +236,7 @@ class BackupProgressPanel
 		mpErrorList->Append(msg);
 		wxYield();
 	}
+
 	virtual void NotifyFileUploading(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath)
@@ -260,10 +244,11 @@ class BackupProgressPanel
 		wxString msg;
 		msg.Printf(wxT("Backing up file '%s'"), 
 			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
-		mpCurrentText->SetLabel(msg);
+		SetCurrentText(msg);
 		Layout();
 		wxYield();
 	}
+
 	virtual void NotifyFileUploadingPatch(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath)
@@ -271,97 +256,43 @@ class BackupProgressPanel
 		wxString msg;
 		msg.Printf(wxT("Backing up file '%s' (sending patch)"), 
 			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
-		mpCurrentText->SetLabel(msg);
+		SetCurrentText(msg);
 		Layout();
 		wxYield();
 	}
+
 	virtual void NotifyFileUploaded(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
 		int64_t FileSize) 
 	{
+		/*
 		mNumFilesUploaded++;
 		mNumBytesUploaded += FileSize;
+		*/
 	}
+
 	virtual void NotifyFileSynchronised(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
 		int64_t FileSize) 
 	{
-		mNumFilesSynchronised++;
-		mNumBytesSynchronised += FileSize;
-
-		wxString str;
-		str.Printf(wxT("%d"), mNumFilesSynchronised);
-		mpNumFilesDone->SetValue(str);
-		mpNumBytesDone->SetValue(FormatNumBytes(mNumBytesSynchronised));
-
-		str.Printf(wxT("%d"), mNumFilesCounted - mNumFilesSynchronised);
-		mpNumFilesRemaining->SetValue(str);
-		mpNumBytesRemaining->SetValue(
-			FormatNumBytes(mNumBytesCounted - mNumBytesSynchronised));
-		
-		mpProgressGauge->SetValue(mNumFilesSynchronised);
+		NotifyMoreFilesDone(1, FileSize);
 	}
 	
 	void BackupProgressPanel::CountDirectory(BackupClientContext& rContext,
 		const std::string &rLocalPath);
+
 	void NotifyCountDirectory(const std::string& rLocalPath)
 	{
 		wxString msg;
 		msg.Printf(wxT("Counting files in directory '%s'"), 
 			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
-		mpCurrentText->SetLabel(msg);
+		SetCurrentText(msg);
 		Layout();
 		wxYield();
 	}
 	
-	wxString FormatNumBytes(int64_t bytes)
-	{
-		wxString units = wxT("B");
-		
-		if (bytes > 1024)
-		{
-			bytes >>= 10;
-			units = wxT("kB");
-		}
-		
-		if (bytes > 1024)
-		{
-			bytes >>= 10;
-			units = wxT("MB");
-		}
-
-		if (bytes > 1024)
-		{
-			bytes >>= 10;
-			units = wxT("GB");
-		}
-
-		wxString str;		
-		str.Printf(wxT("%lld %s"), bytes, units.c_str());
-		return str;
-	}
-	
-	void NotifyMoreFilesCounted(size_t numAdditionalFiles, 
-		int64_t numAdditionalBytes)
-	{
-		mNumFilesCounted += numAdditionalFiles;
-		mNumBytesCounted += numAdditionalBytes;
-
-		wxString str;
-		str.Printf(wxT("%d"), mNumFilesCounted);
-		mpNumFilesTotal->SetValue(str);
-		mpNumBytesTotal->SetValue(FormatNumBytes(mNumBytesCounted));
-	}
-
-	void ReportBackupFatalError(message_t messageId, wxString msg)
-	{
-		wxGetApp().ShowMessageBox(messageId, msg, wxT("Boxi Error"), 
-			wxOK | wxICON_ERROR, this);
-		mpErrorList->Append(msg);
-	}
-
 	DECLARE_EVENT_TABLE()
 };
 

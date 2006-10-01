@@ -65,157 +65,19 @@ BEGIN_EVENT_TABLE(RestoreProgressPanel, wxPanel)
 EVT_BUTTON(wxID_CANCEL, RestoreProgressPanel::OnStopCloseClicked)
 END_EVENT_TABLE()
 
-RestoreProgressPanel::RestoreProgressPanel(
+RestoreProgressPanel::RestoreProgressPanel
+(
 	ClientConfig*     pConfig,
 	ServerConnection* pConnection,
-	wxWindow* parent, 
-	wxWindowID id,
-	const wxPoint& pos, 
-	const wxSize& size,
-	long style, 
-	const wxString& name)
-	: wxPanel(parent, id, pos, size, style, name),
-	  mpConfig(pConfig),
-	  mpConnection(pConnection),
-	  mRestoreRunning(false)
+	wxWindow*         pParent
+)
+: ProgressPanel(pParent, ID_Restore_Progress_Panel, _("Restore Progress Panel")),
+  mpConfig(pConfig),
+  mpConnection(pConnection),
+  mRestoreRunning(false),
+  mRestoreStopRequested(false)
 {
-	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
-
-	wxStaticBoxSizer* pSummaryBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Summary"));
-	pMainSizer->Add(pSummaryBox, 0, wxGROW | wxALL, 8);
-	
-	wxSizer* pSummarySizer = new wxGridSizer(1, 2, 0, 4);
-	pSummaryBox->Add(pSummarySizer, 0, wxGROW | wxALL, 4);
-	
-	mpSummaryText = new wxStaticText(this, wxID_ANY, 
-		wxT("Restore not started yet"));
-	pSummarySizer->Add(mpSummaryText, 0, wxALIGN_CENTER_VERTICAL, 0);
-	
-	mpProgressGauge = new wxGauge(this, wxID_ANY, 100);
-	mpProgressGauge->SetValue(0);
-	pSummarySizer->Add(mpProgressGauge, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
-	mpProgressGauge->Hide();
-	
-	wxStaticBoxSizer* pCurrentBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Current Action"));
-	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-
-	mpCurrentText = new wxStaticText(this, wxID_ANY, 
-		wxT("Idle (nothing to do)"));
-	pCurrentBox->Add(mpCurrentText, 0, wxGROW | wxALL, 4);
-	
-	wxStaticBoxSizer* pErrorsBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Errors"));
-	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-	
-	mpErrorList = new wxListBox(this, ID_BackupProgress_ErrorList);
-	pErrorsBox->Add(mpErrorList, 1, wxGROW | wxALL, 4);
-
-	wxStaticBoxSizer* pStatsBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Statistics"));
-	pMainSizer->Add(pStatsBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-	
-	wxFlexGridSizer* pStatsGrid = new wxFlexGridSizer(4, 4, 4);
-	pStatsBox->Add(pStatsGrid, 1, wxGROW | wxALL, 4);
-
-	pStatsGrid->AddGrowableCol(0);
-	pStatsGrid->AddGrowableCol(1);
-	pStatsGrid->AddGrowableCol(2);
-	pStatsGrid->AddGrowableCol(3);
-
-	pStatsGrid->AddSpacer(1);
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Elapsed")));
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Remaining")));
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Total")));
-
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Files")));
-
-	mpNumFilesDone = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumFilesDone, 1, wxGROW, 0);
-	
-	mpNumFilesRemaining = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumFilesRemaining, 1, wxGROW, 0);
-	
-	mpNumFilesTotal = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumFilesTotal, 1, wxGROW, 0);
-
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Bytes")));
-
-	mpNumBytesDone = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumBytesDone, 1, wxGROW, 0);
-	
-	mpNumBytesRemaining = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumBytesRemaining, 1, wxGROW, 0);
-	
-	mpNumBytesTotal = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumBytesTotal, 1, wxGROW, 0);
-
-	wxSizer* pButtonSizer = new wxBoxSizer(wxHORIZONTAL);
-	pMainSizer->Add(pButtonSizer, 0, 
-		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-
-	mpStopCloseButton = new wxButton(this, wxID_CANCEL, wxT("Close"));
-	pButtonSizer->Add(mpStopCloseButton, 0, wxGROW, 0);
-
-	mRestoreRunning = false;
-	mRestoreStopRequested = false;
-	mNumFilesCounted = 0;
-	mNumBytesCounted = 0;
-
-	SetSizer(pMainSizer);
 }
-
-class wxLogListBox : public wxLog
-{
-	private:
-	wxListBox* mpTarget;
-	wxLog* mpOldTarget;
-	
-	public:
-	wxLogListBox(wxListBox* pTarget)
-	: wxLog(), mpTarget(pTarget), mpOldTarget(wxLog::GetActiveTarget()) 
-	{
-		wxLog::SetActiveTarget(this);		
-	}
-	virtual ~wxLogListBox() { wxLog::SetActiveTarget(mpOldTarget); }
-	
-	virtual void DoLog(wxLogLevel level, const wxChar *msg, time_t timestamp)
-	{
-		wxString msgOut;
-		
-		switch(level)
-		{
-			case wxLOG_FatalError:
-				msgOut = _("Fatal: "); break;
-			case wxLOG_Error:
-				msgOut = _("Error: "); break;
-			case wxLOG_Warning:
-				msgOut = _("Warning: "); break;
-			case wxLOG_Message:
-				msgOut = _("Message: "); break;
-			case wxLOG_Status: 
-				msgOut = _("Status: "); break;
-			case wxLOG_Info:
-				msgOut = _("Info: "); break;
-			case wxLOG_Debug:
-				msgOut = _("Debug: "); break;
-			case wxLOG_Trace:
-				msgOut = _("Trace: "); break;
-			default:
-				msgOut.Printf(_("Unknown (level %d): "), level);
-		}
-		
-		msgOut.Append(msg);
-		mpTarget->Append(msgOut);
-	}
-};
 
 wxFileName RestoreProgressPanel::MakeLocalPath(wxFileName base, 
 	ServerCacheNode* pTargetNode)
@@ -292,7 +154,7 @@ wxFileName RestoreProgressPanel::MakeLocalPath(wxFileName base,
 void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName dest)
 {
 	RestoreSpec spec(rSpec);
-	wxLogListBox logTo(mpErrorList);
+	LogToListBox logTo(mpErrorList);
 	
 	mpErrorList->Clear();
 
@@ -301,7 +163,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 	{
 		wxString msg;
 		msg.Printf(wxT("Error: cannot start restore: %s"), errorMsg.c_str());
-		ReportRestoreFatalError(BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION, msg);
+		ReportFatalError(BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION, msg);
 		return;
 	}
 	
@@ -310,7 +172,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 
 	if (storeHost.length() == 0) 
 	{
-		ReportRestoreFatalError(BM_BACKUP_FAILED_NO_STORE_HOSTNAME,
+		ReportFatalError(BM_BACKUP_FAILED_NO_STORE_HOSTNAME,
 			wxT("Error: cannot start restore: "
 			"You have not configured the Store Hostname!"));
 		return;
@@ -321,7 +183,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 
 	if (keysFile.length() == 0) 
 	{
-		ReportRestoreFatalError(BM_BACKUP_FAILED_NO_KEYS_FILE,
+		ReportFatalError(BM_BACKUP_FAILED_NO_KEYS_FILE,
 			wxT("Error: cannot start restore: "
 			"you have not configured the Keys File"));
 		return;
@@ -330,7 +192,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 	int acctNo;
 	if (!mpConfig->AccountNumber.GetInto(acctNo))
 	{
-		ReportRestoreFatalError(BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER,
+		ReportFatalError(BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER,
 			wxT("Error: cannot start restore: "
 			"you have not configured the Account Number"));
 		return;
@@ -341,28 +203,20 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 	{
 		if (!wxMkdir(dest.GetFullPath()))
 		{
-			ReportRestoreFatalError(BM_RESTORE_FAILED_TO_CREATE_OBJECT,
+			ReportFatalError(BM_RESTORE_FAILED_TO_CREATE_OBJECT,
 				wxT("Error: cannot start restore: "
 				"cannot create the destination directory"));
 			return;
 		}
 	}
 	
-	mNumFilesCounted = 0;
-	mNumBytesCounted = 0;
-	mNumFilesDownloaded = 0;
-	mNumBytesDownloaded = 0;
+	ResetCounters();
 	
-	mpSummaryText->SetLabel(wxT("Starting Restore"));
 	mRestoreRunning = true;
 	mRestoreStopRequested = false;
-	mpStopCloseButton->SetLabel(wxT("Stop Restore"));
-	mpNumFilesTotal->SetValue(wxT(""));
-	mpNumBytesTotal->SetValue(wxT(""));
-	mpNumFilesDone->SetValue(wxT(""));
-	mpNumBytesDone->SetValue(wxT(""));
-	mpNumFilesRemaining->SetValue(wxT(""));
-	mpNumBytesRemaining->SetValue(wxT(""));
+	SetSummaryText(_("Starting Restore"));
+	SetStopButtonLabel(_("Stop Restore"));
+
 	Layout();
 	wxYield();
 	
@@ -417,11 +271,11 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 			}
 		}
 		
-		mpProgressGauge->SetRange(mNumFilesCounted);
+		mpProgressGauge->SetRange(GetNumFilesTotal());
 		mpProgressGauge->SetValue(0);
 		mpProgressGauge->Show();
 
-		mpSummaryText->SetLabel(_("Restoring files"));
+		SetSummaryText(_("Restoring files"));
 		wxYield();
 		
 		// Entries may have been changed by removing duplicates
@@ -474,52 +328,51 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 		
 		if (mRestoreStopRequested)
 		{
-			mpSummaryText->SetLabel(wxT("Restore Interrupted"));
-			ReportRestoreFatalError(BM_BACKUP_FAILED_INTERRUPTED,
+			SetSummaryText(_("Restore Interrupted"));
+			ReportFatalError(BM_BACKUP_FAILED_INTERRUPTED,
 				wxT("Restore interrupted by user"));
-			mpSummaryText->SetLabel(wxT("Restore Interrupted"));
 		}
 		else if (!succeeded)
 		{
-			mpSummaryText->SetLabel(wxT("Restore Failed"));
-			mpErrorList  ->Append  (wxT("Restore Failed"));
+			SetSummaryText(_("Restore Failed"));
+			mpErrorList->Append(_("Restore Failed"));
 		}
 		else
 		{
-			mpSummaryText->SetLabel(wxT("Restore Finished"));
-			mpErrorList  ->Append  (wxT("Restore Finished"));
+			SetSummaryText(_("Restore Finished"));
+			mpErrorList->Append(_("Restore Finished"));
 		}
 		
 		mpProgressGauge->Hide();
 	}
 	catch (ConnectionException& e) 
 	{
-		mpSummaryText->SetLabel(wxT("Restore Failed"));
+		SetSummaryText(_("Restore Failed"));
 		wxString msg;
 		msg.Printf(_("Error: cannot start restore: "
 			"Failed to connect to server: %s"),
 			wxString(e.what(), wxConvLibc).c_str());
-		ReportRestoreFatalError(BM_BACKUP_FAILED_CONNECT_FAILED, msg);
+		ReportFatalError(BM_BACKUP_FAILED_CONNECT_FAILED, msg);
 	}
 	catch (std::exception& e) 
 	{
-		mpSummaryText->SetLabel(_("Restore Failed"));
+		SetSummaryText(_("Restore Failed"));
 		wxString msg;
 		msg.Printf(_("Error: failed to finish restore: %s"),
 			wxString(e.what(), wxConvLibc).c_str());
-		ReportRestoreFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR, msg);
+		ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR, msg);
 	}
 	catch (...)
 	{
-		mpSummaryText->SetLabel(wxT("Restore Failed"));
-		ReportRestoreFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR,
+		SetSummaryText(_("Restore Failed"));
+		ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR,
 			wxT("Error: failed to finish restore: unknown error"));
 	}	
 
-	mpCurrentText->SetLabel(wxT("Idle (nothing to do)"));
+	SetSummaryText(_("Idle (nothing to do)"));
 	mRestoreRunning = false;
 	mRestoreStopRequested = false;
-	mpStopCloseButton->SetLabel(wxT("Close"));
+	SetStopButtonLabel(_("Close"));
 }
 
 ServerFileVersion* RestoreProgressPanel::GetVersionToRestore
@@ -680,7 +533,7 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 			msg.Printf(_("Error: failed to finish restore: "
 				"object already exists: '%s'"), 
 				localName.GetFullPath().c_str());
-			ReportRestoreFatalError(
+			ReportFatalError(
 				BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS, msg);
 			return false;
 		}
@@ -705,7 +558,7 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 				msg.Printf(_("Error: failed to finish restore: "
 					"cannot create directory: '%s'"), 
 					localName.GetFullPath().c_str());
-				ReportRestoreFatalError(
+				ReportFatalError(
 					BM_RESTORE_FAILED_TO_CREATE_OBJECT, msg);
 				return false;
 			}
@@ -753,40 +606,8 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 			pVersion->GetAttributes().WriteAttributes(namebuf.data());
 		}
 
-		NotifyMoreFilesRestored(1, pVersion->GetSizeBlocks() * blockSize);		
+		NotifyMoreFilesDone(1, pVersion->GetSizeBlocks() * blockSize);		
 	}
 	
 	return true;
 }
-
-wxString RestoreProgressPanel::FormatNumBytes(int64_t bytes)
-{
-	wxString units = wxT("B");
-	
-	if (bytes > 1024)
-	{
-		bytes >>= 10;
-		units = wxT("kB");
-	}
-	
-	if (bytes > 1024)
-	{
-		bytes >>= 10;
-		units = wxT("MB");
-	}
-
-	if (bytes > 1024)
-	{
-		bytes >>= 10;
-		units = wxT("GB");
-	}
-
-	wxString str;		
-	#ifdef WIN32
-	str.Printf(wxT("%I64d %s"), bytes, units.c_str());
-	#else
-	str.Printf(wxT("%lld %s"), bytes, units.c_str());
-	#endif
-	return str;
-}
-

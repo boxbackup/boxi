@@ -3,7 +3,7 @@
  *
  *  Mon Apr  4 20:36:25 2005
  *  Copyright 2005-2006 Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -65,115 +65,21 @@
 //DEFINE_EVENT_TYPE(myEVT_CLIENT_NOTIFY)
 
 BEGIN_EVENT_TABLE(BackupProgressPanel, wxPanel)
-EVT_BUTTON(wxID_CANCEL, BackupProgressPanel::OnStopCloseClicked)
+	EVT_BUTTON(wxID_CANCEL, BackupProgressPanel::OnStopCloseClicked)
 END_EVENT_TABLE()
 
-BackupProgressPanel::BackupProgressPanel(
+BackupProgressPanel::BackupProgressPanel
+(
 	ClientConfig*     pConfig,
 	ServerConnection* pConnection,
-	wxWindow* parent, 
-	wxWindowID id,
-	const wxPoint& pos, 
-	const wxSize& size,
-	long style, 
-	const wxString& name)
-	: wxPanel(parent, id, pos, size, style, name),
-	  mpConfig(pConfig),
-	  mpConnection(pConnection),
-	  mBackupRunning(FALSE)
-{
-	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
-
-	wxStaticBoxSizer* pSummaryBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Summary"));
-	pMainSizer->Add(pSummaryBox, 0, wxGROW | wxALL, 8);
-	
-	wxSizer* pSummarySizer = new wxGridSizer(1, 2, 0, 4);
-	pSummaryBox->Add(pSummarySizer, 0, wxGROW | wxALL, 4);
-	
-	mpSummaryText = new wxStaticText(this, wxID_ANY, 
-		wxT("Backup not started yet"));
-	pSummarySizer->Add(mpSummaryText, 0, wxALIGN_CENTER_VERTICAL, 0);
-	
-	mpProgressGauge = new wxGauge(this, wxID_ANY, 100);
-	mpProgressGauge->SetValue(0);
-	pSummarySizer->Add(mpProgressGauge, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
-	mpProgressGauge->Hide();
-	
-	wxStaticBoxSizer* pCurrentBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Current Action"));
-	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-
-	mpCurrentText = new wxStaticText(this, wxID_ANY, 
-		wxT("Idle (nothing to do)"));
-	pCurrentBox->Add(mpCurrentText, 0, wxGROW | wxALL, 4);
-	
-	wxStaticBoxSizer* pErrorsBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Errors"));
-	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-	
-	mpErrorList = new wxListBox(this, ID_BackupProgress_ErrorList);
-	pErrorsBox->Add(mpErrorList, 1, wxGROW | wxALL, 4);
-
-	wxStaticBoxSizer* pStatsBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Statistics"));
-	pMainSizer->Add(pStatsBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-	
-	wxFlexGridSizer* pStatsGrid = new wxFlexGridSizer(4, 4, 4);
-	pStatsBox->Add(pStatsGrid, 1, wxGROW | wxALL, 4);
-
-	pStatsGrid->AddGrowableCol(0);
-	pStatsGrid->AddGrowableCol(1);
-	pStatsGrid->AddGrowableCol(2);
-	pStatsGrid->AddGrowableCol(3);
-
-	pStatsGrid->AddSpacer(1);
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Elapsed")));
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Remaining")));
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Total")));
-
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Files")));
-
-	mpNumFilesDone = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumFilesDone, 1, wxGROW, 0);
-	
-	mpNumFilesRemaining = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumFilesRemaining, 1, wxGROW, 0);
-	
-	mpNumFilesTotal = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumFilesTotal, 1, wxGROW, 0);
-
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Bytes")));
-
-	mpNumBytesDone = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumBytesDone, 1, wxGROW, 0);
-	
-	mpNumBytesRemaining = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumBytesRemaining, 1, wxGROW, 0);
-	
-	mpNumBytesTotal = new wxTextCtrl(this, wxID_ANY, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	pStatsGrid->Add(mpNumBytesTotal, 1, wxGROW, 0);
-
-	wxSizer* pButtonSizer = new wxBoxSizer(wxHORIZONTAL);
-	pMainSizer->Add(pButtonSizer, 0, 
-		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-
-	mpStopCloseButton = new wxButton(this, wxID_CANCEL, wxT("Close"));
-	pButtonSizer->Add(mpStopCloseButton, 0, wxGROW, 0);
-
-	mBackupRunning = FALSE;
-	mBackupStopRequested = FALSE;
-	mNumFilesCounted = 0;
-	mNumBytesCounted = 0;
-
-	SetSizer(pMainSizer);
-}
+	wxWindow*         pParent
+)
+: ProgressPanel(pParent, ID_Backup_Progress_Panel, _("Backup Progress Panel")),
+  mpConfig(pConfig),
+  mpConnection(pConnection),
+  mBackupRunning(false),
+  mBackupStopRequested(false)
+{ }
 
 void BackupProgressPanel::StartBackup()
 {
@@ -183,8 +89,8 @@ void BackupProgressPanel::StartBackup()
 	if (!mpConnection->InitTlsContext(mTlsContext, errorMsg))
 	{
 		wxString msg;
-		msg.Printf(wxT("Error: cannot start backup: %s"), errorMsg.c_str());
-		ReportBackupFatalError(BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION, msg);
+		msg.Printf(_("Error: cannot start backup: %s"), errorMsg.c_str());
+		ReportFatalError(BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION, msg);
 		return;
 	}
 	
@@ -193,8 +99,8 @@ void BackupProgressPanel::StartBackup()
 
 	if (storeHost.length() == 0) 
 	{
-		ReportBackupFatalError(BM_BACKUP_FAILED_NO_STORE_HOSTNAME,
-			wxT("Error: cannot start backup: "
+		ReportFatalError(BM_BACKUP_FAILED_NO_STORE_HOSTNAME,
+			_("Error: cannot start backup: "
 			"You have not configured the Store Hostname!"));
 		return;
 	}
@@ -204,8 +110,8 @@ void BackupProgressPanel::StartBackup()
 
 	if (keysFile.length() == 0) 
 	{
-		ReportBackupFatalError(BM_BACKUP_FAILED_NO_KEYS_FILE,
-			wxT("Error: cannot start backup: "
+		ReportFatalError(BM_BACKUP_FAILED_NO_KEYS_FILE,
+			_("Error: cannot start backup: "
 			"you have not configured the Keys File"));
 		return;
 	}
@@ -213,8 +119,8 @@ void BackupProgressPanel::StartBackup()
 	int acctNo;
 	if (!mpConfig->AccountNumber.GetInto(acctNo))
 	{
-		ReportBackupFatalError(BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER,
-			wxT("Error: cannot start backup: "
+		ReportFatalError(BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER,
+			_("Error: cannot start backup: "
 			"you have not configured the Account Number"));
 		return;
 	}
@@ -229,8 +135,8 @@ void BackupProgressPanel::StartBackup()
 	int minimumFileAgeSecs;
 	if (!mpConfig->MinimumFileAge.GetInto(minimumFileAgeSecs))
 	{
-		ReportBackupFatalError(BM_BACKUP_FAILED_NO_MINIMUM_FILE_AGE,
-			wxT("Error: cannot start backup: "
+		ReportFatalError(BM_BACKUP_FAILED_NO_MINIMUM_FILE_AGE,
+			_("Error: cannot start backup: "
 			"You have not configured the minimum file age"));
 		return;
 	}
@@ -241,8 +147,8 @@ void BackupProgressPanel::StartBackup()
 	int maxUploadWaitSecs;
 	if (!mpConfig->MaxUploadWait.GetInto(maxUploadWaitSecs))
 	{
-		ReportBackupFatalError(BM_BACKUP_FAILED_NO_MAXIMUM_UPLOAD_WAIT,
-			wxT("Error: cannot start backup: "
+		ReportFatalError(BM_BACKUP_FAILED_NO_MAXIMUM_UPLOAD_WAIT,
+			_("Error: cannot start backup: "
 			"You have not configured the maximum upload wait"));
 		return;
 	}
@@ -262,8 +168,8 @@ void BackupProgressPanel::StartBackup()
 	if (!mpConfig->FileTrackingSizeThreshold.GetInto(
 		params.mFileTrackingSizeThreshold))
 	{
-		ReportBackupFatalError(BM_BACKUP_FAILED_NO_TRACKING_THRESHOLD,
-			wxT("Error: cannot start backup: "
+		ReportFatalError(BM_BACKUP_FAILED_NO_TRACKING_THRESHOLD,
+			_("Error: cannot start backup: "
 			"You have not configured the file tracking size threshold"));
 		return;
 	}
@@ -271,8 +177,8 @@ void BackupProgressPanel::StartBackup()
 	if (!mpConfig->DiffingUploadSizeThreshold.GetInto(
 		params.mDiffingUploadSizeThreshold))
 	{
-		ReportBackupFatalError(BM_BACKUP_FAILED_NO_DIFFING_THRESHOLD,
-			wxT("Error: cannot start backup: "
+		ReportFatalError(BM_BACKUP_FAILED_NO_DIFFING_THRESHOLD,
+			_("Error: cannot start backup: "
 			"You have not configured the diffing upload size threshold"));
 		return;
 	}
@@ -290,10 +196,10 @@ void BackupProgressPanel::StartBackup()
 	if (syncPeriodStart >= syncPeriodEnd)
 	{
 		wxString msg;
-		msg.Printf(wxT("Error: cannot start backup: "
+		msg.Printf(_("Error: cannot start backup: "
 			"Sync time window calculation failed: %lld >= %lld"),
 			syncPeriodStart, syncPeriodEnd);
-		ReportBackupFatalError(BM_BACKUP_FAILED_INVALID_SYNC_PERIOD, msg);
+		ReportFatalError(BM_BACKUP_FAILED_INVALID_SYNC_PERIOD, msg);
 		return;
 	}
 
@@ -327,21 +233,14 @@ void BackupProgressPanel::StartBackup()
 		}
 	}
 	
-	mNumFilesCounted = 0;
-	mNumBytesCounted = 0;
-	mNumFilesSynchronised = 0;
-	mNumBytesSynchronised = 0;
+	ResetCounters();
 	
-	mpSummaryText->SetLabel(wxT("Starting Backup"));
-	mBackupRunning = TRUE;
-	mBackupStopRequested = FALSE;
-	mpStopCloseButton->SetLabel(wxT("Stop Backup"));
-	mpNumFilesTotal->SetValue(wxT(""));
-	mpNumBytesTotal->SetValue(wxT(""));
-	mpNumFilesDone->SetValue(wxT(""));
-	mpNumBytesDone->SetValue(wxT(""));
-	mpNumFilesRemaining->SetValue(wxT(""));
-	mpNumBytesRemaining->SetValue(wxT(""));
+	SetSummaryText(_("Starting Backup"));
+	SetStopButtonLabel(_("Stop Backup"));
+	
+	mBackupRunning = true;
+	mBackupStopRequested = false;
+
 	Layout();
 	wxYield();
 
@@ -357,12 +256,12 @@ void BackupProgressPanel::StartBackup()
 		// Get some ID maps going
 		SetupIDMapsForSync();
 	
-		mpSummaryText->SetLabel(wxT("Deleting unused root entries on server"));
+		SetSummaryText(_("Deleting unused root entries on server"));
 		wxYield();
 		
 		DeleteUnusedRootDirEntries(clientContext);
 								
-		mpSummaryText->SetLabel(wxT("Counting files to back up"));
+		SetSummaryText(_("Counting files to back up"));
 		wxYield();
 		
 		typedef const std::vector<LocationRecord *> tLocationRecords;
@@ -381,11 +280,11 @@ void BackupProgressPanel::StartBackup()
 			CountDirectory(clientContext, pLocRecord->mPath);
 		}
 		
-		mpProgressGauge->SetRange(mNumFilesCounted);
+		mpProgressGauge->SetRange(GetNumFilesTotal());
 		mpProgressGauge->SetValue(0);
 		mpProgressGauge->Show();
 
-		mpSummaryText->SetLabel(_("Backing up files"));
+		SetSummaryText(_("Backing up files"));
 		wxYield();
 		
 		// Go through the records agains, this time syncing them
@@ -420,35 +319,35 @@ void BackupProgressPanel::StartBackup()
 		
 		if (clientContext.StorageLimitExceeded())
 		{
-			ReportBackupFatalError(BM_BACKUP_FAILED_STORE_FULL,
+			ReportFatalError(BM_BACKUP_FAILED_STORE_FULL,
 				_("Error: cannot finish backup: "
 				"out of space on server"));
-			mpSummaryText->SetLabel(wxT("Backup Failed"));
+			SetSummaryText(_("Backup Failed"));
 		}
 		else
 		{
-			mpSummaryText->SetLabel(wxT("Backup Finished"));
-			mpErrorList  ->Append  (wxT("Backup Finished"));
+			SetSummaryText(_("Backup Finished"));
+			mpErrorList->Append(_("Backup Finished"));
 		}
 		
 		mpProgressGauge->Hide();
 	}
 	catch (ConnectionException& e) 
 	{
-		mpSummaryText->SetLabel(wxT("Backup Failed"));
+		SetSummaryText(_("Backup Failed"));
 		wxString msg;
-		msg.Printf(wxT("Error: cannot start backup: "
+		msg.Printf(_("Error: cannot start backup: "
 			"Failed to connect to server: %s"),
 			wxString(e.what(), wxConvLibc).c_str());
-		ReportBackupFatalError(BM_BACKUP_FAILED_CONNECT_FAILED, msg);
+		ReportFatalError(BM_BACKUP_FAILED_CONNECT_FAILED, msg);
 	}
 	catch (BackupStoreException& be)
 	{
 		if (be.GetSubType() == BackupStoreException::SignalReceived)
 		{
-			mpSummaryText->SetLabel(wxT("Backup Interrupted"));
-			ReportBackupFatalError(BM_BACKUP_FAILED_INTERRUPTED,
-				wxT("Backup interrupted by user"));
+			SetSummaryText(_("Backup Interrupted"));
+			ReportFatalError(BM_BACKUP_FAILED_INTERRUPTED,
+				_("Backup interrupted by user"));
 		}
 		else		
 		{
@@ -457,9 +356,9 @@ void BackupProgressPanel::StartBackup()
 	}
 	catch (...)
 	{
-		mpSummaryText->SetLabel(wxT("Backup Failed"));
-		ReportBackupFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR,
-			wxT("Unknown error"));
+		SetSummaryText(_("Backup Failed"));
+		ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR,
+			_("Unknown error"));
 	}	
 
 	#ifdef WIN32
@@ -477,10 +376,11 @@ void BackupProgressPanel::StartBackup()
 		}
 	}
 
-	mpCurrentText->SetLabel(wxT("Idle (nothing to do)"));
-	mBackupRunning = FALSE;
-	mBackupStopRequested = FALSE;
-	mpStopCloseButton->SetLabel(wxT("Close"));
+	mBackupRunning = false;
+	mBackupStopRequested = false;
+	
+	SetCurrentText(_("Idle (nothing to do)"));
+	SetStopButtonLabel(_("Close"));
 }
 
 // --------------------------------------------------------------------------
@@ -571,14 +471,10 @@ void BackupProgressPanel::CountDirectory(BackupClientContext& rContext,
 				else if(type == S_IFDIR)
 				{
 					// Directory
-
-					// Exclude it?
-					if(rContext.ExcludeDir(filename))
-					{
-						// Next item!
-						continue;
-					}
-
+					
+					// Excluded directories should be
+					// counted, in case they contain 
+					// included files.
 					CountDirectory(rContext, filename);
 				}
 				else

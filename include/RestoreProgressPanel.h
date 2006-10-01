@@ -41,124 +41,35 @@
 #include "BoxiApp.h"
 #include "ClientConfig.h"
 #include "ClientConnection.h"
+#include "ProgressPanel.h"
 
 class ServerCacheNode;
-	
-/** 
- * RestoreProgressPanel
- * Shows status of a running backup and allows user to pause or cancel it.
- */
-
 class ServerConnection;
 class RestoreSpec;
 
-class RestoreProgressPanel 
-: public wxPanel
+class RestoreProgressPanel : public ProgressPanel
 {
 	public:
-	RestoreProgressPanel(
+	RestoreProgressPanel
+	(
 		ClientConfig*     pConfig,
 		ServerConnection* pConnection,
-		wxWindow* parent, wxWindowID id = -1,
-		const wxPoint& pos = wxDefaultPosition, 
-		const wxSize& size = wxDefaultSize,
-		long style = wxTAB_TRAVERSAL, 
-		const wxString& name = wxT("Restore Progress Panel"));
+		wxWindow*         pParent
+	);
 
 	void StartRestore(const RestoreSpec& rSpec, wxFileName dest);
 
-	wxString GetNumFilesTotalString() { return mpNumFilesTotal->GetValue(); }
-	wxString GetNumBytesTotalString() { return mpNumBytesTotal->GetValue(); }
-	wxString GetNumFilesDoneString() { return mpNumFilesDone->GetValue(); }
-	wxString GetNumBytesDoneString() { return mpNumBytesDone->GetValue(); }
-	wxString GetNumFilesRemainingString() { return mpNumFilesRemaining->GetValue(); }
-	wxString GetNumBytesRemainingString() { return mpNumBytesRemaining->GetValue(); }
-	int GetProgressMax() { return mpProgressGauge->GetRange(); }
-	int GetProgressPos() { return mpProgressGauge->GetValue(); }
-
 	private:
-	friend class TestRestore;
-	int GetConnectionIndex() { return mpConnection->GetConnectionIndex(); }
-	
 	ClientConfig*     mpConfig;
 	ServerConnection* mpConnection;
 	TLSContext        mTlsContext;
-	wxListBox*        mpErrorList;
-	wxStaticText*     mpSummaryText;
-	wxStaticText*     mpCurrentText;
-	wxTextCtrl*       mpNumFilesDone;
-	wxTextCtrl*       mpNumFilesRemaining;
-	wxTextCtrl*       mpNumFilesTotal;
-	wxTextCtrl*       mpNumBytesDone;
-	wxTextCtrl*       mpNumBytesRemaining;
-	wxTextCtrl*       mpNumBytesTotal;
-	wxButton*         mpStopCloseButton;
-	wxGauge*          mpProgressGauge;
-	bool              mStorageLimitExceeded;
-	bool              mRestoreRunning;
-	bool              mRestoreStopRequested;
-
-	size_t  mNumFilesCounted;
-	int64_t mNumBytesCounted;
-
-	size_t  mNumFilesDownloaded;
-	int64_t mNumBytesDownloaded;
 	
-	void RestoreProgressPanel::CountDirectory(BackupClientContext& rContext,
+	bool mRestoreRunning;
+	bool mRestoreStopRequested;
+
+	void CountDirectory(BackupClientContext& rContext,
 		const std::string &rLocalPath);
-	void NotifyCountDirectory(const std::string& rLocalPath)
-	{
-		wxString msg;
-		msg.Printf(wxT("Counting files in directory '%s'"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
-		mpCurrentText->SetLabel(msg);
-		Layout();
-		wxYield();
-	}
 	
-	wxString FormatNumBytes(int64_t bytes);
-	
-	void NotifyMoreFilesCounted(size_t numAdditionalFiles, 
-		int64_t numAdditionalBytes)
-	{
-		mNumFilesCounted += numAdditionalFiles;
-		mNumBytesCounted += numAdditionalBytes;
-
-		wxString str;
-		str.Printf(wxT("%d"), mNumFilesCounted);
-		mpNumFilesTotal->SetValue(str);
-		mpNumBytesTotal->SetValue(FormatNumBytes(mNumBytesCounted));
-	}
-
-	void NotifyMoreFilesRestored(size_t numAdditionalFiles, 
-		int64_t numAdditionalBytes)
-	{
-		mNumFilesDownloaded += numAdditionalFiles;
-		mNumBytesDownloaded += numAdditionalBytes;
-
-		wxString str;
-		str.Printf(wxT("%d"), mNumFilesDownloaded);
-		mpNumFilesDone->SetValue(str);
-		mpNumBytesDone->SetValue(FormatNumBytes(mNumBytesDownloaded));
-		
-		int64_t numFilesRemaining = mNumFilesCounted - mNumFilesDownloaded;
-		int64_t numBytesRemaining = mNumBytesCounted - mNumBytesDownloaded;
-
-		str.Printf(wxT("%d"), numFilesRemaining);
-		mpNumFilesRemaining->SetValue(str);
-		mpNumBytesRemaining->SetValue(FormatNumBytes(numBytesRemaining));
-		
-		mpProgressGauge->SetValue(mNumFilesDownloaded);
-		wxYield();
-	}
-
-	void ReportRestoreFatalError(message_t messageId, wxString msg)
-	{
-		wxGetApp().ShowMessageBox(messageId, msg, wxT("Boxi Error"), 
-			wxOK | wxICON_ERROR, this);
-		mpErrorList->Append(msg);
-	}
-
 	virtual void OnStopCloseClicked(wxCommandEvent& event) 
 	{ 
 		if (mRestoreRunning)
@@ -180,6 +91,9 @@ class RestoreProgressPanel
 		ServerCacheNode* pNode, int64_t parentId, 
 		wxFileName localName, int blockSize);
 	wxFileName MakeLocalPath(wxFileName base, ServerCacheNode* pNode);
+
+	friend class TestRestore;
+	int GetConnectionIndex() { return mpConnection->GetConnectionIndex(); }
 
 	DECLARE_EVENT_TABLE()
 };
