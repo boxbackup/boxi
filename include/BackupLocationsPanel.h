@@ -3,7 +3,7 @@
  *
  *  Tue Mar  1 00:26:35 2005
  *  Copyright 2005-2006 Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -33,7 +33,7 @@
 #include "ClientConfig.h"
 
 class BackupTreeNode;
-class BackupTreeCtrl;
+class LocalFileTree;
 class ClientConfig;
 class LocationsPanel;
 class MainFrame;
@@ -56,7 +56,7 @@ class BackupLocationsPanel : public wxPanel, public ConfigChangeListener
 	
 	private:
 	ClientConfig*   mpConfig;
-	BackupTreeCtrl* mpTree;
+	LocalFileTree*  mpTree;
 	BackupTreeNode* mpRootNode;
 	MainFrame*      mpMainFrame;
 	wxPanel*        mpPanelToShowOnClose;
