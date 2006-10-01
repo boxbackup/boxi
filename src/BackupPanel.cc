@@ -47,8 +47,7 @@ BackupPanel::BackupPanel
 		pMainFrame, pParent, ID_Backup_Panel)
 {
 	mpProgressPanel = new BackupProgressPanel(pConfig, 
-		mpMainFrame->GetConnection(), 
-		pParent, ID_Backup_Progress_Panel);
+		mpMainFrame->GetConnection(), pParent);
 	mpProgressPanel->Hide();
 	
 	mpLocationsPanel = new BackupLocationsPanel(pConfig, pParent, 

@@ -66,7 +66,7 @@ RestorePanel::RestorePanel
 		pMainFrame, pParent, ID_Restore_Panel)
 {
 	mpProgressPanel = new RestoreProgressPanel(pConfig, pServerConnection,
-		pParent, ID_Restore_Progress_Panel);
+		pParent);
 	mpProgressPanel->Hide();
 	
 	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to restore"));
