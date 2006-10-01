@@ -3,7 +3,7 @@
  *
  *  Tue Mar  1 00:24:16 2005
  *  Copyright 2005-2006 Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -27,74 +27,145 @@
 #include <wx/filename.h>
 
 #include "ComparePanel.h"
+#include "MainFrame.h"
 #include "ParamPanel.h"
 
-BEGIN_EVENT_TABLE(ComparePanel, FunctionPanel)
+BEGIN_EVENT_TABLE(ComparePanel, wxPanel)
+	EVT_BUTTON(ID_Function_Start_Button,  ComparePanel::OnClickStartButton)
+	EVT_BUTTON(wxID_CANCEL,               ComparePanel::OnClickCloseButton)
+	EVT_RADIOBUTTON(wxID_ANY,             ComparePanel::OnClickRadioButton)
 END_EVENT_TABLE()
 
 ComparePanel::ComparePanel
 (
 	ClientConfig*     pConfig,
-	ClientInfoPanel*  pClientConfigPanel,
 	MainFrame*        pMainFrame,
 	ServerConnection* pServerConnection,
 	wxWindow*         pParent
 )
-: FunctionPanel(wxT("Compare Panel"), pConfig, pClientConfigPanel, 
-	pMainFrame, pParent, ID_Compare_Panel)
+: wxPanel(pParent, ID_Compare_Panel, wxDefaultPosition, wxDefaultSize, 
+	wxTAB_TRAVERSAL, wxT("Compare Panel")),
+  mpServerConnection(pServerConnection),
+  mpConfig(pConfig),
+  mpMainFrame(pMainFrame)
 {
-	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to compare"));
-	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Compare &with"));
+	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 
-	mpOldLocRadio = new wxRadioButton(this, 
-		ID_Compare_Panel_Old_Location_Radio, 
-		wxT("&Original Locations"),
-		wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-	mpDestBox->Add(mpOldLocRadio, 0, wxGROW | wxALL, 8);
-
-	wxSizer* mpNewDestSizer = new wxBoxSizer(wxHORIZONTAL);
-	mpDestBox->Add(mpNewDestSizer, 0, wxGROW | wxALL, 8);
+	wxStaticBoxSizer* pSourceBox = new wxStaticBoxSizer(wxVERTICAL, this, 
+		_("Files to compare"));
+	pMainSizer->Add(pSourceBox, 1, wxGROW | wxALL, 8);
 	
-	mpNewLocRadio = new wxRadioButton(this, 
-		ID_Compare_Panel_New_Location_Radio, 
-		_("&New location:"), 
-		wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-	mpNewDestSizer->Add(mpNewLocRadio, 0, wxALIGN_CENTER, 0);
-
-	mpNewLocText = new wxTextCtrl(this, ID_Compare_Panel_New_Location_Text, 
-		wxT(""));
-	mpNewDestSizer->Add(mpNewLocText, 1, wxGROW | wxLEFT, 8);
+	mpAllLocsRadio = new wxRadioButton(this, ID_Compare_Panel_All_Locs_Radio,
+		_("&All Locations"), wxDefaultPosition, wxDefaultSize, 
+		wxRB_GROUP);
+	pSourceBox->Add(mpAllLocsRadio, 0, wxGROW | wxALL, 8);
 	
-	mpNewLocButton = new DirSelButton(this, 
-		ID_Compare_Panel_New_Location_Button, mpNewLocText);
-	mpNewDestSizer->Add(mpNewLocButton, 0, wxGROW | wxLEFT, 4);
+	mpOneLocRadio = new wxRadioButton(this, ID_Compare_Panel_One_Loc_Radio,
+		_("&One Location:"));
+	pSourceBox->Add(mpOneLocRadio, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
-	mpSourceEditButton->SetLabel(wxT("&Select Files"));
-	mpStartButton     ->SetLabel(wxT("Start &Compare"));
+	wxSizer* pOneLocSizer = new wxBoxSizer(wxVERTICAL);
+	pSourceBox->Add(pOneLocSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+	
+	mpOneLocChoice = new wxChoice(this, ID_Compare_Panel_One_Loc_Choice);
+	mpOneLocChoice->Disable();
+	pOneLocSizer->Add(mpOneLocChoice, 0, wxGROW | wxLEFT, 20);
 
-	/*
-	mpFilesPanel = new CompareFilesPanel(pConfig, 
-		pServerConnection, pMainFrame, pParent, this, this);
-	mpFilesPanel->Hide();
+	mpDirRadio = new wxRadioButton(this, ID_Compare_Panel_Dir_Radio,
+		_("&Specified Directory:"));
+	pSourceBox->Add(mpDirRadio, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	mpProgressPanel = new RestoreProgressPanel(pConfig, pServerConnection,
-		pParent, ID_Restore_Progress_Panel);
-	mpProgressPanel->Hide();
-	*/
+	wxFlexGridSizer* pDirSizer = new wxFlexGridSizer(3, 8, 8);
+	pDirSizer->AddGrowableCol(1, 1);
+	pSourceBox->Add(pDirSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	// Update();
+	pDirSizer->Add(new wxStaticText(this, wxID_ANY, _("&Local Directory:")),
+		1, wxALIGN_CENTER_VERTICAL | wxLEFT, 20);
+	
+	mpDirLocalText = new wxTextCtrl(this, 
+		ID_Compare_Panel_Dir_Local_Path_Text, wxEmptyString);
+	pDirSizer->Add(mpDirLocalText, 1, wxGROW);
+
+	wxBitmap FileOpenBitmap = wxArtProvider::GetBitmap(wxART_FILE_OPEN, 
+		wxART_CMN_DIALOG, wxSize(16, 16));
+
+	mpDirLocalButton = new DirSelButton(this, 
+		ID_Compare_Panel_Dir_Local_Path_Button, mpDirLocalText);
+	pDirSizer->Add(mpDirLocalButton, 0, wxGROW);
+	
+	pDirSizer->Add(new wxStaticText(this, wxID_ANY, 
+		_("&Remote Directory:")), 1, 
+		wxALIGN_CENTER_VERTICAL | wxLEFT, 20);
+	
+	mpDirRemoteText = new wxTextCtrl(this, 
+		ID_Compare_Panel_Dir_Remote_Path_Text, wxEmptyString);
+	pDirSizer->Add(mpDirRemoteText, 1, wxGROW);
+
+	mpDirRemoteButton = new DirSelButton(this, 
+		ID_Compare_Panel_Dir_Remote_Path_Button, mpDirRemoteText);
+	pDirSizer->Add(mpDirRemoteButton, 0, wxGROW);
+	
+	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
+	pMainSizer->Add(pActionCtrlSizer, 0, 
+		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+
+	wxButton* pStartButton = new wxButton(this, ID_Function_Start_Button, 
+		_("Start &Compare"));
+	pActionCtrlSizer->Add(pStartButton, 0, wxGROW, 0);
+
+	wxButton* pCloseButton = new wxButton(this, wxID_CANCEL, _("Close"));
+	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
+	
+	SetSizer(pMainSizer);
+
 	UpdateEnabledState();
 	
 	mpConfig->AddListener(this);
 }
 
-void ComparePanel::OnCompareSpecChange()
+void ComparePanel::NotifyChange()
 {
 	Update();
 }
 
 void ComparePanel::Update()
 {
+	Location* pOldSelectedLoc = NULL;
+	int newSelectedIndex = wxNOT_FOUND;
+	
+	if (mpOneLocChoice->GetSelection() != wxNOT_FOUND)
+	{
+		pOldSelectedLoc = (Location*)mpOneLocChoice->GetClientData
+			(mpOneLocChoice->GetSelection());
+	}
+	
+	mpOneLocChoice->Clear();
+	
+	const Location::List& rLocations = mpConfig->GetLocations();
+	for (Location::ConstIterator cpLoc = rLocations.begin();
+		cpLoc != rLocations.end(); cpLoc++)
+	{
+		Location* pLoc = mpConfig->GetLocation(*cpLoc);
+
+		wxString locString;
+		locString.Printf(wxT("%s -> %s"), 
+			pLoc->GetPath().c_str(), pLoc->GetName().c_str());
+
+		int newIndex = mpOneLocChoice->Append(locString, pLoc);
+		
+		if (pOldSelectedLoc == pLoc)
+		{
+			newSelectedIndex = newIndex;
+		}
+	}
+	
+	if (newSelectedIndex == wxNOT_FOUND && mpOneLocChoice->GetCount() > 0)
+	{
+		newSelectedIndex = 0;
+	}
+	
+	mpOneLocChoice->SetSelection(newSelectedIndex);
+
 	/*
 	mpSourceList->Clear();
 	
@@ -120,10 +191,12 @@ void ComparePanel::AddToNotebook(wxNotebook* pNotebook)
 	// pNotebook->AddPage(mpProgressPanel, wxT("Compare Progress"));
 }
 
+/*
 void ComparePanel::OnClickSourceButton(wxCommandEvent& rEvent)
 {
-	// mpMainFrame->ShowPanel(mpFilesPanel);
+	mpMainFrame->ShowPanel(mpFilesPanel);
 }
+*/
 
 void ComparePanel::OnClickStartButton(wxCommandEvent& rEvent)
 {
@@ -154,6 +227,30 @@ void ComparePanel::OnClickStartButton(wxCommandEvent& rEvent)
 
 void ComparePanel::UpdateEnabledState()
 {
+	if (mpOneLocRadio->GetValue())
+	{
+		mpOneLocChoice->Enable();
+	}
+	else 
+	{
+		mpOneLocChoice->Disable();
+	}
+	
+	if (mpDirRadio->GetValue())
+	{
+		mpDirLocalText   ->Enable();
+		mpDirLocalButton ->Enable();
+		mpDirRemoteText  ->Enable();
+		mpDirRemoteButton->Enable();
+	}
+	else
+	{
+		mpDirLocalText   ->Disable();
+		mpDirLocalButton ->Disable();
+		mpDirRemoteText  ->Disable();
+		mpDirRemoteButton->Disable();
+	}
+	
 	/*
 	if (mpOldLocRadio->GetValue())
 	{
@@ -167,14 +264,14 @@ void ComparePanel::UpdateEnabledState()
 		mpNewLocButton->Enable();
 		mpRestoreDirsCheck->Enable();
 	}
-	*/
 	
 	UpdateCompareSpec();
+	*/
 }
 
+/*
 void ComparePanel::UpdateCompareSpec()
 {
-	/*
 	RestoreSpec& rSpec = mpFilesPanel->GetRestoreSpec();
 	rSpec.SetRestoreToDateEnabled(mpToDateCheckBox->GetValue());
 	
@@ -184,5 +281,15 @@ void ComparePanel::UpdateCompareSpec()
 	epoch.SetSecond(0);
 	epoch.SetMillisecond(0);
 	rSpec.SetRestoreToDate(epoch);
-	*/
+}
+*/
+
+void ComparePanel::OnClickCloseButton(wxCommandEvent& rEvent)
+{
+	Hide();
+}
+
+void ComparePanel::OnClickRadioButton(wxCommandEvent& rEvent)
+{
+	UpdateEnabledState();
 }

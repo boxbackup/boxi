@@ -2,8 +2,8 @@
  *            ComparePanel.h
  *
  *  Tue Mar  1 00:24:11 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -34,6 +34,8 @@ class CompareProgressPanel;
 class DirSelButton;
 class ServerCacheNode;
 class ServerConnection;
+
+class wxChoice;
 class wxFileName;
 class wxNotebook;
 class wxRadioButton;
@@ -101,40 +103,52 @@ class CompareSpecChangeListener
 	virtual ~CompareSpecChangeListener() { }
 };
 
-class ComparePanel : public FunctionPanel, CompareSpecChangeListener
+class ComparePanel : public wxPanel, public ConfigChangeListener
 {
 	public:
 	ComparePanel
 	(
 		ClientConfig*     pConfig,
-		ClientInfoPanel*  pClientConfigPanel,
 		MainFrame*        pMainFrame,
 		ServerConnection* pServerConnection,
 		wxWindow*         pParent
 	);
 	
 	void AddToNotebook(wxNotebook* pNotebook);
-	virtual void OnCompareSpecChange();
 	
-	private:
-	friend class TestCompare;
-	CompareSpec mCompareSpec;
-	// for use in unit tests only!
-	CompareSpec& GetCompareSpec() { return mCompareSpec; }
+	private:	
+	ServerConnection*     mpServerConnection;
+	ClientConfig*         mpConfig;
+	MainFrame*            mpMainFrame;
 	
+	wxRadioButton* mpAllLocsRadio;
+	wxRadioButton* mpOneLocRadio;
+	wxRadioButton* mpDirRadio;
+	
+	wxChoice* mpOneLocChoice;
+	
+	wxTextCtrl* mpDirLocalText;
+	wxTextCtrl* mpDirRemoteText;
+	wxButton*   mpDirLocalButton;
+	wxButton*   mpDirRemoteButton;
+	
+	/*
 	CompareProgressPanel* mpProgressPanel;
-	CompareFilesPanel* mpFilesPanel;
+	CompareFilesPanel*    mpFilesPanel;
 	wxRadioButton* mpOldLocRadio;
 	wxRadioButton* mpNewLocRadio;
 	wxTextCtrl*    mpNewLocText;
 	DirSelButton*  mpNewLocButton;
+	*/
 
-	virtual void Update();
-	virtual void OnClickSourceButton(wxCommandEvent& rEvent);
-	virtual void OnClickStartButton (wxCommandEvent& rEvent);
+	void Update();
+	void OnClickStartButton(wxCommandEvent& rEvent);
+	void OnClickCloseButton(wxCommandEvent& rEvent);
+	void OnClickRadioButton(wxCommandEvent& rEvent);
 	void UpdateEnabledState();
-	void UpdateCompareSpec();
-	
+
+	virtual void NotifyChange(); // ConfigChangeListener
+		
 	DECLARE_EVENT_TABLE()
 };
 
