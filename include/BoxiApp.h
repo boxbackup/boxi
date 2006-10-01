@@ -2,8 +2,8 @@
  *            BoxiApp.h
  *
  *  Wed May 10 20:50:08 2006
- *  Copyright  2006  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
