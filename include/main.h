@@ -3,7 +3,7 @@
  *
  *  Sun Feb 27 21:27:17 2005
  *  Copyright 2005-2006 Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -131,6 +131,14 @@ enum {
 	ID_Compare_Panel_New_Location_Radio,
 	ID_Compare_Panel_New_Location_Text,
 	ID_Compare_Panel_New_Location_Button,
+	ID_Compare_Panel_All_Locs_Radio,
+	ID_Compare_Panel_One_Loc_Radio,
+	ID_Compare_Panel_One_Loc_Choice,
+	ID_Compare_Panel_Dir_Radio,
+	ID_Compare_Panel_Dir_Local_Path_Text,
+	ID_Compare_Panel_Dir_Local_Path_Button,
+	ID_Compare_Panel_Dir_Remote_Path_Text,
+	ID_Compare_Panel_Dir_Remote_Path_Button,	
 };
 
 typedef enum
