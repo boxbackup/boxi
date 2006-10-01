@@ -67,7 +67,8 @@ boxi_SOURCES = \
 	TestRestore.cc\
 	RestoreProgressPanel.cc\
 	TestWithServer.cc\
-	TestCompare.cc
+	TestCompare.cc\
+	ProgressPanel.cc
 
 boxi_LDFLAGS = 
 

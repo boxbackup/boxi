@@ -40,6 +40,7 @@ boxi_include_DATA = \
 	TestRestore.h\
 	RestoreProgressPanel.h\
 	TestWithServer.h\
-	TestCompare.h
+	TestCompare.h\
+	ProgressPanel.h
 
 EXTRA_DIST = $(boxi_include_DATA)

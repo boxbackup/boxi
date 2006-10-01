@@ -114,7 +114,8 @@ module.include.files=\
 	TestRestore.h\
 	RestoreProgressPanel.h\
 	TestWithServer.h\
-	TestCompare.h
+	TestCompare.h\
+	ProgressPanel.h
 
 module.source.name=src
 module.source.type=
@@ -170,7 +171,8 @@ module.source.files=\
 	TestRestore.cc\
 	RestoreProgressPanel.cc\
 	TestWithServer.cc\
-	TestCompare.cc
+	TestCompare.cc\
+	ProgressPanel.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=
@@ -217,7 +219,7 @@ compiler.options.optimize.buttons=1 0 0 0
 compiler.options.other.buttons=1 0 
 compiler.options.other.c.flags=
 compiler.options.other.l.flags=
-compiler.options.other.l.libs= ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbstored/BBStoreDHousekeeping.o ../boxbackup/release/bin/bbstored/HousekeepStoreAccount.o ../boxbackup/release/bin/bbstored/BackupContext.o ../boxbackup/release/bin/bbstored/BackupCommands.o ../boxbackup/release/bin/bbstored/autogen_BackupProtocolServer.o ../boxbackup/release/bin/bbstored/BackupStoreDaemon.o ../boxbackup/release/bin/bbackupquery/BackupQueries.o ../boxbackup/release/bin/bbackupquery/autogen_Documentation.o ../boxbackup/release/lib/backupstore/backupstore.a ../boxbackup/release/lib/raidfile/raidfile.a ../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a -lz
+compiler.options.other.l.libs= ../boxbackup/release/bin/bbackupd/BackupClientContext.o ../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o ../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o ../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o ../boxbackup/release/bin/bbstored/BBStoreDHousekeeping.o ../boxbackup/release/bin/bbstored/HousekeepStoreAccount.o ../boxbackup/release/bin/bbstored/BackupContext.o ../boxbackup/release/bin/bbstored/BackupCommands.o ../boxbackup/release/bin/bbstored/autogen_BackupProtocolServer.o ../boxbackup/release/bin/bbstored/BackupStoreDaemon.o ../boxbackup/release/bin/bbackupquery/BackupQueries.o ../boxbackup/release/bin/bbackupquery/autogen_Documentation.o ../boxbackup/release/lib/backupstore/backupstore.a ../boxbackup/release/lib/raidfile/raidfile.a ../boxbackup/release/lib/backupclient/backupclient.a ../boxbackup/release/lib/server/server.a ../boxbackup/release/lib/crypto/crypto.a ../boxbackup/release/lib/compress/compress.a ../boxbackup/release/lib/common/common.a ../boxbackup/release/lib/win32/win32.a -lz
 
 project.src.paths=/home/chris/project/boxi/boxbackup-0.09-orig/release/lib/common/common.a \
 /home/chris/project/boxi/boxbackup-0.09-orig/release/lib/backupclient/backupclient.a
