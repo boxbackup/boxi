@@ -22,8 +22,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
  
-#ifndef _SERVERFILESPANEL_H
-#define _SERVERFILESPANEL_H
+#ifndef RESTOREFILESPANEL_H
+#define RESTOREFILESPANEL_H
 
 #include <sys/types.h>
 
@@ -382,4 +382,4 @@ class RestoreFilesPanel : public wxPanel
 extern const char * ErrorString(Protocol* proto);
 extern const char * ErrorString(int type, int subtype);
 
-#endif /* _SERVERFILESPANEL_H */
+#endif /* RESTOREFILESPANEL_H */
