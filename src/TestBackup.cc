@@ -258,6 +258,7 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 			CPPUNIT_ASSERT(outFos.Ok());
 
 			outFos.Write(zipInput);
+			outFos.Close();
 			/*
 			CPPUNIT_ASSERT_EQUAL((int)apEntry->GetSize(),
 			       (int)outFos.LastWrite());
