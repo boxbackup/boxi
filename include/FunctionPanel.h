@@ -2,8 +2,8 @@
  *            FunctionPanel.h
  *
  *  Fri Dec 30 15:39:30 2005
- *  Copyright  2005  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2005-2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
