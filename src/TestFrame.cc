@@ -777,7 +777,11 @@ void GuiTestBase::CheckBoxWaitEvent(wxCheckBox* pCheckBox, bool newValue)
 
 MainFrame* GuiTestBase::GetMainFrame()
 {
-	MainFrame* pFrame = new MainFrame 
+	MainFrame* pFrame = (MainFrame*)wxWindow::FindWindowById(ID_Main_Frame);
+	CPPUNIT_ASSERT_EQUAL_MESSAGE("There can be only one main frame at a time",
+		(MainFrame*)NULL, pFrame);
+
+	pFrame = new MainFrame 
 	(
 		NULL,
 		wxString(g_argv[0], wxConvLibc),
