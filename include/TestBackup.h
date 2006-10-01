@@ -59,12 +59,9 @@ class TestBackupStoreDaemon
 	  mStateListening(false), mStateDead(false)
 	{ }
 	
-	virtual void Run()   { ServerTLS<BOX_PORT_BBSTORED, 1, false>::Run(); }
-	virtual void Setup() { SetupInInitialProcess(); }
-	virtual bool Load(const std::string& file) 
-	{ 
-		return LoadConfigurationFile(file); 
-	}
+	virtual void Run();
+	virtual void Setup();
+	virtual bool Load(const std::string& file);
 	
 	wxMutex     mConditionLock;
 	wxCondition mStateKnownCondition;

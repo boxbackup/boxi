@@ -108,6 +108,21 @@ void TestBackupStoreDaemon::SetupInInitialProcess()
 	// Ready to go!
 }
 
+void TestBackupStoreDaemon::Setup() 
+{ 
+	SetupInInitialProcess(); 
+}
+
+bool TestBackupStoreDaemon::Load(const std::string& file) 
+{ 
+	return LoadConfigurationFile(file); 
+}
+
+void TestBackupStoreDaemon::Run()
+{ 
+	ServerTLS<BOX_PORT_BBSTORED, 1, false>::Run(); 
+}
+
 void TestBackupStoreDaemon::Connection(SocketStreamTLS &rStream)
 {
 	// Get the common name from the certificate
@@ -697,6 +712,58 @@ void TestBackup::RunTest()
 
 	// before the first backup, there should be differences
 	CHECK_COMPARE_LOC_FAILS(1, 0, 0, 0);
+
+	// reconfigure to exclude all files but one
+	CPPUNIT_ASSERT(mpTestDataLocation);
+	MyExcludeList& rExcludeList = mpTestDataLocation->GetExcludeList();
+	const MyExcludeEntry::List& rEntries = rExcludeList.GetEntries();
+	CPPUNIT_ASSERT_EQUAL((size_t)9, rEntries.size());
+	for (MyExcludeEntry::ConstIterator i = rEntries.begin();
+		rEntries.size() > 0; 
+		i = rEntries.begin())
+	{
+		rExcludeList.RemoveEntry(*i);
+	}
+	CPPUNIT_ASSERT_EQUAL((size_t)0, rEntries.size());
+	rExcludeList.AddEntry
+	(
+		MyExcludeEntry
+		(
+			theExcludeTypes[ETI_EXCLUDE_FILES_REGEX], ".*"
+		)
+	);
+	rExcludeList.AddEntry
+	(
+		MyExcludeEntry
+		(
+			theExcludeTypes[ETI_EXCLUDE_DIRS_REGEX], ".*"
+		)
+	);
+	rExcludeList.AddEntry
+	(
+		MyExcludeEntry
+		(
+			theExcludeTypes[ETI_ALWAYS_INCLUDE_FILE],
+			MakeAbsolutePath(mTestDataDir, 
+				_("spacetest/f2")).GetFullPath()
+		)
+	);
+	CPPUNIT_ASSERT_EQUAL((size_t)3, rEntries.size());
+		
+	// before the first backup, there should be differences
+	CHECK_COMPARE_LOC_FAILS(1, 0, 0, 0);
+
+	CHECK_BACKUP_OK();
+
+	// and afterwards, there should be no differences any more
+	CHECK_COMPARE_LOC_OK(0, 0);
+	
+	// restore the default settings
+	RemoveDefaultLocation();
+	SetupDefaultLocation();
+
+	// now there should be differences again
+	CHECK_COMPARE_LOC_FAILS(6, 0, 0, 0);
 
 	CHECK_BACKUP_OK();
 
