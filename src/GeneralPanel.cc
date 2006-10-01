@@ -36,8 +36,9 @@
 #include "SetupWizard.h"
 
 BEGIN_EVENT_TABLE(GeneralPanel, wxPanel)
-	EVT_BUTTON(ID_General_Backup_Button, GeneralPanel::OnBackupButtonClick)
+	EVT_BUTTON(ID_General_Backup_Button,  GeneralPanel::OnBackupButtonClick)
 	EVT_BUTTON(ID_General_Restore_Button, GeneralPanel::OnRestoreButtonClick)
+	EVT_BUTTON(ID_General_Compare_Button, GeneralPanel::OnCompareButtonClick)
 	EVT_BUTTON(ID_General_Setup_Wizard_Button, 
 		GeneralPanel::OnSetupWizardButtonClick)
 	EVT_BUTTON(ID_General_Setup_Advanced_Button, 
@@ -143,7 +144,6 @@ GeneralPanel::GeneralPanel
 	mpComparePanel = new ComparePanel
 	(
 		mpConfig,
-		mpConfigPanel,
 		pMainFrame,
 		pServerConnection,
 		pParent
@@ -183,6 +183,11 @@ void GeneralPanel::OnBackupButtonClick(wxCommandEvent& event)
 void GeneralPanel::OnRestoreButtonClick(wxCommandEvent& event)
 {
 	mpMainFrame->ShowPanel(mpRestorePanel);
+}
+
+void GeneralPanel::OnCompareButtonClick(wxCommandEvent& event)
+{
+	mpMainFrame->ShowPanel(mpComparePanel);
 }
 
 void GeneralPanel::OnIdle(wxIdleEvent& event)
