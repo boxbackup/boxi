@@ -104,6 +104,7 @@ void RaidFileController::Initialise(const char *ConfigFilename)
 	}
 	
 	// Use the values
+	mSetList.clear();
 	int expectedSetNum = 0;
 	std::vector<std::string> confdiscs(pconfig->GetSubConfigurationNames());
 	for(std::vector<std::string>::const_iterator i(confdiscs.begin()); i != confdiscs.end(); ++i)
@@ -212,6 +213,3 @@ std::string RaidFileController::DiscSetPathToFileSystemPath(unsigned int DiscSet
 	r += rFilename;
 	return r;
 }
-
-
-
