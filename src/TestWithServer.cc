@@ -69,6 +69,8 @@
 
 void TestWithServer::setUp()
 {
+	TestWithConfig::setUp();
+	
 	// create a working directory
 	mBaseDir.AssignTempFileName(wxT("boxi-test-tempdir-"));
 	CPPUNIT_ASSERT(mBaseDir.FileExists());
@@ -265,36 +267,8 @@ void TestWithServer::setUp()
 
 	CPPUNIT_ASSERT(!hasEntries);
 
-	CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
-		
-	mpTestDataLocation = NULL;	
-	Location testDirLoc(_("testdata"), mTestDataDir.GetFullPath(),
-		mpConfig);
-	mpConfig->AddLocation(testDirLoc);
-	CPPUNIT_ASSERT_EQUAL((size_t)1, 
-		mpConfig->GetLocations().size());
-	mpTestDataLocation = mpConfig->GetLocation(testDirLoc);
-	CPPUNIT_ASSERT(mpTestDataLocation);
-
-	MyExcludeList& rExcludes = mpTestDataLocation->GetExcludeList();
-
-	#define ADD_ENTRY(type, path) \
-	rExcludes.AddEntry(MyExcludeEntry(theExcludeTypes[type], path))
+	SetupDefaultLocation();
 	
-	ADD_ENTRY(ETI_EXCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("excluded_1")).GetFullPath());
-	ADD_ENTRY(ETI_EXCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("excluded_2")).GetFullPath());
-	ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("\\.excludethis$"));
-	ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("EXCLUDE"));
-	ADD_ENTRY(ETI_ALWAYS_INCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("dont.excludethis")).GetFullPath());
-	ADD_ENTRY(ETI_EXCLUDE_DIR, MakeAbsolutePath(mTestDataDir,_("exclude_dir")).GetFullPath());
-	ADD_ENTRY(ETI_EXCLUDE_DIR, MakeAbsolutePath(mTestDataDir,_("exclude_dir_2")).GetFullPath());
-	ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, _("not_this_dir"));
-	ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, _("ALWAYSINCLUDE"));
-	
-	#undef ADD_ENTRY
-
-	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
-
 	// helps with debugging
 	mClientConfigFile = wxFileName(mConfDir.GetFullPath(), _("bbackupd.conf"));
 	mpConfig->Save(mClientConfigFile.GetFullPath());
@@ -314,7 +288,7 @@ void TestWithServer::setUp()
 	std::string certFile(mapClientConfig->GetKeyValue("CertificateFile"));
 	std::string keyFile (mapClientConfig->GetKeyValue("PrivateKeyFile"));
 	std::string caFile  (mapClientConfig->GetKeyValue("TrustedCAsFile"));
-	mTlsContext.Initialise(false /* as client */, 
+	mTlsContext.Initialise(false, // as client
 		certFile.c_str(), keyFile.c_str(), caFile.c_str());
 	
 	// Initialise keys
@@ -599,9 +573,7 @@ void TestWithServer::tearDown()
 	// clean up
 	if (mpTestDataLocation)
 	{
-		CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
-		mpConfig->RemoveLocation(*mpTestDataLocation);
-		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+		RemoveDefaultLocation();
 	}
 	
 	/*	
@@ -615,4 +587,46 @@ void TestWithServer::tearDown()
 	DeleteRecursive(mStoreDir);
 	CPPUNIT_ASSERT(mBaseDir.Rmdir());
 	*/
+	
+	TestWithConfig::tearDown();
+}
+
+void TestWithServer::SetupDefaultLocation()
+{
+	CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+		
+	CPPUNIT_ASSERT(!mpTestDataLocation);
+	Location testDirLoc(_("testdata"), mTestDataDir.GetFullPath(), mpConfig);
+	mpConfig->AddLocation(testDirLoc);
+	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+	mpTestDataLocation = mpConfig->GetLocation(testDirLoc);
+	CPPUNIT_ASSERT(mpTestDataLocation);
+
+	MyExcludeList& rExcludes = mpTestDataLocation->GetExcludeList();
+
+	#define ADD_ENTRY(type, path) \
+	rExcludes.AddEntry(MyExcludeEntry(theExcludeTypes[type], path))
+	
+	ADD_ENTRY(ETI_EXCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("excluded_1")).GetFullPath());
+	ADD_ENTRY(ETI_EXCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("excluded_2")).GetFullPath());
+	ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("\\.excludethis$"));
+	ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("EXCLUDE"));
+	ADD_ENTRY(ETI_ALWAYS_INCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("dont.excludethis")).GetFullPath());
+	ADD_ENTRY(ETI_EXCLUDE_DIR, MakeAbsolutePath(mTestDataDir,_("exclude_dir")).GetFullPath());
+	ADD_ENTRY(ETI_EXCLUDE_DIR, MakeAbsolutePath(mTestDataDir,_("exclude_dir_2")).GetFullPath());
+	ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, _("not_this_dir"));
+	ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, _("ALWAYSINCLUDE"));
+	
+	#undef ADD_ENTRY
+
+	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+}
+
+void TestWithServer::RemoveDefaultLocation()
+{
+	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+	CPPUNIT_ASSERT(mpTestDataLocation);
+	mpConfig->RemoveLocation(*mpTestDataLocation);
+	CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+	mpTestDataLocation = NULL;
 }

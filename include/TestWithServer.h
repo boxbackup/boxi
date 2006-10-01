@@ -69,6 +69,9 @@ class TestWithServer : public TestWithConfig
 		size_t diffsExpected);
 	void CompareDirsInternal(wxFileName dir1, wxFileName dir2, 
 		wxArrayString& rDiffs);
+		
+	void SetupDefaultLocation();
+	void RemoveDefaultLocation();
 };
 
 #define CHECK_BACKUP() \
