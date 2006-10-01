@@ -91,6 +91,10 @@ file selection dialog
 =item *
 Allow copying of error messages from list box in backup progress panel.
 
+=item *
+Investigate files being restored with wrong timestamps (4 hours in the future)
+reported by Pete Jalajas.
+
 =back
 
 Last updated: 2006-10-01 by Chris Wilson.
