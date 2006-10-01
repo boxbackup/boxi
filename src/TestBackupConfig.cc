@@ -22,7 +22,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <openssl/ssl.h>
+// #include <openssl/bio.h>
+
+// class SSL;
+// class SSL_CTX;
 
 #include <wx/button.h>
 #include <wx/dir.h>
@@ -36,7 +39,7 @@
 #include <cppunit/TestSuite.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#define TLS_CLASS_IMPLEMENTATION_CPP
+// #define TLS_CLASS_IMPLEMENTATION_CPP
 
 #include "SandBox.h"
 #include "Box.h"
@@ -62,12 +65,12 @@
 #include "FileTree.h"
 #include "MainFrame.h"
 #include "SetupWizard.h"
-#include "SslConfig.h"
+// #include "SslConfig.h"
 #include "TestBackupConfig.h"
 
 #include "ServerConnection.h"
 
-#undef TLS_CLASS_IMPLEMENTATION_CPP
+// #undef TLS_CLASS_IMPLEMENTATION_CPP
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(TestBackupConfig, "WxGuiTest");
 
