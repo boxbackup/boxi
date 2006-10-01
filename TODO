@@ -88,6 +88,9 @@ Convert the std::strings in Location.h to wxStrings
 Fix inability to select socket and PID file that don't exist using
 file selection dialog
 
+=item *
+Allow copying of error messages from list box in backup progress panel.
+
 =back
 
-Last updated: 2006-09-10 by Chris Wilson.
+Last updated: 2006-10-01 by Chris Wilson.
