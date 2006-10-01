@@ -236,11 +236,16 @@ void DirSelButton::OnClick(wxCommandEvent& event)
 	mpTextCtrl->SetValue(newDir);
 }
 
-ParamPanel::ParamPanel(
-	wxWindow* parent, wxWindowID id,
-	const wxPoint& pos, const wxSize& size,
-	long style, const wxString& name)
-	: wxPanel(parent, id, pos, size, style, name)
+ParamPanel::ParamPanel
+(
+	wxWindow* parent, 
+	wxWindowID id,
+	const wxPoint& pos, 
+	const wxSize& size,
+	long style, 
+	const wxString& name
+)
+: wxPanel(parent, id, pos, size, style, name)
 {
 	wxBoxSizer *pBasicBox = new wxBoxSizer(wxVERTICAL);
 	SetSizer(pBasicBox, true);
