@@ -2,8 +2,8 @@
  *            FileTree.h
  *
  *  Mon Jan  2 12:33:06 2006
- *  Copyright  2006  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2006 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -120,6 +120,56 @@ class FileTree : public wxTreeCtrl
 	void OnTreeNodeExpand(wxTreeEvent& event);
 	
 	DECLARE_EVENT_TABLE()
+};
+
+class LocalFileTree;
+	
+class LocalFileNode : public FileNode 
+{
+	private:
+	wxString mFileName;
+	wxString mFullPath;
+	bool     mIsRoot;
+	bool     mIsDirectory;
+	
+	public:
+	LocalFileNode(const wxString& path);
+	LocalFileNode(LocalFileNode* pParent, const wxString& path);
+
+	virtual LocalFileNode* CreateChildNode(LocalFileNode* pParent, 
+		const wxString& rPath);
+	
+	virtual const wxString& GetFileName() const { return mFileName; }
+	virtual const wxString& GetFullPath() const { return mFullPath; }
+
+	bool IsDirectory() const { return mIsDirectory; }
+	bool IsRoot()      const { return mIsRoot; }
+
+	// void SetDirectory(bool value = true) { mIsDirectory = value; }
+	virtual int UpdateState(FileImageList& rImageList, bool updateParents);
+
+	private:
+	virtual bool _AddChildrenSlow(LocalFileTree* pTreeCtrl, bool recurse);
+	virtual bool _AddChildrenSlow(wxTreeCtrl*    pTreeCtrl, bool recurse)
+	{
+		return _AddChildrenSlow((LocalFileTree*)pTreeCtrl, recurse);
+	}
+};
+
+class LocalFileTree : public FileTree
+{
+	public:
+	LocalFileTree
+	(
+		wxWindow* pParent, 
+		wxWindowID id,
+		LocalFileNode* pRootNode,
+		const wxString& rRootLabel
+	);
+	
+	private:
+	virtual int OnCompareItems(const wxTreeItemId& item1, 
+		const wxTreeItemId& item2);
 };
 
 #endif /* _FILETREE_H */
