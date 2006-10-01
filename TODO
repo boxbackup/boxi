@@ -95,6 +95,9 @@ Allow copying of error messages from list box in backup progress panel.
 Investigate files being restored with wrong timestamps (4 hours in the future)
 reported by Pete Jalajas.
 
+=item *
+Remove the View menu, or make it work.
+
 =back
 
 Last updated: 2006-10-01 by Chris Wilson.
