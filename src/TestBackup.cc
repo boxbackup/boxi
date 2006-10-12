@@ -178,7 +178,16 @@ void StoreServerThread::Stop()
 {
 	if (!IsAlive()) return;
 	mDaemon.SetTerminateWanted();
-	Wait();
+	wxLogNull nolog;
+	wxThreadError err = Delete();
+	if (err != wxTHREAD_NO_ERROR)
+	{
+		wxString msg;
+		msg.Printf(_("Failed to wait for server thread: error %d"),
+			err);
+		wxGetApp().ShowMessageBox(BM_TEST_WAIT_FOR_THREAD_FAILED,
+			msg, _("Boxi Error"), wxOK | wxICON_ERROR, NULL);
+	}
 }
 
 StoreServerThread::ExitCode StoreServerThread::Entry()
