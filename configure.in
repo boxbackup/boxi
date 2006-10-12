@@ -16,7 +16,7 @@ AM_PROG_CC_STDC
 AC_HEADER_STDC
 AC_CHECK_HEADERS([execinfo.h netinet/in.h regex.h sys/types.h sys/xattr.h])
 
-if [ -z "CFLAGS" ]; then
+if test -z "CFLAGS"; then
 	export CFLAGS="-g -O0"
 fi
 
