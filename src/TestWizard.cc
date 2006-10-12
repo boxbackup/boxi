@@ -418,8 +418,10 @@ void TestWizard::RunTest()
 		// expect BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE
 		CPPUNIT_ASSERT(tempdir.Mkdir(wxS_IRUSR | wxS_IXUSR));
 		CPPUNIT_ASSERT(tempdir.DirExists());
-		
+	
+		#ifndef WIN32 // it is writable on Windows
 		CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
+		#endif
 		
 		// change the filename to refer to the directory
 		// expect BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY
