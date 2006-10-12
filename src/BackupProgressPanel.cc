@@ -908,6 +908,9 @@ void BackupProgressPanel::FillIDMapVector(std::vector<BackupClientInodeToIDMap *
 		BackupClientInodeToIDMap *pmap = new BackupClientInodeToIDMap();
 		try
 		{
+#ifdef BACKIPCLIENTINODETOIDMAP_IN_MEMORY_IMPLEMENTATION
+			pmap->OpenEmpty();
+#else
 			// Get the base filename of this map
 			std::string filename;
 			MakeMapBaseName(l, filename);
@@ -928,6 +931,7 @@ void BackupProgressPanel::FillIDMapVector(std::vector<BackupClientInodeToIDMap *
 				// Open the map
 				pmap->Open(filename.c_str(), !NewMaps /* read only */, NewMaps /* create new */);
 			}
+#endif // BACKIPCLIENTINODETOIDMAP_IN_MEMORY_IMPLEMENTATION
 			
 			// Store on vector
 			rVector.push_back(pmap);
@@ -963,6 +967,7 @@ void BackupProgressPanel::DeleteIDMapVector(std::vector<BackupClientInodeToIDMap
 	ASSERT(rVector.size() == 0);
 }
 
+#ifndef BACKIPCLIENTINODETOIDMAP_IN_MEMORY_IMPLEMENTATION
 // --------------------------------------------------------------------------
 //
 // Function
@@ -990,6 +995,7 @@ void BackupProgressPanel::MakeMapBaseName(unsigned int MountNumber,
 	// Build the final filename
 	rNameOut = dir + DIRECTORY_SEPARATOR "mnt" + leaf;
 }
+#endif
 
 // --------------------------------------------------------------------------
 //
