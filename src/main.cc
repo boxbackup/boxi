@@ -314,7 +314,9 @@ int BoxiApp::ShowMessageBox
 	
 	if (mExpectedMessageId != messageId)
 	{
-		CPPUNIT_ASSERT(mExpectedMessageId == messageId);
+		wxCharBuffer buf = message.mb_str();
+		CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(), 
+			mExpectedMessageId, messageId);
 	}
 	
 	mExpectedMessageId = BM_UNKNOWN;
