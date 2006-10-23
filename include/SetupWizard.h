@@ -47,12 +47,13 @@ class SetupWizard : public wxWizard
 {
 	public:
 	SetupWizard(ClientConfig *config, wxWindow* parent);
-	bool Run() { return RunWizard(mpIntroPage); }
 	SetupWizardPage_id_t GetCurrentPageId();
 
 #if wxABI_VERSION >= 20602
+	bool Run() { RunWizardMaybeModeless(); return true; }
 	virtual void RunWizardMaybeModeless();
 #else
+	bool Run() { return RunWizard(mpIntroPage); }
 	virtual int  ShowModal();
 	virtual void EndModal(int retcode);
 #endif
