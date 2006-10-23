@@ -56,7 +56,8 @@ GeneralPanel::GeneralPanel
 :	wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 
 		wxTAB_TRAVERSAL, wxT("General Panel")),
 	mpMainFrame(pMainFrame),
-	mpConfig(pConfig)
+	mpConfig(pConfig),
+	mpWizard(NULL)
 {
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 	SetSizer(pMainSizer);
@@ -162,8 +163,6 @@ GeneralPanel::GeneralPanel
 		ID_General_Compare_Button, wxT("&Compare"));
 	pCompareBox->Add(pCompareButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
-		
-	mpWizard = NULL;
 }
 
 void GeneralPanel::AddToNotebook(wxNotebook* pNotebook)
