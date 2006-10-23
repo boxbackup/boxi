@@ -64,7 +64,7 @@
 #include "ClientConfig.h"
 #include "FileTree.h"
 #include "MainFrame.h"
-#include "SetupWizard.h"
+// #include "SetupWizard.h"
 // #include "SslConfig.h"
 #include "TestBackupConfig.h"
 
@@ -1168,8 +1168,8 @@ void TestBackupConfig::RunTest()
 			) \
 		)
 		
-		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _(".*"));
-		ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX,  _(".*"));
+		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, wxString(_(".*")));
+		ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX,  wxString(_(".*")));
 		
 		#undef ADD_ENTRY
 
