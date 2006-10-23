@@ -166,8 +166,8 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 	bool mIsDirectory, const MyExcludeEntry** ppExcludedBy, 
 	const MyExcludeEntry** ppIncludedBy, ExcludedState ParentState)
 {
-	wxLogDebug(wxT(" checking whether %s is excluded..."), 
-		rLocalFileName.c_str());
+	//wxLogDebug(wxT(" checking whether %s is excluded..."), 
+	//	rLocalFileName.c_str());
 	
 	const std::list<MyExcludeEntry>& rExcludeList =
 		mExcluded.GetEntries();
@@ -232,21 +232,21 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 			{
 				std::string name = pEntry->ToString();
 				wxString name2(name.c_str(), wxConvLibc);
-				wxLogDebug(wxT("  checking against %s"),
-					name2.c_str());
+				//wxLogDebug(wxT("  checking against %s"),
+				//	name2.c_str());
 			}
 
 			ExcludeSense sense = pEntry->GetSense();
 			
 			if (pass == 1 && sense != ES_EXCLUDE) 
 			{
-				wxLogDebug(wxT("   not an Exclude entry"));
+				//wxLogDebug(wxT("   not an Exclude entry"));
 				continue;
 			}
 			
 			if (pass == 2 && sense != ES_ALWAYSINCLUDE) 
 			{
-				wxLogDebug(wxT("   not an AlwaysInclude entry"));
+				//wxLogDebug(wxT("   not an AlwaysInclude entry"));
 				continue;
 			}
 			
@@ -254,13 +254,13 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 			
 			if (fileOrDir == EFD_FILE && mIsDirectory) 
 			{
-				wxLogDebug(wxT("   doesn't match directories"));
+				//wxLogDebug(wxT("   doesn't match directories"));
 				continue;
 			}
 			
 			if (fileOrDir == EFD_DIR && !mIsDirectory) 
 			{
-				wxLogDebug(wxT("   doesn't match files"));
+				//wxLogDebug(wxT("   doesn't match files"));
 				continue;
 			}
 			
@@ -268,7 +268,7 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 			{
 				if (rLocalFileName == value2) 
 				{
-					wxLogDebug(wxT("    exact match"));
+					//wxLogDebug(wxT("    exact match"));
 					matched = true;
 				}
 			} 
@@ -292,11 +292,11 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 			
 			if (!matched) 
 			{
-				wxLogDebug(wxT("   no match."));
+				//wxLogDebug(wxT("   no match."));
 				continue;
 			}
 
-			wxLogDebug(wxT("   matched!"));
+			//wxLogDebug(wxT("   matched!"));
 			
 			if (sense == ES_EXCLUDE)
 			{
