@@ -738,14 +738,14 @@ void TestBackup::RunTest()
 	(
 		MyExcludeEntry
 		(
-			theExcludeTypes[ETI_EXCLUDE_FILES_REGEX], ".*"
+			theExcludeTypes[ETI_EXCLUDE_FILES_REGEX], wxString(".*")
 		)
 	);
 	rExcludeList.AddEntry
 	(
 		MyExcludeEntry
 		(
-			theExcludeTypes[ETI_EXCLUDE_DIRS_REGEX], ".*"
+			theExcludeTypes[ETI_EXCLUDE_DIRS_REGEX], wxString(".*")
 		)
 	);
 	rExcludeList.AddEntry
