@@ -29,79 +29,15 @@
 
 #include "FunctionPanel.h"
 
-class CompareFilesPanel;
 class CompareProgressPanel;
-class DirSelButton;
-class ServerCacheNode;
 class ServerConnection;
 
 class wxChoice;
 class wxFileName;
+class wxGenericDirCtrl;
 class wxNotebook;
 class wxRadioButton;
-class wxTextCtrl;
-
-class CompareSpecEntry
-{
-	public:
-	typedef std::list<CompareSpecEntry> List;
-	typedef List::iterator Iterator;
-	typedef List::const_iterator ConstIterator;
-		
-	private:
-	wxFileName       mLocalFile;
-	ServerCacheNode* mpRemoteFile;
-	bool             mInclude;
-
-	public:
-	CompareSpecEntry(const wxFileName& rLocalFile, 
-		ServerCacheNode* pRemoteFile, bool lInclude)
-	: mLocalFile(rLocalFile),
-	  mpRemoteFile(pRemoteFile),
-	  mInclude(lInclude)
-	{ }
-
-	wxFileName       GetLocalFile()  const { return mLocalFile; }
-	ServerCacheNode& GetRemoteFile() const { return *mpRemoteFile; }
-	bool IsInclude() const { return mInclude; }
-	bool IsSameAs(const CompareSpecEntry& rOther) const
-	{
-		return mLocalFile.SameAs(rOther.mLocalFile) && 
-			mpRemoteFile == rOther.mpRemoteFile &&
-			mInclude == rOther.mInclude;
-	}
-};
-
-class CompareSpec
-{
-	private:
-	CompareSpecEntry::List mEntries;
-	bool mCompareWithOriginalLocations;
-	wxFileName mCompareWithNewLocation;
-	
-	public:
-	CompareSpec() { }
-	const CompareSpecEntry::List& GetEntries() const { return mEntries; }
-	void Add   (const CompareSpecEntry& rNewEntry);
-	void Remove(const CompareSpecEntry& rOldEntry);
-	
-	void SetCompareWithOriginalLocations(bool newValue) 
-	{ mCompareWithOriginalLocations = newValue; }
-	void SetCompareWithNewLocation(const wxFileName& rNewValue)
-	{ mCompareWithNewLocation = rNewValue; }
-	
-	bool       GetCompareWithOriginalLocations() const 
-	{ return mCompareWithOriginalLocations; }
-	wxFileName GetCompareWithNewLocation() const 
-	{ return mCompareWithNewLocation; }
-};
-
-class CompareSpecChangeListener
-{
-	public:
-	virtual void OnCompareSpecChange() = 0;
-	virtual ~CompareSpecChangeListener() { }
-};
+class wxTreeCtrl;
 
 class ComparePanel : public wxPanel, public ConfigChangeListener
 {
@@ -127,19 +63,10 @@ class ComparePanel : public wxPanel, public ConfigChangeListener
 	
 	wxChoice* mpOneLocChoice;
 	
-	wxTextCtrl* mpDirLocalText;
-	wxTextCtrl* mpDirRemoteText;
-	wxButton*   mpDirLocalButton;
-	wxButton*   mpDirRemoteButton;
+	wxGenericDirCtrl* mpDirLocalTree;
+	wxTreeCtrl*       mpDirRemoteTree;
 	
-	/*
-	CompareProgressPanel* mpProgressPanel;
-	CompareFilesPanel*    mpFilesPanel;
-	wxRadioButton* mpOldLocRadio;
-	wxRadioButton* mpNewLocRadio;
-	wxTextCtrl*    mpNewLocText;
-	DirSelButton*  mpNewLocButton;
-	*/
+	// CompareProgressPanel* mpProgressPanel;
 
 	void Update();
 	void OnClickStartButton(wxCommandEvent& rEvent);

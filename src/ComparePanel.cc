@@ -24,7 +24,9 @@
 
 // #include <wx/arrstr.h>
 #include <wx/dir.h>
+#include <wx/dirctrl.h>
 #include <wx/filename.h>
+#include <wx/splitter.h>
 
 #include "ComparePanel.h"
 #include "MainFrame.h"
@@ -75,13 +77,14 @@ ComparePanel::ComparePanel
 		_("&Specified Directory:"));
 	pSourceBox->Add(mpDirRadio, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
+	/*
 	wxFlexGridSizer* pDirSizer = new wxFlexGridSizer(3, 8, 8);
 	pDirSizer->AddGrowableCol(1, 1);
 	pSourceBox->Add(pDirSizer, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	pDirSizer->Add(new wxStaticText(this, wxID_ANY, _("&Local Directory:")),
 		1, wxALIGN_CENTER_VERTICAL | wxLEFT, 20);
-	
+
 	mpDirLocalText = new wxTextCtrl(this, 
 		ID_Compare_Panel_Dir_Local_Path_Text, wxEmptyString);
 	pDirSizer->Add(mpDirLocalText, 1, wxGROW);
@@ -104,6 +107,24 @@ ComparePanel::ComparePanel
 	mpDirRemoteButton = new DirSelButton(this, 
 		ID_Compare_Panel_Dir_Remote_Path_Button, mpDirRemoteText);
 	pDirSizer->Add(mpDirRemoteButton, 0, wxGROW);
+	*/
+	
+	wxSizer* pDirSizer = new wxBoxSizer(wxVERTICAL);
+	pSourceBox->Add(pDirSizer, 1, 
+		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+		
+	wxSplitterWindow* pSplitter = new wxSplitterWindow(this, 
+		ID_Compare_Panel_Dir_Splitter);
+	pDirSizer->Add(pSplitter, 1, wxGROW | wxLEFT, 20);
+	
+	mpDirLocalTree = new wxGenericDirCtrl(pSplitter, 
+		ID_Compare_Panel_Dir_Local_Tree, wxDirDialogDefaultFolderStr,
+		wxDefaultPosition, wxDefaultSize, wxDIRCTRL_3D_INTERNAL);
+	mpDirRemoteTree = new wxTreeCtrl(pSplitter, 
+		ID_Compare_Panel_Dir_Remote_Tree, wxDefaultPosition, 
+		wxDefaultSize, wxTR_HAS_BUTTONS | wxSUNKEN_BORDER);
+	pSplitter->SplitVertically(mpDirLocalTree, mpDirRemoteTree);
+	pSplitter->SetMinimumPaneSize(20);
 	
 	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
 	pMainSizer->Add(pActionCtrlSizer, 0, 
@@ -238,17 +259,13 @@ void ComparePanel::UpdateEnabledState()
 	
 	if (mpDirRadio->GetValue())
 	{
-		mpDirLocalText   ->Enable();
-		mpDirLocalButton ->Enable();
-		mpDirRemoteText  ->Enable();
-		mpDirRemoteButton->Enable();
+		mpDirLocalTree ->Enable();
+		mpDirRemoteTree->Enable();
 	}
 	else
 	{
-		mpDirLocalText   ->Disable();
-		mpDirLocalButton ->Disable();
-		mpDirRemoteText  ->Disable();
-		mpDirRemoteButton->Disable();
+		mpDirLocalTree ->Disable();
+		mpDirRemoteTree->Disable();
 	}
 	
 	/*
