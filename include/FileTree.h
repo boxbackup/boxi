@@ -109,14 +109,13 @@ class FileTree : public wxTreeCtrl
 		FileNode* pRootNode,
 		const wxString& rRootLabel
 		);
+
 	void UpdateStateIcon(FileNode* pNode, bool updateParents, 
 		bool updateChildren);
 
 	private:
 	FileImageList mImages;
 
-	virtual int OnCompareItems(const wxTreeItemId& item1, 
-		const wxTreeItemId& item2) = 0;
 	void OnTreeNodeExpand(wxTreeEvent& event);
 	
 	DECLARE_EVENT_TABLE()
@@ -167,7 +166,6 @@ class LocalFileTree : public FileTree
 		const wxString& rRootLabel
 	);
 	
-	private:
 	virtual int OnCompareItems(const wxTreeItemId& item1, 
 		const wxTreeItemId& item2);
 };
