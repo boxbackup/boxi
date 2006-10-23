@@ -170,6 +170,11 @@ void TestBackupConfig::RunTest()
 	
 	pMainFrame->DoFileOpen(MakeAbsolutePath(
 		_("../test/config/bbackupd.conf")).GetFullPath());
+	{
+		const Location::List& rLocs = mpConfig->GetLocations();
+		CPPUNIT_ASSERT_EQUAL((size_t)0, rLocs.size());
+	}
+	
 	wxString msg;
 	bool isOk = mpConfig->Check(msg);
 
@@ -209,11 +214,9 @@ void TestBackupConfig::RunTest()
 	wxString rootLabel  = pTree->GetItemText(rootId);
 
 	#ifdef WIN32
-	CPPUNIT_ASSERT_EQUAL((std::string)"My Computer", 
-		(std::string)rootLabel.mb_str(wxConvLibc).data());
+	CPPUNIT_ASSERT_EQUAL(wxString(_("My Computer")), rootLabel);
 	#else
-	CPPUNIT_ASSERT_EQUAL((std::string)"/ (local root)", 
-		(std::string)rootLabel.mb_str(wxConvLibc).data());
+	CPPUNIT_ASSERT_EQUAL(wxString(_("/ (local root)")), rootLabel);
 	#endif
 	
 	FileImageList images;
@@ -410,8 +413,9 @@ void TestBackupConfig::RunTest()
 					break;
 				}
 			}
-			
-			CPPUNIT_ASSERT_MESSAGE(dirName.mb_str(wxConvLibc).data(), found);
+
+			wxCharBuffer buf = dirName.mb_str();			
+			CPPUNIT_ASSERT_MESSAGE(buf.data(), found);
 		}
 		
 		wxTreeItemIdValue cookie;
@@ -1189,13 +1193,13 @@ void TestBackupConfig::RunTest()
 		
 		ADD_ENTRY(ETI_EXCLUDE_FILE, testDataDir_excluded_1.GetFullPath());
 		ADD_ENTRY(ETI_EXCLUDE_FILE, testDataDir_excluded_2.GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("_excludethis$"));
-		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("EXCLUDE"));
+		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, wxString(_("_excludethis$")));
+		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, wxString(_("EXCLUDE")));
 		ADD_ENTRY(ETI_ALWAYS_INCLUDE_FILE, testDataDir_dont_excludethis.GetFullPath());
 		ADD_ENTRY(ETI_EXCLUDE_DIR, testDataDir_exclude_dir.GetFullPath());
 		ADD_ENTRY(ETI_EXCLUDE_DIR, testDataDir_exclude_dir_2.GetFullPath());
-		ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, _("not_this_dir"));
-		ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, _("ALWAYSINCLUDE"));
+		ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, wxString(_("not_this_dir")));
+		ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, wxString(_("ALWAYSINCLUDE")));
 		
 		#undef ADD_ENTRY
 
