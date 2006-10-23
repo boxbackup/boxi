@@ -135,10 +135,15 @@ enum {
 	ID_Compare_Panel_One_Loc_Radio,
 	ID_Compare_Panel_One_Loc_Choice,
 	ID_Compare_Panel_Dir_Radio,
+	/*
 	ID_Compare_Panel_Dir_Local_Path_Text,
 	ID_Compare_Panel_Dir_Local_Path_Button,
 	ID_Compare_Panel_Dir_Remote_Path_Text,
-	ID_Compare_Panel_Dir_Remote_Path_Button,	
+	ID_Compare_Panel_Dir_Remote_Path_Button,
+	*/
+	ID_Compare_Panel_Dir_Splitter,
+	ID_Compare_Panel_Dir_Local_Tree,
+	ID_Compare_Panel_Dir_Remote_Tree,
 };
 
 typedef enum
