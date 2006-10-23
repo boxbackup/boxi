@@ -1719,6 +1719,7 @@ SetupWizardPage_id_t SetupWizard::GetCurrentPageId()
 	return pPage->GetPageId();
 }
 
+#if wxABI_VERSION >= 20602
 void SetupWizard::RunWizardMaybeModeless()
 {
 	wxASSERT(mpIntroPage);
@@ -1732,3 +1733,17 @@ void SetupWizard::RunWizardMaybeModeless()
 
 	WxGuiTestHelper::ShowModal(this);
 }
+#else
+// work around private FinishLayout() in older versions
+void SetupWizard::ShowModal()
+{
+        if (WxGuiTestHelper::s_showModalDialogsNonModal)
+	{
+		Show();
+	}
+	else
+	{
+		wxWizard::ShowModal();
+	}
+}
+#endif

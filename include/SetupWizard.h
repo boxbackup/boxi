@@ -49,8 +49,13 @@ class SetupWizard : public wxWizard
 	SetupWizard(ClientConfig *config, wxWindow* parent);
 	bool Run() { return RunWizard(mpIntroPage); }
 	SetupWizardPage_id_t GetCurrentPageId();
+
+#if wxABI_VERSION >= 20602
 	virtual void RunWizardMaybeModeless();
-	
+#else
+	virtual int ShowModal();
+#endif
+
 	private:
 	ClientConfig* mpConfig;
 	wxWizardPageSimple* mpIntroPage;
