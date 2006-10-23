@@ -609,13 +609,13 @@ void TestWithServer::SetupDefaultLocation()
 	
 	ADD_ENTRY(ETI_EXCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("excluded_1")).GetFullPath());
 	ADD_ENTRY(ETI_EXCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("excluded_2")).GetFullPath());
-	ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("\\.excludethis$"));
-	ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _("EXCLUDE"));
+	ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, wxString(_("\\.excludethis$")));
+	ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, wxString(_("EXCLUDE")));
 	ADD_ENTRY(ETI_ALWAYS_INCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("dont.excludethis")).GetFullPath());
 	ADD_ENTRY(ETI_EXCLUDE_DIR, MakeAbsolutePath(mTestDataDir,_("exclude_dir")).GetFullPath());
 	ADD_ENTRY(ETI_EXCLUDE_DIR, MakeAbsolutePath(mTestDataDir,_("exclude_dir_2")).GetFullPath());
-	ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, _("not_this_dir"));
-	ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, _("ALWAYSINCLUDE"));
+	ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, wxString(_("not_this_dir")));
+	ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, wxString(_("ALWAYSINCLUDE")));
 	
 	#undef ADD_ENTRY
 
