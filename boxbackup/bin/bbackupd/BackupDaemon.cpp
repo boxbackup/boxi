@@ -1682,6 +1682,9 @@ void BackupDaemon::FillIDMapVector(std::vector<BackupClientInodeToIDMap *> &rVec
 			}
 
 			// If it's not a new map, it may not exist in which case an empty map should be created
+			#ifdef BACKIPCLIENTINODETOIDMAP_IN_MEMORY_IMPLEMENTATION
+			pmap->OpenEmpty();
+			#else
 			if(!NewMaps && !FileExists(filename.c_str()))
 			{
 				pmap->OpenEmpty();
@@ -1691,6 +1694,7 @@ void BackupDaemon::FillIDMapVector(std::vector<BackupClientInodeToIDMap *> &rVec
 				// Open the map
 				pmap->Open(filename.c_str(), !NewMaps /* read only */, NewMaps /* create new */);
 			}
+			#endif // BACKIPCLIENTINODETOIDMAP_IN_MEMORY_IMPLEMENTATION
 			
 			// Store on vector
 			rVector.push_back(pmap);
