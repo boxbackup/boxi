@@ -33,6 +33,7 @@
 #include <wx/tokenzr.h>
 #include <wx/txtstrm.h>
 
+#include "SandBox.h"
 #include "ClientConnection.h"
 #include "BoxException.h"
 
@@ -58,6 +59,10 @@ ClientConnection::~ClientConnection()
 	// Wait();
 }
 
+// temporary hack since the old GetClientBinaryPath doesn't compile
+void* ClientConnection::Entry() { }
+
+/*
 void* ClientConnection::Entry()
 {
 	wxLogDebug(wxT("Client worker thread starting"));
@@ -159,6 +164,7 @@ void* ClientConnection::Entry()
 	wxLogDebug(wxT("Client worker thread shutdown"));
 	return NULL;
 }
+*/
 
 long ClientConnection::GetClientPidFast()
 {
@@ -407,6 +413,7 @@ ClientConnection::Error ClientConnection::DoReadLine()
 	return ERR_NONE;
 }
 
+/*
 bool ClientConnection::GetClientBinaryPath(wxString& rDestPath)
 {
 	// search for bbackupd
@@ -455,6 +462,7 @@ bool ClientConnection::GetClientBinaryPath(wxString& rDestPath)
 	rDestPath = BBackupdPath;
 	return TRUE;
 }
+*/
 
 void ClientConnection::OnConnectedIdle() {
 	{
@@ -490,6 +498,7 @@ void ClientConnection::OnConnectedIdle() {
 	}
 }
 
+/*
 void ClientConnection::OnStartClient() {
 	{
 		wxMutexLocker lock(mMutex);
@@ -506,7 +515,9 @@ void ClientConnection::OnStartClient() {
 		mLastError = result;
 	}
 }
+*/
 
+/*
 ClientConnection::Error ClientConnection::DoStartClient() {
 	wxString ClientPath;
 	if (!GetClientBinaryPath(ClientPath))
@@ -549,6 +560,7 @@ ClientConnection::Error ClientConnection::DoStartClient() {
 	
 	return ERR_NONE;
 }
+*/
 
 void ClientConnection::OnStopClient() {
 	{
