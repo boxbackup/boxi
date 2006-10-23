@@ -758,6 +758,7 @@ void TestBackup::RunTest()
 		)
 	);
 	CPPUNIT_ASSERT_EQUAL((size_t)3, rEntries.size());
+	mpConfig->Save(mClientConfigFile.GetFullPath());
 		
 	// before the first backup, there should be differences
 	CHECK_COMPARE_LOC_FAILS(1, 0, 0, 0);
