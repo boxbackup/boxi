@@ -53,7 +53,8 @@ class SetupWizard : public wxWizard
 #if wxABI_VERSION >= 20602
 	virtual void RunWizardMaybeModeless();
 #else
-	virtual int ShowModal();
+	virtual int  ShowModal();
+	virtual void EndModal(int retcode);
 #endif
 
 	private:

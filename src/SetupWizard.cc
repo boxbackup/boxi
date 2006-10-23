@@ -1735,15 +1735,29 @@ void SetupWizard::RunWizardMaybeModeless()
 }
 #else
 // work around private FinishLayout() in older versions
-void SetupWizard::ShowModal()
+int SetupWizard::ShowModal()
 {
-        if (WxGuiTestHelper::s_showModalDialogsNonModal)
+        if (WxGuiTestHelper::GetShowModalDialogsNonModalFlag())
 	{
 		Show();
 	}
 	else
 	{
 		wxWizard::ShowModal();
+	}
+
+	return 0;
+}
+
+void SetupWizard::EndModal(int retcode)
+{
+        if (WxGuiTestHelper::GetShowModalDialogsNonModalFlag())
+	{
+		Show(FALSE);
+	}
+	else
+	{
+		wxWizard::EndModal(retcode);
 	}
 }
 #endif
