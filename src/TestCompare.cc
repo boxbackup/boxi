@@ -30,9 +30,11 @@
 #include <wx/button.h>
 #include <wx/datectrl.h>
 #include <wx/dir.h>
+#include <wx/dirctrl.h>
 #include <wx/file.h>
 #include <wx/filename.h>
 #include <wx/spinctrl.h>
+#include <wx/splitter.h>
 #include <wx/treectrl.h>
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
@@ -201,7 +203,15 @@ void TestCompare::RunTest()
 	SetupDefaultLocation();
 	CPPUNIT_ASSERT_EQUAL(1, pCompareOneLocChoice->GetCount());
 	CPPUNIT_ASSERT_EQUAL(0, pCompareOneLocChoice->GetSelection());
-	
+
+	wxSplitterWindow* pSplitter = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_Dir_Splitter), 
+		wxSplitterWindow
+	);
+	CPPUNIT_ASSERT(pSplitter);
+
+	/*
 	wxTextCtrl* pCompareDirLocalText = wxDynamicCast
 	(
 		pComparePanel->FindWindow(ID_Compare_Panel_Dir_Local_Path_Text), 
@@ -233,12 +243,27 @@ void TestCompare::RunTest()
 	);
 	CPPUNIT_ASSERT(pCompareDirRemoteButton);
 	CPPUNIT_ASSERT(!pCompareDirRemoteButton->IsEnabled());
+	*/
+
+	wxGenericDirCtrl* pLocalDirCtrl = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_Dir_Local_Tree), 
+		wxGenericDirCtrl
+	);
+	CPPUNIT_ASSERT(pLocalDirCtrl);
+	CPPUNIT_ASSERT(!pLocalDirCtrl->IsEnabled());
+
+	wxTreeCtrl* pRemoteDirCtrl = wxDynamicCast
+	(
+		pComparePanel->FindWindow(ID_Compare_Panel_Dir_Remote_Tree), 
+		wxTreeCtrl
+	);
+	CPPUNIT_ASSERT(pRemoteDirCtrl);
+	CPPUNIT_ASSERT(!pRemoteDirCtrl->IsEnabled());
 
 	ClickRadioWaitEvent(pCompareDirRadio);
-	CPPUNIT_ASSERT(pCompareDirLocalText->IsEnabled());
-	CPPUNIT_ASSERT(pCompareDirLocalButton->IsEnabled());
-	CPPUNIT_ASSERT(pCompareDirRemoteText->IsEnabled());
-	CPPUNIT_ASSERT(pCompareDirRemoteButton->IsEnabled());
+	CPPUNIT_ASSERT(pLocalDirCtrl->IsEnabled());
+	CPPUNIT_ASSERT(pRemoteDirCtrl->IsEnabled());
 	CPPUNIT_ASSERT(!pCompareOneLocChoice->IsEnabled());
 
 	/*
