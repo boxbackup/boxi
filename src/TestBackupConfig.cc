@@ -1159,6 +1159,57 @@ void TestBackupConfig::RunTest()
 		
 		MyExcludeList& rExcludes = pNewLoc->GetExcludeList();
 
+		#define ADD_ENTRY(type, path) \
+		rExcludes.AddEntry \
+		( \
+			MyExcludeEntry \
+			( \
+				theExcludeTypes[type], path \
+			) \
+		)
+		
+		ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, _(".*"));
+		ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX,  _(".*"));
+		
+		#undef ADD_ENTRY
+
+		mpConfig->Save(configFile.GetFullPath());
+		CPPUNIT_ASSERT(configFile.FileExists());
+
+		#define CHECK_ITEM(name, image) \
+		CPPUNIT_ASSERT(item.IsOk()); \
+		CPPUNIT_ASSERT_EQUAL((wxString)_(name), \
+			pTree->GetItemText(item)); \
+		CPPUNIT_ASSERT_EQUAL(images.Get ## image ## ImageId(), \
+			pTree->GetItemImage(item))
+		
+		wxTreeItemId item = testDataDirItem;
+		CHECK_ITEM("testdata", Checked);
+
+		CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+		mpConfig->RemoveLocation(*pNewLoc);
+		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+	}
+
+	{
+		CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+		
+		Location* pNewLoc = NULL;
+		
+		{
+			Location testDirLoc(_("testdata"), testDataDir.GetFullPath(),
+				mpConfig);
+			mpConfig->AddLocation(testDirLoc);
+			CPPUNIT_ASSERT_EQUAL((size_t)1, 
+				mpConfig->GetLocations().size());
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+			pNewLoc = mpConfig->GetLocation(testDirLoc);
+			CPPUNIT_ASSERT(pNewLoc);
+		}
+		
+		MyExcludeList& rExcludes = pNewLoc->GetExcludeList();
+
 		#define CREATE_FILE(dir, name) \
 		wxFileName dir ## _ ## name(dir.GetFullPath(), _(#name)); \
 		{ wxFile f; CPPUNIT_ASSERT(f.Create(dir ## _ ## name.GetFullPath())); }
