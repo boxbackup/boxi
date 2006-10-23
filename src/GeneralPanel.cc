@@ -205,7 +205,7 @@ void GeneralPanel::OnSetupWizardButtonClick(wxCommandEvent& event)
 	// SetupWizard wizard(mpConfig, this);
 	// wizard.Run();
 	mpWizard = new SetupWizard(mpConfig, this);
-	mpWizard->RunWizardMaybeModeless();
+	mpWizard->Run();
 	// pWizard->Destroy();
 	// delete pWizard;
 }
