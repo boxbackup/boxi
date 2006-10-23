@@ -117,10 +117,12 @@ BackupDaemonPanel::BackupDaemonPanel(
 	pMainSizer->SetSizeHints( this );
 	
 	wxString DaemonPath;
+	/*
 	if (mClientConn.GetClientBinaryPath(DaemonPath))
 	{
 		pBoxLocationCtrl->SetValue(DaemonPath);
-	}	
+	}
+	*/
 
 	HandleClientEvent();
 }
