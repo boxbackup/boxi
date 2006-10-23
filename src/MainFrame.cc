@@ -24,6 +24,8 @@
 
 #include <wx/notebook.h>
 
+#include "SandBox.h"
+
 #define TLS_CLASS_IMPLEMENTATION_CPP
 #include "ServerConnection.h"
 #undef TLS_CLASS_IMPLEMENTATION_CPP
