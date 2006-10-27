@@ -41,6 +41,14 @@ mingw*)
 	;;
 esac
 
+AC_CHECK_TOOL(AR,      ar,      AC_MSG_ERROR(ar executable was not found))
+AC_CHECK_TOOL(RANLIB,  ranlib,  AC_MSG_ERROR(ranlib executable was not found))
+AC_CHECK_TOOL(WINDRES, windres, AC_MSG_ERROR(windres executable was not found))
+
+AC_SUBST(AR)
+AC_SUBST(RANLIB)
+AC_SUBST(WINDRES)
+
 ### Checks for libraries.
 
 case $target_os in
