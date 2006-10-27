@@ -29,6 +29,10 @@
 #include <stdio.h>
 #include <regex.h>
 
+#ifdef HAVE_MNTENT_H
+	#include <mntent.h>
+#endif
+
 #include <wx/statbox.h>
 #include <wx/listbox.h>
 #include <wx/button.h>
