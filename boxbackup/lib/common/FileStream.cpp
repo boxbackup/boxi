@@ -7,9 +7,10 @@
 //
 // --------------------------------------------------------------------------
 
+#include "Box.h"
+
 #include <errno.h>
 
-#include "Box.h"
 #include "FileStream.h"
 #include "CommonException.h"
 
