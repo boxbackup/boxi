@@ -105,9 +105,9 @@ if ! (
 	./bootstrap || exit 1 # PATCH IN RELEASE
 	echo "Configuring Box Backup with" \
 		$ax_check_ssl_headers $ax_check_ssl_lib \
-		--target=${target_cpu}-${target_vendor}-${target_os}
+		--host=$host_alias --target=$target_alias
 	./configure $ax_check_ssl_headers $ax_check_ssl_lib \
-		--target=${target_cpu}-${target_vendor}-${target_os} \
+		--host=$host_alias --target=$target_alias \
 		|| exit 1
 	mv Makefile Makefile.in || exit 1
 ); then
