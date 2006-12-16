@@ -280,8 +280,11 @@ class BackupProgressPanel
 		NotifyMoreFilesDone(1, FileSize);
 	}
 	
-	void BackupProgressPanel::CountDirectory(BackupClientContext& rContext,
-		const std::string &rLocalPath);
+	void BackupProgressPanel::CountDirectory
+	(
+		BackupClientContext& rContext,
+		const std::string &rLocalPath
+	);
 
 	void NotifyCountDirectory(const std::string& rLocalPath)
 	{
