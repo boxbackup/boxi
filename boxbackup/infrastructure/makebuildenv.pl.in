@@ -482,12 +482,7 @@ __E
 	my $mk_name_extra = ($bsd_make)?'':'X';
 	open MAKE,">$mod/Makefile".$mk_name_extra or die "Can't open Makefile for $mod\n";
 	my $debug_link_extra = ($target_is_library)?'':'../../debug/lib/debug/debug.a';
-
-	my $release_flags = "-O2";
-	if ($target_windows)
-	{
-		$release_flags = "-O0 -g";
-	}
+	my $release_flags = "-O0 -g";
 
 	print MAKE <<__E;
 #
