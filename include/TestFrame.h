@@ -2,7 +2,7 @@
  *            TestFrame.h
  *
  *  Sun Jan 22 22:35:37 2006
- *  Copyright  2006  Chris Wilson
+ *  Copyright 2006 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
