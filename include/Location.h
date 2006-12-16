@@ -362,15 +362,18 @@ class Location
 		if (! rOther.mPath.IsSameAs(mPath) ) return false;
 		return mExcluded.IsSameAs(rOther.mExcluded);
 	}
-	
+
+	/*	
 	bool IsExcluded(const wxString& rLocalFileName, bool mIsDirectory, 
 		const MyExcludeEntry** ppExcludedBy, 
 		const MyExcludeEntry** ppIncludedBy);
+	*/
+	
 	ExcludedState GetExcludedState(const wxString& rLocalFileName, 
 		bool mIsDirectory, 
 		const MyExcludeEntry** ppExcludedBy, 
 		const MyExcludeEntry** ppIncludedBy,
-		ExcludedState ParentState = EST_UNKNOWN);
+		bool* pMatched);
 	
 	ExcludeList* GetBoxExcludeList(bool listDirs) const;
 	

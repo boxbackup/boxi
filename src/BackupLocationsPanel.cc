@@ -38,7 +38,6 @@ class BackupTreeNode : public LocalFileNode
 	const MyExcludeEntry* mpExcludedBy;
 	const MyExcludeEntry* mpIncludedBy;
 	ClientConfig* mpConfig;
-	ExcludedState mExcludedState;
 	int           mIconId;
 	
 	public:
@@ -61,7 +60,6 @@ BackupTreeNode::BackupTreeNode(ClientConfig* pConfig, const wxString& path)
   mpExcludedBy   (NULL),
   mpIncludedBy   (NULL),
   mpConfig       (pConfig),
-  mExcludedState (EST_UNKNOWN),
   mIconId        (-1)
 { }
 
@@ -71,7 +69,6 @@ BackupTreeNode::BackupTreeNode(BackupTreeNode* pParent, const wxString& path)
   mpExcludedBy   (pParent->GetExcludedBy()),
   mpIncludedBy   (pParent->GetIncludedBy()),
   mpConfig       (pParent->GetConfig()),
-  mExcludedState (EST_UNKNOWN),
   mIconId        (-1)
 { }
 
@@ -84,19 +81,17 @@ LocalFileNode* BackupTreeNode::CreateChildNode(LocalFileNode* pParent,
 int BackupTreeNode::UpdateState(FileImageList& rImageList, bool updateParents) 
 {
 	int iconId = LocalFileNode::UpdateState(rImageList, updateParents);
-
-	// by default, inherit our include/exclude state
-	// from our parent node, if we have one
-	ExcludedState ParentState = EST_UNKNOWN;
 	
 	BackupTreeNode* pParentNode = (BackupTreeNode*)GetParentNode();
 	
+	// by default, inherit our include/exclude state
+	// from our parent node, if we have one
+	
 	if (pParentNode) 
 	{
-		mpLocation   = pParentNode->mpLocation;
-		mpExcludedBy = pParentNode->mpExcludedBy;
-		mpIncludedBy = pParentNode->mpIncludedBy;
-		ParentState  = pParentNode->mExcludedState;
+		mpLocation     = pParentNode->mpLocation;
+		mpExcludedBy   = pParentNode->mpExcludedBy;
+		mpIncludedBy   = pParentNode->mpIncludedBy;
 	} 
 	else 
 	{
@@ -140,47 +135,59 @@ int BackupTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 		mFullPath.c_str(), mpLocation->GetPath().c_str());
 	*/
 		
-	// if this node doesn't belong to a location, then by definition
-	// our parent node doesn't have one either, so the inherited
-	// values are fine, leave them alone.
-
-	if (mpLocation)
+	bool matchedRule = false;
+	
+	if (!mpLocation)
 	{
-		mExcludedState = mpLocation->GetExcludedState(GetFullPath(), 
-			IsDirectory(), &mpExcludedBy, &mpIncludedBy, ParentState);
+		// if this node doesn't belong to a location, then by definition
+		// our parent node doesn't have one either, so the inherited
+		// values are fine, leave them alone.
+	}
+	else if (mpExcludedBy && !mpIncludedBy)
+	{
+		// A node whose parent is excluded is also excluded,
+		// since Box Backup will never scan it.
+	}
+	else
+	{
+		mpLocation->GetExcludedState(
+			GetFullPath(), IsDirectory(), 
+			&mpExcludedBy, &mpIncludedBy, &matchedRule);
 	}
 
+	// now decide which icon to use, based on the resulting state.
+	
 	if (mpIncludedBy != NULL)
 	{
-		if (pParentNode && mpIncludedBy == pParentNode->mpIncludedBy)
+		if (matchedRule)
 		{
-			iconId = rImageList.GetAlwaysGreyImageId();
+			iconId = rImageList.GetAlwaysImageId();
 		}
 		else
 		{
-			iconId = rImageList.GetAlwaysImageId();
+			iconId = rImageList.GetAlwaysGreyImageId();
 		}
 	}
 	else if (mpExcludedBy != NULL)
 	{
-		if (pParentNode && mpExcludedBy == pParentNode->mpExcludedBy)
+		if (matchedRule)
 		{
-			iconId = rImageList.GetCrossedGreyImageId();
+			iconId = rImageList.GetCrossedImageId();
 		}
 		else
 		{
-			iconId = rImageList.GetCrossedImageId();
+			iconId = rImageList.GetCrossedGreyImageId();
 		}
 	}
 	else if (mpLocation != NULL)
 	{
-		if (pParentNode && mpLocation == pParentNode->mpLocation)
+		if (matchedRule)
 		{
-			iconId = rImageList.GetCheckedGreyImageId();
+			iconId = rImageList.GetCheckedImageId();
 		}
 		else
 		{
-			iconId = rImageList.GetCheckedImageId();
+			iconId = rImageList.GetCheckedGreyImageId();
 		}
 	}
 	else

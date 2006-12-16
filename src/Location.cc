@@ -153,18 +153,22 @@ MyExcludeEntry* MyExcludeList::UnConstEntry(const MyExcludeEntry& rEntry)
 	return &(*current);
 }
 
+/*
 bool Location::IsExcluded(const wxString& rLocalFileName, bool mIsDirectory, 
 	const MyExcludeEntry** ppExcludedBy, const MyExcludeEntry** ppIncludedBy)
 {
 	ExcludedState state = GetExcludedState(rLocalFileName, mIsDirectory,
 		ppExcludedBy, ppIncludedBy);
+	assert(state == EST_KNOWN);
+	return (
 	return (state == EST_UNKNOWN || state == EST_NOLOC 
 		||  state == EST_EXCLUDED);
 }
-	
+*/
+
 ExcludedState Location::GetExcludedState(const wxString& rLocalFileName, 
 	bool mIsDirectory, const MyExcludeEntry** ppExcludedBy, 
-	const MyExcludeEntry** ppIncludedBy, ExcludedState ParentState)
+	const MyExcludeEntry** ppIncludedBy, bool* pMatched)
 {
 	//wxLogDebug(wxT(" checking whether %s is excluded..."), 
 	//	rLocalFileName.c_str());
@@ -172,46 +176,32 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 	const std::list<MyExcludeEntry>& rExcludeList =
 		mExcluded.GetEntries();
 
-	// inherit default state from parent
-	ExcludedState isExcluded = EST_UNKNOWN;
-	
-	if (ParentState != EST_UNKNOWN)
-	{
-		isExcluded = ParentState;
-	}
-	else
-	{
-		wxFileName fn(rLocalFileName);
-		wxFileName locroot(GetPath());
-		wxFileName root(fn.GetPath());
-		root.SetPath(fn.GetPathSeparator());
+	wxFileName fn(rLocalFileName);
+	wxFileName locroot(GetPath());
+	wxFileName root(fn.GetPath());
+	root.SetPath(fn.GetPathSeparator());
 
-		*ppExcludedBy = NULL;
-		*ppIncludedBy = NULL;
+	if (fn == locroot)
+	{
+		// The location root cannot be Excluded or AlwaysIncluded.
 		
-		if (fn == locroot)
+		if (pMatched)
 		{
-			isExcluded = EST_INCLUDED;
+			*pMatched = true;
 		}
-		else if (fn == root)
-		{
-			isExcluded = EST_NOLOC;
-		}
-		else
-		{
-			isExcluded = GetExcludedState(fn.GetPath(), TRUE,
-				ppExcludedBy, ppIncludedBy);
-		}
+		
+		return EST_INCLUDED;
 	}
 	
-	if (isExcluded == EST_ALWAYSINCLUDED ||
-		isExcluded == EST_UNKNOWN ||
-		isExcluded == EST_NOLOC)
+	if (fn == root)
 	{
-		return isExcluded;
+		// If the root directory is not a Location,
+		// then at least it's the base case. Don't try
+		// to go further up!
+		return EST_NOLOC;
 	}
-
-	assert(isExcluded == EST_INCLUDED || isExcluded == EST_EXCLUDED);
+	
+	ExcludedState isExcluded = EST_INCLUDED;
 	
 	// on pass 1, remove Excluded files
 	// on pass 2, re-add AlwaysInclude files
@@ -289,11 +279,16 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 					matched = (result == 0);
 				}
 			}
-			
+
 			if (!matched) 
 			{
 				//wxLogDebug(wxT("   no match."));
 				continue;
+			}
+
+			if (pMatched)
+			{
+				*pMatched = true;
 			}
 
 			//wxLogDebug(wxT("   matched!"));
@@ -310,7 +305,21 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 				if (ppIncludedBy)
 					*ppIncludedBy = &(*pEntry);
 			}
+			
+			// Now break out of this loop, since it doesn't matter
+			// if any other entry has the same effect as this one.
+			break;
 		}
+	}
+	
+	if (isExcluded != EST_ALWAYSINCLUDED && ppIncludedBy)
+	{
+		*ppIncludedBy = NULL;
+	}
+	
+	if (isExcluded == EST_INCLUDED && ppExcludedBy)
+	{
+		*ppExcludedBy = NULL;
 	}
 	
 	return isExcluded;

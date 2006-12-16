@@ -364,16 +364,40 @@ void TestBackupConfig::RunTest()
 	{
 		wxFileName testDepth1Dir(testDataDir.GetFullPath(), _("depth1"));
 		CPPUNIT_ASSERT(testDepth1Dir.Mkdir(0700));
+		wxFileName testAnotherDir(testDataDir.GetFullPath(), _("another"));
+		CPPUNIT_ASSERT(testAnotherDir.Mkdir(0700));
+
+		wxFileName testFile1(testDepth1Dir.GetFullPath(), _("file1"));
+		CPPUNIT_ASSERT(wxFile().Create(testFile1.GetFullPath()));
+		wxFileName testDir1(testDepth1Dir.GetFullPath(), _("dir1"));
+		CPPUNIT_ASSERT(testDir1.Mkdir(0700));
 		wxFileName testDepth2Dir(testDepth1Dir.GetFullPath(), _("depth2"));
 		CPPUNIT_ASSERT(testDepth2Dir.Mkdir(0700));
+
+		wxFileName testFile2(testDepth2Dir.GetFullPath(), _("file2"));
+		CPPUNIT_ASSERT(wxFile().Create(testFile2.GetFullPath()));
+		wxFileName testDir2(testDepth2Dir.GetFullPath(), _("dir2"));
+		CPPUNIT_ASSERT(testDir2.Mkdir(0700));
 		wxFileName testDepth3Dir(testDepth2Dir.GetFullPath(), _("depth3"));
 		CPPUNIT_ASSERT(testDepth3Dir.Mkdir(0700));
+
 		wxFileName testDepth4Dir(testDepth3Dir.GetFullPath(), _("depth4"));
 		CPPUNIT_ASSERT(testDepth4Dir.Mkdir(0700));
+
 		wxFileName testDepth5Dir(testDepth4Dir.GetFullPath(), _("depth5"));
 		CPPUNIT_ASSERT(testDepth5Dir.Mkdir(0700));
+
+		wxFileName testFile3(testDepth5Dir.GetFullPath(), _("file3"));
+		CPPUNIT_ASSERT(wxFile().Create(testFile3.GetFullPath()));
+		wxFileName testDir3(testDepth5Dir.GetFullPath(), _("dir3"));
+		CPPUNIT_ASSERT(testDir3.Mkdir(0700));
 		wxFileName testDepth6Dir(testDepth5Dir.GetFullPath(), _("depth6"));
 		CPPUNIT_ASSERT(testDepth6Dir.Mkdir(0700));
+
+		wxFileName testFile4(testDepth6Dir.GetFullPath(), _("file4"));
+		CPPUNIT_ASSERT(wxFile().Create(testFile4.GetFullPath()));
+		wxFileName testDir4(testDepth6Dir.GetFullPath(), _("dir4"));
+		CPPUNIT_ASSERT(testDir4.Mkdir(0700));
 		
 		wxArrayString testDataDirPathDirs = testDataDir.GetDirs();
 		testDataDirPathDirs.Add(testDataDir.GetName());
@@ -421,41 +445,266 @@ void TestBackupConfig::RunTest()
 		wxTreeItemIdValue cookie;
 		
 		pTree->Expand(testDataDirItem);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
+		CPPUNIT_ASSERT_EQUAL((size_t)2, 
 			pTree->GetChildrenCount(testDataDirItem, false));
-		wxTreeItemId depth1 = pTree->GetFirstChild(testDataDirItem, cookie);
+		wxTreeItemId another = pTree->GetFirstChild(testDataDirItem, cookie);
+		CPPUNIT_ASSERT(another.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("another")), 
+			pTree->GetItemText(another));
+		wxTreeItemId depth1 = pTree->GetNextChild(testDataDirItem, cookie);
 		CPPUNIT_ASSERT(depth1.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("depth1")), 
+			pTree->GetItemText(depth1));
 		
 		pTree->Expand(depth1);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
+		CPPUNIT_ASSERT_EQUAL((size_t)3, 
 			pTree->GetChildrenCount(depth1, false));
 		wxTreeItemId depth2 = pTree->GetFirstChild(depth1, cookie);
 		CPPUNIT_ASSERT(depth2.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("depth2")), 
+			pTree->GetItemText(depth2));
+		wxTreeItemId dir1 = pTree->GetNextChild(depth1, cookie);
+		CPPUNIT_ASSERT(dir1.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("dir1")), 
+			pTree->GetItemText(dir1));
+		wxTreeItemId file1 = pTree->GetNextChild(depth1, cookie);
+		CPPUNIT_ASSERT(file1.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("file1")), 
+			pTree->GetItemText(file1));
 		
 		pTree->Expand(depth2);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
+		CPPUNIT_ASSERT_EQUAL((size_t)3, 
 			pTree->GetChildrenCount(depth2, false));
 		wxTreeItemId depth3 = pTree->GetFirstChild(depth2, cookie);
 		CPPUNIT_ASSERT(depth3.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("depth3")), 
+			pTree->GetItemText(depth3));
+		wxTreeItemId dir2 = pTree->GetNextChild(depth2, cookie);
+		CPPUNIT_ASSERT(dir2.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("dir2")), 
+			pTree->GetItemText(dir2));
+		wxTreeItemId file2 = pTree->GetNextChild(depth2, cookie);
+		CPPUNIT_ASSERT(file2.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("file2")), 
+			pTree->GetItemText(file2));
 		
 		pTree->Expand(depth3);
 		CPPUNIT_ASSERT_EQUAL((size_t)1, 
 			pTree->GetChildrenCount(depth3, false));
 		wxTreeItemId depth4 = pTree->GetFirstChild(depth3, cookie);		
 		CPPUNIT_ASSERT(depth4.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("depth4")), 
+			pTree->GetItemText(depth4));
 
 		pTree->Expand(depth4);
 		CPPUNIT_ASSERT_EQUAL((size_t)1, 
 			pTree->GetChildrenCount(depth4, false));
 		wxTreeItemId depth5 = pTree->GetFirstChild(depth4, cookie);		
 		CPPUNIT_ASSERT(depth5.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("depth5")), 
+			pTree->GetItemText(depth5));
 
 		pTree->Expand(depth5);
-		CPPUNIT_ASSERT_EQUAL((size_t)1, 
+		CPPUNIT_ASSERT_EQUAL((size_t)3, 
 			pTree->GetChildrenCount(depth5, false));
 		wxTreeItemId depth6 = pTree->GetFirstChild(depth5, cookie);		
 		CPPUNIT_ASSERT(depth6.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("depth6")), 
+			pTree->GetItemText(depth6));
+		wxTreeItemId dir3 = pTree->GetNextChild(depth5, cookie);
+		CPPUNIT_ASSERT(dir3.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("dir3")), 
+			pTree->GetItemText(dir3));
+		wxTreeItemId file3 = pTree->GetNextChild(depth5, cookie);
+		CPPUNIT_ASSERT(file3.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("file3")), 
+			pTree->GetItemText(file3));
 
+		pTree->Expand(depth6);
+		CPPUNIT_ASSERT_EQUAL((size_t)2, 
+			pTree->GetChildrenCount(depth6, false));
+		wxTreeItemId dir4 = pTree->GetFirstChild(depth6, cookie);
+		CPPUNIT_ASSERT(dir4.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("dir4")), 
+			pTree->GetItemText(dir4));
+		wxTreeItemId file4 = pTree->GetNextChild(depth6, cookie);
+		CPPUNIT_ASSERT(file4.IsOk());
+		CPPUNIT_ASSERT_EQUAL(wxString(_("file4")), 
+			pTree->GetItemText(file4));
+
+		// Check that excluding all files but one does not mark the
+		// location node as excluded, and other nodes are correctly 
+		// marked. Reconfigure to exclude all files but one
+		{
+			ActivateTreeItemWaitEvent(pTree, testDataDirItem);
+
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+
+			const Location::List& rLocations = 
+				mpConfig->GetLocations();
+			CPPUNIT_ASSERT_EQUAL((size_t)1, rLocations.size());
+			
+			Location* pTestDataLocation = mpConfig->GetLocation(
+				*(rLocations.begin()));
+			CPPUNIT_ASSERT(pTestDataLocation);
+			
+			MyExcludeList& rExcludeList = 
+				pTestDataLocation->GetExcludeList();
+			const MyExcludeEntry::List& rEntries = 
+				rExcludeList.GetEntries();
+			CPPUNIT_ASSERT_EQUAL((size_t)0, rEntries.size());
+			
+			rExcludeList.AddEntry
+			(
+				MyExcludeEntry
+				(
+					theExcludeTypes[ETI_EXCLUDE_FILES_REGEX], 
+					wxString(_(".*"))
+				)
+			);
+			
+			rExcludeList.AddEntry
+			(
+				MyExcludeEntry
+				(
+					theExcludeTypes[ETI_EXCLUDE_DIRS_REGEX], 
+					wxString(_(".*"))
+				)
+			);
+			
+			rExcludeList.AddEntry
+			(
+				MyExcludeEntry
+				(
+					theExcludeTypes[ETI_ALWAYS_INCLUDE_DIR],
+					testDepth1Dir.GetFullPath()
+				)
+			);
+			
+			CPPUNIT_ASSERT_EQUAL((size_t)3, rEntries.size());
+			
+			CPPUNIT_ASSERT_EQUAL(images.GetCheckedImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+				
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(another));
+			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysImageId(), 
+				pTree->GetItemImage(depth1));
+
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(dir1));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(file1));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(depth2));
+				
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+				pTree->GetItemImage(dir2));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+				pTree->GetItemImage(file2));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+				pTree->GetItemImage(depth3));
+
+			// Now add another entry to AlwaysInclude depth2
+			// by regex. Make sure that its children are still
+			// excluded by the Exclude* = .* directives.
+
+			wxString path = wxT("^");
+			path.Append(testDepth1Dir.GetFullPath());
+			path.Append(wxT("/de...2$"));
+			
+			rExcludeList.AddEntry
+			(
+				MyExcludeEntry
+				(
+					theExcludeTypes[ETI_ALWAYS_INCLUDE_DIRS_REGEX],
+					path
+				)
+			);
+
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(dir1));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(file1));
+			CPPUNIT_ASSERT_EQUAL(images.GetAlwaysImageId(), 
+				pTree->GetItemImage(depth2));
+
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(dir2));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(file2));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(depth3));
+
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+				pTree->GetItemImage(depth4));
+
+			// Include a file and a dir using the wrong kinds of
+			// rules. Check that they don't show up as included.
+			
+			rExcludeList.AddEntry
+			(
+				MyExcludeEntry
+				(
+					theExcludeTypes[ETI_ALWAYS_INCLUDE_DIR],
+					testFile1.GetFullPath()
+				)
+			);
+
+			rExcludeList.AddEntry
+			(
+				MyExcludeEntry
+				(
+					theExcludeTypes[ETI_ALWAYS_INCLUDE_FILE],
+					testDir1.GetFullPath()
+				)
+			);
+
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(dir1));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedImageId(), 
+				pTree->GetItemImage(file1));
+
+			// Include a file inside an excluded directory. Check
+			// that it doesn't show up as included, because it will
+			// never be scanned until its parents are included.
+
+			rExcludeList.AddEntry
+			(
+				MyExcludeEntry
+				(
+					theExcludeTypes[ETI_ALWAYS_INCLUDE_DIR],
+					testDir3.GetFullPath()
+				)
+			);
+
+			rExcludeList.AddEntry
+			(
+				MyExcludeEntry
+				(
+					theExcludeTypes[ETI_ALWAYS_INCLUDE_FILE],
+					testFile3.GetFullPath()
+				)
+			);
+
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+				pTree->GetItemImage(dir3));
+			CPPUNIT_ASSERT_EQUAL(images.GetCrossedGreyImageId(), 
+				pTree->GetItemImage(file3));
+
+			MessageBoxSetResponse(
+				BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, 
+				wxYES);
+			ActivateTreeItemWaitEvent(pTree, testDataDirItem);
+			MessageBoxCheckFired();
+
+			CPPUNIT_ASSERT_EQUAL(images.GetEmptyImageId(), 
+				pTree->GetItemImage(testDataDirItem));
+				
+			CPPUNIT_ASSERT_EQUAL((size_t)0, rLocations.size());
+		}
+		
 		{
 			// activate the testdata dir node, check that it
 			// and its children are shown as included in the tree,
@@ -1272,6 +1521,9 @@ void TestBackupConfig::RunTest()
 			pTree->GetItemImage(item))
 		
 		item = pTree->GetFirstChild(dir1, cookie1);
+		CHECK_ITEM("another", CheckedGrey);
+
+		item = pTree->GetNextChild(dir1, cookie1);
 		CHECK_ITEM("exclude_dir", Crossed);
 
 		item = pTree->GetNextChild(dir1, cookie1);
