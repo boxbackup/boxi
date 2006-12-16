@@ -754,9 +754,9 @@ void TestBackup::RunTest()
 	(
 		MyExcludeEntry
 		(
-			theExcludeTypes[ETI_ALWAYS_INCLUDE_FILE],
+			theExcludeTypes[ETI_ALWAYS_INCLUDE_DIR],
 			MakeAbsolutePath(mTestDataDir, 
-				_("spacetest/f2")).GetFullPath()
+				_("spacetest")).GetFullPath()
 		)
 	);
 	CPPUNIT_ASSERT_EQUAL((size_t)3, rEntries.size());
