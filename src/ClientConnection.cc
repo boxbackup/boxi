@@ -60,7 +60,7 @@ ClientConnection::~ClientConnection()
 }
 
 // temporary hack since the old GetClientBinaryPath doesn't compile
-void* ClientConnection::Entry() { }
+void* ClientConnection::Entry() { return NULL; }
 
 /*
 void* ClientConnection::Entry()
