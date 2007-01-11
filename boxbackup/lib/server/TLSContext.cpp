@@ -70,19 +70,19 @@ void TLSContext::Initialise(bool AsServer, const char *CertificatesFile, const c
 	// Setup our identity
 	if(::SSL_CTX_use_certificate_chain_file(mpContext, CertificatesFile) != 1)
 	{
-		SSLLib::LogError("Load certificates");
+		SSLLib::LogError("Load certificates", CertificatesFile);
 		THROW_EXCEPTION(ServerException, TLSLoadCertificatesFailed)
 	}
 	if(::SSL_CTX_use_PrivateKey_file(mpContext, PrivateKeyFile, SSL_FILETYPE_PEM) != 1)
 	{
-		SSLLib::LogError("Load private key");
+		SSLLib::LogError("Load private key", PrivateKeyFile);
 		THROW_EXCEPTION(ServerException, TLSLoadPrivateKeyFailed)
 	}
 	
 	// Setup the identify of CAs we trust
 	if(::SSL_CTX_load_verify_locations(mpContext, TrustedCAsFile, NULL) != 1)
 	{
-		SSLLib::LogError("Load CA cert");
+		SSLLib::LogError("Load CA cert", TrustedCAsFile);
 		THROW_EXCEPTION(ServerException, TLSLoadTrustedCAsFailed)
 	}
 	

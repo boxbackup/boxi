@@ -29,7 +29,7 @@
 namespace SSLLib
 {
 	void Initialise();
-	void LogError(const char *ErrorDuringAction);
+	void LogError(const char *ErrorDuringAction, const char *Filename = NULL);
 };
 
 #endif // SSLLIB__H

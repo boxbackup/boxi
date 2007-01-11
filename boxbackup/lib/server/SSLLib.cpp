@@ -61,25 +61,36 @@ void SSLLib::Initialise()
 // --------------------------------------------------------------------------
 //
 // Function
-//		Name:    SSLLib::LogError(const char *)
+//		Name:    SSLLib::LogError(const char *, const char *)
 //		Purpose: Logs an error
 //		Created: 2003/08/06
 //
 // --------------------------------------------------------------------------
-void SSLLib::LogError(const char *ErrorDuringAction)
+void SSLLib::LogError(const char *ErrorDuringAction, const char *Filename)
 {
 	unsigned long errcode;
 	char errname[256];		// SSL docs say at least 120 bytes
 	while((errcode = ERR_get_error()) != 0)
 	{
 		::ERR_error_string_n(errcode, errname, sizeof(errname));
+
 		#ifndef NDEBUG
 			if(SSLLib__TraceErrors)
 			{
 				TRACE2("SSL err during %s: %s\n", ErrorDuringAction, errname);
 			}
 		#endif
-		::syslog(LOG_ERR, "SSL err during %s: %s", ErrorDuringAction, errname);
+
+		if(Filename != NULL)
+		{
+			::syslog(LOG_ERR, "SSL err during %s (%s): %s", 
+				ErrorDuringAction, Filename, errname);
+		}
+		else
+		{
+			::syslog(LOG_ERR, "SSL err during %s: %s", 
+				ErrorDuringAction, errname);
+		}
 	}
 }
 
