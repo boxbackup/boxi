@@ -102,13 +102,20 @@ class FileNode : public wxTreeItemData
 
 class FileTree : public wxTreeCtrl 
 {
+	DECLARE_DYNAMIC_CLASS(FileTree)
+
 	public:
+
 	FileTree(
 		wxWindow* pParent, 
 		wxWindowID id,
 		FileNode* pRootNode,
 		const wxString& rRootLabel
 		);
+
+	// do not use this constructor! IMPLEMENT_DYNAMIC_CLASS
+	// requires it, but it doesn't work!
+	FileTree() { }
 
 	void UpdateStateIcon(FileNode* pNode, bool updateParents, 
 		bool updateChildren);
