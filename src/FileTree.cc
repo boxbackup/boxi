@@ -24,10 +24,13 @@
 
 #include <wx/dir.h>
 #include <wx/filename.h>
+#include <wx/intl.h>
 #include <wx/string.h>
 #include <wx/volume.h>
 
 #include "FileTree.h"
+
+IMPLEMENT_DYNAMIC_CLASS(FileTree, wxTreeCtrl)
 
 bool FileNode::AddChildren(wxTreeCtrl* pTreeCtrl, bool recurse) 
 {
