@@ -449,8 +449,12 @@ void TestWizard::RunTest()
 	
 		// make the file writable, expect BM_SETUP_WIZARD_FILE_OVERWRITE
 		// reply No and check that we stay put
-		
-		CPPUNIT_ASSERT(wxRemoveFile(existingpath));
+	
+		wxCharBuffer buf = existingpath.mb_str();
+		CPPUNIT_ASSERT_MESSAGE(buf.data(), 
+			chmod(buf.data(), 0777) == 0);
+		// CPPUNIT_ASSERT_MESSAGE(buf.data(), wxRemoveFile(existingpath));
+		CPPUNIT_ASSERT_MESSAGE(buf.data(), unlink(buf.data()) == 0);
 		CPPUNIT_ASSERT(existing.Create(existingpath, false, 
 			wxS_IRUSR | wxS_IWUSR));
 		CPPUNIT_ASSERT(wxFile::Access(existingpath, wxFile::read));
