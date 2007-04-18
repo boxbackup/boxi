@@ -605,8 +605,11 @@ cp pcreposix.h /usr/i686-pc-mingw32/include/regex.h
       it. Normally, your contract would specify the amount of storage
       space on the server that is available to you.</para>
       
-      <para>The server operator 
-    
+      <para>The server operator </para>
+
+    </sect1>
+
+  </chapter>
 
 </book>
 
