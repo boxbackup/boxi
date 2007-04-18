@@ -2,8 +2,8 @@
  *            Location.cc
  *
  *  Mon Feb 28 23:38:45 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2007 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -38,14 +38,14 @@
 #undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 
 MyExcludeType theExcludeTypes [] = {
-	MyExcludeType(ES_EXCLUDE, 		EFD_DIR, 	EM_EXACT),
-	MyExcludeType(ES_EXCLUDE, 		EFD_DIR, 	EM_REGEX),
-	MyExcludeType(ES_EXCLUDE, 		EFD_FILE, 	EM_EXACT),
-	MyExcludeType(ES_EXCLUDE, 		EFD_FILE, 	EM_REGEX),
-	MyExcludeType(ES_ALWAYSINCLUDE, EFD_DIR, 	EM_EXACT),
-	MyExcludeType(ES_ALWAYSINCLUDE, EFD_DIR, 	EM_REGEX),
-	MyExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, 	EM_EXACT),
-	MyExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, 	EM_REGEX),
+	MyExcludeType(ES_EXCLUDE,       EFD_DIR,  EM_EXACT),
+	MyExcludeType(ES_EXCLUDE,       EFD_DIR,  EM_REGEX),
+	MyExcludeType(ES_EXCLUDE,       EFD_FILE, EM_EXACT),
+	MyExcludeType(ES_EXCLUDE,       EFD_FILE, EM_REGEX),
+	MyExcludeType(ES_ALWAYSINCLUDE, EFD_DIR,  EM_EXACT),
+	MyExcludeType(ES_ALWAYSINCLUDE, EFD_DIR,  EM_REGEX),
+	MyExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, EM_EXACT),
+	MyExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, EM_REGEX),
 };
 
 MyExcludeList::MyExcludeList(const Configuration& conf, 
@@ -55,19 +55,19 @@ MyExcludeList::MyExcludeList(const Configuration& conf,
 	for (size_t i = 0; i < sizeof(theExcludeTypes) / sizeof(MyExcludeType); i++)
 	{
 		MyExcludeType& t = theExcludeTypes[i];
-		addConfigList(conf, t.ToString(), t);
+		_AddConfigList(conf, t.ToString(), t);
 	}
 }	
 
-inline void MyExcludeList::addConfigList(const Configuration& conf, 
+inline void MyExcludeList::_AddConfigList(const Configuration& conf, 
 	const std::string& keyName, MyExcludeType& type)
 {
 	if (!conf.KeyExists(keyName.c_str())) return;
 	std::string value = conf.GetKeyValue(keyName.c_str());
-	addSeparatedList(value, type);
+	_AddSeparatedList(value, type);
 }
 
-inline void MyExcludeList::addSeparatedList(const std::string& entries, 
+inline void MyExcludeList::_AddSeparatedList(const std::string& entries, 
 	MyExcludeType& type)
 {
 	std::vector<std::string> temp;
@@ -82,7 +82,45 @@ inline void MyExcludeList::addSeparatedList(const std::string& entries,
 
 void MyExcludeList::AddEntry(const MyExcludeEntry& rNewEntry) 
 {
+	for (MyExcludeEntry::ConstIterator 
+		i  = mEntries.begin();
+		i != mEntries.end(); i++)
+	{
+		if (i->IsSameAs(rNewEntry))
+		{
+			return;
+		}
+	}
+
 	mEntries.push_back(rNewEntry);
+	
+	if (mpListener)
+	{
+		mpListener->OnExcludeListChange(this);
+	}
+}
+
+void MyExcludeList::InsertEntry(int index, const MyExcludeEntry& rNewEntry) 
+{
+	for (MyExcludeEntry::ConstIterator 
+		i  = mEntries.begin();
+		i != mEntries.end(); i++)
+	{
+		if (i->IsSameAs(rNewEntry))
+		{
+			return;
+		}
+	}
+
+	MyExcludeEntry::Iterator i;
+		
+	for (i = mEntries.begin();
+	     i != mEntries.end() && index > 0;
+	     i++, index--)
+	{ }
+
+	mEntries.insert(i, rNewEntry);
+	
 	if (mpListener)
 	{
 		mpListener->OnExcludeListChange(this);

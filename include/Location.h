@@ -152,6 +152,15 @@ enum ExcludeTypeIndex
 	ETI_ALWAYS_INCLUDE_FILES_REGEX,
 };
 
+#define ET_EXCLUDE_DIR                theExcludeTypes[ETI_EXCLUDE_DIR]
+#define ET_EXCLUDE_DIRS_REGEX         theExcludeTypes[ETI_EXCLUDE_DIRS_REGEX]
+#define ET_EXCLUDE_FILE               theExcludeTypes[ETI_EXCLUDE_FILE]
+#define ET_EXCLUDE_FILES_REGEX        theExcludeTypes[ETI_EXCLUDE_FILES_REGEX]
+#define ET_ALWAYS_INCLUDE_DIR         theExcludeTypes[ETI_ALWAYS_INCLUDE_DIR]
+#define ET_ALWAYS_INCLUDE_DIRS_REGEX  theExcludeTypes[ETI_ALWAYS_INCLUDE_DIRS_REGEX]
+#define ET_ALWAYS_INCLUDE_FILE        theExcludeTypes[ETI_ALWAYS_INCLUDE_FILE]
+#define ET_ALWAYS_INCLUDE_FILES_REGEX theExcludeTypes[ETI_ALWAYS_INCLUDE_FILES_REGEX]
+
 class Location;
 
 class MyExcludeEntry 
@@ -257,7 +266,9 @@ class MyExcludeList
 	
 	const MyExcludeEntry::List& GetEntries() const { return mEntries; }
 	void AddEntry(const MyExcludeEntry& rNewEntry);
-	void ReplaceEntry(const MyExcludeEntry& rOldEntry, const MyExcludeEntry& rNewEntry);
+	void InsertEntry(int index, const MyExcludeEntry& rNewEntry);
+	void ReplaceEntry(const MyExcludeEntry& rOldEntry, 
+		const MyExcludeEntry& rNewEntry);
 	// void RemoveEntry(int index);
 	void RemoveEntry(const MyExcludeEntry& rOldEntry);
 	MyExcludeEntry* UnConstEntry(const MyExcludeEntry& rEntry);
@@ -291,11 +302,14 @@ class MyExcludeList
 		return true;
 	}
 	
-	void addConfigList(const Configuration& conf, 
-		const std::string& keyName, MyExcludeType& type);
-	void addSeparatedList(const std::string& entries, MyExcludeType& type);
 	void SetListener(LocationChangeListener* pListener)
 	{ mpListener = pListener; }
+	
+	private:
+	void _AddConfigList(const Configuration& conf, 
+		const std::string& keyName, MyExcludeType& type);
+	void _AddSeparatedList(const std::string& entries, MyExcludeType& type);
+
 };
 
 class Location
