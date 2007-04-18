@@ -1058,8 +1058,8 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		pLocationRoot = pParentNode;
 	}
 
-	wxASSERT(!(pLocation && !pLocationRoot));
-	wxASSERT(!(pLocation && !pList));
+	wxASSERT(!(pLocation   && !pLocationRoot));
+	wxASSERT(!(pLocation   && !pList));
 	wxASSERT(!(pIncludedBy && !pList));
 	wxASSERT(!(pExcludedBy && !pList));
 	
@@ -1113,21 +1113,19 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			}
 		}
 		
-		if (doDelete) 
+		if (doDelete && pList) 
 		{
-			if (pList)
-			{
-				pList->RemoveEntry(*pIncludedBy);
-				pUpdateFrom = pLocationRoot;
-			}
+			pList->RemoveEntry(*pIncludedBy);
+			pUpdateFrom = pLocationRoot;
 		}			
 	} 
-	else if	(pExcludedBy != NULL)
+	else if (pExcludedBy != NULL)
 	{
 		// Node is excluded, and user wants to include it.
 		// If the selected node is the value of an exact matching
 		// Exclude(File|Dir) entry, we can delete that entry.
-		// Otherwise, we will have to add an AlwaysInclude entry for it.
+		// Otherwise, we may need to change the exclusion, and/or
+		// add some AlwaysInclude entries for it.
 		
 		bool handled = false;
 		
@@ -1145,18 +1143,69 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			}
 		}
 		
-		if (!handled)
+		if (!handled && pList)
 		{
-			MyExcludeEntry newEntry(
-				theExcludeTypes[
-					pTreeNode->IsDirectory() 
-					? ETI_ALWAYS_INCLUDE_DIR
-					: ETI_ALWAYS_INCLUDE_FILE],
-				pTreeNode->GetFullPath());
+			// walk up the tree, adding AlwaysIncludeDir nodes,
+			// until we reach one which is not excluded, or which
+			// is excluded by an exact match. In the latter case,
+			// delete the exact match. In either case, stop there.
 			
-			if (pList)
+			int pos = pList->GetEntries().size();
+			BackupTreeNode* pExclude;
+			
+			for (BackupTreeNode* pPos = pTreeNode;
+				pPos->GetExcludedBy()
+				&& !(pPos->GetIncludedBy())
+				&& !(pPos->IsRoot())
+				&& pList;
+				pPos = (BackupTreeNode*)pPos->GetParentNode())
 			{
-				pList->AddEntry(newEntry);
+				pExclude = pPos;
+				
+				MyExcludeEntry newEntry(
+					pPos->IsDirectory() 
+					? ET_ALWAYS_INCLUDE_DIR
+					: ET_ALWAYS_INCLUDE_FILE,
+					pPos->GetFullPath());
+				
+				pList->InsertEntry(pos, newEntry);
+			}
+
+			// pExclude is now the last (highest) node visited,
+			// which may be the same as pTreeNode (e.g. if an
+			// exclude regexp applies to pTreeNode)
+			
+			if (pTreeNode == pExclude)
+			{
+				// simple case, no need to exclude 
+				// and alwaysinclude
+			}
+			else if (pExclude->IsDirectory())
+			{
+				wxString path(wxT("^"));
+				path.Append(pExclude->GetFullPath());
+				path.Append(wxT("/"));
+				pList->InsertEntry(pos, MyExcludeEntry(
+					ET_EXCLUDE_FILES_REGEX, path));
+				pList->InsertEntry(pos, MyExcludeEntry(
+					ET_EXCLUDE_DIRS_REGEX, path));
+			}
+			
+			if (pTreeNode->IsDirectory())
+			{
+				wxString path(wxT("^"));
+				path.Append(pTreeNode->GetFullPath());
+				path.Append(wxT("/"));
+				pList->AddEntry(MyExcludeEntry(
+					ET_ALWAYS_INCLUDE_DIRS_REGEX, path));
+				pList->AddEntry(MyExcludeEntry(
+					ET_ALWAYS_INCLUDE_FILES_REGEX, path));
+			}
+			else
+			{
+				pList->AddEntry(MyExcludeEntry(
+					ET_ALWAYS_INCLUDE_FILE, 
+					pTreeNode->GetFullPath()));
 			}
 		}
 
@@ -1193,7 +1242,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			handled = true;
 		}
 		
-		if (!handled) 
+		if (!handled && pList) 
 		{
 			MyExcludeEntry newEntry(
 				theExcludeTypes[
@@ -1202,11 +1251,8 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 					: ETI_EXCLUDE_FILE],
 				pTreeNode->GetFullPath());
 
-			if (pList)
-			{
-				pList->AddEntry(newEntry);
-				pUpdateFrom = pLocationRoot;
-			}
+			pList->AddEntry(newEntry);
+			pUpdateFrom = pLocationRoot;
 		}
 	}
 	else
