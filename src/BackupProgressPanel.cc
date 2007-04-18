@@ -463,7 +463,7 @@ void BackupProgressPanel::CountDirectory(BackupClientContext& rContext,
 					// File or symbolic link
 
 					// Exclude it?
-					if(rContext.ExcludeFile(filename))
+					if (rContext.ExcludeFile(filename))
 					{
 						// Next item!
 						continue;
@@ -476,9 +476,13 @@ void BackupProgressPanel::CountDirectory(BackupClientContext& rContext,
 				{
 					// Directory
 					
-					// Excluded directories should be
-					// counted, in case they contain 
-					// included files.
+					// Exclude it?
+					if (rContext.ExcludeDir(filename))
+					{
+						// Next item!
+						continue;
+					}
+					
 					CountDirectory(rContext, filename);
 				}
 				else
