@@ -8,6 +8,10 @@ is new.
 =over
 
 =item *
+Fix the account number encoding. In the certificate it is in hex,
+but without leading zeroes.
+
+=item *
 Implement the Compare function.
 
 Allows users to determine whether their files have been backed up,
