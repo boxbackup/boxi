@@ -115,7 +115,7 @@ public:
     */
     static int FlushEventQueue ();
 
-    static void WxGuiTestHelper::ShowModal(wxDialog* pWindow);
+    static void ShowModal(wxDialog* pWindow);
 
     /*! \fn static int Show (wxWindow *wdw, bool show, bool isModal)
         \brief Show frames, dialogs conditionally using global s_isGuiLessUnitTest flag.
