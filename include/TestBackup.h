@@ -54,7 +54,7 @@ class TestBackupStoreDaemon
   public HousekeepingInterface
 {
 	public:
-	TestBackupStoreDaemon::TestBackupStoreDaemon()
+	TestBackupStoreDaemon()
 	: mStateKnownCondition(mConditionLock),
 	  mStateListening(false), mStateDead(false)
 	{ }
