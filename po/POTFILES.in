@@ -58,5 +58,6 @@ src/RestoreProgressPanel.cc
 src/TestWithServer.cc
 src/TestCompare.cc
 src/ProgressPanel.cc
+src/TestBackupConfig2.cc
 
 
