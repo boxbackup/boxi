@@ -2,8 +2,8 @@
  *            TestRestore.h
  *
  *  Sat Aug 12 14:01:01 2006
- *  Copyright  2006  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2006-2007 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -32,6 +32,13 @@ class TestRestore : public TestWithServer
 	public:
 	static CppUnit::Test *suite();
 	virtual void RunTest();
+	
+	private:
+	RestorePanel* mpRestorePanel;
+	RestoreProgressPanel* mpRestoreProgressPanel;
+	wxListBox* mpRestoreErrorList;
+
+	void TestRestoreToDate();
 };
 
 #endif /* _TESTRESTORE_H */

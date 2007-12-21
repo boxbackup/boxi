@@ -2,7 +2,7 @@
  *            TestRestore.cc
  *
  *  Wed May 10 23:10:16 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2007 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -172,19 +172,19 @@ void TestRestore::RunTest()
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(3, 4);
 	
-	RestorePanel* pRestorePanel = wxDynamicCast
+	mpRestorePanel = wxDynamicCast
 	(
 		mpMainFrame->FindWindow(ID_Restore_Panel), RestorePanel
 	);
-	CPPUNIT_ASSERT(pRestorePanel);
+	CPPUNIT_ASSERT(mpRestorePanel);
 
-	CPPUNIT_ASSERT(!pRestorePanel->IsShown());	
+	CPPUNIT_ASSERT(!mpRestorePanel->IsShown());	
 	ClickButtonWaitEvent(ID_Main_Frame, ID_General_Restore_Button);
-	CPPUNIT_ASSERT(pRestorePanel->IsShown());
+	CPPUNIT_ASSERT(mpRestorePanel->IsShown());
 	
 	wxListBox* pLocsList = wxDynamicCast
 	(
-		pRestorePanel->FindWindow(ID_Function_Source_List), wxListBox
+		mpRestorePanel->FindWindow(ID_Function_Source_List), wxListBox
 	);
 	CPPUNIT_ASSERT(pLocsList);
 	CPPUNIT_ASSERT_EQUAL(0, pLocsList->GetCount());
@@ -279,7 +279,7 @@ void TestRestore::RunTest()
 
 	// check that the restore spec contains what we expect
 	{
-		RestoreSpec& rRestoreSpec(pRestorePanel->GetRestoreSpec());
+		RestoreSpec& rRestoreSpec(mpRestorePanel->GetRestoreSpec());
 		const RestoreSpecEntry::Vector entries = rRestoreSpec.GetEntries();
 		CPPUNIT_ASSERT_EQUAL((size_t)1, entries.size());
 		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/df9834.dsf")),
@@ -296,68 +296,68 @@ void TestRestore::RunTest()
 	CPPUNIT_ASSERT_EQUAL(wxString(_("+ /testdata/df9834.dsf")),
 		pLocsList->GetString(0));
 	
-	RestoreProgressPanel* pRestoreProgressPanel = wxDynamicCast
+	mpRestoreProgressPanel = wxDynamicCast
 	(
 		mpMainFrame->FindWindow(ID_Restore_Progress_Panel), 
 		RestoreProgressPanel
 	);
-	CPPUNIT_ASSERT(pRestoreProgressPanel);
+	CPPUNIT_ASSERT(mpRestoreProgressPanel);
 
 	wxRadioButton* pNewLocRadio = wxDynamicCast
 	(
-		pRestorePanel->FindWindow(ID_Restore_Panel_New_Location_Radio), 
+		mpRestorePanel->FindWindow(ID_Restore_Panel_New_Location_Radio), 
 		wxRadioButton
 	);
 	CPPUNIT_ASSERT(!pNewLocRadio);
 
-	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown());
+	CPPUNIT_ASSERT(!mpRestoreProgressPanel->IsShown());
 	MessageBoxSetResponse(BM_RESTORE_FAILED_INVALID_DESTINATION_PATH, wxOK);
 	ClickButtonWaitEvent(ID_Restore_Panel, ID_Function_Start_Button);
 	MessageBoxCheckFired();
-	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown());
+	CPPUNIT_ASSERT(!mpRestoreProgressPanel->IsShown());
 
 	wxTextCtrl* pNewLocText = wxDynamicCast
 	(
-		pRestorePanel->FindWindow(ID_Restore_Panel_New_Location_Text), 
+		mpRestorePanel->FindWindow(ID_Restore_Panel_New_Location_Text), 
 		wxTextCtrl
 	);
 	CPPUNIT_ASSERT(pNewLocText);
 	wxFileName restoreDest(mBaseDir.GetFullPath(), _("restore"));
 	SetTextCtrlValue(pNewLocText, restoreDest.GetFullPath());
 
-	wxListBox* pRestoreErrorList = wxDynamicCast
+	mpRestoreErrorList = wxDynamicCast
 	(
-		pRestoreProgressPanel->FindWindow(ID_BackupProgress_ErrorList), 
+		mpRestoreProgressPanel->FindWindow(ID_BackupProgress_ErrorList), 
 		wxListBox
 	);
-	CPPUNIT_ASSERT(pRestoreErrorList);
-	CPPUNIT_ASSERT_EQUAL(0, pRestoreErrorList->GetCount());
+	CPPUNIT_ASSERT(mpRestoreErrorList);
+	CPPUNIT_ASSERT_EQUAL(0, mpRestoreErrorList->GetCount());
 
 	#define CHECK_RESTORE_OK(files, bytes) \
-	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown()); \
+	CPPUNIT_ASSERT(!mpRestoreProgressPanel->IsShown()); \
 	ClickButtonWaitEvent(ID_Restore_Panel, ID_Function_Start_Button); \
-	CPPUNIT_ASSERT(pRestoreProgressPanel->IsShown()); \
-	CPPUNIT_ASSERT(pRestoreErrorList->GetCount() >= 1); \
+	CPPUNIT_ASSERT(mpRestoreProgressPanel->IsShown()); \
+	CPPUNIT_ASSERT(mpRestoreErrorList->GetCount() >= 1); \
 	CPPUNIT_ASSERT_EQUAL(wxString(_("Restore Finished")), \
-		pRestoreErrorList->GetString(0)); \
-	CPPUNIT_ASSERT_EQUAL(1, pRestoreErrorList->GetCount()); \
+		mpRestoreErrorList->GetString(0)); \
+	CPPUNIT_ASSERT_EQUAL(1, mpRestoreErrorList->GetCount()); \
 	ClickButtonWaitEvent(ID_Restore_Progress_Panel, wxID_CANCEL); \
-	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown()); \
+	CPPUNIT_ASSERT(!mpRestoreProgressPanel->IsShown()); \
 	mpMainFrame->GetConnection()->Disconnect(); \
 	CPPUNIT_ASSERT_EQUAL(wxString(_(#files)), \
-		pRestoreProgressPanel->GetNumFilesTotalString()); \
+		mpRestoreProgressPanel->GetNumFilesTotalString()); \
 	CPPUNIT_ASSERT_EQUAL(wxString(_(bytes)), \
-		pRestoreProgressPanel->GetNumBytesTotalString()); \
+		mpRestoreProgressPanel->GetNumBytesTotalString()); \
 	CPPUNIT_ASSERT_EQUAL(wxString(_(#files)), \
-		pRestoreProgressPanel->GetNumFilesDoneString()); \
+		mpRestoreProgressPanel->GetNumFilesDoneString()); \
 	CPPUNIT_ASSERT_EQUAL(wxString(_(bytes)), \
-		pRestoreProgressPanel->GetNumBytesDoneString()); \
+		mpRestoreProgressPanel->GetNumBytesDoneString()); \
 	CPPUNIT_ASSERT_EQUAL(wxString(_("0")), \
-		pRestoreProgressPanel->GetNumFilesRemainingString()); \
+		mpRestoreProgressPanel->GetNumFilesRemainingString()); \
 	CPPUNIT_ASSERT_EQUAL(wxString(_("0 B")), \
-		pRestoreProgressPanel->GetNumBytesRemainingString()); \
-	CPPUNIT_ASSERT_EQUAL(files, pRestoreProgressPanel->GetProgressPos()); \
-	CPPUNIT_ASSERT_EQUAL(files, pRestoreProgressPanel->GetProgressMax());
+		mpRestoreProgressPanel->GetNumBytesRemainingString()); \
+	CPPUNIT_ASSERT_EQUAL(files, mpRestoreProgressPanel->GetProgressPos()); \
+	CPPUNIT_ASSERT_EQUAL(files, mpRestoreProgressPanel->GetProgressMax());
 	
 	CHECK_RESTORE_OK(1, "18 kB");
 	
@@ -374,11 +374,11 @@ void TestRestore::RunTest()
 	CPPUNIT_ASSERT(wxRemoveFile(df9834_dsfRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
 	
-	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown());
+	CPPUNIT_ASSERT(!mpRestoreProgressPanel->IsShown());
 	MessageBoxSetResponse(BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS, wxOK);
 	ClickButtonWaitEvent(ID_Restore_Panel, ID_Function_Start_Button);
 	MessageBoxCheckFired();
-	CPPUNIT_ASSERT(!pRestoreProgressPanel->IsShown());
+	CPPUNIT_ASSERT(!mpRestoreProgressPanel->IsShown());
 	
 	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
 	
@@ -421,7 +421,7 @@ void TestRestore::RunTest()
 	
 	// check that the restore spec contains what we expect
 	{
-		RestoreSpec& rRestoreSpec(pRestorePanel->GetRestoreSpec());
+		RestoreSpec& rRestoreSpec(mpRestorePanel->GetRestoreSpec());
 		const RestoreSpecEntry::Vector entries = rRestoreSpec.GetEntries();
 		CPPUNIT_ASSERT_EQUAL((size_t)2, entries.size());
 		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/df9834.dsf")),
@@ -470,7 +470,7 @@ void TestRestore::RunTest()
 	}
 
 	{
-		RestoreSpec& rRestoreSpec(pRestorePanel->GetRestoreSpec());
+		RestoreSpec& rRestoreSpec(mpRestorePanel->GetRestoreSpec());
 		const RestoreSpecEntry::Vector entries = rRestoreSpec.GetEntries();
 		CPPUNIT_ASSERT_EQUAL((size_t)2, entries.size());
 		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23")),
@@ -505,7 +505,7 @@ void TestRestore::RunTest()
 	}
 
 	{
-		RestoreSpec& rRestoreSpec(pRestorePanel->GetRestoreSpec());
+		RestoreSpec& rRestoreSpec(mpRestorePanel->GetRestoreSpec());
 		const RestoreSpecEntry::Vector entries = rRestoreSpec.GetEntries();
 		CPPUNIT_ASSERT_EQUAL((size_t)3, entries.size());
 		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23")),
@@ -569,7 +569,7 @@ void TestRestore::RunTest()
 	}
 
 	{
-		RestoreSpec& rRestoreSpec(pRestorePanel->GetRestoreSpec());
+		RestoreSpec& rRestoreSpec(mpRestorePanel->GetRestoreSpec());
 		const RestoreSpecEntry::Vector entries = rRestoreSpec.GetEntries();
 		CPPUNIT_ASSERT_EQUAL((size_t)5, entries.size());
 		CPPUNIT_ASSERT_EQUAL(wxString(_("/testdata/sub23")),
@@ -644,7 +644,7 @@ void TestRestore::RunTest()
 			pRestoreTree->GetItemImage(rootId));
 	}
 
-	RestoreSpec& rRestoreSpec(pRestorePanel->GetRestoreSpec());
+	RestoreSpec& rRestoreSpec(mpRestorePanel->GetRestoreSpec());
 	CPPUNIT_ASSERT(!rRestoreSpec.GetRestoreToDateEnabled());
 
 	{
@@ -666,42 +666,8 @@ void TestRestore::RunTest()
 	DeleteRecursive(testdataRestored);
 	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
 	
-	// check restoring to a specified date
-	wxCheckBox* pToDateCheckBox = wxDynamicCast
-	(
-		pRestorePanel->FindWindow(ID_Restore_Panel_To_Date_Checkbox), 
-		wxCheckBox
-	);
-	CPPUNIT_ASSERT(pToDateCheckBox);
-	CPPUNIT_ASSERT(!pToDateCheckBox->GetValue());
-	
-	wxDatePickerCtrl* pDatePicker = wxDynamicCast
-	(
-		pRestorePanel->FindWindow(ID_Restore_Panel_Date_Picker), 
-		wxDatePickerCtrl
-	);
-	CPPUNIT_ASSERT(pDatePicker);
-	
-	wxSpinCtrl* pHourSpin = wxDynamicCast
-	(
-		pRestorePanel->FindWindow(ID_Restore_Panel_Hour_Spin), 
-		wxSpinCtrl
-	);
-	CPPUNIT_ASSERT(pHourSpin);
-
-	wxSpinCtrl* pMinSpin = wxDynamicCast
-	(
-		pRestorePanel->FindWindow(ID_Restore_Panel_Min_Spin), 
-		wxSpinCtrl
-	);
-	CPPUNIT_ASSERT(pMinSpin);
-
-	CPPUNIT_ASSERT(!pDatePicker->IsEnabled());
-	CPPUNIT_ASSERT(!pHourSpin->IsEnabled());
-	CPPUNIT_ASSERT(!pMinSpin->IsEnabled());
-
 	// check that connection index is being incremented with each connection
-	CPPUNIT_ASSERT_EQUAL(6, pRestoreProgressPanel->GetConnectionIndex());
+	CPPUNIT_ASSERT_EQUAL(6, mpRestoreProgressPanel->GetConnectionIndex());
 
 	// check that old and deleted files are not restored, and that 
 	// node cache is being invalidated when connection index changes
@@ -717,7 +683,7 @@ void TestRestore::RunTest()
 	CHECK_COMPARE_LOC_OK(0, 0);
 	CHECK_RESTORE_OK(11, "86 kB");
 	DeleteRecursive(restoreDest);
-	CPPUNIT_ASSERT_EQUAL(7, pRestoreProgressPanel->GetConnectionIndex());
+	CPPUNIT_ASSERT_EQUAL(7, mpRestoreProgressPanel->GetConnectionIndex());
 
 	Unzip(test3ZipFile, mTestDataDir, true);
 	CHECK_COMPARE_LOC_FAILS(12, 0, 0, 0);
@@ -725,7 +691,56 @@ void TestRestore::RunTest()
 	CHECK_COMPARE_LOC_OK(0, 0);
 	CHECK_RESTORE_OK(17, "160 kB");
 	DeleteRecursive(restoreDest);
-	CPPUNIT_ASSERT_EQUAL(8, pRestoreProgressPanel->GetConnectionIndex());
+	CPPUNIT_ASSERT_EQUAL(8, mpRestoreProgressPanel->GetConnectionIndex());
+
+	TestRestoreToDate();
+
+	DeleteRecursive(mTestDataDir);
+	CPPUNIT_ASSERT(mStoreConfigFileName.FileExists());
+	CPPUNIT_ASSERT(wxRemoveFile(mStoreConfigFileName.GetFullPath()));
+	CPPUNIT_ASSERT(wxRemoveFile(mAccountsFile.GetFullPath()));
+	CPPUNIT_ASSERT(wxRemoveFile(mRaidConfigFile.GetFullPath()));
+	CPPUNIT_ASSERT(wxRemoveFile(mClientConfigFile.GetFullPath()));		
+	CPPUNIT_ASSERT(mConfDir.Rmdir());
+	DeleteRecursive(mStoreDir);
+	CPPUNIT_ASSERT(mBaseDir.Rmdir());
+}
+
+void TestRestore::TestRestoreToDate()
+{
+	// check restoring to a specified date
+	wxCheckBox* pToDateCheckBox = wxDynamicCast
+	(
+		mpRestorePanel->FindWindow(ID_Restore_Panel_To_Date_Checkbox), 
+		wxCheckBox
+	);
+	CPPUNIT_ASSERT(pToDateCheckBox);
+	CPPUNIT_ASSERT(!pToDateCheckBox->GetValue());
+	
+	wxDatePickerCtrl* pDatePicker = wxDynamicCast
+	(
+		mpRestorePanel->FindWindow(ID_Restore_Panel_Date_Picker), 
+		wxDatePickerCtrl
+	);
+	CPPUNIT_ASSERT(pDatePicker);
+	
+	wxSpinCtrl* pHourSpin = wxDynamicCast
+	(
+		mpRestorePanel->FindWindow(ID_Restore_Panel_Hour_Spin), 
+		wxSpinCtrl
+	);
+	CPPUNIT_ASSERT(pHourSpin);
+
+	wxSpinCtrl* pMinSpin = wxDynamicCast
+	(
+		mpRestorePanel->FindWindow(ID_Restore_Panel_Min_Spin), 
+		wxSpinCtrl
+	);
+	CPPUNIT_ASSERT(pMinSpin);
+
+	CPPUNIT_ASSERT(!pDatePicker->IsEnabled());
+	CPPUNIT_ASSERT(!pHourSpin->IsEnabled());
+	CPPUNIT_ASSERT(!pMinSpin->IsEnabled());
 
 	wxDateTime now = wxDateTime::Now();
 	CheckBoxWaitEvent(pToDateCheckBox);
@@ -844,14 +859,4 @@ void TestRestore::RunTest()
 	
 	DeleteRecursive(restoreDest);
 	DeleteRecursive(expectedRestoreDir);
-
-	DeleteRecursive(mTestDataDir);
-	CPPUNIT_ASSERT(mStoreConfigFileName.FileExists());
-	CPPUNIT_ASSERT(wxRemoveFile(mStoreConfigFileName.GetFullPath()));
-	CPPUNIT_ASSERT(wxRemoveFile(mAccountsFile.GetFullPath()));
-	CPPUNIT_ASSERT(wxRemoveFile(mRaidConfigFile.GetFullPath()));
-	CPPUNIT_ASSERT(wxRemoveFile(mClientConfigFile.GetFullPath()));		
-	CPPUNIT_ASSERT(mConfDir.Rmdir());
-	DeleteRecursive(mStoreDir);
-	CPPUNIT_ASSERT(mBaseDir.Rmdir());
 }
