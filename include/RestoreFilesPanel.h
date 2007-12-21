@@ -96,8 +96,7 @@ class ServerFileVersion
 	}
 	ServerFileVersion(BackupStoreDirectory::Entry* pDirEntry);
 	ServerFileVersion(const ServerFileVersion& rToCopy);
-	ServerFileVersion& ServerFileVersion::operator=
-		(const ServerFileVersion& rToCopy);
+	ServerFileVersion& operator=(const ServerFileVersion& rToCopy);
 	
 	const wxDateTime& GetDateTime()   const { return mDateTime; }
 	int64_t           GetBoxFileId()  const { return mBoxFileId; }
@@ -205,7 +204,7 @@ class ServerCacheNode
 	  mVersionsSafe     (mVersions)
 	{ }
 	
-	ServerCacheNode& ServerCacheNode::operator=(const ServerCacheNode& rToCopy)
+	ServerCacheNode& operator=(const ServerCacheNode& rToCopy)
 	{
 		mFileName          = rToCopy.mFileName;
 	  	mFullPath          = rToCopy.mFullPath;
