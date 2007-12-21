@@ -1,4 +1,4 @@
-# Anjuta Version 1.2.4 
+# Anjuta Version 1.2.4a 
 Compatibility Level: 1 
 
 <PROJECT_DESCRIPTION_START>
@@ -35,7 +35,7 @@ fi
 
 props.file.type=project
 
-anjuta.version=1.2.4
+anjuta.version=1.2.4a
 anjuta.compatibility.level=1
 
 project.name=boxi
@@ -115,7 +115,8 @@ module.include.files=\
 	RestoreProgressPanel.h\
 	TestWithServer.h\
 	TestCompare.h\
-	ProgressPanel.h
+	ProgressPanel.h\
+	TestWizard.h
 
 module.source.name=src
 module.source.type=
@@ -172,7 +173,8 @@ module.source.files=\
 	RestoreProgressPanel.cc\
 	TestWithServer.cc\
 	TestCompare.cc\
-	ProgressPanel.cc
+	ProgressPanel.cc\
+	TestBackupConfig2.cc
 
 module.pixmap.name=pixmaps
 module.pixmap.type=
