@@ -27,7 +27,7 @@ class StreamableMemBlock;
 class HousekeepingInterface
 {
 	public:
-	virtual HousekeepingInterface::~HousekeepingInterface() { }
+	virtual ~HousekeepingInterface() { }
 	virtual void SendMessageToHousekeepingProcess(const void *Msg, int MsgLen) = 0;
 };
 
