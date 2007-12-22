@@ -148,10 +148,10 @@ void TestRestore::RunTest()
 		Unzip(testBaseZipFile, mTestDataDir, true);
 	}
 
-	wxFileName test2ZipFile(MakeAbsolutePath(_("../test/data/test2.zip")));
+	mTest2ZipFile = MakeAbsolutePath(_("../test/data/test2.zip"));
 	{
-		CPPUNIT_ASSERT(test2ZipFile.FileExists());
-		Unzip(test2ZipFile, mTestDataDir, true);
+		CPPUNIT_ASSERT(mTest2ZipFile.FileExists());
+		Unzip(mTest2ZipFile, mTestDataDir, true);
 	}
 
 	{
@@ -162,11 +162,11 @@ void TestRestore::RunTest()
 		Unzip(testExcludeZipFile, mTestDataDir, true);
 	}
 	
-	wxFileName test3ZipFile(MakeAbsolutePath(_("../test/data/test3.zip")));
+	mTest3ZipFile = MakeAbsolutePath(_("../test/data/test3.zip"));
 	{
 		// Add some more files and modify others
-		CPPUNIT_ASSERT(test3ZipFile.FileExists());
-		Unzip(test3ZipFile, mTestDataDir, true);
+		CPPUNIT_ASSERT(mTest3ZipFile.FileExists());
+		Unzip(mTest3ZipFile, mTestDataDir, true);
 	}
 
 	CHECK_BACKUP_OK();
@@ -322,8 +322,8 @@ void TestRestore::RunTest()
 		wxTextCtrl
 	);
 	CPPUNIT_ASSERT(pNewLocText);
-	wxFileName restoreDest(mBaseDir.GetFullPath(), _("restore"));
-	SetTextCtrlValue(pNewLocText, restoreDest.GetFullPath());
+	mRestoreDest = wxFileName(mBaseDir.GetFullPath(), _("restore"));
+	SetTextCtrlValue(pNewLocText, mRestoreDest.GetFullPath());
 
 	mpRestoreErrorList = wxDynamicCast
 	(
@@ -361,8 +361,8 @@ void TestRestore::RunTest()
 	
 	CHECK_RESTORE_OK(1, "18 kB");
 	
-	CPPUNIT_ASSERT(restoreDest.DirExists());
-	wxFileName testdataRestored = MakeAbsolutePath(restoreDest, 
+	CPPUNIT_ASSERT(mRestoreDest.DirExists());
+	wxFileName testdataRestored = MakeAbsolutePath(mRestoreDest, 
 		_("testdata"));
 	CPPUNIT_ASSERT(testdataRestored.DirExists());
 	wxFileName df9834_dsfRestored = MakeAbsolutePath(testdataRestored, 
@@ -380,7 +380,7 @@ void TestRestore::RunTest()
 	MessageBoxCheckFired();
 	CPPUNIT_ASSERT(!mpRestoreProgressPanel->IsShown());
 	
-	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
 	
 	// now select a whole directory to restore
 	// leave the single file selected as well
@@ -407,8 +407,8 @@ void TestRestore::RunTest()
 	
 	CHECK_RESTORE_OK(13, "124 kB");
 	
-	CPPUNIT_ASSERT(restoreDest.DirExists());
-	wxFileName sub23 = MakeAbsolutePath(restoreDest, _("testdata/sub23"));
+	CPPUNIT_ASSERT(mRestoreDest.DirExists());
+	wxFileName sub23 = MakeAbsolutePath(mRestoreDest, _("testdata/sub23"));
 	CPPUNIT_ASSERT(sub23.DirExists());
 	CPPUNIT_ASSERT(df9834_dsfRestored.FileExists());
 	CompareFiles(df9834_dsfOriginal, df9834_dsfRestored);
@@ -417,7 +417,7 @@ void TestRestore::RunTest()
 	DeleteRecursive(sub23);
 	CPPUNIT_ASSERT(wxRemoveFile(df9834_dsfRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
-	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
 	
 	// check that the restore spec contains what we expect
 	{
@@ -484,14 +484,14 @@ void TestRestore::RunTest()
 	// check that restore works as expected
 	CHECK_RESTORE_OK(12, "106 kB");
 	
-	CPPUNIT_ASSERT(restoreDest.DirExists());
+	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(sub23.DirExists());
 	CPPUNIT_ASSERT(!df9834_dsfRestored.FileExists());
 	CompareExpectNoDifferences(rClientConfig, mTlsContext, _("testdata/sub23"),
 		sub23);
 	DeleteRecursive(sub23);
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
-	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
 
 	// create a weirder configuration, with double include and the
 	// included item also excluded. The include should be ignored,
@@ -522,14 +522,14 @@ void TestRestore::RunTest()
 	// check that restore works as expected
 	CHECK_RESTORE_OK(8, "76 kB");
 	
-	CPPUNIT_ASSERT(restoreDest.DirExists());
+	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(sub23.DirExists());
 	CPPUNIT_ASSERT(!df9834_dsfRestored.FileExists());
 	CompareExpectDifferences(rClientConfig, mTlsContext, _("testdata/sub23"),
 		sub23, 1, 0);
 	DeleteRecursive(sub23);
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
-	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
 
 	wxTreeItemId bfdlink_h = GetItemIdFromPath(pRestoreTree, dhsfdss, 
 		_("bfdlink.h"));
@@ -594,13 +594,13 @@ void TestRestore::RunTest()
 	// check that restore works as expected
 	CHECK_RESTORE_OK(10, "96 kB");
 	
-	CPPUNIT_ASSERT(restoreDest.DirExists());
+	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(sub23.DirExists());
 	CompareExpectDifferences(rClientConfig, mTlsContext, _("testdata/sub23"),
 		sub23, 4, 0);
 	DeleteRecursive(sub23);
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
-	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
 
 	// clear all entries, select the server root
 	{
@@ -644,10 +644,9 @@ void TestRestore::RunTest()
 			pRestoreTree->GetItemImage(rootId));
 	}
 
-	RestoreSpec& rRestoreSpec(mpRestorePanel->GetRestoreSpec());
-	CPPUNIT_ASSERT(!rRestoreSpec.GetRestoreToDateEnabled());
-
 	{
+		RestoreSpec& rRestoreSpec(mpRestorePanel->GetRestoreSpec());
+		CPPUNIT_ASSERT(!rRestoreSpec.GetRestoreToDateEnabled());
 		const RestoreSpecEntry::Vector entries = rRestoreSpec.GetEntries();
 		CPPUNIT_ASSERT_EQUAL((size_t)1, entries.size());
 		CPPUNIT_ASSERT_EQUAL(wxString(_("/")),
@@ -658,13 +657,13 @@ void TestRestore::RunTest()
 	// check that restore works as expected
 	CHECK_RESTORE_OK(32, "262 kB");
 	
-	CPPUNIT_ASSERT(restoreDest.DirExists());
+	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(testdataRestored.DirExists());
 	CPPUNIT_ASSERT(sub23.DirExists());
 	CompareExpectNoDifferences(rClientConfig, mTlsContext, _("testdata"),
 		testdataRestored);
 	DeleteRecursive(testdataRestored);
-	CPPUNIT_ASSERT(wxRmdir(restoreDest.GetFullPath()));
+	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
 	
 	// check that connection index is being incremented with each connection
 	CPPUNIT_ASSERT_EQUAL(6, mpRestoreProgressPanel->GetConnectionIndex());
@@ -677,20 +676,20 @@ void TestRestore::RunTest()
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
 
-	Unzip(test2ZipFile, mTestDataDir, true);
+	Unzip(mTest2ZipFile, mTestDataDir, true);
 	CHECK_COMPARE_LOC_FAILS(2, 0, 0, 0);
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
 	CHECK_RESTORE_OK(11, "86 kB");
-	DeleteRecursive(restoreDest);
+	DeleteRecursive(mRestoreDest);
 	CPPUNIT_ASSERT_EQUAL(7, mpRestoreProgressPanel->GetConnectionIndex());
 
-	Unzip(test3ZipFile, mTestDataDir, true);
+	Unzip(mTest3ZipFile, mTestDataDir, true);
 	CHECK_COMPARE_LOC_FAILS(12, 0, 0, 0);
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
 	CHECK_RESTORE_OK(17, "160 kB");
-	DeleteRecursive(restoreDest);
+	DeleteRecursive(mRestoreDest);
 	CPPUNIT_ASSERT_EQUAL(8, mpRestoreProgressPanel->GetConnectionIndex());
 
 	TestRestoreToDate();
@@ -708,6 +707,9 @@ void TestRestore::RunTest()
 
 void TestRestore::TestRestoreToDate()
 {
+	RestoreSpec& rRestoreSpec(mpRestorePanel->GetRestoreSpec());
+	CPPUNIT_ASSERT(!rRestoreSpec.GetRestoreToDateEnabled());
+
 	// check restoring to a specified date
 	wxCheckBox* pToDateCheckBox = wxDynamicCast
 	(
@@ -778,12 +780,12 @@ void TestRestore::TestRestoreToDate()
 	// automatically as half-way between the latest file in test2,
 	// and the earliest one in test3.
 
-	std::auto_ptr<wxZipEntry> beforeEntry = FindZipEntry(test2ZipFile,
+	std::auto_ptr<wxZipEntry> beforeEntry = FindZipEntry(mTest2ZipFile,
 		_("sub23/dhsfdss/bfdlink.h"));
 	CPPUNIT_ASSERT(beforeEntry.get());
 	wxDateTime before = beforeEntry->GetDateTime();
 
-	std::auto_ptr<wxZipEntry> afterEntry = FindZipEntry(test3ZipFile,
+	std::auto_ptr<wxZipEntry> afterEntry = FindZipEntry(mTest3ZipFile,
 		_("apropos"));
 	CPPUNIT_ASSERT(afterEntry.get());
 	wxDateTime after = afterEntry->GetDateTime();
@@ -835,9 +837,9 @@ void TestRestore::TestRestoreToDate()
 	wxFileName expectedTestDataDir(expectedRestoreDir.GetFullPath(), 
 		_("testdata"));
 	CPPUNIT_ASSERT(expectedTestDataDir.Mkdir(0700));
-	Unzip(test2ZipFile, expectedTestDataDir, true);
+	Unzip(mTest2ZipFile, expectedTestDataDir, true);
 	
-	CompareDirs(expectedRestoreDir, restoreDest, 2);
+	CompareDirs(expectedRestoreDir, mRestoreDest, 2);
 	
 	// Now fix those differences.
 	{
@@ -855,8 +857,8 @@ void TestRestore::TestRestoreToDate()
 	}
 	
 	// Now there should be no differences.
-	CompareDirs(expectedRestoreDir, restoreDest, 0);
+	CompareDirs(expectedRestoreDir, mRestoreDest, 0);
 	
-	DeleteRecursive(restoreDest);
+	DeleteRecursive(mRestoreDest);
 	DeleteRecursive(expectedRestoreDir);
 }

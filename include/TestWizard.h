@@ -2,8 +2,8 @@
  *            TestWizard.h
  *
  *  Sat Aug 12 14:34:26 2006
- *  Copyright  2006  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2006-2007 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -39,9 +39,20 @@ class TestWizard : public TestWithConfig
 	static CppUnit::Test *suite();
 
 	private:
+	MainFrame*   mpMainFrame;
 	wxButton*    mpForwardButton;
 	SetupWizard* mpWizard;
-
+	wxFileName   mConfigFileName;
+	wxFileName   mTempDir;
+	wxFileName   mClientCryptoFileName;
+	wxFileName   mClientCertFileName;
+	wxFileName   mCaFileName;
+	wxFileName   mClientBadSigCertFileName;
+	wxFileName   mClientSelfSigCertFileName;
+	wxFileName   mClientCsrFileName;
+	wxFileName   mPrivateKeyFileName;
+	wxFileName   mConfigTestDir;
+	
 	void CheckForwardErrorImpl(message_t messageId, 
 		const wxString& rMessageName, const CppUnit::SourceLine& rLine);
 	X509* LoadCertificate(const wxFileName& rCertFile);
@@ -60,6 +71,16 @@ class TestWizard : public TestWithConfig
 	{
 		ClickButtonWaitEvent(ID_Setup_Wizard_Frame, wxID_BACKWARD);
 	}
+	void TestAccountPage();
+	void TestPrivateKeyPage();
+	void TestCertExistsPage();
+	void TestCertRequestPage();
+	void SignCertificate();
+	void TestCertificatePage();
+	void TestCryptoKeyPage();
+	void TestBackedUpPage();
+	void TestDataDirPage();
+	void TestConfigOptionalRequiredItems();
 };
 
 #endif /* _TESTWIZARD_H */

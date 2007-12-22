@@ -2,8 +2,8 @@
  *            TestWizard.cc
  *
  *  Tue May  9 19:44:11 2006
- *  Copyright  2006  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2006-2007 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -305,11 +305,11 @@ void TestWizard::CheckForwardErrorImpl
 
 void TestWizard::RunTest()
 {
-	MainFrame* pMainFrame = GetMainFrame();
-	CPPUNIT_ASSERT(pMainFrame);
+	mpMainFrame = GetMainFrame();
+	CPPUNIT_ASSERT(mpMainFrame);
 	
 	CPPUNIT_ASSERT(!FindWindow(ID_Setup_Wizard_Frame));
-	ClickButtonWaitIdle(pMainFrame->FindWindow(
+	ClickButtonWaitIdle(mpMainFrame->FindWindow(
 		ID_General_Setup_Wizard_Button));
 	
 	mpWizard = (SetupWizard*)FindWindow(ID_Setup_Wizard_Frame);
@@ -323,6 +323,25 @@ void TestWizard::RunTest()
 	CPPUNIT_ASSERT(pBackButton);
 	
 	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_ACCOUNT, mpWizard->GetCurrentPageId());
+
+	TestAccountPage();
+	TestPrivateKeyPage();
+	TestCertRequestPage();	
+	SignCertificate();
+	TestCertificatePage();
+	TestCryptoKeyPage();
+	TestBackedUpPage();
+	TestDataDirPage();
+	TestConfigOptionalRequiredItems();
+	
+	CloseWindowWaitClosed(mpMainFrame);
+
+	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
+}
+
+void TestWizard::TestAccountPage()
+{
 	CPPUNIT_ASSERT_EQUAL(BWP_ACCOUNT, mpWizard->GetCurrentPageId());
 	
 	wxTextCtrl* pStoreHost;
@@ -342,7 +361,7 @@ void TestWizard::RunTest()
 	MessageBoxCheckFired();
 	CPPUNIT_ASSERT_EQUAL(BWP_ACCOUNT, mpWizard->GetCurrentPageId());
 
-	mpConfig = pMainFrame->GetConfig();
+	mpConfig = mpMainFrame->GetConfig();
 	CPPUNIT_ASSERT(mpConfig);
 	CPPUNIT_ASSERT(!mpConfig->StoreHostname.IsConfigured());
 	
@@ -375,778 +394,785 @@ void TestWizard::RunTest()
 	int AccountNumber;
 	CPPUNIT_ASSERT(mpConfig->AccountNumber.GetInto(AccountNumber));
 	CPPUNIT_ASSERT_EQUAL(1, AccountNumber);
+}
 
-	wxFileName configTestDir;
-	configTestDir.AssignTempFileName(wxT("boxi-configTestDir-"));
-	CPPUNIT_ASSERT(wxRemoveFile(configTestDir.GetFullPath()));
-	CPPUNIT_ASSERT(configTestDir.Mkdir(wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
+void TestWizard::TestPrivateKeyPage()
+{
+	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
+
+	mConfigTestDir.AssignTempFileName(wxT("boxi-configTestDir-"));
+	CPPUNIT_ASSERT(wxRemoveFile(mConfigTestDir.GetFullPath()));
+	CPPUNIT_ASSERT(mConfigTestDir.Mkdir(wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
 	
-	wxFileName tempdir;
-	tempdir.AssignTempFileName(wxT("boxi-tempdir-"));
-	CPPUNIT_ASSERT(wxRemoveFile(tempdir.GetFullPath()));
+	mTempDir.AssignTempFileName(wxT("boxi-tempdir-"));
+	CPPUNIT_ASSERT(wxRemoveFile(mTempDir.GetFullPath()));
 	
-	wxFileName privateKeyFileName(configTestDir.GetFullPath(), 
+	mPrivateKeyFileName = wxFileName(mConfigTestDir.GetFullPath(), 
 		wxT("1-key.pem"));
 
-	{
-		CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
-
-		wxRadioButton* pNewFileRadioButton = 
-			(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
-				ID_Setup_Wizard_New_File_Radio);
-		ClickRadioWaitEvent(pNewFileRadioButton);
-		CPPUNIT_ASSERT(pNewFileRadioButton->GetValue());
-		
-		CheckForwardError(BM_SETUP_WIZARD_NO_FILE_NAME);
-		
-		wxTextCtrl* pFileName = GetTextCtrl(
-			mpWizard->GetCurrentPage(),
-			ID_Setup_Wizard_File_Name_Text);
-		
-		CPPUNIT_ASSERT(pFileName->GetValue().IsSameAs(wxEmptyString));
-
-		wxFileName nonexistantfile(tempdir.GetFullPath(), 
-			wxT("nonexistant"));
-		pFileName->SetValue(nonexistantfile.GetFullPath());
+	wxRadioButton* pNewFileRadioButton = 
+		(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
+			ID_Setup_Wizard_New_File_Radio);
+	ClickRadioWaitEvent(pNewFileRadioButton);
+	CPPUNIT_ASSERT(pNewFileRadioButton->GetValue());
 	
-		// filename refers to a path that doesn't exist
-		// expect BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND
-		CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
+	CheckForwardError(BM_SETUP_WIZARD_NO_FILE_NAME);
 	
-		// create the directory, but not the file
-		// make the directory not writable
-		// expect BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE
-		CPPUNIT_ASSERT(tempdir.Mkdir(wxS_IRUSR | wxS_IXUSR));
-		CPPUNIT_ASSERT(tempdir.DirExists());
+	wxTextCtrl* pFileName = GetTextCtrl(
+		mpWizard->GetCurrentPage(),
+		ID_Setup_Wizard_File_Name_Text);
 	
-		#ifndef WIN32 // it is writable on Windows
-		CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
-		#endif
-		
-		// change the filename to refer to the directory
-		// expect BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY
-		pFileName->SetValue(tempdir.GetFullPath());
-		CPPUNIT_ASSERT(pFileName->GetValue().IsSameAs(tempdir.GetFullPath()));
-		CheckForwardError(BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
-		
-		// make the directory read write
-		CPPUNIT_ASSERT(tempdir.Rmdir());
-		CPPUNIT_ASSERT(tempdir.Mkdir(wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
-		
-		// create a new file in the directory, make it read only, 
-		// and change the filename to refer to it. 
-		// expect BM_SETUP_WIZARD_FILE_OVERWRITE
-		wxFileName existingfile(tempdir.GetFullPath(), wxT("existing"));
-		wxString   existingpath = existingfile.GetFullPath();
-		wxFile     existing;
+	CPPUNIT_ASSERT(pFileName->GetValue().IsSameAs(wxEmptyString));
 
-		CPPUNIT_ASSERT(existing.Create(existingpath, false, wxS_IRUSR));
-		CPPUNIT_ASSERT(  wxFile::Access(existingpath, wxFile::read));
-		CPPUNIT_ASSERT(! wxFile::Access(existingpath, wxFile::write));
-		
-		pFileName->SetValue(existingpath);
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
+	wxFileName nonexistantfile(mTempDir.GetFullPath(), 
+		wxT("nonexistant"));
+	pFileName->SetValue(nonexistantfile.GetFullPath());
+
+	// filename refers to a path that doesn't exist
+	// expect BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND
+	CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
+
+	// create the directory, but not the file
+	// make the directory not writable
+	// expect BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE
+	CPPUNIT_ASSERT(mTempDir.Mkdir(wxS_IRUSR | wxS_IXUSR));
+	CPPUNIT_ASSERT(mTempDir.DirExists());
+
+	#ifndef WIN32 // it is writable on Windows
+	CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
+	#endif
 	
-		// make the file writable, expect BM_SETUP_WIZARD_FILE_OVERWRITE
-		// reply No and check that we stay put
+	// change the filename to refer to the directory
+	// expect BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY
+	pFileName->SetValue(mTempDir.GetFullPath());
+	CPPUNIT_ASSERT(pFileName->GetValue().IsSameAs(mTempDir.GetFullPath()));
+	CheckForwardError(BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
 	
-		wxCharBuffer buf = existingpath.mb_str();
-		CPPUNIT_ASSERT_MESSAGE(buf.data(), 
-			chmod(buf.data(), 0777) == 0);
-		// CPPUNIT_ASSERT_MESSAGE(buf.data(), wxRemoveFile(existingpath));
-		CPPUNIT_ASSERT_MESSAGE(buf.data(), unlink(buf.data()) == 0);
-		CPPUNIT_ASSERT(existing.Create(existingpath, false, 
-			wxS_IRUSR | wxS_IWUSR));
-		CPPUNIT_ASSERT(wxFile::Access(existingpath, wxFile::read));
-		CPPUNIT_ASSERT(wxFile::Access(existingpath, wxFile::write));
-		
-		MessageBoxSetResponse(BM_SETUP_WIZARD_FILE_OVERWRITE, wxNO);
-		ClickForward();
-		MessageBoxCheckFired();
-		
-		CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
-		
-		// now try again, reply Yes, and check that we move forward
-		MessageBoxSetResponse(BM_SETUP_WIZARD_FILE_OVERWRITE, wxYES);
-		ClickForward();
-		MessageBoxCheckFired();
+	// make the directory read write
+	CPPUNIT_ASSERT(mTempDir.Rmdir());
+	CPPUNIT_ASSERT(mTempDir.Mkdir(wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
+	
+	// create a new file in the directory, make it read only, 
+	// and change the filename to refer to it. 
+	// expect BM_SETUP_WIZARD_FILE_OVERWRITE
+	wxFileName existingfile(mTempDir.GetFullPath(), wxT("existing"));
+	wxString   existingpath = existingfile.GetFullPath();
+	wxFile     existing;
 
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
+	CPPUNIT_ASSERT(existing.Create(existingpath, false, wxS_IRUSR));
+	CPPUNIT_ASSERT(  wxFile::Access(existingpath, wxFile::read));
+	CPPUNIT_ASSERT(! wxFile::Access(existingpath, wxFile::write));
+	
+	pFileName->SetValue(existingpath);
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
 
-		// was the configuration updated?
-		wxString keyfile;
-		CPPUNIT_ASSERT(mpConfig->PrivateKeyFile.GetInto(keyfile));
-		CPPUNIT_ASSERT(keyfile.IsSameAs(existingpath));
+	// make the file writable, expect BM_SETUP_WIZARD_FILE_OVERWRITE
+	// reply No and check that we stay put
+	
+	wxCharBuffer buf = existingpath.mb_str();
+	CPPUNIT_ASSERT_MESSAGE(buf.data(), 
+		chmod(buf.data(), 0777) == 0);
+	CPPUNIT_ASSERT_MESSAGE(buf.data(), unlink(buf.data()) == 0);
+	CPPUNIT_ASSERT(existing.Create(existingpath, false, 
+		wxS_IRUSR | wxS_IWUSR));
+	CPPUNIT_ASSERT(wxFile::Access(existingpath, wxFile::read));
+	CPPUNIT_ASSERT(wxFile::Access(existingpath, wxFile::write));
+	
+	MessageBoxSetResponse(BM_SETUP_WIZARD_FILE_OVERWRITE, wxNO);
+	ClickForward();
+	MessageBoxCheckFired();
+	
+	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
+	
+	// now try again, reply Yes, and check that we move forward
+	MessageBoxSetResponse(BM_SETUP_WIZARD_FILE_OVERWRITE, wxYES);
+	ClickForward();
+	MessageBoxCheckFired();
 
-		// go back, select "existing", choose a nonexistant file,
-		// expect BM_SETUP_WIZARD_FILE_NOT_FOUND
-		ClickBackward();
-		CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
-		
-		wxRadioButton* pExistingFileRadioButton = 
-			(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
-				ID_Setup_Wizard_Existing_File_Radio);
-		CPPUNIT_ASSERT(pExistingFileRadioButton);
-		ClickRadioWaitEvent(pExistingFileRadioButton);
-		CPPUNIT_ASSERT(pExistingFileRadioButton->GetValue());
-		
-		CPPUNIT_ASSERT(pFileName->GetValue().IsSameAs(existingpath));
-		
-		pFileName->SetValue(nonexistantfile.GetFullPath());
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
-		
-		// set the path to a bogus path, 
-		// expect BM_SETUP_WIZARD_FILE_NOT_FOUND
-		wxString boguspath = nonexistantfile.GetFullPath();
-		boguspath.Append(wxT("/foo/bar"));
-		pFileName->SetValue(boguspath);
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
-		
-		// create another file, make it unreadable,
-		// expect BM_SETUP_WIZARD_FILE_NOT_READABLE
-		wxString anotherfilename = existingpath;
-		anotherfilename.Append(wxT("2"));
-		wxFile anotherfile;
-		CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, false, 0));
-		
-		pFileName->SetValue(anotherfilename);
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
-		
-		// make it readable, but not a valid key,
-		// expect BM_SETUP_WIZARD_BAD_PRIVATE_KEY
-		CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
-		CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, wxS_IRUSR));
-		CheckForwardError(BM_SETUP_WIZARD_BAD_PRIVATE_KEY);
-		
-		// delete that file, move the private key file to the 
-		// configTestDir, set the filename to that new location,
-		// expect that Boxi can read the key file and we move on
-		// to the next page
-		CPPUNIT_ASSERT(::wxRemoveFile(anotherfilename));
-		CPPUNIT_ASSERT(::wxRenameFile(existingpath, 
-			privateKeyFileName.GetFullPath()));
-		pFileName->SetValue(privateKeyFileName.GetFullPath());
-		ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
 
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
-		
-		// was the configuration updated?
-		CPPUNIT_ASSERT(mpConfig->PrivateKeyFile.GetInto(keyfile));
-		CPPUNIT_ASSERT(keyfile.IsSameAs(privateKeyFileName.GetFullPath()));
-	}
+	// was the configuration updated?
+	wxString keyfile;
+	CPPUNIT_ASSERT(mpConfig->PrivateKeyFile.GetInto(keyfile));
+	CPPUNIT_ASSERT(keyfile.IsSameAs(existingpath));
 
-	{
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
+	// go back, select "existing", choose a nonexistant file,
+	// expect BM_SETUP_WIZARD_FILE_NOT_FOUND
+	ClickBackward();
+	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
+	
+	wxRadioButton* pExistingFileRadioButton = 
+		(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
+			ID_Setup_Wizard_Existing_File_Radio);
+	CPPUNIT_ASSERT(pExistingFileRadioButton);
+	ClickRadioWaitEvent(pExistingFileRadioButton);
+	CPPUNIT_ASSERT(pExistingFileRadioButton->GetValue());
+	
+	CPPUNIT_ASSERT(pFileName->GetValue().IsSameAs(existingpath));
+	
+	pFileName->SetValue(nonexistantfile.GetFullPath());
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
+	
+	// set the path to a bogus path, 
+	// expect BM_SETUP_WIZARD_FILE_NOT_FOUND
+	wxString boguspath = nonexistantfile.GetFullPath();
+	boguspath.Append(wxT("/foo/bar"));
+	pFileName->SetValue(boguspath);
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
+	
+	// create another file, make it unreadable,
+	// expect BM_SETUP_WIZARD_FILE_NOT_READABLE
+	wxString anotherfilename = existingpath;
+	anotherfilename.Append(wxT("2"));
+	wxFile anotherfile;
+	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, false, 0));
+	
+	pFileName->SetValue(anotherfilename);
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
+	
+	// make it readable, but not a valid key,
+	// expect BM_SETUP_WIZARD_BAD_PRIVATE_KEY
+	CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
+	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, wxS_IRUSR));
+	CheckForwardError(BM_SETUP_WIZARD_BAD_PRIVATE_KEY);
+	
+	// delete that file, move the private key file to the 
+	// mConfigTestDir, set the filename to that new location,
+	// expect that Boxi can read the key file and we move on
+	// to the next page
+	CPPUNIT_ASSERT(::wxRemoveFile(anotherfilename));
+	CPPUNIT_ASSERT(::wxRenameFile(existingpath, 
+		mPrivateKeyFileName.GetFullPath()));
+	pFileName->SetValue(mPrivateKeyFileName.GetFullPath());
+	ClickForward();
 
-		// ask for a new certificate request to be generated
-		wxRadioButton* pNewFileRadioButton =
-			(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
-				ID_Setup_Wizard_New_File_Radio);
-		ClickRadioWaitEvent(pNewFileRadioButton);
-		CPPUNIT_ASSERT(pNewFileRadioButton->GetValue());
-		
-		ClickForward();
-		
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
-	}
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
+	
+	// was the configuration updated?
+	CPPUNIT_ASSERT(mpConfig->PrivateKeyFile.GetInto(keyfile));
+	CPPUNIT_ASSERT(keyfile.IsSameAs(mPrivateKeyFileName.GetFullPath()));
+}
 
-	wxFileName clientCsrFileName(configTestDir.GetFullPath(), 
+void TestWizard::TestCertExistsPage()
+{
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
+
+	// ask for a new certificate request to be generated
+	wxRadioButton* pNewFileRadioButton =
+		(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
+			ID_Setup_Wizard_New_File_Radio);
+	ClickRadioWaitEvent(pNewFileRadioButton);
+	CPPUNIT_ASSERT(pNewFileRadioButton->GetValue());
+	
+	ClickForward();
+	
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
+}
+
+void TestWizard::TestCertRequestPage()
+{
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
+
+	mClientCsrFileName = wxFileName(mConfigTestDir.GetFullPath(), 
 		wxT("1-csr.pem"));
 
-	{
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
-
-		// ask for a new certificate request to be generated
-		wxRadioButton* pNewFileRadioButton = 
-			(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
-				ID_Setup_Wizard_New_File_Radio);
-		ClickRadioWaitEvent(pNewFileRadioButton);
-		CPPUNIT_ASSERT(pNewFileRadioButton->GetValue());
-		
-		wxString tmp;
-		
-		CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
-		CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
-		CPPUNIT_ASSERT(tmp.IsSameAs(clientCsrFileName.GetFullPath()));
-		
-		// go back, and check that the property is unconfigured for us
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
-		ClickBackward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
-		CPPUNIT_ASSERT(!mpConfig->CertRequestFile.IsConfigured());
-		
-		// set the certificate file manually, 
-		// check that it is not overwritten.
-		wxFileName dummyName(tempdir.GetFullPath(), wxT("nosuchfile"));
-		mpConfig->CertRequestFile.Set(dummyName.GetFullPath());
-		
-		CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
-		CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
-		CPPUNIT_ASSERT(tmp.IsSameAs(dummyName.GetFullPath()));
-		
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
-		ClickForward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
-		CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
-		CPPUNIT_ASSERT(tmp.IsSameAs(dummyName.GetFullPath()));
-
-		// clear the value again, check that the property is 
-		// unconfigured
-		wxTextCtrl* pText = GetTextCtrl(mpWizard->GetCurrentPage(), 
-			ID_Setup_Wizard_File_Name_Text);
-		CPPUNIT_ASSERT(pText);
-		pText->SetValue(wxEmptyString);
-		CPPUNIT_ASSERT(!mpConfig->CertRequestFile.IsConfigured());
-		
-		// go back, forward again, check that the default 
-		// value is inserted
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
-
-		ClickBackward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
-		
-		ClickForward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
-		
-		CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
-		CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
-		CPPUNIT_ASSERT(tmp.IsSameAs(clientCsrFileName.GetFullPath()));
-		
-		// go forward, check that the file is created
-		CPPUNIT_ASSERT(!clientCsrFileName.FileExists());
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
-
-		ClickForward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
-		CPPUNIT_ASSERT(clientCsrFileName.FileExists());
-		
-		// go back, choose "existing cert request", check that
-		// our newly generated request is accepted.
-		CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
-		
-		ClickBackward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
-		
-		ClickForward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
-		
-		wxRadioButton* pExistingFileRadioButton = 
-			(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
-				ID_Setup_Wizard_Existing_File_Radio);
-		CPPUNIT_ASSERT(pExistingFileRadioButton);
-		ClickRadioWaitEvent(pExistingFileRadioButton);
-		CPPUNIT_ASSERT(pExistingFileRadioButton->GetValue());
-			
-		CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
-		CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
-		CPPUNIT_ASSERT(tmp.IsSameAs(clientCsrFileName.GetFullPath()));
-		
-		ClickForward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
-	}
+	// ask for a new certificate request to be generated
+	wxRadioButton* pNewFileRadioButton = 
+		(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
+			ID_Setup_Wizard_New_File_Radio);
+	ClickRadioWaitEvent(pNewFileRadioButton);
+	CPPUNIT_ASSERT(pNewFileRadioButton->GetValue());
 	
+	wxString tmp;
+	
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
+	CPPUNIT_ASSERT(tmp.IsSameAs(mClientCsrFileName.GetFullPath()));
+	
+	// go back, and check that the property is unconfigured for us
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
+	ClickBackward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
+	CPPUNIT_ASSERT(!mpConfig->CertRequestFile.IsConfigured());
+	
+	// set the certificate file manually, 
+	// check that it is not overwritten.
+	wxFileName dummyName(mTempDir.GetFullPath(), wxT("nosuchfile"));
+	mpConfig->CertRequestFile.Set(dummyName.GetFullPath());
+	
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
+	CPPUNIT_ASSERT(tmp.IsSameAs(dummyName.GetFullPath()));
+	
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
+	CPPUNIT_ASSERT(tmp.IsSameAs(dummyName.GetFullPath()));
+
+	// clear the value again, check that the property is 
+	// unconfigured
+	wxTextCtrl* pText = GetTextCtrl(mpWizard->GetCurrentPage(), 
+		ID_Setup_Wizard_File_Name_Text);
+	CPPUNIT_ASSERT(pText);
+	pText->SetValue(wxEmptyString);
+	CPPUNIT_ASSERT(!mpConfig->CertRequestFile.IsConfigured());
+	
+	// go back, forward again, check that the default 
+	// value is inserted
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
+
+	ClickBackward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
+	
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
+	
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
+	CPPUNIT_ASSERT(tmp.IsSameAs(mClientCsrFileName.GetFullPath()));
+	
+	// go forward, check that the file is created
+	CPPUNIT_ASSERT(!mClientCsrFileName.FileExists());
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
+
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
+	CPPUNIT_ASSERT(mClientCsrFileName.FileExists());
+	
+	// go back, choose "existing cert request", check that
+	// our newly generated request is accepted.
+	CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
+	
+	ClickBackward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
+	
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
+	
+	wxRadioButton* pExistingFileRadioButton = 
+		(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
+			ID_Setup_Wizard_Existing_File_Radio);
+	CPPUNIT_ASSERT(pExistingFileRadioButton);
+	ClickRadioWaitEvent(pExistingFileRadioButton);
+	CPPUNIT_ASSERT(pExistingFileRadioButton->GetValue());
+		
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
+	CPPUNIT_ASSERT(tmp.IsSameAs(mClientCsrFileName.GetFullPath()));
+	
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
+}
+
+void TestWizard::SignCertificate()
+{
 	// fake a server signing of this private keyfile
 
-	wxFileName clientCertFileName(configTestDir.GetFullPath(), 
+	mClientCertFileName = wxFileName(mConfigTestDir.GetFullPath(), 
 		wxT("1-cert.pem"));
-	CPPUNIT_ASSERT(!clientCertFileName.FileExists());
+	CPPUNIT_ASSERT(!mClientCertFileName.FileExists());
 	
-	wxFileName caFileName(configTestDir.GetFullPath(), 
+	mCaFileName = wxFileName(mConfigTestDir.GetFullPath(), 
 		wxT("client-ca-cert.pem"));
-	CPPUNIT_ASSERT(!caFileName.FileExists());
+	CPPUNIT_ASSERT(!mCaFileName.FileExists());
 	
-	wxFileName clientBadSigCertFileName(configTestDir.GetFullPath(), 
+	mClientBadSigCertFileName = wxFileName(mConfigTestDir.GetFullPath(), 
 		wxT("1-cert-badsig.pem"));
-	CPPUNIT_ASSERT(!clientBadSigCertFileName.FileExists());
+	CPPUNIT_ASSERT(!mClientBadSigCertFileName.FileExists());
 	
-	wxFileName clientSelfSigCertFileName(configTestDir.GetFullPath(), 
+	mClientSelfSigCertFileName = wxFileName(mConfigTestDir.GetFullPath(), 
 		wxT("1-cert-selfsig.pem"));
-	CPPUNIT_ASSERT(!clientSelfSigCertFileName.FileExists());
+	CPPUNIT_ASSERT(!mClientSelfSigCertFileName.FileExists());
 	
+	// generate a private key for the fake client CA
+	
+	wxFileName clientCaKeyFileName(mConfigTestDir.GetFullPath(), 
+		wxT("client-ca-key.pem"));
+	CPPUNIT_ASSERT(!clientCaKeyFileName.FileExists());
+	
+	BIGNUM* pBigNum = BN_new();
+	CPPUNIT_ASSERT_MESSAGE("Failed to create an OpenSSL BN object",
+		pBigNum);
+	
+	RSA* pRSA = RSA_new();
+	CPPUNIT_ASSERT_MESSAGE("Failed to create an OpenSSL RSA object",
+		pRSA);
+
+	BIO* pKeyOutBio = BIO_new(BIO_s_file());
+	CPPUNIT_ASSERT_MESSAGE("Failed to create an OpenSSL BIO object",
+		pKeyOutBio);
+	
+	wxCharBuffer filename = 
+		clientCaKeyFileName.GetFullPath().mb_str(wxConvLibc);
+	CPPUNIT_ASSERT_MESSAGE("Failed to open key file using an "
+		"OpenSSL BIO",
+		BIO_write_filename(pKeyOutBio, filename.data()) >= 0);
+	
+	CPPUNIT_ASSERT_MESSAGE("Failed to set key type to RSA F4",
+		BN_set_word(pBigNum, RSA_F4));
+
+	wxProgressDialog progress(wxT("Boxi: Generating Server Key"),
+		MySslProgressCallbackMessage(0), 2, mpMainFrame, 
+		wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
+	numCheckedTest = 0;
+	
+	RSA* pRSA2 = RSA_generate_key(2048, 0x10001, 
+		MySslProgressCallbackTest, &progress);
+	CPPUNIT_ASSERT_MESSAGE("Failed to generate an RSA key", pRSA2);
+
+	progress.Hide();
+	
+	CPPUNIT_ASSERT_MESSAGE("Failed to write the key "
+		"to the specified file",
+		PEM_write_bio_RSAPrivateKey(pKeyOutBio, pRSA2, NULL, 
+			NULL, 0, NULL, NULL));
+	
+	BIO_free_all(pKeyOutBio);
+	RSA_free(pRSA);
+	BN_free(pBigNum);
+
+	CPPUNIT_ASSERT(clientCaKeyFileName.FileExists());
+	
+	// generate a certificate signing request (CSR) for 
+	// the fake client CA, which we will sign ourselves
+
+	wxFileName clientCaCsrFileName(mConfigTestDir.GetFullPath(), 
+		wxT("client-ca-csr.pem"));
+	CPPUNIT_ASSERT(!clientCaCsrFileName.FileExists());
+
+	wxString msg;
+	std::auto_ptr<SslConfig> apConfig(SslConfig::Get(&msg));
+	CPPUNIT_ASSERT_MESSAGE("Error loading OpenSSL config", 
+		apConfig.get());
+
+	char* pExtensions = NCONF_get_string(apConfig->GetConf(), "req", 
+		"x509_extensions");
+	if (pExtensions) 
 	{
-		// generate a private key for the fake client CA
+		/* Check syntax of file */
+		X509V3_CTX ctx;
+		X509V3_set_ctx_test(&ctx);
+		X509V3_set_nconf(&ctx, apConfig->GetConf());
 		
-		wxFileName clientCaKeyFileName(configTestDir.GetFullPath(), 
-			wxT("client-ca-key.pem"));
-		CPPUNIT_ASSERT(!clientCaKeyFileName.FileExists());
-		
-		BIGNUM* pBigNum = BN_new();
-		CPPUNIT_ASSERT_MESSAGE("Failed to create an OpenSSL BN object",
-			pBigNum);
-		
-		RSA* pRSA = RSA_new();
-		CPPUNIT_ASSERT_MESSAGE("Failed to create an OpenSSL RSA object",
-			pRSA);
-
-		BIO* pKeyOutBio = BIO_new(BIO_s_file());
-		CPPUNIT_ASSERT_MESSAGE("Failed to create an OpenSSL BIO object",
-			pKeyOutBio);
-		
-		wxCharBuffer filename = 
-			clientCaKeyFileName.GetFullPath().mb_str(wxConvLibc);
-		CPPUNIT_ASSERT_MESSAGE("Failed to open key file using an "
-			"OpenSSL BIO",
-			BIO_write_filename(pKeyOutBio, filename.data()) >= 0);
-		
-		CPPUNIT_ASSERT_MESSAGE("Failed to set key type to RSA F4",
-			BN_set_word(pBigNum, RSA_F4));
-
-		wxProgressDialog progress(wxT("Boxi: Generating Server Key"),
-			MySslProgressCallbackMessage(0), 2, pMainFrame, 
-			wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
-		numCheckedTest = 0;
-		
-		RSA* pRSA2 = RSA_generate_key(2048, 0x10001, 
-			MySslProgressCallbackTest, &progress);
-		CPPUNIT_ASSERT_MESSAGE("Failed to generate an RSA key", pRSA2);
-
-		progress.Hide();
-		
-		CPPUNIT_ASSERT_MESSAGE("Failed to write the key "
-			"to the specified file",
-			PEM_write_bio_RSAPrivateKey(pKeyOutBio, pRSA2, NULL, 
-				NULL, 0, NULL, NULL));
-		
-		BIO_free_all(pKeyOutBio);
-		RSA_free(pRSA);
-		BN_free(pBigNum);
-
-		CPPUNIT_ASSERT(clientCaKeyFileName.FileExists());
-		
-		// generate a certificate signing request (CSR) for 
-		// the fake client CA, which we will sign ourselves
-
-		wxFileName clientCaCsrFileName(configTestDir.GetFullPath(), 
-			wxT("client-ca-csr.pem"));
-		CPPUNIT_ASSERT(!clientCaCsrFileName.FileExists());
-
-		wxString msg;
-		std::auto_ptr<SslConfig> apConfig(SslConfig::Get(&msg));
-		CPPUNIT_ASSERT_MESSAGE("Error loading OpenSSL config", 
-			apConfig.get());
-
-		char* pExtensions = NCONF_get_string(apConfig->GetConf(), "req", 
-			"x509_extensions");
-		if (pExtensions) 
-		{
-			/* Check syntax of file */
-			X509V3_CTX ctx;
-			X509V3_set_ctx_test(&ctx);
-			X509V3_set_nconf(&ctx, apConfig->GetConf());
-			
-			CPPUNIT_ASSERT_MESSAGE("Error in OpenSSL configuration: "
-				"Failed to load certificate extensions section",
-				X509V3_EXT_add_nconf(apConfig->GetConf(), &ctx, 
-					pExtensions, NULL));
-		}
-		else
-		{
-			ERR_clear_error();
-		}
-		
-		CPPUNIT_ASSERT_MESSAGE("Failed to set the OpenSSL string mask to "
-			"'nombstr'", 
-			ASN1_STRING_set_default_mask_asc("nombstr"));
-		
-		EVP_PKEY* pKey = LoadKey(clientCaKeyFileName.GetFullPath(), &msg);
-		CPPUNIT_ASSERT_MESSAGE("Failed to load private key", pKey);
-
-		BIO* pRequestBio = BIO_new(BIO_s_file());
-		CPPUNIT_ASSERT_MESSAGE("Failed to create an OpenSSL BIO", pRequestBio);
-		
-		X509_REQ* pRequest = X509_REQ_new();
-		CPPUNIT_ASSERT_MESSAGE("Failed to create a new OpenSSL "
-			"request object", pRequest);
-		
-		CPPUNIT_ASSERT_MESSAGE("Failed to set version in "
-			"OpenSSL request object",
-			X509_REQ_set_version(pRequest,0L));
-		
-		int commonNameNid = OBJ_txt2nid("commonName");
-		CPPUNIT_ASSERT_MESSAGE("Failed to find node ID of "
-			"X.509 CommonName attribute", commonNameNid != NID_undef);
-		
-		wxString certSubject = wxT("Backup system client root");
-		X509_NAME* pX509SubjectName = X509_REQ_get_subject_name(pRequest);
-		CPPUNIT_ASSERT_MESSAGE("X.509 subject name was null", 
-			pX509SubjectName);
-
-		wxCharBuffer subject = certSubject.mb_str(wxConvLibc);
-		CPPUNIT_ASSERT_MESSAGE("Failed to add common name to "
-			"certificate request",
-			X509_NAME_add_entry_by_NID(pX509SubjectName, 
-				commonNameNid, MBSTRING_ASC, 
-				(unsigned char *)subject.data(), 
-				-1, -1, 0));
-
-		CPPUNIT_ASSERT_MESSAGE("Failed to set public key of "
-			"certificate request", X509_REQ_set_pubkey(pRequest, pKey));
-		
-		X509V3_CTX ext_ctx;
-		X509V3_set_ctx(&ext_ctx, NULL, NULL, pRequest, NULL, 0);
-		X509V3_set_nconf(&ext_ctx, apConfig->GetConf());
-		
-		char *pReqExtensions = NCONF_get_string(apConfig->GetConf(), 
-			"section", "req_extensions");
-		if (pReqExtensions)
-		{
-			X509V3_CTX ctx;
-			X509V3_set_ctx_test(&ctx);
-			X509V3_set_nconf(&ctx, apConfig->GetConf());
-			
-			CPPUNIT_ASSERT_MESSAGE("Failed to load request extensions "
-				"section", 
-				X509V3_EXT_REQ_add_nconf(apConfig->GetConf(), 
-					&ctx, pReqExtensions, pRequest));
-		}
-		else
-		{
-			ERR_clear_error();
-		}
-
-		const EVP_MD* pDigestAlgo = EVP_get_digestbyname("sha1");
-		CPPUNIT_ASSERT_MESSAGE("Failed to find OpenSSL digest "
-			"algorithm SHA1", pDigestAlgo);
-		
-		CPPUNIT_ASSERT_MESSAGE("Failed to sign certificate request",
-			X509_REQ_sign(pRequest, pKey, pDigestAlgo));
-		
-		CPPUNIT_ASSERT_MESSAGE("Failed to verify signature on "
-			"certificate request", X509_REQ_verify(pRequest, pKey));
-		
-		wxCharBuffer buf = 
-			clientCaCsrFileName.GetFullPath().mb_str(wxConvLibc);
-		CPPUNIT_ASSERT_MESSAGE("Failed to set certificate request "
-			"output filename", 
-			BIO_write_filename(pRequestBio, buf.data()) > 0);
-		
-		CPPUNIT_ASSERT_MESSAGE("Failed to write certificate request "
-			"file", PEM_write_bio_X509_REQ(pRequestBio, pRequest));
-		
-		X509_REQ_free(pRequest);
-		pRequest = NULL;
-		
-		FreeKey(pKey);
-		pKey = NULL;
-		
-		BIO_free(pRequestBio);
-		pRequestBio = NULL;
-
-		CPPUNIT_ASSERT(clientCaCsrFileName.FileExists());
-		
-		// sign our own request with our own private key
-		// (self signed)
-
-		wxFileName clientCaCertFileName(configTestDir.GetFullPath(), 
-			wxT("client-ca-cert.pem"));
-		CPPUNIT_ASSERT(!clientCaCertFileName.FileExists());
-
-		{
-			wxFileName dummy;
-			SignRequestWithKey
-			(
-				clientCaCsrFileName, 
-				clientCaKeyFileName,
-				dummy, 
-				clientCaCertFileName
-			);
-		}
-
-		CPPUNIT_ASSERT(clientCaCertFileName.FileExists());
-		
-		// sign the client's request with our private key
-
-		CPPUNIT_ASSERT(!clientCertFileName.FileExists());
-
-		SignRequestWithKey(clientCsrFileName, clientCaKeyFileName,
-			clientCaCertFileName, clientCertFileName);
-		CPPUNIT_ASSERT(clientCertFileName.FileExists());
+		CPPUNIT_ASSERT_MESSAGE("Error in OpenSSL configuration: "
+			"Failed to load certificate extensions section",
+			X509V3_EXT_add_nconf(apConfig->GetConf(), &ctx, 
+				pExtensions, NULL));
+	}
+	else
+	{
+		ERR_clear_error();
+	}
 	
-		// make a "bad signature" copy of the client's request,
-		// signed with its own private key (mismatches the cert)
+	CPPUNIT_ASSERT_MESSAGE("Failed to set the OpenSSL string mask to "
+		"'nombstr'", 
+		ASN1_STRING_set_default_mask_asc("nombstr"));
+	
+	EVP_PKEY* pKey = LoadKey(clientCaKeyFileName.GetFullPath(), &msg);
+	CPPUNIT_ASSERT_MESSAGE("Failed to load private key", pKey);
 
-		CPPUNIT_ASSERT(!clientBadSigCertFileName.FileExists());
+	BIO* pRequestBio = BIO_new(BIO_s_file());
+	CPPUNIT_ASSERT_MESSAGE("Failed to create an OpenSSL BIO", pRequestBio);
+	
+	X509_REQ* pRequest = X509_REQ_new();
+	CPPUNIT_ASSERT_MESSAGE("Failed to create a new OpenSSL "
+		"request object", pRequest);
+	
+	CPPUNIT_ASSERT_MESSAGE("Failed to set version in "
+		"OpenSSL request object",
+		X509_REQ_set_version(pRequest,0L));
+	
+	int commonNameNid = OBJ_txt2nid("commonName");
+	CPPUNIT_ASSERT_MESSAGE("Failed to find node ID of "
+		"X.509 CommonName attribute", commonNameNid != NID_undef);
+	
+	wxString certSubject = wxT("Backup system client root");
+	X509_NAME* pX509SubjectName = X509_REQ_get_subject_name(pRequest);
+	CPPUNIT_ASSERT_MESSAGE("X.509 subject name was null", 
+		pX509SubjectName);
 
-		SignRequestWithKey(clientCsrFileName, privateKeyFileName,
-			clientCaCertFileName, clientBadSigCertFileName);
-		CPPUNIT_ASSERT(clientBadSigCertFileName.FileExists());		
+	wxCharBuffer subject = certSubject.mb_str(wxConvLibc);
+	CPPUNIT_ASSERT_MESSAGE("Failed to add common name to "
+		"certificate request",
+		X509_NAME_add_entry_by_NID(pX509SubjectName, 
+			commonNameNid, MBSTRING_ASC, 
+			(unsigned char *)subject.data(), 
+			-1, -1, 0));
 
-		// make a "self signed" copy of the client's request,
-		// signed with its own certificate and private key
-
-		CPPUNIT_ASSERT(!clientSelfSigCertFileName.FileExists());
-
-		SignRequestWithKey(clientCsrFileName, privateKeyFileName,
-			wxFileName(), clientSelfSigCertFileName);
-		CPPUNIT_ASSERT(clientSelfSigCertFileName.FileExists());		
+	CPPUNIT_ASSERT_MESSAGE("Failed to set public key of "
+		"certificate request", X509_REQ_set_pubkey(pRequest, pKey));
+	
+	X509V3_CTX ext_ctx;
+	X509V3_set_ctx(&ext_ctx, NULL, NULL, pRequest, NULL, 0);
+	X509V3_set_nconf(&ext_ctx, apConfig->GetConf());
+	
+	char *pReqExtensions = NCONF_get_string(apConfig->GetConf(), 
+		"section", "req_extensions");
+	if (pReqExtensions)
+	{
+		X509V3_CTX ctx;
+		X509V3_set_ctx_test(&ctx);
+		X509V3_set_nconf(&ctx, apConfig->GetConf());
+		
+		CPPUNIT_ASSERT_MESSAGE("Failed to load request extensions "
+			"section", 
+			X509V3_EXT_REQ_add_nconf(apConfig->GetConf(), 
+				&ctx, pReqExtensions, pRequest));
+	}
+	else
+	{
+		ERR_clear_error();
 	}
 
+	const EVP_MD* pDigestAlgo = EVP_get_digestbyname("sha1");
+	CPPUNIT_ASSERT_MESSAGE("Failed to find OpenSSL digest "
+		"algorithm SHA1", pDigestAlgo);
+	
+	CPPUNIT_ASSERT_MESSAGE("Failed to sign certificate request",
+		X509_REQ_sign(pRequest, pKey, pDigestAlgo));
+	
+	CPPUNIT_ASSERT_MESSAGE("Failed to verify signature on "
+		"certificate request", X509_REQ_verify(pRequest, pKey));
+	
+	wxCharBuffer buf = 
+		clientCaCsrFileName.GetFullPath().mb_str(wxConvLibc);
+	CPPUNIT_ASSERT_MESSAGE("Failed to set certificate request "
+		"output filename", 
+		BIO_write_filename(pRequestBio, buf.data()) > 0);
+	
+	CPPUNIT_ASSERT_MESSAGE("Failed to write certificate request "
+		"file", PEM_write_bio_X509_REQ(pRequestBio, pRequest));
+	
+	X509_REQ_free(pRequest);
+	pRequest = NULL;
+	
+	FreeKey(pKey);
+	pKey = NULL;
+	
+	BIO_free(pRequestBio);
+	pRequestBio = NULL;
+
+	CPPUNIT_ASSERT(clientCaCsrFileName.FileExists());
+	
+	// sign our own request with our own private key
+	// (self signed)
+
+	wxFileName clientCaCertFileName(mConfigTestDir.GetFullPath(), 
+		wxT("client-ca-cert.pem"));
+	CPPUNIT_ASSERT(!clientCaCertFileName.FileExists());
+
 	{
-		CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
-
-		// clear both fields, try to go forward, check that it fails
-		CPPUNIT_ASSERT(!mpConfig->CertificateFile.IsConfigured());
-		CPPUNIT_ASSERT(!mpConfig->TrustedCAsFile.IsConfigured());		
-		CheckForwardError(BM_SETUP_WIZARD_NO_FILE_NAME);
-		
-		// set the certificate file to a name that doesn't exist
-		wxFileName nonexistantfile(tempdir.GetFullPath(), 
-			wxT("nonexistant"));
-		mpConfig->CertificateFile.Set(nonexistantfile.GetFullPath());
-		
-		// try to go forward, check that it fails
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
-
-		// create another file, make it unreadable,
-		// expect BM_SETUP_WIZARD_FILE_NOT_READABLE
-		wxString anotherfilename = clientCertFileName.GetFullPath();
-		anotherfilename.Append(wxT("2"));
-		wxFile anotherfile;
-		CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, false, 0));
-		
-		mpConfig->CertificateFile.Set(anotherfilename);
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
-		
-		// make it readable, but not a valid certificate,
-		// expect BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR
-		CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
-		CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, wxS_IRUSR));
-		CheckForwardError(BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
-		CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
-
-		// set the CertificateFile to the real certificate,
-		// expect complaints about the Trusted CAs File
-		mpConfig->CertificateFile.Set(clientCertFileName.GetFullPath());
-		CPPUNIT_ASSERT(!mpConfig->TrustedCAsFile.IsConfigured());
-		CheckForwardError(BM_SETUP_WIZARD_NO_FILE_NAME);
-
-		// same for the trusted CAs file
-		// set the certificate file to a name that doesn't exist
-		mpConfig->TrustedCAsFile.Set(nonexistantfile.GetFullPath());
-		
-		// try to go forward, check that it fails
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
-
-		// create another file, make it unreadable,
-		// expect BM_SETUP_WIZARD_FILE_NOT_READABLE
-		CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, false, 0));		
-		mpConfig->TrustedCAsFile.Set(anotherfilename);
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
-		
-		// make it readable, but not a valid certificate,
-		// expect BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR
-		CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
-		CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, wxS_IRUSR));
-		CheckForwardError(BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
-		CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
-
-		// set it to the real trusted CAs certificate,
-		mpConfig->TrustedCAsFile.Set(caFileName.GetFullPath());
-
-		// set CertificateFile to a valid certificate file, 
-		// but with a bad signature, expect BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR
-		/*
-		mpConfig->CertificateFile.Set(clientBadSigCertFileName.GetFullPath());
-		CheckForwardError(BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
-		*/
-		
-		// set CertificateFile to a valid certificate file, 
-		// but self signed, expect BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR
-		// (key mismatch between the certs)
-		/*
-		mpConfig->CertificateFile.Set(clientSelfSigCertFileName.GetFullPath());
-		CheckForwardError(BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
-		*/
-
-		// set the CertificateFile to the real one,
-		// expect that we can go forward
-		mpConfig->CertificateFile.Set(clientCertFileName.GetFullPath());
-		CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
-		ClickForward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
+		wxFileName dummy;
+		SignRequestWithKey
+		(
+			clientCaCsrFileName, 
+			clientCaKeyFileName,
+			dummy, 
+			clientCaCertFileName
+		);
 	}
 
-	// tests for the crypto keys page
+	CPPUNIT_ASSERT(clientCaCertFileName.FileExists());
 	
-	wxFileName clientCryptoFileName(configTestDir.GetFullPath(), 
+	// sign the client's request with our private key
+
+	CPPUNIT_ASSERT(!mClientCertFileName.FileExists());
+
+	SignRequestWithKey(mClientCsrFileName, clientCaKeyFileName,
+		clientCaCertFileName, mClientCertFileName);
+	CPPUNIT_ASSERT(mClientCertFileName.FileExists());
+
+	// make a "bad signature" copy of the client's request,
+	// signed with its own private key (mismatches the cert)
+
+	CPPUNIT_ASSERT(!mClientBadSigCertFileName.FileExists());
+
+	SignRequestWithKey(mClientCsrFileName, mPrivateKeyFileName,
+		clientCaCertFileName, mClientBadSigCertFileName);
+	CPPUNIT_ASSERT(mClientBadSigCertFileName.FileExists());		
+
+	// make a "self signed" copy of the client's request,
+	// signed with its own certificate and private key
+
+	CPPUNIT_ASSERT(!mClientSelfSigCertFileName.FileExists());
+
+	SignRequestWithKey(mClientCsrFileName, mPrivateKeyFileName,
+		wxFileName(), mClientSelfSigCertFileName);
+	CPPUNIT_ASSERT(mClientSelfSigCertFileName.FileExists());		
+}
+
+void TestWizard::TestCertificatePage()
+{
+	CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
+
+	// clear both fields, try to go forward, check that it fails
+	CPPUNIT_ASSERT(!mpConfig->CertificateFile.IsConfigured());
+	CPPUNIT_ASSERT(!mpConfig->TrustedCAsFile.IsConfigured());		
+	CheckForwardError(BM_SETUP_WIZARD_NO_FILE_NAME);
+	
+	// set the certificate file to a name that doesn't exist
+	wxFileName nonexistantfile(mTempDir.GetFullPath(), 
+		wxT("nonexistant"));
+	mpConfig->CertificateFile.Set(nonexistantfile.GetFullPath());
+	
+	// try to go forward, check that it fails
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
+
+	// create another file, make it unreadable,
+	// expect BM_SETUP_WIZARD_FILE_NOT_READABLE
+	wxString anotherfilename = mClientCertFileName.GetFullPath();
+	anotherfilename.Append(wxT("2"));
+	wxFile anotherfile;
+	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, false, 0));
+	
+	mpConfig->CertificateFile.Set(anotherfilename);
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
+	
+	// make it readable, but not a valid certificate,
+	// expect BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR
+	CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
+	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, wxS_IRUSR));
+	CheckForwardError(BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
+	CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
+
+	// set the CertificateFile to the real certificate,
+	// expect complaints about the Trusted CAs File
+	mpConfig->CertificateFile.Set(mClientCertFileName.GetFullPath());
+	CPPUNIT_ASSERT(!mpConfig->TrustedCAsFile.IsConfigured());
+	CheckForwardError(BM_SETUP_WIZARD_NO_FILE_NAME);
+
+	// same for the trusted CAs file
+	// set the certificate file to a name that doesn't exist
+	mpConfig->TrustedCAsFile.Set(nonexistantfile.GetFullPath());
+	
+	// try to go forward, check that it fails
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
+
+	// create another file, make it unreadable,
+	// expect BM_SETUP_WIZARD_FILE_NOT_READABLE
+	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, false, 0));		
+	mpConfig->TrustedCAsFile.Set(anotherfilename);
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
+	
+	// make it readable, but not a valid certificate,
+	// expect BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR
+	CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
+	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, wxS_IRUSR));
+	CheckForwardError(BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
+	CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
+
+	// set it to the real trusted CAs certificate,
+	mpConfig->TrustedCAsFile.Set(mCaFileName.GetFullPath());
+
+	// set CertificateFile to a valid certificate file, 
+	// but with a bad signature, expect BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR
+	/*
+	mpConfig->CertificateFile.Set(mClientBadSigCertFileName.GetFullPath());
+	CheckForwardError(BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
+	*/
+	
+	// set CertificateFile to a valid certificate file, 
+	// but self signed, expect BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR
+	// (key mismatch between the certs)
+	/*
+	mpConfig->CertificateFile.Set(mClientSelfSigCertFileName.GetFullPath());
+	CheckForwardError(BM_SETUP_WIZARD_CERTIFICATE_FILE_ERROR);
+	*/
+
+	// set the CertificateFile to the real one,
+	// expect that we can go forward
+	mpConfig->CertificateFile.Set(mClientCertFileName.GetFullPath());
+	CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
+}
+
+void TestWizard::TestCryptoKeyPage()
+{
+	CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
+
+	mClientCryptoFileName = wxFileName(mConfigTestDir.GetFullPath(), 
 		wxT("1-FileEncKeys.raw"));
-	CPPUNIT_ASSERT(!clientCryptoFileName.FileExists());
+	CPPUNIT_ASSERT(!mClientCryptoFileName.FileExists());
 	
-	{
-		CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
+	// ask for new crypto keys to be generated
+	wxRadioButton* pNewFileRadioButton = 
+		(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
+			ID_Setup_Wizard_New_File_Radio);
+	ClickRadioWaitEvent(pNewFileRadioButton);
+	CPPUNIT_ASSERT(pNewFileRadioButton->GetValue());
+	
+	wxString tmp;
+	
+	CPPUNIT_ASSERT(mpConfig->KeysFile.IsConfigured());
+	CPPUNIT_ASSERT(mpConfig->KeysFile.GetInto(tmp));
+	CPPUNIT_ASSERT(tmp.IsSameAs(mClientCryptoFileName.GetFullPath()));
+	
+	// go back, and check that the property is unconfigured for us
+	CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
+	ClickBackward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
+	CPPUNIT_ASSERT(!mpConfig->KeysFile.IsConfigured());
+	
+	// set the crypto key file manually, 
+	// check that it is not overwritten.
+	wxFileName dummyName(mTempDir.GetFullPath(), wxT("nosuchfile"));
+	mpConfig->KeysFile.Set(dummyName.GetFullPath());
+	
+	CPPUNIT_ASSERT(mpConfig->KeysFile.IsConfigured());
+	CPPUNIT_ASSERT(mpConfig->KeysFile.GetInto(tmp));
+	CPPUNIT_ASSERT(tmp.IsSameAs(dummyName.GetFullPath()));
+	
+	CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
+	CPPUNIT_ASSERT(mpConfig->KeysFile.GetInto(tmp));
+	CPPUNIT_ASSERT(tmp.IsSameAs(dummyName.GetFullPath()));
 
-		// ask for new crypto keys to be generated
-		wxRadioButton* pNewFileRadioButton = 
-			(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
-				ID_Setup_Wizard_New_File_Radio);
-		ClickRadioWaitEvent(pNewFileRadioButton);
-		CPPUNIT_ASSERT(pNewFileRadioButton->GetValue());
-		
-		wxString tmp;
-		
-		CPPUNIT_ASSERT(mpConfig->KeysFile.IsConfigured());
-		CPPUNIT_ASSERT(mpConfig->KeysFile.GetInto(tmp));
-		CPPUNIT_ASSERT(tmp.IsSameAs(clientCryptoFileName.GetFullPath()));
-		
-		// go back, and check that the property is unconfigured for us
-		CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
-		ClickBackward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
-		CPPUNIT_ASSERT(!mpConfig->KeysFile.IsConfigured());
-		
-		// set the crypto key file manually, 
-		// check that it is not overwritten.
-		wxFileName dummyName(tempdir.GetFullPath(), wxT("nosuchfile"));
-		mpConfig->KeysFile.Set(dummyName.GetFullPath());
-		
-		CPPUNIT_ASSERT(mpConfig->KeysFile.IsConfigured());
-		CPPUNIT_ASSERT(mpConfig->KeysFile.GetInto(tmp));
-		CPPUNIT_ASSERT(tmp.IsSameAs(dummyName.GetFullPath()));
-		
-		CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
-		ClickForward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
-		CPPUNIT_ASSERT(mpConfig->KeysFile.GetInto(tmp));
-		CPPUNIT_ASSERT(tmp.IsSameAs(dummyName.GetFullPath()));
+	// clear the value again, check that the property is 
+	// unconfigured
+	wxTextCtrl* pText = GetTextCtrl(mpWizard->GetCurrentPage(), 
+		ID_Setup_Wizard_File_Name_Text);
+	CPPUNIT_ASSERT(pText);
+	pText->SetValue(wxEmptyString);
+	CPPUNIT_ASSERT(!mpConfig->KeysFile.IsConfigured());
+	
+	// go back, forward again, check that the default 
+	// value is inserted
+	CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
 
-		// clear the value again, check that the property is 
-		// unconfigured
-		wxTextCtrl* pText = GetTextCtrl(mpWizard->GetCurrentPage(), 
-			ID_Setup_Wizard_File_Name_Text);
-		CPPUNIT_ASSERT(pText);
-		pText->SetValue(wxEmptyString);
-		CPPUNIT_ASSERT(!mpConfig->KeysFile.IsConfigured());
-		
-		// go back, forward again, check that the default 
-		// value is inserted
-		CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
+	ClickBackward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
+	
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
+	
+	CPPUNIT_ASSERT(mpConfig->KeysFile.IsConfigured());
+	CPPUNIT_ASSERT(mpConfig->KeysFile.GetInto(tmp));
+	CPPUNIT_ASSERT(tmp.IsSameAs(mClientCryptoFileName.GetFullPath()));
+	
+	// go forward, check that the file is created
+	CPPUNIT_ASSERT(!mClientCryptoFileName.FileExists());
+	CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
 
-		ClickBackward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CERTIFICATE, mpWizard->GetCurrentPageId());
-		
-		ClickForward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
-		
-		CPPUNIT_ASSERT(mpConfig->KeysFile.IsConfigured());
-		CPPUNIT_ASSERT(mpConfig->KeysFile.GetInto(tmp));
-		CPPUNIT_ASSERT(tmp.IsSameAs(clientCryptoFileName.GetFullPath()));
-		
-		// go forward, check that the file is created
-		CPPUNIT_ASSERT(!clientCryptoFileName.FileExists());
-		CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_BACKED_UP, mpWizard->GetCurrentPageId());
+	CPPUNIT_ASSERT(mClientCryptoFileName.FileExists());
 
-		ClickForward();
-		CPPUNIT_ASSERT_EQUAL(BWP_BACKED_UP, mpWizard->GetCurrentPageId());
-		CPPUNIT_ASSERT(clientCryptoFileName.FileExists());
+	// go back
+	ClickBackward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
 
-		// go back
-		ClickBackward();
-		CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
+	// choose "existing keys file"
+	wxRadioButton* pExistingFileRadioButton = 
+		(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
+			ID_Setup_Wizard_Existing_File_Radio);
+	CPPUNIT_ASSERT(pExistingFileRadioButton);
+	ClickRadioWaitEvent(pExistingFileRadioButton);
+	CPPUNIT_ASSERT(pExistingFileRadioButton->GetValue());
 
-		// choose "existing keys file"
-		wxRadioButton* pExistingFileRadioButton = 
-			(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
-				ID_Setup_Wizard_Existing_File_Radio);
-		CPPUNIT_ASSERT(pExistingFileRadioButton);
-		ClickRadioWaitEvent(pExistingFileRadioButton);
-		CPPUNIT_ASSERT(pExistingFileRadioButton->GetValue());
+	// specify a newly created empty file, 
+	// expect BM_SETUP_WIZARD_ENCRYPTION_KEY_FILE_NOT_VALID
+	wxString anotherfilename = mClientCryptoFileName.GetFullPath();
+	anotherfilename.Append(wxT(".invalid"));
+	mpConfig->KeysFile.Set(anotherfilename);
+	wxFile anotherfile;
+	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, wxS_IRUSR));
+	CheckForwardError(BM_SETUP_WIZARD_ENCRYPTION_KEY_FILE_NOT_VALID);
+	CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
+	
+	// check that our newly generated key is accepted.	
+	mpConfig->KeysFile.Set(mClientCryptoFileName.GetFullPath());
+	
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_BACKED_UP, mpWizard->GetCurrentPageId());
+}
 
-		// specify a newly created empty file, 
-		// expect BM_SETUP_WIZARD_ENCRYPTION_KEY_FILE_NOT_VALID
-		wxString anotherfilename = clientCryptoFileName.GetFullPath();
-		anotherfilename.Append(wxT(".invalid"));
-		mpConfig->KeysFile.Set(anotherfilename);
-		wxFile anotherfile;
-		CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, wxS_IRUSR));
-		CheckForwardError(BM_SETUP_WIZARD_ENCRYPTION_KEY_FILE_NOT_VALID);
-		CPPUNIT_ASSERT(wxRemoveFile(anotherfilename));
-		
-		// check that our newly generated key is accepted.	
-		mpConfig->KeysFile.Set(clientCryptoFileName.GetFullPath());
-		
-		ClickForward();
-		CPPUNIT_ASSERT_EQUAL(BWP_BACKED_UP, mpWizard->GetCurrentPageId());
-	}
+void TestWizard::TestBackedUpPage()
+{
+	CPPUNIT_ASSERT_EQUAL(BWP_BACKED_UP, mpWizard->GetCurrentPageId());
+	
+	wxCheckBox* pCheckBox = (wxCheckBox*) FindWindow
+		(ID_Setup_Wizard_Backed_Up_Checkbox);
+	CPPUNIT_ASSERT(pCheckBox);
+	CPPUNIT_ASSERT(!pCheckBox->GetValue());
+	
+	CheckForwardError(BM_SETUP_WIZARD_MUST_CHECK_THE_BOX_KEYS_BACKED_UP);
+	
+	pCheckBox->SetValue(true);
+	ClickForward();
 
-	{
-		CPPUNIT_ASSERT_EQUAL(BWP_BACKED_UP, mpWizard->GetCurrentPageId());
-		
-		wxCheckBox* pCheckBox = (wxCheckBox*) FindWindow
-			(ID_Setup_Wizard_Backed_Up_Checkbox);
-		CPPUNIT_ASSERT(pCheckBox);
-		CPPUNIT_ASSERT(!pCheckBox->GetValue());
-		
-		CheckForwardError(BM_SETUP_WIZARD_MUST_CHECK_THE_BOX_KEYS_BACKED_UP);
-		
-		pCheckBox->SetValue(true);
-		ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_DATA_DIR, mpWizard->GetCurrentPageId());
+}
 
-		CPPUNIT_ASSERT_EQUAL(BWP_DATA_DIR, mpWizard->GetCurrentPageId());
-	}
+void TestWizard::TestDataDirPage()
+{
+	CPPUNIT_ASSERT_EQUAL(BWP_DATA_DIR, mpWizard->GetCurrentPageId());
 
-	{
-		CPPUNIT_ASSERT_EQUAL(BWP_DATA_DIR, mpWizard->GetCurrentPageId());
+	mpConfig->DataDirectory.Clear();
+	CheckForwardError(BM_SETUP_WIZARD_NO_FILE_NAME);
+	
+	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
+	CPPUNIT_ASSERT(!mTempDir.DirExists());
+	wxFile temp;
+	CPPUNIT_ASSERT(temp.Create(mTempDir.GetFullPath()));
+	CPPUNIT_ASSERT(mTempDir.FileExists());
+	mpConfig->DataDirectory.Set(mTempDir.GetFullPath());
+	CheckForwardError(BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
+	CPPUNIT_ASSERT(wxRemoveFile(mTempDir.GetFullPath()));
+	
+	CPPUNIT_ASSERT(wxMkdir(mTempDir.GetFullPath(), 0000));
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
+	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
 
-		mpConfig->DataDirectory.Clear();
-		CheckForwardError(BM_SETUP_WIZARD_NO_FILE_NAME);
-		
-		CPPUNIT_ASSERT(wxRmdir(tempdir.GetFullPath()));
-		CPPUNIT_ASSERT(!tempdir.DirExists());
-		wxFile temp;
-		CPPUNIT_ASSERT(temp.Create(tempdir.GetFullPath()));
-		CPPUNIT_ASSERT(tempdir.FileExists());
-		mpConfig->DataDirectory.Set(tempdir.GetFullPath());
-		CheckForwardError(BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
-		CPPUNIT_ASSERT(wxRemoveFile(tempdir.GetFullPath()));
-		
-		CPPUNIT_ASSERT(wxMkdir(tempdir.GetFullPath(), 0000));
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
-		CPPUNIT_ASSERT(wxRmdir(tempdir.GetFullPath()));
+	CPPUNIT_ASSERT(wxMkdir(mTempDir.GetFullPath(), 0600));
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
+	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
 
-		CPPUNIT_ASSERT(wxMkdir(tempdir.GetFullPath(), 0600));
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
-		CPPUNIT_ASSERT(wxRmdir(tempdir.GetFullPath()));
+	CPPUNIT_ASSERT(wxMkdir(mTempDir.GetFullPath(), 0500));
+	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
+	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
+	
+	CPPUNIT_ASSERT(wxMkdir(mTempDir.GetFullPath(), 0770));
+	CheckForwardError(BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
+	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
 
-		CPPUNIT_ASSERT(wxMkdir(tempdir.GetFullPath(), 0500));
-		CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
-		CPPUNIT_ASSERT(wxRmdir(tempdir.GetFullPath()));
-		
-		CPPUNIT_ASSERT(wxMkdir(tempdir.GetFullPath(), 0770));
-		CheckForwardError(BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
-		CPPUNIT_ASSERT(wxRmdir(tempdir.GetFullPath()));
+	CPPUNIT_ASSERT(wxMkdir(mTempDir.GetFullPath(), 0707));
+	CheckForwardError(BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
+	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
 
-		CPPUNIT_ASSERT(wxMkdir(tempdir.GetFullPath(), 0707));
-		CheckForwardError(BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
-		CPPUNIT_ASSERT(wxRmdir(tempdir.GetFullPath()));
+	wxFileName tempdir2(mTempDir.GetFullPath(), wxT("foo"));
+	mpConfig->DataDirectory.Set(tempdir2.GetFullPath());
+	CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
+	
+	CPPUNIT_ASSERT(wxMkdir(mTempDir.GetFullPath(), 0400));
+	CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
+	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
 
-		wxFileName tempdir2(tempdir.GetFullPath(), wxT("foo"));
-		mpConfig->DataDirectory.Set(tempdir2.GetFullPath());
-		CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
-		
-		CPPUNIT_ASSERT(wxMkdir(tempdir.GetFullPath(), 0400));
-		CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
-		CPPUNIT_ASSERT(wxRmdir(tempdir.GetFullPath()));
+	CPPUNIT_ASSERT(wxMkdir(mTempDir.GetFullPath(), 0600));
+	CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
+	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
 
-		CPPUNIT_ASSERT(wxMkdir(tempdir.GetFullPath(), 0600));
-		CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
-		CPPUNIT_ASSERT(wxRmdir(tempdir.GetFullPath()));
+	CPPUNIT_ASSERT(wxMkdir(mTempDir.GetFullPath(), 0700));
+	mpConfig->DataDirectory.Set(mTempDir.GetFullPath());
+	ClickForward();
+	
+	wxFileName socket (mTempDir.GetFullPath(), wxT("bbackupd.sock"));
+	wxFileName pidfile(mTempDir.GetFullPath(), wxT("bbackupd.pid"));
+	CPPUNIT_ASSERT(mpConfig->CommandSocket.Is(socket.GetFullPath()));
+	CPPUNIT_ASSERT(mpConfig->PidFile      .Is(pidfile.GetFullPath()));
+	
+	CPPUNIT_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
+	CPPUNIT_ASSERT(!FindWindow(ID_Setup_Wizard_Frame));		
+}
 
-		CPPUNIT_ASSERT(wxMkdir(tempdir.GetFullPath(), 0700));
-		mpConfig->DataDirectory.Set(tempdir.GetFullPath());
-		ClickForward();
-		
-		wxFileName socket (tempdir.GetFullPath(), wxT("bbackupd.sock"));
-		wxFileName pidfile(tempdir.GetFullPath(), wxT("bbackupd.pid"));
-		CPPUNIT_ASSERT(mpConfig->CommandSocket.Is(socket.GetFullPath()));
-		CPPUNIT_ASSERT(mpConfig->PidFile      .Is(pidfile.GetFullPath()));
-		
-		CPPUNIT_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
-		CPPUNIT_ASSERT(!FindWindow(ID_Setup_Wizard_Frame));		
-	}
-
-	CPPUNIT_ASSERT(configTestDir.DirExists());
-	wxFileName configFileName(configTestDir.GetFullPath(), wxT("config.foo"));
-	CPPUNIT_ASSERT(!configFileName.FileExists());
+void TestWizard::TestConfigOptionalRequiredItems()
+{
+	CPPUNIT_ASSERT(mConfigTestDir.DirExists());
+	mConfigFileName = wxFileName(mConfigTestDir.GetFullPath(),
+		wxT("config.foo"));
+	CPPUNIT_ASSERT(!mConfigFileName.FileExists());
 
 	// check that the configuration verifies OK
 	wxString msg;
@@ -1155,7 +1181,7 @@ void TestWizard::RunTest()
 	CPPUNIT_ASSERT_MESSAGE(buf.data(), isOk);
 	
 	// save it
-	mpConfig->Save(configFileName.GetFullPath());
+	mpConfig->Save(mConfigFileName.GetFullPath());
 	
 	#define CHECK_OPTIONAL_PROPERTY(name) \
 		CPPUNIT_ASSERT(mpConfig->Check(msg)); \
@@ -1181,6 +1207,7 @@ void TestWizard::RunTest()
 	CHECK_OPTIONAL_PROPERTY(StoreObjectInfoFile)
 	CHECK_OPTIONAL_PROPERTY(NotifyScript)
 	// mpConfig->User.Clear();
+	#undef CHECK_OPTIONAL_PROPERTY
 	
 	// still OK?
 	isOk = mpConfig->Check(msg);
@@ -1192,7 +1219,7 @@ void TestWizard::RunTest()
 		mpConfig->name.Clear(); \
 		CPPUNIT_ASSERT_MESSAGE("Clearing " #name " did not cause " \
 			"config check to fail", !mpConfig->Check(msg)); \
-		mpConfig->Load(configFileName.GetFullPath()); \
+		mpConfig->Load(mConfigFileName.GetFullPath()); \
 		CPPUNIT_ASSERT(mpConfig->Check(msg));
 		
 	CHECK_REQUIRED_PROPERTY(PidFile)
@@ -1209,7 +1236,5 @@ void TestWizard::RunTest()
 	CHECK_REQUIRED_PROPERTY(KeysFile)
 	CHECK_REQUIRED_PROPERTY(DataDirectory)
 	
-	CloseWindowWaitClosed(pMainFrame);
-
-	CPPUNIT_ASSERT(wxRmdir(tempdir.GetFullPath()));
+	#undef CHECK_REQUIRED_PROPERTY
 }

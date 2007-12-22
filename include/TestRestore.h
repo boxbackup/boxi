@@ -27,6 +27,9 @@
 
 #include "TestWithServer.h"
 
+class RestorePanel;
+class RestoreProgressPanel;
+
 class TestRestore : public TestWithServer
 {
 	public:
@@ -37,6 +40,7 @@ class TestRestore : public TestWithServer
 	RestorePanel* mpRestorePanel;
 	RestoreProgressPanel* mpRestoreProgressPanel;
 	wxListBox* mpRestoreErrorList;
+	wxFileName mTest2ZipFile, mTest3ZipFile, mRestoreDest;
 
 	void TestRestoreToDate();
 };
