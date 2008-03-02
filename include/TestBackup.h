@@ -2,7 +2,7 @@
  *            TestBackup.h
  *
  *  Sat Aug 12 14:01:01 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2007 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -47,6 +47,20 @@ class TestBackup : public TestWithServer
 	public:
 	virtual void RunTest();
 	static CppUnit::Test *suite();
+	
+	private:
+	void TestConfigChecks();
+	void TestRenameTrackedOverDeleted();
+	void TestVeryOldFiles();
+	void TestModifyExisting();
+	void TestExclusions();
+	void TestReadErrors();
+	void TestMinimumFileAge();
+	void TestBackupOfAttributes();
+	void TestAddMoreFiles();
+	void TestRenameDir();
+	void TestRestore();
+	void CleanUp();
 };
 
 class TestBackupStoreDaemon

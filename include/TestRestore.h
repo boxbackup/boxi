@@ -25,6 +25,7 @@
 #ifndef _TESTRESTORE_H
 #define _TESTRESTORE_H
 
+#include "FileTree.h"
 #include "TestWithServer.h"
 
 class RestorePanel;
@@ -41,8 +42,22 @@ class TestRestore : public TestWithServer
 	RestoreProgressPanel* mpRestoreProgressPanel;
 	wxListBox* mpRestoreErrorList;
 	wxFileName mTest2ZipFile, mTest3ZipFile, mRestoreDest;
+	wxFileName mSub23, df9834_dsfRestored, df9834_dsfOriginal;
+	wxFileName testdataRestored;
+	wxTreeItemId sub23id, dhsfdss, mRootId, dfsfd, bfdlink_h, a_out_h, 
+		mLocationId;
+	FileImageList mImages;
+	wxTreeCtrl* mpRestoreTree;
 
+	void TestRestoreWholeDir();
+	void TestRestoreSpec();
+	void TestDoubleIncludes();
+	void TestDoubleAndConflictingIncludes();
+	void TestIncludeInsideExclude();
+	void TestRestoreServerRoot();
+	void TestOldAndDeletedFilesNotRestored();
 	void TestRestoreToDate();
+	void CleanUp();
 };
 
 #endif /* _TESTRESTORE_H */

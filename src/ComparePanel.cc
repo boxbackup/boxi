@@ -26,6 +26,7 @@
 #include <wx/dir.h>
 #include <wx/dirctrl.h>
 #include <wx/filename.h>
+#include <wx/notebook.h>
 #include <wx/splitter.h>
 
 #include "ComparePanel.h"

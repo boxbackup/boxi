@@ -2,7 +2,7 @@
  *            TestBackup.cc
  *
  *  Wed May 10 23:10:16 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2007 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -292,7 +292,7 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 			
 			wxFile outFile(outName.GetFullPath());
 			wxCharBuffer buf = outName.GetFullPath().mb_str();
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(),
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(), 
 				pEntry->GetSize(), outFile.Length());
 		}
 		
@@ -661,6 +661,44 @@ void SetFileTime(const char* filename, time_t creationTime /* not used */,
 }
 #endif
 
+void TestBackup::TestConfigChecks()
+{
+	#define CHECK_PROPERTY(property, message) \
+	CHECK_BACKUP_ERROR(message); \
+	mpConfig->property.Revert()
+
+	#define CHECK_UNSET_PROPERTY(property, message) \
+	mpConfig->property.Clear(); \
+	CHECK_PROPERTY(property, message)
+	
+	CHECK_UNSET_PROPERTY(StoreHostname,  BM_BACKUP_FAILED_NO_STORE_HOSTNAME);
+	CHECK_UNSET_PROPERTY(KeysFile,       BM_BACKUP_FAILED_NO_KEYS_FILE);
+	CHECK_UNSET_PROPERTY(AccountNumber,  BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER);
+	CHECK_UNSET_PROPERTY(MinimumFileAge, BM_BACKUP_FAILED_NO_MINIMUM_FILE_AGE);
+	CHECK_UNSET_PROPERTY(MaxUploadWait,  BM_BACKUP_FAILED_NO_MAXIMUM_UPLOAD_WAIT);
+	CHECK_UNSET_PROPERTY(FileTrackingSizeThreshold, BM_BACKUP_FAILED_NO_TRACKING_THRESHOLD);
+	CHECK_UNSET_PROPERTY(DiffingUploadSizeThreshold, BM_BACKUP_FAILED_NO_DIFFING_THRESHOLD);
+	
+	// TODO: test BM_BACKUP_FAILED_INVALID_SYNC_PERIOD
+	/*
+	mpConfig->MinimumFileAge.Set(GetCurrentBoxTime() + 1000000);
+	CHECK_PROPERTY(MinimumFileAge, BM_BACKUP_FAILED_INVALID_SYNC_PERIOD);
+	*/
+
+	#undef CHECK_UNSET_PROPERTY
+	#undef CHECK_PROPERTY
+
+	mapServer->Stop();
+	CHECK_BACKUP_ERROR(BM_BACKUP_FAILED_CONNECT_FAILED);
+	mapServer->Start();
+
+	/*
+	TODO: write tests for:
+	BM_BACKUP_FAILED_INTERRUPTED,
+	BM_BACKUP_FAILED_UNKNOWN_ERROR,
+	*/
+}
+
 void TestBackup::RunTest()
 {	
 	{
@@ -671,53 +709,16 @@ void TestBackup::RunTest()
 
 	// TODO: test BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION
 	
-	{
-		#define CHECK_PROPERTY(property, message) \
-		CHECK_BACKUP_ERROR(message); \
-		mpConfig->property.Revert()
-
-		#define CHECK_UNSET_PROPERTY(property, message) \
-		mpConfig->property.Clear(); \
-		CHECK_PROPERTY(property, message)
-		
-		CHECK_UNSET_PROPERTY(StoreHostname,  BM_BACKUP_FAILED_NO_STORE_HOSTNAME);
-		CHECK_UNSET_PROPERTY(KeysFile,       BM_BACKUP_FAILED_NO_KEYS_FILE);
-		CHECK_UNSET_PROPERTY(AccountNumber,  BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER);
-		CHECK_UNSET_PROPERTY(MinimumFileAge, BM_BACKUP_FAILED_NO_MINIMUM_FILE_AGE);
-		CHECK_UNSET_PROPERTY(MaxUploadWait,  BM_BACKUP_FAILED_NO_MAXIMUM_UPLOAD_WAIT);
-		CHECK_UNSET_PROPERTY(FileTrackingSizeThreshold, BM_BACKUP_FAILED_NO_TRACKING_THRESHOLD);
-		CHECK_UNSET_PROPERTY(DiffingUploadSizeThreshold, BM_BACKUP_FAILED_NO_DIFFING_THRESHOLD);
-		
-		// TODO: test BM_BACKUP_FAILED_INVALID_SYNC_PERIOD
-		/*
-		mpConfig->MinimumFileAge.Set(GetCurrentBoxTime() + 1000000);
-		CHECK_PROPERTY(MinimumFileAge, BM_BACKUP_FAILED_INVALID_SYNC_PERIOD);
-		*/
-
-		#undef CHECK_UNSET_PROPERTY
-		#undef CHECK_PROPERTY
-
-		mapServer->Stop();
-		CHECK_BACKUP_ERROR(BM_BACKUP_FAILED_CONNECT_FAILED);
-		mapServer->Start();
-
-		/*
-		TODO: write tests for:
-		BM_BACKUP_FAILED_INTERRUPTED,
-		BM_BACKUP_FAILED_UNKNOWN_ERROR,
-		*/
-	}
-
-	std::auto_ptr<Configuration> apClientConfig;
+	TestConfigChecks();
+	
 	{
 		std::string errs;
 		wxCharBuffer buf = mClientConfigFile.GetFullPath().mb_str();
-		apClientConfig = Configuration::LoadAndVerify(buf.data(), 
+		mapClientConfig = Configuration::LoadAndVerify(buf.data(), 
 			&BackupDaemonConfigVerify, errs);
-		CPPUNIT_ASSERT(apClientConfig.get());
+		CPPUNIT_ASSERT(mapClientConfig.get());
 		CPPUNIT_ASSERT(errs.empty());
 	}
-	const Configuration &rClientConfig(*apClientConfig);
 
 	// before the first backup, there should be differences
 	CHECK_COMPARE_LOC_FAILS(1, 0, 0, 0);
@@ -967,6 +968,21 @@ void TestBackup::RunTest()
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
 
+	TestRenameTrackedOverDeleted();
+	TestVeryOldFiles();
+	TestModifyExisting();	
+	TestExclusions();
+	TestReadErrors();
+	TestMinimumFileAge();
+	TestBackupOfAttributes();
+	TestAddMoreFiles();
+	TestRenameDir();	
+	TestRestore();
+	CleanUp();
+}
+
+void TestBackup::TestRenameTrackedOverDeleted()
+{
 	// case which went wrong: rename a tracked file over a deleted file
 	#ifdef WIN32
 	CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(mTestDataDir, 
@@ -985,7 +1001,10 @@ void TestBackup::RunTest()
 	CPPUNIT_ASSERT(wxRenameFile(
 		MakeAbsolutePath(mTestDataDir, _("x1/dsfdsfs98.fd")).GetFullPath(),
 		MakeAbsolutePath(mTestDataDir, _("df9834.dsf")).GetFullPath()));
+}
 
+void TestBackup::TestVeryOldFiles()
+{
 	// Add some more files. Because we restore the original
 	// time stamps, these files will look very old to the daemon.
 	// Lucky it'll upload them then!
@@ -995,34 +1014,38 @@ void TestBackup::RunTest()
 	// Run another backup and check that it works
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
+}
 
-	// Then modify an existing file
-	{
-		wxFileName fileToUpdate(MakeAbsolutePath(mTestDataDir,
-			_("sub23/rand.h")));
-		wxFile f(fileToUpdate.GetFullPath(), wxFile::read_write);
-		CPPUNIT_ASSERT(f.IsOpened());
-		CPPUNIT_ASSERT(f.SeekEnd() != wxInvalidOffset);
-		CPPUNIT_ASSERT(f.Write(_("MODIFIED!\n")));
-		f.Close();
-		
-		// and then move the time backwards!
-		struct timeval times[2];
-		BoxTimeToTimeval(SecondsToBoxTime((time_t)(365*24*60*60)), times[1]);
-		times[0] = times[1];
-		wxCharBuffer buf = fileToUpdate.GetFullPath().mb_str(wxConvLibc);
-		CPPUNIT_ASSERT(::utimes(buf.data(), times) == 0);
-	}
+// Modify an existing file
+void TestBackup::TestModifyExisting()
+{
+	wxFileName fileToUpdate(MakeAbsolutePath(mTestDataDir,
+		_("sub23/rand.h")));
+	wxFile f(fileToUpdate.GetFullPath(), wxFile::read_write);
+	CPPUNIT_ASSERT(f.IsOpened());
+	CPPUNIT_ASSERT(f.SeekEnd() != wxInvalidOffset);
+	CPPUNIT_ASSERT(f.Write(_("MODIFIED!\n")));
+	f.Close();
+	
+	// and then move the time backwards!
+	struct timeval times[2];
+	BoxTimeToTimeval(SecondsToBoxTime((time_t)(365*24*60*60)), times[1]);
+	times[0] = times[1];
+	wxCharBuffer buf = fileToUpdate.GetFullPath().mb_str(wxConvLibc);
+	CPPUNIT_ASSERT(::utimes(buf.data(), times) == 0);
 
 	// Run another backup and check that it works
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
-	
-	{
-		// Add some files and directories which are marked as excluded
-		wxFileName zipExcludeTest(MakeAbsolutePath(_("../test/data/testexclude.zip")));
-		Unzip(zipExcludeTest, mTestDataDir, true);
-	}
+}
+
+// check that the excluded files did not make it
+// into the store, and the included files did
+void TestBackup::TestExclusions()
+{
+	// Add some files and directories which are marked as excluded
+	wxFileName zipExcludeTest(MakeAbsolutePath(_("../test/data/testexclude.zip")));
+	Unzip(zipExcludeTest, mTestDataDir, true);
 	
 	// backup should still work
 	CHECK_BACKUP_OK();
@@ -1033,124 +1056,131 @@ void TestBackup::RunTest()
 	// compare directly (without exclude lists) should fail
 	CHECK_COMPARE_FAILS(7, 0);
 
-	// check that the excluded files did not make it
-	// into the store, and the included files did
+	SocketStreamTLS socket;
+	socket.Open(mTlsContext, Socket::TypeINET, 
+		mapClientConfig->GetKeyValue("StoreHostname").c_str(), 
+		BOX_PORT_BBSTORED);
+	BackupProtocolClient connection(socket);
+	connection.Handshake();
+	std::auto_ptr<BackupProtocolClientVersion> 
+		serverVersion(connection.QueryVersion(
+			BACKUP_STORE_SERVER_VERSION));
+	if(serverVersion->GetVersion() != 
+		BACKUP_STORE_SERVER_VERSION)
 	{
-		SocketStreamTLS socket;
-		socket.Open(mTlsContext, Socket::TypeINET, 
-			rClientConfig.GetKeyValue("StoreHostname").c_str(), 
-			BOX_PORT_BBSTORED);
-		BackupProtocolClient connection(socket);
-		connection.Handshake();
-		std::auto_ptr<BackupProtocolClientVersion> 
-			serverVersion(connection.QueryVersion(
-				BACKUP_STORE_SERVER_VERSION));
-		if(serverVersion->GetVersion() != 
-			BACKUP_STORE_SERVER_VERSION)
-		{
-			THROW_EXCEPTION(BackupStoreException, 
-				WrongServerVersion);
-		}
-		connection.QueryLogin(
-			rClientConfig.GetKeyValueInt("AccountNumber"),
-			BackupProtocolClientLogin::Flags_ReadOnly);
-		
-		int64_t rootDirId = BackupProtocolClientListDirectory
-			::RootDirectory;
-		std::auto_ptr<BackupProtocolClientSuccess> dirreply(
-			connection.QueryListDirectory(
-				rootDirId, false, 0, false));
-		std::auto_ptr<IOStream> dirstream(
-			connection.ReceiveStream());
-		BackupStoreDirectory dir;
-		dir.ReadFromStream(*dirstream, connection.GetTimeout());
-
-		int64_t testDirId = SearchDir(dir, "testdata");
-		CPPUNIT_ASSERT(testDirId != 0);
-		dirreply = connection.QueryListDirectory(testDirId, false, 0, false);
-		dirstream = connection.ReceiveStream();
-		dir.ReadFromStream(*dirstream, connection.GetTimeout());
-		
-		CPPUNIT_ASSERT(!SearchDir(dir, "excluded_1"));
-		CPPUNIT_ASSERT(!SearchDir(dir, "excluded_2"));
-		CPPUNIT_ASSERT(!SearchDir(dir, "exclude_dir"));
-		CPPUNIT_ASSERT(!SearchDir(dir, "exclude_dir_2"));
-		// xx_not_this_dir_22 should not be excluded by
-		// ExcludeDirsRegex, because it's a file
-		CPPUNIT_ASSERT(SearchDir (dir, "xx_not_this_dir_22"));
-		CPPUNIT_ASSERT(!SearchDir(dir, "zEXCLUDEu"));
-		CPPUNIT_ASSERT(SearchDir (dir, "dont.excludethis"));
-		CPPUNIT_ASSERT(SearchDir (dir, "xx_not_this_dir_ALWAYSINCLUDE"));
-
-		int64_t sub23id = SearchDir(dir, "sub23");
-		CPPUNIT_ASSERT(sub23id != 0);
-		dirreply = connection.QueryListDirectory(sub23id, false, 0, false);
-		dirstream = connection.ReceiveStream();
-		dir.ReadFromStream(*dirstream, connection.GetTimeout());
-		CPPUNIT_ASSERT(!SearchDir(dir, "xx_not_this_dir_22"));
-		CPPUNIT_ASSERT(!SearchDir(dir, "somefile.excludethis"));
-		connection.QueryFinished();
+		THROW_EXCEPTION(BackupStoreException, 
+			WrongServerVersion);
 	}
+	connection.QueryLogin(
+		mapClientConfig->GetKeyValueInt("AccountNumber"),
+		BackupProtocolClientLogin::Flags_ReadOnly);
 	
+	int64_t rootDirId = BackupProtocolClientListDirectory
+		::RootDirectory;
+	std::auto_ptr<BackupProtocolClientSuccess> dirreply(
+		connection.QueryListDirectory(
+			rootDirId, false, 0, false));
+	std::auto_ptr<IOStream> dirstream(
+		connection.ReceiveStream());
+	BackupStoreDirectory dir;
+	dir.ReadFromStream(*dirstream, connection.GetTimeout());
+
+	int64_t testDirId = SearchDir(dir, "testdata");
+	CPPUNIT_ASSERT(testDirId != 0);
+	dirreply = connection.QueryListDirectory(testDirId, false, 0, false);
+	dirstream = connection.ReceiveStream();
+	dir.ReadFromStream(*dirstream, connection.GetTimeout());
+	
+	CPPUNIT_ASSERT(!SearchDir(dir, "excluded_1"));
+	CPPUNIT_ASSERT(!SearchDir(dir, "excluded_2"));
+	CPPUNIT_ASSERT(!SearchDir(dir, "exclude_dir"));
+	CPPUNIT_ASSERT(!SearchDir(dir, "exclude_dir_2"));
+	// xx_not_this_dir_22 should not be excluded by
+	// ExcludeDirsRegex, because it's a file
+	CPPUNIT_ASSERT(SearchDir (dir, "xx_not_this_dir_22"));
+	CPPUNIT_ASSERT(!SearchDir(dir, "zEXCLUDEu"));
+	CPPUNIT_ASSERT(SearchDir (dir, "dont.excludethis"));
+	CPPUNIT_ASSERT(SearchDir (dir, "xx_not_this_dir_ALWAYSINCLUDE"));
+
+	int64_t sub23id = SearchDir(dir, "sub23");
+	CPPUNIT_ASSERT(sub23id != 0);
+	dirreply = connection.QueryListDirectory(sub23id, false, 0, false);
+	dirstream = connection.ReceiveStream();
+	dir.ReadFromStream(*dirstream, connection.GetTimeout());
+	CPPUNIT_ASSERT(!SearchDir(dir, "xx_not_this_dir_22"));
+	CPPUNIT_ASSERT(!SearchDir(dir, "somefile.excludethis"));
+	connection.QueryFinished();
+}
+
+void TestBackup::TestReadErrors()
+{
 	#ifndef WIN32
 	// These tests only work as non-root users.
-	if(::getuid() != 0)
+	if (::getuid() == 0)
 	{
-		// Check that read errors are reported neatly
-		// Dir and file which can't be read
-		wxFileName unreadableDir = MakeAbsolutePath(mTestDataDir, 
-			_("sub23/read-fail-test-dir"));
-		CPPUNIT_ASSERT(wxMkdir(unreadableDir.GetFullPath(), 0000));
-		
-		wxFileName unreadableFile = MakeAbsolutePath(mTestDataDir,
-			_("read-fail-test-file"));
-		wxFile f;
-		CPPUNIT_ASSERT(f.Create(unreadableFile.GetFullPath(), false, 
-			0000));
-
-		CHECK_BACKUP_OK();
-		CHECK_COMPARE_LOC_FAILS(2, 0, 3, 4);
-
-		// Check that it was reported correctly
-		CPPUNIT_ASSERT_EQUAL(3, mpBackupErrorList->GetCount());
-		wxString msg;
-		
-		msg.Printf(_("Failed to send file '%s': Access denied"), 
-			unreadableFile.GetFullPath().c_str());
-		CPPUNIT_ASSERT_EQUAL(msg, mpBackupErrorList->GetString(0));
-		
-		msg.Printf(_("Failed to list directory '%s': Access denied"), 
-			unreadableDir.GetFullPath().c_str());
-		CPPUNIT_ASSERT_EQUAL(msg, mpBackupErrorList->GetString(1));
-		
-		CPPUNIT_ASSERT_EQUAL(wxString(_("Backup Finished")), 
-			mpBackupErrorList->GetString(2));
-		
-		CPPUNIT_ASSERT(wxRmdir(unreadableDir.GetFullPath()));
-		CPPUNIT_ASSERT(wxRemoveFile(unreadableFile.GetFullPath()));
+		return;
 	}
+	
+	// Check that read errors are reported neatly
+	// Dir and file which can't be read
+	wxFileName unreadableDir = MakeAbsolutePath(mTestDataDir, 
+		_("sub23/read-fail-test-dir"));
+	CPPUNIT_ASSERT(wxMkdir(unreadableDir.GetFullPath(), 0000));
+	
+	wxFileName unreadableFile = MakeAbsolutePath(mTestDataDir,
+		_("read-fail-test-file"));
+	wxFile f;
+	CPPUNIT_ASSERT(f.Create(unreadableFile.GetFullPath(), false, 
+		0000));
+
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_FAILS(2, 0, 3, 4);
+
+	// Check that it was reported correctly
+	CPPUNIT_ASSERT_EQUAL((unsigned int)3,
+		mpBackupErrorList->GetCount());
+	wxString msg;
+	
+	msg.Printf(_("Failed to send file '%s': Access denied"), 
+		unreadableFile.GetFullPath().c_str());
+	CPPUNIT_ASSERT_EQUAL(msg, mpBackupErrorList->GetString(0));
+	
+	msg.Printf(_("Failed to list directory '%s': Access denied"), 
+		unreadableDir.GetFullPath().c_str());
+	CPPUNIT_ASSERT_EQUAL(msg, mpBackupErrorList->GetString(1));
+	
+	CPPUNIT_ASSERT_EQUAL(wxString(_("Backup Finished")), 
+		mpBackupErrorList->GetString(2));
+	
+	CPPUNIT_ASSERT(wxRmdir(unreadableDir.GetFullPath()));
+	CPPUNIT_ASSERT(wxRemoveFile(unreadableFile.GetFullPath()));
 	#endif
+}
 
-	// check that a file that is newly created is not uploaded
-	// until it reaches the minimum file age
-	{
-		mpConfig->MinimumFileAge.Set(5);
-		
-		wxFile f;
-		CPPUNIT_ASSERT(f.Create(MakeAbsolutePath(mTestDataDir, 
-			_("continuous-update")).GetFullPath()));
-		
-		// too new
-		CHECK_BACKUP_OK();
-		CHECK_COMPARE_LOC_FAILS(1, 0, 3, 4);
-		
-		sleep(5);
-		CHECK_BACKUP_OK();
-		CHECK_COMPARE_LOC_OK(3, 4);
-		
-		mpConfig->MinimumFileAge.Set(0);
-	}
+// check that a file that is newly created is not uploaded
+// until it reaches the minimum file age
+void TestBackup::TestMinimumFileAge()
+{
+	mpConfig->MinimumFileAge.Set(5);
+	
+	wxFile f;
+	CPPUNIT_ASSERT(f.Create(MakeAbsolutePath(mTestDataDir, 
+		_("continuous-update")).GetFullPath()));
+	
+	// too new
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_FAILS(1, 0, 3, 4);
+	
+	sleep(5);
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK(3, 4);
+	
+	mpConfig->MinimumFileAge.Set(0);
+}
 
+// check that attributes are backed up and compared correctly
+void TestBackup::TestBackupOfAttributes()
+{
 	// Delete a directory
 	DeleteRecursive(MakeAbsolutePath(mTestDataDir, _("x1")));
 	
@@ -1164,190 +1194,191 @@ void TestBackup::RunTest()
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(3, 4);
 
-	// check that attributes are backed up and compared correctly
-	{
-		wxFileName testFileName = MakeAbsolutePath(mTestDataDir, 
-			_("f1.dat"));
-		wxCharBuffer buf = testFileName.GetFullPath().mb_str(wxConvLibc);
+	wxFileName testFileName = MakeAbsolutePath(mTestDataDir, 
+		_("f1.dat"));
+	wxCharBuffer buf = testFileName.GetFullPath().mb_str(wxConvLibc);
 
-		#ifndef WIN32		
-		// make one of the files unreadable, expect a compare failure
-		struct stat st;
-		CPPUNIT_ASSERT(stat(buf.data(), &st) == 0);
-		CPPUNIT_ASSERT_EQUAL(0, chmod(buf.data(), 0000));
-		CHECK_COMPARE_LOC_FAILS(2, 0, 3, 4);
-		#endif
-		
-		// make one of the files read-only, expect a compare failure
-		#ifdef WIN32
-		wxString cmd = _("attrib +r ");
-		cmd.Append(testFileName.GetFullPath());
-		wxCharBuffer cmdbuf = cmd.mb_str(wxConvLibc);
-		int compareReturnValue = ::system(cmdbuf.data());
-		CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
-		#else
-		CPPUNIT_ASSERT_EQUAL(0, chmod(buf.data(), 0444));
-		#endif
-		
-		CHECK_COMPARE_LOC_FAILS(1, 0, 3, 4);
+	#ifndef WIN32		
+	// make one of the files unreadable, expect a compare failure
+	struct stat st;
+	CPPUNIT_ASSERT(stat(buf.data(), &st) == 0);
+	CPPUNIT_ASSERT_EQUAL(0, chmod(buf.data(), 0000));
+	CHECK_COMPARE_LOC_FAILS(2, 0, 3, 4);
+	#endif
 	
-		// set it back, expect no failures
-		#ifdef WIN32
-		cmd = _("attrib -r ");
-		cmd.Append(testFileName.GetFullPath());
-		cmdbuf = cmd.mb_str(wxConvLibc);
-		compareReturnValue = ::system(cmdbuf.data());
-		CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
-		#else
-		CPPUNIT_ASSERT_EQUAL(0, chmod(buf.data(), st.st_mode));
-		#endif
-		
-		CHECK_COMPARE_LOC_OK(3, 4);
+	// make one of the files read-only, expect a compare failure
+	#ifdef WIN32
+	wxString cmd = _("attrib +r ");
+	cmd.Append(testFileName.GetFullPath());
+	wxCharBuffer cmdbuf = cmd.mb_str(wxConvLibc);
+	int compareReturnValue = ::system(cmdbuf.data());
+	CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
+	#else
+	CPPUNIT_ASSERT_EQUAL(0, chmod(buf.data(), 0444));
+	#endif
+	
+	CHECK_COMPARE_LOC_FAILS(1, 0, 3, 4);
 
-		// change the timestamp on a file, expect a compare failure
-		#ifdef WIN32
-		HANDLE handle = openfile(buf.data(), O_RDWR, 0);
-		CPPUNIT_ASSERT(handle != INVALID_HANDLE_VALUE);
-		FILETIME creationTime, lastModTime, lastAccessTime;
-		CPPUNIT_ASSERT(GetFileTime(handle, &creationTime, &lastAccessTime, 
-			&lastModTime) != 0);
-		CPPUNIT_ASSERT(CloseHandle(handle));
-		FILETIME dummyTime = lastModTime;
-		dummyTime.dwHighDateTime -= 100;
-		#else
-		time_t creationTime = st.st_ctime, 
-			lastModTime = st.st_mtime, 
-			lastAccessTime = st.st_atime,
-			dummyTime = lastModTime - 10000;
-		#endif
+	// set it back, expect no failures
+	#ifdef WIN32
+	cmd = _("attrib -r ");
+	cmd.Append(testFileName.GetFullPath());
+	cmdbuf = cmd.mb_str(wxConvLibc);
+	compareReturnValue = ::system(cmdbuf.data());
+	CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
+	#else
+	CPPUNIT_ASSERT_EQUAL(0, chmod(buf.data(), st.st_mode));
+	#endif
+	
+	CHECK_COMPARE_LOC_OK(3, 4);
 
-		SetFileTime(buf.data(), dummyTime, lastModTime,	lastAccessTime);
-		#ifdef WIN32
-		// creation time is backed up, so changing it should cause
-		// a compare failure
-		CHECK_COMPARE_LOC_FAILS(1, 0, 3, 4);
-		#else
-		// inode change time is backed up, but not restored or compared
-		CHECK_COMPARE_LOC_OK(3, 4);
-		#endif		
+	// change the timestamp on a file, expect a compare failure
+	#ifdef WIN32
+	HANDLE handle = openfile(buf.data(), O_RDWR, 0);
+	CPPUNIT_ASSERT(handle != INVALID_HANDLE_VALUE);
+	FILETIME creationTime, lastModTime, lastAccessTime;
+	CPPUNIT_ASSERT(GetFileTime(handle, &creationTime, &lastAccessTime, 
+		&lastModTime) != 0);
+	CPPUNIT_ASSERT(CloseHandle(handle));
+	FILETIME dummyTime = lastModTime;
+	dummyTime.dwHighDateTime -= 100;
+	#else
+	time_t creationTime = st.st_ctime, 
+		lastModTime = st.st_mtime, 
+		lastAccessTime = st.st_atime,
+		dummyTime = lastModTime - 10000;
+	#endif
 
-		// last access time is not backed up, so it cannot be compared
-		SetFileTime(buf.data(), creationTime, lastModTime, dummyTime);
-		CHECK_COMPARE_LOC_OK(3, 4);
-		
-		// last modified time is backed up, so changing it should cause
-		// a compare failure
-		SetFileTime(buf.data(), creationTime, dummyTime, lastAccessTime);
-		CHECK_COMPARE_LOC_FAILS(1, 0, 3, 4);
+	SetFileTime(buf.data(), dummyTime, lastModTime,	lastAccessTime);
+	#ifdef WIN32
+	// creation time is backed up, so changing it should cause
+	// a compare failure
+	CHECK_COMPARE_LOC_FAILS(1, 0, 3, 4);
+	#else
+	// inode change time is backed up, but not restored or compared
+	CHECK_COMPARE_LOC_OK(3, 4);
+	#endif		
 
-		// set back to original values, check that compare succeeds
-		SetFileTime(buf.data(), creationTime, lastModTime, lastAccessTime);
-		CHECK_COMPARE_LOC_OK(3, 4);
-	}
+	// last access time is not backed up, so it cannot be compared
+	SetFileTime(buf.data(), creationTime, lastModTime, dummyTime);
+	CHECK_COMPARE_LOC_OK(3, 4);
+	
+	// last modified time is backed up, so changing it should cause
+	// a compare failure
+	SetFileTime(buf.data(), creationTime, dummyTime, lastAccessTime);
+	CHECK_COMPARE_LOC_FAILS(1, 0, 3, 4);
 
-	{
-		// Add some more files and modify others
-		// Don't use the timestamp flag this time, so they have 
-		// a recent modification time.
-		wxFileName zipTest3(MakeAbsolutePath(_("../test/data/test3.zip")));
-		Unzip(zipTest3, mTestDataDir, false);
-	}
+	// set back to original values, check that compare succeeds
+	SetFileTime(buf.data(), creationTime, lastModTime, lastAccessTime);
+	CHECK_COMPARE_LOC_OK(3, 4);
+}
+
+void TestBackup::TestAddMoreFiles()
+{
+	// Add some more files and modify others
+	// Don't use the timestamp flag this time, so they have 
+	// a recent modification time.
+	wxFileName zipTest3(MakeAbsolutePath(_("../test/data/test3.zip")));
+	Unzip(zipTest3, mTestDataDir, false);
+
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK(3, 4);
+}
+
+void TestBackup::TestRenameDir()
+{
+	// Rename directory
+	wxFileName from = MakeAbsolutePath(mTestDataDir,
+		_("sub23/dhsfdss"));
+	wxFileName to = MakeAbsolutePath(mTestDataDir,
+		_("renamed-dir"));
+	CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
+		to.GetFullPath()));
+	
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK(3, 4);
+	
+	// Rename some files -- one under the threshold, others above
+	/*
+	from = MakeAbsolutePath(mTestDataDir,
+		_("continousupdate"));
+	to = MakeAbsolutePath(mTestDataDir,
+		_("continousupdate-ren"));
+	CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
+		to.GetFullPath()));
+	*/
+
+	from = MakeAbsolutePath(mTestDataDir,
+		_("df324"));
+	to = MakeAbsolutePath(mTestDataDir,
+		_("df324-ren"));
+	CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
+		to.GetFullPath()));
+
+	from = MakeAbsolutePath(mTestDataDir,
+		_("sub23/find2perl"));
+	to = MakeAbsolutePath(mTestDataDir,
+		_("find2perl-ren"));
+	CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
+		to.GetFullPath()));
 
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(3, 4);
 
-	{
-		// Rename directory
-		wxFileName from = MakeAbsolutePath(mTestDataDir,
-			_("sub23/dhsfdss"));
-		wxFileName to = MakeAbsolutePath(mTestDataDir,
-			_("renamed-dir"));
-		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
-			to.GetFullPath()));
-		
-		CHECK_BACKUP_OK();
-		CHECK_COMPARE_LOC_OK(3, 4);
-		
-		// Rename some files -- one under the threshold, others above
-		/*
-		from = MakeAbsolutePath(mTestDataDir,
-			_("continousupdate"));
-		to = MakeAbsolutePath(mTestDataDir,
-			_("continousupdate-ren"));
-		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
-			to.GetFullPath()));
-		*/
+	// Check that modifying files with madly in the future 
+	// timestamps still get added
 
-		from = MakeAbsolutePath(mTestDataDir,
-			_("df324"));
-		to = MakeAbsolutePath(mTestDataDir,
-			_("df324-ren"));
-		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
-			to.GetFullPath()));
+	// Create a new file
+	wxFileName fn = MakeAbsolutePath(mTestDataDir, 
+		_("sub23/in-the-future"));
+	wxFile f;
+	CPPUNIT_ASSERT(f.Create(fn.GetFullPath()));
+	CPPUNIT_ASSERT(f.Write(_("Back to the future!\n")));
+	f.Close();
 
-		from = MakeAbsolutePath(mTestDataDir,
-			_("sub23/find2perl"));
-		to = MakeAbsolutePath(mTestDataDir,
-			_("find2perl-ren"));
-		CPPUNIT_ASSERT(wxRenameFile(from.GetFullPath(), 
-			to.GetFullPath()));
+	// and then move the time forwards!
+	struct timeval times[2];
+	BoxTimeToTimeval(GetCurrentBoxTime() + 
+		SecondsToBoxTime((time_t)(365*24*60*60)), 
+		times[1]);
+	times[0] = times[1];
+	wxCharBuffer buf = fn.GetFullPath().mb_str(wxConvLibc);
+	CPPUNIT_ASSERT(::utimes(buf.data(), times) == 0);
 
-		CHECK_BACKUP_OK();
-		CHECK_COMPARE_LOC_OK(3, 4);
+	CHECK_BACKUP_OK();
+	CHECK_COMPARE_LOC_OK(3, 4);
+}
 
-		// Check that modifying files with madly in the future 
-		// timestamps still get added
+// try a restore
+void TestBackup::TestRestore()
+{
+	BackupStoreDirectory dir;
 
-		{
-			// Create a new file
-			wxFileName fn = MakeAbsolutePath(mTestDataDir, 
-				_("sub23/in-the-future"));
-			wxFile f;
-			CPPUNIT_ASSERT(f.Create(fn.GetFullPath()));
-			CPPUNIT_ASSERT(f.Write(_("Back to the future!\n")));
-			f.Close();
+	CPPUNIT_ASSERT(mapConn->ListDirectory(
+		BackupProtocolClientListDirectory::RootDirectory,
+		BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING,
+		dir));
+	int64_t testId = SearchDir(dir, "testdata");
+	CPPUNIT_ASSERT(testId);
 
-			// and then move the time forwards!
-			struct timeval times[2];
-			BoxTimeToTimeval(GetCurrentBoxTime() + 
-				SecondsToBoxTime((time_t)(365*24*60*60)), 
-				times[1]);
-			times[0] = times[1];
-			wxCharBuffer buf = fn.GetFullPath().mb_str(wxConvLibc);
-			CPPUNIT_ASSERT(::utimes(buf.data(), times) == 0);
-		}
-
-		CHECK_BACKUP_OK();
-		CHECK_COMPARE_LOC_OK(3, 4);
-	}
-		
-	// try a restore
-	{
-		BackupStoreDirectory dir;
-
-		CPPUNIT_ASSERT(mapConn->ListDirectory(
-			BackupProtocolClientListDirectory::RootDirectory,
-			BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING,
-			dir));
-		int64_t testId = SearchDir(dir, "testdata");
-		CPPUNIT_ASSERT(testId);
-
-		wxFileName remStoreDir(mBaseDir.GetFullPath(), _("restore"));
-		CPPUNIT_ASSERT(!remStoreDir.DirExists());
-		// CPPUNIT_ASSERT(wxMkdir(remStoreDir.GetFullPath()));
-		
-		wxCharBuffer buf = remStoreDir.GetFullPath().mb_str(wxConvLibc);
-		CPPUNIT_ASSERT_EQUAL((int)Restore_Complete, mapConn->Restore(
-			testId, buf.data(), NULL, NULL, false, false, false));
-
-		mapConn->Disconnect();
-		
-		CompareExpectNoDifferences(rClientConfig, mTlsContext, 
-			_("testdata"), remStoreDir);
-			
-		DeleteRecursive(remStoreDir);
-	}
+	wxFileName remStoreDir(mBaseDir.GetFullPath(), _("restore"));
+	CPPUNIT_ASSERT(!remStoreDir.DirExists());
+	// CPPUNIT_ASSERT(wxMkdir(remStoreDir.GetFullPath()));
 	
+	wxCharBuffer buf = remStoreDir.GetFullPath().mb_str(wxConvLibc);
+	CPPUNIT_ASSERT_EQUAL((int)Restore_Complete, mapConn->Restore(
+		testId, buf.data(), NULL, NULL, false, false, false));
+
+	mapConn->Disconnect();
+	
+	CompareExpectNoDifferences(*mapClientConfig, mTlsContext, 
+		_("testdata"), remStoreDir);
+		
+	DeleteRecursive(remStoreDir);
+}
+
+void TestBackup::CleanUp()
+{	
 	// clean up
 	DeleteRecursive(mTestDataDir);
 	CPPUNIT_ASSERT(wxRemoveFile(mStoreConfigFileName.GetFullPath()));

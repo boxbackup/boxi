@@ -129,8 +129,6 @@ static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root,
 
 void TestCompare::RunTest()
 {
-	wxLogAsserter logToCppUnit();
-	
 	CPPUNIT_ASSERT(!mpBackupPanel->IsShown());	
 	ClickButtonWaitEvent(ID_Main_Frame, ID_General_Backup_Button);
 	CPPUNIT_ASSERT(mpBackupPanel->IsShown());

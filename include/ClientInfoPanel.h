@@ -25,11 +25,11 @@
 #ifndef _CLIENTINFOPANEL_H
 #define _CLIENTINFOPANEL_H
 
-#include <wx/checkbox.h>
-
 #include "ClientConfig.h"
 #include "ParamPanel.h"
 #include "Property.h"
+
+class wxNotebook;
 
 class ClientInfoPanel : public wxPanel, public ConfigChangeListener {
 	public:

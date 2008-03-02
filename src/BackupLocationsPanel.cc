@@ -24,6 +24,7 @@
 
 #include <wx/dynarray.h>
 #include <wx/filename.h>
+#include <wx/notebook.h>
 // #include <wx/mstream.h>
 
 #include "BackupLocationsPanel.h"

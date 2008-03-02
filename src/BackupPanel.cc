@@ -25,9 +25,10 @@
  * YOU MUST NOT REMOVE THIS ATTRIBUTION!
  */
 
-#include <wx/statbox.h>
-#include <wx/listbox.h>
 #include <wx/button.h>
+#include <wx/listbox.h>
+#include <wx/notebook.h>
+#include <wx/statbox.h>
 
 #include "main.h"
 #include "BackupPanel.h"

@@ -25,6 +25,8 @@
  * YOU MUST NOT REMOVE THIS ATTRIBUTION!
  */
 
+#include <wx/notebook.h>
+
 #include "main.h"
 
 #include "BackupPanel.h"

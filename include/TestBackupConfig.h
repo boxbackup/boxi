@@ -33,7 +33,7 @@
 class TestBackupConfig : public TestWithConfig
 {
 	public:
-	TestBackupConfig() { }
+	TestBackupConfig() : TestWithConfig() { }
 	virtual void RunTest();
 	static CppUnit::Test *suite();
 	

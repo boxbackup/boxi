@@ -33,6 +33,17 @@ class TestConfig : public TestWithConfig
 	TestConfig() { }
 	virtual void RunTest();
 	static CppUnit::Test *suite();
+
+	private:
+	MainFrame* mpMainFrame;
+	wxFileName mConfigFileName;
+	void NewConfig();
+	void LoadConfig();
+	void AssertDefaultConfig();
+	void AssertConfigAsExpected();
+	void ClearConfig();
+	void AssertClean();
+	void AssertDirty();
 };
 
 #endif /* _TESTCONFIG_H */

@@ -29,6 +29,7 @@
 #include <wx/datectrl.h>
 #include <wx/dateevt.h>
 #include <wx/listbox.h>
+#include <wx/notebook.h>
 #include <wx/spinctrl.h>
 #include <wx/statbox.h>
 

@@ -16,9 +16,10 @@
 // #include "Common.h"
 #include <wx/wx.h>
 
+class wxNotebook;
+class wxSpinCtrl;
 class wxTreeItemId;
 class wxTreeCtrl;
-class wxSpinCtrl;
 
 namespace sw {
     class ToolBar;

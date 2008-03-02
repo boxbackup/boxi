@@ -97,19 +97,19 @@ class TestWithServer : public TestWithConfig
 	}
 
 #define CHECK_COMPARE_OK() \
-	CompareExpectNoDifferences(rClientConfig, mTlsContext, _("testdata"), \
-		mTestDataDir);
+	CompareExpectNoDifferences(*mapClientConfig, mTlsContext, \
+		_("testdata"), mTestDataDir);
 
 #define CHECK_COMPARE_FAILS(diffs, modified) \
-	CompareExpectDifferences(rClientConfig, mTlsContext, _("testdata"), \
-		mTestDataDir, diffs, modified);
+	CompareExpectDifferences(*mapClientConfig, mTlsContext, \
+		_("testdata"), mTestDataDir, diffs, modified);
 
 #define CHECK_COMPARE_LOC_OK(exdirs, exfiles) \
-	CompareLocationExpectNoDifferences(rClientConfig, mTlsContext, \
+	CompareLocationExpectNoDifferences(*mapClientConfig, mTlsContext, \
 		"testdata", exdirs, exfiles);
 
 #define CHECK_COMPARE_LOC_FAILS(diffs, modified, exdirs, exfiles) \
-	CompareLocationExpectDifferences(rClientConfig, mTlsContext, "testdata", \
-		diffs, modified, exdirs, exfiles);
+	CompareLocationExpectDifferences(*mapClientConfig, mTlsContext, \
+		"testdata", diffs, modified, exdirs, exfiles);
 
 #endif /* _TESTWITHSERVER_H */
