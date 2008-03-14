@@ -2,7 +2,7 @@
  *            TestBackupConfig.cc
  *
  *  Wed May 10 23:10:16 2006
- *  Copyright 2006-2007 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -149,6 +149,8 @@ void DeleteRecursive(const wxFileName& rPath)
 
 void TestBackupConfig::RunTest()
 {
+	mapImages.reset(new FileImageList());
+
 	wxLogNull logSuppress();
 
 	// create a working directory
@@ -219,7 +221,7 @@ void TestBackupConfig::RunTest()
 	CPPUNIT_ASSERT_EQUAL(wxString(_("/ (local root)")), rootLabel);
 	#endif
 	
-	CPPUNIT_ASSERT_EQUAL(mImages.GetEmptyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(), 
 		mpTree->GetItemImage(rootId));
 		
 	mpLocationsListBox = wxDynamicCast
@@ -355,6 +357,7 @@ void TestBackupConfig::RunTest()
 	#endif
 
 	mTestDataDir = wxFileName(mTempDir.GetFullPath(), _("testdata"));
+	mTestDataDir = wxFileName(mTestDataDir.GetFullPath(), _(""));
 	wxCharBuffer buf = mTestDataDir.GetFullPath().mb_str();
 	CPPUNIT_ASSERT_MESSAGE(buf.data(), mTestDataDir.Mkdir(0700));
 	
@@ -363,53 +366,66 @@ void TestBackupConfig::RunTest()
 
 	{
 		mTestDepth1Dir = wxFileName(mTestDataDir.GetFullPath(),	_("depth1"));
+		mTestDepth1Dir = wxFileName(mTestDepth1Dir.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDepth1Dir.Mkdir(0700));
 		
 		mTestAnotherDir = wxFileName(mTestDataDir.GetFullPath(), _("another"));
+		mTestAnotherDir = wxFileName(mTestAnotherDir.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestAnotherDir.Mkdir(0700));
 
 		mTestFile1 = wxFileName(mTestDepth1Dir.GetFullPath(), _("file1"));
 		CPPUNIT_ASSERT(wxFile().Create(mTestFile1.GetFullPath()));
 		
 		mTestDir1 = wxFileName(mTestDepth1Dir.GetFullPath(), _("dir1"));
+		mTestDir1 = wxFileName(mTestDir1.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDir1.Mkdir(0700));
 		
 		mTestDepth2Dir = wxFileName(mTestDepth1Dir.GetFullPath(), _("depth2"));
+		mTestDepth2Dir = wxFileName(mTestDepth2Dir.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDepth2Dir.Mkdir(0700));
 
 		mTestFile2 = wxFileName(mTestDepth2Dir.GetFullPath(), _("file2"));
 		CPPUNIT_ASSERT(wxFile().Create(mTestFile2.GetFullPath()));
 		mTestDir2 = wxFileName(mTestDepth2Dir.GetFullPath(), _("dir2"));
+		mTestDir2 = wxFileName(mTestDir2.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDir2.Mkdir(0700));
 		mTestDepth3Dir = wxFileName(mTestDepth2Dir.GetFullPath(), _("depth3"));
+		mTestDepth3Dir = wxFileName(mTestDepth3Dir.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDepth3Dir.Mkdir(0700));
 
 		mTestDepth4Dir = wxFileName(mTestDepth3Dir.GetFullPath(), _("depth4"));
+		mTestDepth4Dir = wxFileName(mTestDepth4Dir.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDepth4Dir.Mkdir(0700));
 
 		mTestDepth5Dir = wxFileName(mTestDepth4Dir.GetFullPath(), _("depth5"));
+		mTestDepth5Dir = wxFileName(mTestDepth5Dir.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDepth5Dir.Mkdir(0700));
 
 		mTestFile3 = wxFileName(mTestDepth5Dir.GetFullPath(), _("file3"));
 		CPPUNIT_ASSERT(wxFile().Create(mTestFile3.GetFullPath()));
 		mTestDir3 = wxFileName(mTestDepth5Dir.GetFullPath(), _("dir3"));
+		mTestDir3 = wxFileName(mTestDir3.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDir3.Mkdir(0700));
 		mTestDepth6Dir = wxFileName(mTestDepth5Dir.GetFullPath(), _("depth6"));
+		mTestDepth6Dir = wxFileName(mTestDepth6Dir.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDepth6Dir.Mkdir(0700));
 
 		mTestFile4 = wxFileName(mTestDepth6Dir.GetFullPath(), _("file4"));
 		CPPUNIT_ASSERT(wxFile().Create(mTestFile4.GetFullPath()));
 		mTestDir4 = wxFileName(mTestDepth6Dir.GetFullPath(), _("dir4"));
+		mTestDir4 = wxFileName(mTestDir4.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDir4.Mkdir(0700));
 
 		mTestFile5 = wxFileName(mTestDir4.GetFullPath(), _("file5"));
 		CPPUNIT_ASSERT(wxFile().Create(mTestFile5.GetFullPath()));
 		mTestDir5 = wxFileName(mTestDir4.GetFullPath(), _("dir5"));
+		mTestDir5 = wxFileName(mTestDir5.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDir5.Mkdir(0700));
 
 		mTestFile6 = wxFileName(mTestDir3.GetFullPath(), _("file6"));
 		CPPUNIT_ASSERT(wxFile().Create(mTestFile6.GetFullPath()));
 		mTestDir6 = wxFileName(mTestDir3.GetFullPath(), _("dir6"));
+		mTestDir6 = wxFileName(mTestDir6.GetFullPath(), _(""));
 		CPPUNIT_ASSERT(mTestDir6.Mkdir(0700));
 
 		wxArrayString testDataDirPathDirs = mTestDataDir.GetDirs();
@@ -636,7 +652,7 @@ void TestBackupConfig::TestAddAndRemoveSimpleLocationInTree()
 {
 	ActivateTreeItemWaitEvent(mpTree, mTestDataDirItem);
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(), 
 		mpTree->GetItemImage(mTestDataDirItem));
 
 	const Location::List& rLocations = 
@@ -687,26 +703,26 @@ void TestBackupConfig::TestAddAndRemoveSimpleLocationInTree()
 	
 	CPPUNIT_ASSERT_EQUAL((size_t)3, rEntries.size());
 	
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(), 
 		mpTree->GetItemImage(mTestDataDirItem));
 		
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mAnother));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth1));
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDir1));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mFile1));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDepth2));
 		
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mDir2));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mFile2));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mDepth3));
 
 	// Now add another entry to AlwaysInclude mDepth2
@@ -726,21 +742,21 @@ void TestBackupConfig::TestAddAndRemoveSimpleLocationInTree()
 		)
 	);
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDir1));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mFile1));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth2));
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDir2));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mFile2));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDepth3));
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mDepth4));
 
 	// Include a file and a dir using the wrong kinds of
@@ -764,9 +780,9 @@ void TestBackupConfig::TestAddAndRemoveSimpleLocationInTree()
 		)
 	);
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDir1));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mFile1));
 
 	// Include a file inside an excluded directory. Check
@@ -791,9 +807,9 @@ void TestBackupConfig::TestAddAndRemoveSimpleLocationInTree()
 		)
 	);
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mDir3));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mFile3));
 
 	// Remove the location by clicking in the tree.
@@ -804,7 +820,7 @@ void TestBackupConfig::TestAddAndRemoveSimpleLocationInTree()
 	ActivateTreeItemWaitEvent(mpTree, mTestDataDirItem);
 	MessageBoxCheckFired();
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetEmptyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(), 
 		mpTree->GetItemImage(mTestDataDirItem));
 		
 	CPPUNIT_ASSERT_EQUAL((size_t)0, rLocations.size());
@@ -817,13 +833,13 @@ void TestBackupConfig::TestAddLocationInTree()
 	// and all parent nodes are shown as partially included
 	ActivateTreeItemWaitEvent(mpTree, mTestDataDirItem);
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(), 
 		mpTree->GetItemImage(mTestDataDirItem));
 
 	for (wxTreeItemId nodeId = mpTree->GetItemParent(mTestDataDirItem);
 		nodeId.IsOk(); nodeId = mpTree->GetItemParent(nodeId))
 	{
-		CPPUNIT_ASSERT_EQUAL(mImages.GetPartialImageId(), 
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetPartialImageId(), 
 			mpTree->GetItemImage(nodeId));
 	}
 	
@@ -831,7 +847,7 @@ void TestBackupConfig::TestAddLocationInTree()
 		!(nodeId == mTestDataDirItem); 
 		nodeId = mpTree->GetItemParent(nodeId))
 	{
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(), 
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(), 
 			mpTree->GetItemImage(nodeId));
 	}
 	
@@ -873,16 +889,16 @@ void TestBackupConfig::TestSimpleExcludeInTree()
 		mpExcludeLocsListBox->GetString(0));
 	CPPUNIT_ASSERT_EQUAL(1, mpExcludeListBox->GetCount());
 	CPPUNIT_ASSERT_EQUAL(0, mpExcludeListBox->GetSelection());
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(), 
 		mpTree->GetItemImage(mTestDataDirItem));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(), 
 		mpTree->GetItemImage(mDepth1));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDepth2));
 	for (wxTreeItemId nodeId = mDepth6; !(nodeId == mDepth2); 
 		nodeId = mpTree->GetItemParent(nodeId))
 	{
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 			mpTree->GetItemImage(nodeId));
 	}
 }
@@ -950,47 +966,47 @@ void TestBackupConfig::TestDeepIncludePattern()
 		.Append(wxT("/")));
 	rExcludeList.AddEntry(t8);
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(), 
 		mpTree->GetItemImage(mTestDataDirItem));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(), 
 		mpTree->GetItemImage(mAnother));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(), 
 		mpTree->GetItemImage(mDepth1));
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(), 
 		mpTree->GetItemImage(mDir1));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(), 
 		mpTree->GetItemImage(mFile1));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(), 
 		mpTree->GetItemImage(mDepth2));
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDir2));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mFile2));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth3));
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth4));
 		
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth5));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDir3));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mFile3));
 		
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth6));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDir4));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mFile4));
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDir5));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mFile5));
 
 	rExcludeList.AddEntry(t0);
@@ -1042,33 +1058,33 @@ void TestBackupConfig::TestAlwaysIncludeFileDeepInTree()
 	CPPUNIT_ASSERT_EQUAL(expectedTitle,
 		mpExcludeLocsListBox->GetString(0));
 		
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(), 
 		mpTree->GetItemImage(mTestDataDirItem));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(), 
 		mpTree->GetItemImage(mDepth1));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth2));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth3));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth4));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth5));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mFile3));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDir3));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDepth6));
 	// mFile4 is grey because its parent is excluded,
 	// even though it matches an Exclude entry itself.
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mFile4));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mDir4));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mFile5));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mDir5));
 
 	// deactivate mFile3 again, check that its alwaysinclude
@@ -1098,33 +1114,33 @@ void TestBackupConfig::TestAlwaysIncludeFileDeepInTree()
 	CPPUNIT_ASSERT_EQUAL(expectedTitle,
 		mpExcludeLocsListBox->GetString(0));
 		
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(), 
 		mpTree->GetItemImage(mTestDataDirItem));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(), 
 		mpTree->GetItemImage(mDepth1));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth2));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth3));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth4));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetAlwaysImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetAlwaysImageId(), 
 		mpTree->GetItemImage(mDepth5));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mFile3));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDir3));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(), 
 		mpTree->GetItemImage(mDepth6));
 	// mFile4 is grey because its parent is excluded,
 	// even though it matches an Exclude entry itself.
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mFile4));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mDir4));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mFile5));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(), 
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(), 
 		mpTree->GetItemImage(mDir5));
 }
 

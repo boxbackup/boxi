@@ -53,7 +53,7 @@ class TestBackupConfig : public TestWithConfig
 	wxButton*   mpExcludeDelButton;
 	wxTextCtrl* mpExcludePathCtrl;
 	wxTreeCtrl* mpTree;
-	FileImageList mImages;
+	std::auto_ptr<FileImageList> mapImages;
 	wxFileName mTestDataDir;
 	wxTreeItemId mTestDataDirItem;
 	wxFileName mTestDepth1Dir;
