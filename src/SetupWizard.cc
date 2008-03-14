@@ -2,7 +2,7 @@
  *            SetupWizard.cc
  *
  *  Created 2005-12-24 01:05
- *  Copyright 2005-2006 Chris Wilson <chris-boxisource@qwirx.com>
+ *  Copyright 2005-2008 Chris Wilson <chris-boxisource@qwirx.com>
  ****************************************************************************/
 
 /*
@@ -1506,9 +1506,8 @@ class DataDirectoryPage : public SetupWizardPage
 				BM_SETUP_WIZARD_NO_FILE_NAME);
 			return false;
 		}
-		wxFileName dataDir(dataDirName);
 		
-		if (dataDir.FileExists())
+		if (wxFileName::FileExists(dataDirName))
 		{
 			ShowError(wxT("The specified data directory already "
 				"exists as a file"),
@@ -1516,7 +1515,7 @@ class DataDirectoryPage : public SetupWizardPage
 			return false;
 		}
 
-		if (dataDir.DirExists() && 
+		if (wxFileName::DirExists(dataDirName) && 
 			! wxFile::Access(dataDirName, wxFile::read))
 		{
 			ShowError(wxT("The specified data directory already "
@@ -1526,7 +1525,7 @@ class DataDirectoryPage : public SetupWizardPage
 			return false;
 		}
 
-		if (dataDir.DirExists() && 
+		if (wxFileName::DirExists(dataDirName) && 
 			! wxFile::Access(dataDirName, wxFile::write))
 		{
 			ShowError(wxT("The specified data directory already "
@@ -1536,12 +1535,13 @@ class DataDirectoryPage : public SetupWizardPage
 			return false;
 		}
 
+		wxFileName dataDir(dataDirName);
 		wxFileName parent(dataDir.GetPath());
 		
-		if (dataDir.DirExists())
+		if (wxFileName::DirExists(dataDir.GetFullPath()))
 		{
 			struct stat st;
-			wxCharBuffer buf = dataDirName.mb_str(wxConvLibc);
+			wxCharBuffer buf = dataDirName.mb_str();
 
 			if (stat(buf.data(), &st) != 0 ||
 				(st.st_mode & 0700) != 0700)
@@ -1568,14 +1568,14 @@ class DataDirectoryPage : public SetupWizardPage
 				ShowError(msg, BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
 				return false;
 			}
-		}
-		
-		if (dataDir.DirExists())
-		{
+
+			// dir exists and has good permissions
 			return true;
 		}
+		
+		// dir does not exist, can we create it?
 
-		if (!parent.DirExists())
+		if (!wxFileName::DirExists(parent.GetFullPath()))
 		{
 			wxString msg;
 			msg.Printf(wxT("The specified data directory (%s) "
@@ -1622,7 +1622,7 @@ class DataDirectoryPage : public SetupWizardPage
 
 		{
 			struct stat st;
-			wxCharBuffer buf = dataDirName.mb_str(wxConvLibc);
+			wxCharBuffer buf = dataDirName.mb_str();
 
 			if (stat(buf.data(), &st) != 0 ||
 				(st.st_mode & 0700) != 0700)
