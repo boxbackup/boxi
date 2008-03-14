@@ -4,7 +4,7 @@
  *  Main source code file for Boxi, a graphical user interface for
  *  Box Backup (software developed by Ben Summers).
  *
- *  Copyright 2005-2006 Chris Wilson
+ *  Copyright 2005-2008 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -314,7 +314,8 @@ int BoxiApp::ShowMessageBox
 	
 	if (mExpectedMessageId != messageId)
 	{
-		wxCharBuffer buf = message.mb_str();
+		wxString msg2 = StackWalker::AppendTo(message);
+		wxCharBuffer buf = msg2.mb_str();
 		CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(), 
 			mExpectedMessageId, messageId);
 	}
@@ -334,4 +335,21 @@ void BoxiApp::ExpectMessageBox(message_t messageId, int response,
 		mExpectedMessageId == 0, rLine);
 	mExpectedMessageId       = messageId;
 	mExpectedMessageResponse = response;
+}
+
+void BoxiApp::OnAssertFailure(const wxChar *file, int line,
+	const wxChar *func, const wxChar *cond, const wxChar *msg)
+{
+	if (mTesting)
+	{
+		wxCharBuffer msgBuf  = wxString(msg).mb_str();
+		wxCharBuffer condBuf = wxString(cond).mb_str();
+		wxCharBuffer fileBuf = wxString(file).mb_str();
+		CPPUNIT_ASSERT_MESSAGE_AT_FILE_LINE(msgBuf.data(), 
+			condBuf.data(), fileBuf.data(), line);
+	}
+	else
+	{
+		wxApp::OnAssertFailure(file, line, func, cond, msg);
+	}
 }

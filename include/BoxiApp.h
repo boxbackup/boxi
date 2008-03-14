@@ -2,7 +2,7 @@
  *            BoxiApp.h
  *
  *  Wed May 10 20:50:08 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -63,6 +63,11 @@ class BoxiApp : public wxApp
 	
 	// event handlers
 	void OnIdle(wxIdleEvent& rEvent);
+	virtual void OnAssertFailure(const wxChar *file,
+		int line,
+		const wxChar *func,
+		const wxChar *cond,
+		const wxChar *msg);
 	
 	// cppunit testing interface
 	void SetTestRunner(TestSetUpDecorator* pTestRunner)
