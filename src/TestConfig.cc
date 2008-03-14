@@ -55,17 +55,18 @@ void TestConfig::RunTest()
 	CPPUNIT_ASSERT(configTestDir.Mkdir(wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
 
 	CPPUNIT_ASSERT(configTestDir.DirExists());
-	wxFileName configFileName(configTestDir.GetFullPath(), wxT("config.foo"));
-	CPPUNIT_ASSERT(!configFileName.FileExists());
+	mConfigFileName = wxFileName(configTestDir.GetFullPath(),
+		wxT("config.foo"));
+	CPPUNIT_ASSERT(!mConfigFileName.FileExists());
 
 	{
 		wxFileDialog dialog(
 			NULL, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
 			_("Box Backup client configuration file|bbackupd.conf"), 
 			wxSAVE | wxOVERWRITE_PROMPT, wxDefaultPosition);
-		wxString in = configFileName.GetFullPath();
-		dialog.SetPath(configFileName.GetFullPath());
-		dialog.SetFilename(configFileName.GetFullName());
+		wxString in = mConfigFileName.GetFullPath();
+		dialog.SetPath(mConfigFileName.GetFullPath());
+		dialog.SetFilename(mConfigFileName.GetFullName());
 
 		wxFileName fn(dialog.GetDirectory(), dialog.GetFilename());
 		wxString out = fn.GetFullPath();
@@ -78,7 +79,7 @@ void TestConfig::RunTest()
 			NULL, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
 			_("Box Backup client configuration file|bbackupd.conf"), 
 			wxSAVE | wxOVERWRITE_PROMPT, wxDefaultPosition);
-		wxString in = configFileName.GetFullPath();
+		wxString in = mConfigFileName.GetFullPath();
 		wxGetApp().ExpectFileDialog(in);
 		CPPUNIT_ASSERT(wxGetApp().ShowFileDialog(dialog) == wxID_OK);
 
@@ -112,36 +113,23 @@ void TestConfig::RunTest()
 			NULL, wxT("Open file"), wxT(""), wxT("bbackupd.conf"),  	
 			_("Box Backup client configuration file|bbackupd.conf"), 
 			wxOPEN | wxFILE_MUST_EXIST, wxDefaultPosition);
-		wxString in = configFileName.GetFullPath();
-		dialog.SetPath(configFileName.GetFullPath());
-		dialog.SetFilename(configFileName.GetFullName());
+		wxString in = mConfigFileName.GetFullPath();
+		dialog.SetPath(mConfigFileName.GetFullPath());
+		dialog.SetFilename(mConfigFileName.GetFullName());
 		wxString out = dialog.GetPath();
 		CPPUNIT_ASSERT_EQUAL(in, out);
 	}
 	*/
 	
-	MainFrame* pMainFrame = GetMainFrame();
-	CPPUNIT_ASSERT(pMainFrame);
+	mpMainFrame = GetMainFrame();
+	CPPUNIT_ASSERT(mpMainFrame);
 	
-	mpConfig = pMainFrame->GetConfig();
+	mpConfig = mpMainFrame->GetConfig();
 	CPPUNIT_ASSERT(mpConfig);
 
-	// check that all config options are at defaults
-	#define PROP(name) CPPUNIT_ASSERT_MESSAGE(#name \
-		" should not be dirty yet", mpConfig->name.IsClean());
-	#define STR_PROP_SUBCONF(name, section)  PROP(name)
-	#define STR_PROP(name)  PROP(name)
-	#define INT_PROP(name)  PROP(name)
-	#define BOOL_PROP(name)
-	ALL_PROPS
-	#undef BOOL_PROP
-	#undef INT_PROP
-	#undef STR_PROP
-	#undef STR_PROP_SUBCONF
-	#undef PROP
-	
-	CPPUNIT_ASSERT(mpConfig->IsClean());
-	
+	AssertDefaultConfig();
+	AssertClean();
+
 	// set them to something wacky
 	mpConfig->CertRequestFile.Set(wxT("/foo/req.foo"));
 	CPPUNIT_ASSERT(mpConfig->IsClean());
@@ -169,11 +157,105 @@ void TestConfig::RunTest()
 	mpConfig->ExtendedLogging.Set(true);
 	mpConfig->AutomaticBackup.Set(false);
 
-	// check that all config options are configured
+	AssertConfigAsExpected();
+	AssertDirty();
+	
+	// save the configuration so that we can load it again later
+	// expect the "configuration has errors" message while saving
+	
+	wxGetApp().ExpectMessageBox(BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
+		wxYES, CPPUNIT_SOURCELINE());
+	wxGetApp().ExpectFileDialog(mConfigFileName.GetFullPath());
+	ClickMenuItem(ID_File_Save, mpMainFrame);
+	CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
+	CPPUNIT_ASSERT(wxGetApp().ShowedMessageBox());
+	CPPUNIT_ASSERT(mConfigFileName.FileExists());
+	AssertClean();
+
+	wxRemoveFile(mConfigFileName.GetFullPath());
+	CPPUNIT_ASSERT(!mConfigFileName.FileExists());
+	wxGetApp().ExpectMessageBox(BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
+		wxYES, CPPUNIT_SOURCELINE());
+	ClickMenuItem(ID_File_Save, mpMainFrame);
+	CPPUNIT_ASSERT(wxGetApp().ShowedMessageBox());
+	CPPUNIT_ASSERT(mConfigFileName.FileExists());
+	AssertClean();
+
+	wxRemoveFile(mConfigFileName.GetFullPath());
+	CPPUNIT_ASSERT(!mConfigFileName.FileExists());
+	wxGetApp().ExpectMessageBox(BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
+		wxYES, CPPUNIT_SOURCELINE());
+	wxGetApp().ExpectFileDialog(mConfigFileName.GetFullPath());
+	ClickMenuItem(ID_File_SaveAs, mpMainFrame);
+	CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
+	CPPUNIT_ASSERT(wxGetApp().ShowedMessageBox());
+	CPPUNIT_ASSERT(mConfigFileName.FileExists());
+
+	AssertConfigAsExpected();
+	AssertClean();
+
+	NewConfig();
+	AssertDefaultConfig();
+	AssertClean();
+	
+	LoadConfig();
+	AssertConfigAsExpected();
+	AssertClean();
+
+	ClearConfig();
+	AssertDefaultConfig();
+	AssertDirty();
+
+	// save the configuration with all settings cleared
+	wxRemoveFile(mConfigFileName.GetFullPath());
+	CPPUNIT_ASSERT(!mConfigFileName.FileExists());
+	wxGetApp().ExpectMessageBox(BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
+		wxYES, CPPUNIT_SOURCELINE());
+	wxGetApp().ExpectFileDialog(mConfigFileName.GetFullPath());
+	ClickMenuItem(ID_File_SaveAs, mpMainFrame);
+	CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
+	CPPUNIT_ASSERT(wxGetApp().ShowedMessageBox());
+	CPPUNIT_ASSERT(mConfigFileName.FileExists());
+	AssertDefaultConfig();
+	AssertClean();
+
+	// back to default configuration
+	ClickMenuItem(ID_File_New, mpMainFrame);
+	AssertDefaultConfig();
+	AssertClean();
+
+	// load the saved configuration with all settings cleared
+	// cannot do this because of the bug in the file chooser widget
+	// wxGetApp().ExpectFileDialog(mConfigFileName.GetFullPath());
+	// ClickMenuItem(ID_File_Open, mpMainFrame);
+	// CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
+	mpMainFrame->DoFileOpen(mConfigFileName.GetFullPath());
+	AssertDefaultConfig();
+	AssertClean();
+
+	// back to default configuration again
+	ClickMenuItem(ID_File_New, mpMainFrame);
+	AssertDefaultConfig();
+	AssertClean();
+	
+	// close the main frame, check that it closes cleanly
+	ClickMenuItem(wxID_EXIT, mpMainFrame);
+	CPPUNIT_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
+	CPPUNIT_ASSERT(!FindWindow(ID_Main_Frame));
+}
+
+void TestConfig::NewConfig()
+{
+	// file new, check that the configuration is fresh
+	// and all settings are at their defaults
+	ClickMenuItem(ID_File_New, mpMainFrame);
+}
+
+void TestConfig::AssertDefaultConfig()
+{
+	// check that all config options are at defaults
 	#define PROP(name) CPPUNIT_ASSERT_MESSAGE(#name \
-		" should be configured by now", mpConfig->name.IsConfigured()); \
-		CPPUNIT_ASSERT_MESSAGE(#name \
-		" should be dirty by now", !mpConfig->name.IsClean());
+		" should not be dirty yet", mpConfig->name.IsClean());
 	#define STR_PROP_SUBCONF(name, section)  PROP(name)
 	#define STR_PROP(name)  PROP(name)
 	#define INT_PROP(name)  PROP(name)
@@ -185,64 +267,6 @@ void TestConfig::RunTest()
 	#undef STR_PROP_SUBCONF
 	#undef PROP
 	
-	CPPUNIT_ASSERT(mpConfig->CertRequestFile.Is(wxT("/foo/req.foo")));
-	CPPUNIT_ASSERT(mpConfig->CertificateFile.Is(wxT("/foo/cert.foo")));
-	CPPUNIT_ASSERT(mpConfig->PrivateKeyFile.Is (wxT("/foo/privatekey.foo")));
-	CPPUNIT_ASSERT(mpConfig->DataDirectory.Is  (wxT("/var/bbackupd/foo")));
-	CPPUNIT_ASSERT(mpConfig->NotifyScript.Is   (wxT("/foo/foo.sh")));
-	CPPUNIT_ASSERT(mpConfig->TrustedCAsFile.Is (wxT("/foo/serverCA.foo")));
-	CPPUNIT_ASSERT(mpConfig->KeysFile.Is       (wxT("/foo/keysfile.foo")));
-	CPPUNIT_ASSERT(mpConfig->StoreHostname.Is  (wxT("host.foo.bar")));
-	CPPUNIT_ASSERT(mpConfig->SyncAllowScript.Is(wxT("/foo/sync.sh")));
-	CPPUNIT_ASSERT(mpConfig->CommandSocket.Is  (wxT("/foo/socket.foo")));
-	CPPUNIT_ASSERT(mpConfig->PidFile.Is        (wxT("/foo/pid.foo")));
-	CPPUNIT_ASSERT(mpConfig->StoreObjectInfoFile.Is(wxT("/foo/cache.foo")));
-	CPPUNIT_ASSERT(mpConfig->AccountNumber.Is(12345));
-	CPPUNIT_ASSERT(mpConfig->UpdateStoreInterval.Is(1));
-	CPPUNIT_ASSERT(mpConfig->MinimumFileAge.Is(2));
-	CPPUNIT_ASSERT(mpConfig->MaxUploadWait.Is(3));
-	CPPUNIT_ASSERT(mpConfig->FileTrackingSizeThreshold.Is(4));
-	CPPUNIT_ASSERT(mpConfig->DiffingUploadSizeThreshold.Is(5));
-	CPPUNIT_ASSERT(mpConfig->MaximumDiffingTime.Is(6));
-	CPPUNIT_ASSERT(mpConfig->MaxFileTimeInFuture.Is(7));
-	CPPUNIT_ASSERT(mpConfig->KeepAliveTime.Is(8));
-	CPPUNIT_ASSERT(mpConfig->ExtendedLogging.Is(true));
-	CPPUNIT_ASSERT(mpConfig->AutomaticBackup.Is(false));
-	
-	// save the configuration so that we can load it again later
-	// expect the "configuration has errors" message while saving
-	
-	CPPUNIT_ASSERT(!mpConfig->IsClean());
-	wxGetApp().ExpectMessageBox(BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
-		wxYES, CPPUNIT_SOURCELINE());
-	wxGetApp().ExpectFileDialog(configFileName.GetFullPath());
-	ClickMenuItem(ID_File_Save, pMainFrame);
-	CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
-	CPPUNIT_ASSERT(wxGetApp().ShowedMessageBox());
-	CPPUNIT_ASSERT(configFileName.FileExists());
-	CPPUNIT_ASSERT(mpConfig->IsClean());
-
-	wxRemoveFile(configFileName.GetFullPath());
-	CPPUNIT_ASSERT(!configFileName.FileExists());
-	wxGetApp().ExpectMessageBox(BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
-		wxYES, CPPUNIT_SOURCELINE());
-	ClickMenuItem(ID_File_Save, pMainFrame);
-	CPPUNIT_ASSERT(wxGetApp().ShowedMessageBox());
-	CPPUNIT_ASSERT(configFileName.FileExists());
-
-	wxRemoveFile(configFileName.GetFullPath());
-	CPPUNIT_ASSERT(!configFileName.FileExists());
-	wxGetApp().ExpectMessageBox(BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
-		wxYES, CPPUNIT_SOURCELINE());
-	wxGetApp().ExpectFileDialog(configFileName.GetFullPath());
-	ClickMenuItem(ID_File_SaveAs, pMainFrame);
-	CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
-	CPPUNIT_ASSERT(wxGetApp().ShowedMessageBox());
-	CPPUNIT_ASSERT(configFileName.FileExists());
-
-	// file new, check that the configuration is fresh
-	// and all settings are at their defaults
-	ClickMenuItem(ID_File_New, pMainFrame);
 	CPPUNIT_ASSERT(mpConfig->IsClean());
 	
 	CPPUNIT_ASSERT(!mpConfig->CertRequestFile.IsConfigured());
@@ -268,13 +292,36 @@ void TestConfig::RunTest()
 	CPPUNIT_ASSERT(!mpConfig->KeepAliveTime.IsConfigured());
 	CPPUNIT_ASSERT(mpConfig->ExtendedLogging.Is(false));
 	CPPUNIT_ASSERT(mpConfig->AutomaticBackup.Is(true));
+}
 
+void TestConfig::LoadConfig()
+{
 	// open the saved configuration again
 	// cannot do this because of the bug in the file chooser widget
-	// wxGetApp().ExpectFileDialog(configFileName.GetFullPath());
-	// ClickMenuItem(ID_File_Open, pMainFrame);
+	// wxGetApp().ExpectFileDialog(mConfigFileName.GetFullPath());
+	// ClickMenuItem(ID_File_Open, mpMainFrame);
 	// CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
-	pMainFrame->DoFileOpen(configFileName.GetFullPath());
+	mpMainFrame->DoFileOpen(mConfigFileName.GetFullPath());
+	AssertConfigAsExpected();
+}
+
+void TestConfig::AssertConfigAsExpected()
+{
+	// check that all config options are configured
+	#define PROP(name) \
+		CPPUNIT_ASSERT_MESSAGE(#name \
+			" should be configured by now", \
+			mpConfig->name.IsConfigured());
+	#define STR_PROP_SUBCONF(name, section)  PROP(name)
+	#define STR_PROP(name)  PROP(name)
+	#define INT_PROP(name)  PROP(name)
+	#define BOOL_PROP(name)
+	ALL_PROPS
+	#undef BOOL_PROP
+	#undef INT_PROP
+	#undef STR_PROP
+	#undef STR_PROP_SUBCONF
+	#undef PROP
 
 	CPPUNIT_ASSERT(!mpConfig->CertRequestFile.IsConfigured());
 	CPPUNIT_ASSERT(mpConfig->CertificateFile.Is(wxT("/foo/cert.foo")));
@@ -299,11 +346,12 @@ void TestConfig::RunTest()
 	CPPUNIT_ASSERT(mpConfig->KeepAliveTime.Is(8));
 	CPPUNIT_ASSERT(mpConfig->ExtendedLogging.Is(true));
 	CPPUNIT_ASSERT(mpConfig->AutomaticBackup.Is(false));
-	CPPUNIT_ASSERT(mpConfig->IsClean());
+}
 
+void TestConfig::ClearConfig()
+{
 	// check that all config options are configured, and clear them
-	#define PROP(name) CPPUNIT_ASSERT_MESSAGE(#name \
-		" should be configured by now", mpConfig->name.IsConfigured()); \
+	#define PROP(name) \
 		mpConfig->name.Clear(); \
 		CPPUNIT_ASSERT(!mpConfig->name.IsConfigured());
 	#define STR_PROP_SUBCONF(name, section)  PROP(name)
@@ -316,31 +364,13 @@ void TestConfig::RunTest()
 	#undef STR_PROP
 	#undef STR_PROP_SUBCONF
 	#undef PROP
+}
 
-	// save the configuration with all settings cleared
-	wxRemoveFile(configFileName.GetFullPath());
-	CPPUNIT_ASSERT(!configFileName.FileExists());
-	wxGetApp().ExpectMessageBox(BM_MAIN_FRAME_CONFIG_HAS_ERRORS_WHEN_SAVING,
-		wxYES, CPPUNIT_SOURCELINE());
-	wxGetApp().ExpectFileDialog(configFileName.GetFullPath());
-	ClickMenuItem(ID_File_SaveAs, pMainFrame);
-	CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
-	CPPUNIT_ASSERT(wxGetApp().ShowedMessageBox());
-	CPPUNIT_ASSERT(configFileName.FileExists());
-
-	// back to default configuration
-	ClickMenuItem(ID_File_New, pMainFrame);
-	CPPUNIT_ASSERT(mpConfig->IsClean());
-
-	// load the saved configuration with all settings cleared
-	// cannot do this because of the bug in the file chooser widget
-	// wxGetApp().ExpectFileDialog(configFileName.GetFullPath());
-	// ClickMenuItem(ID_File_Open, pMainFrame);
-	// CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
-	pMainFrame->DoFileOpen(configFileName.GetFullPath());
-
-	// check that no options are configured
-	#define PROP(name) CPPUNIT_ASSERT(!mpConfig->name.IsConfigured());
+void TestConfig::AssertClean()
+{
+	// check that all config options are clean
+	#define PROP(name) \
+		CPPUNIT_ASSERT(mpConfig->name.IsClean());
 	#define STR_PROP_SUBCONF(name, section)  PROP(name)
 	#define STR_PROP(name)  PROP(name)
 	#define INT_PROP(name)  PROP(name)
@@ -351,13 +381,23 @@ void TestConfig::RunTest()
 	#undef STR_PROP
 	#undef STR_PROP_SUBCONF
 	#undef PROP
-
-	// back to default configuration again
-	ClickMenuItem(ID_File_New, pMainFrame);
 	CPPUNIT_ASSERT(mpConfig->IsClean());
-	
-	// close the main frame, check that it closes cleanly
-	ClickMenuItem(wxID_EXIT, pMainFrame);
-	CPPUNIT_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
-	CPPUNIT_ASSERT(!FindWindow(ID_Main_Frame));
+}
+
+void TestConfig::AssertDirty()
+{
+	// check that all config options are clean
+	#define PROP(name) \
+		CPPUNIT_ASSERT(!mpConfig->name.IsClean());
+	#define STR_PROP_SUBCONF(name, section)  PROP(name)
+	#define STR_PROP(name)  PROP(name)
+	#define INT_PROP(name)  PROP(name)
+	#define BOOL_PROP(name)
+	ALL_PROPS
+	#undef BOOL_PROP
+	#undef INT_PROP
+	#undef STR_PROP
+	#undef STR_PROP_SUBCONF
+	#undef PROP
+	CPPUNIT_ASSERT(!mpConfig->IsClean());
 }
