@@ -327,7 +327,8 @@ void TestWizard::RunTest()
 
 	TestAccountPage();
 	TestPrivateKeyPage();
-	TestCertRequestPage();	
+	TestCertExistsPage();
+	TestCertRequestPage();
 	SignCertificate();
 	TestCertificatePage();
 	TestCryptoKeyPage();
@@ -402,6 +403,7 @@ void TestWizard::TestPrivateKeyPage()
 
 	mConfigTestDir.AssignTempFileName(wxT("boxi-configTestDir-"));
 	CPPUNIT_ASSERT(wxRemoveFile(mConfigTestDir.GetFullPath()));
+	mConfigTestDir = wxFileName(mConfigTestDir.GetFullPath(), _(""));
 	CPPUNIT_ASSERT(mConfigTestDir.Mkdir(wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
 	
 	mTempDir.AssignTempFileName(wxT("boxi-tempdir-"));
@@ -435,8 +437,9 @@ void TestWizard::TestPrivateKeyPage()
 	// create the directory, but not the file
 	// make the directory not writable
 	// expect BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE
-	CPPUNIT_ASSERT(mTempDir.Mkdir(wxS_IRUSR | wxS_IXUSR));
-	CPPUNIT_ASSERT(mTempDir.DirExists());
+	CPPUNIT_ASSERT(wxFileName::Mkdir(mTempDir.GetFullPath(),
+		wxS_IRUSR | wxS_IXUSR));
+	CPPUNIT_ASSERT(wxFileName::DirExists(mTempDir.GetFullPath()));
 
 	#ifndef WIN32 // it is writable on Windows
 	CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
@@ -449,8 +452,9 @@ void TestWizard::TestPrivateKeyPage()
 	CheckForwardError(BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
 	
 	// make the directory read write
-	CPPUNIT_ASSERT(mTempDir.Rmdir());
-	CPPUNIT_ASSERT(mTempDir.Mkdir(wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
+	CPPUNIT_ASSERT(wxFileName::Rmdir(mTempDir.GetFullPath()));
+	CPPUNIT_ASSERT(wxFileName::Mkdir(mTempDir.GetFullPath(),
+		wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
 	
 	// create a new file in the directory, make it read only, 
 	// and change the filename to refer to it. 
@@ -1114,7 +1118,7 @@ void TestWizard::TestDataDirPage()
 	CheckForwardError(BM_SETUP_WIZARD_NO_FILE_NAME);
 	
 	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
-	CPPUNIT_ASSERT(!mTempDir.DirExists());
+	CPPUNIT_ASSERT(!wxFileName::DirExists(mTempDir.GetFullPath()));
 	wxFile temp;
 	CPPUNIT_ASSERT(temp.Create(mTempDir.GetFullPath()));
 	CPPUNIT_ASSERT(mTempDir.FileExists());
