@@ -153,6 +153,8 @@ static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root,
 
 void TestRestore::RunTest()
 {
+	mapImages.reset(new FileImageList());
+
 	CPPUNIT_ASSERT(!mpBackupPanel->IsShown());	
 	ClickButtonWaitEvent(ID_Main_Frame, ID_General_Backup_Button);
 	CPPUNIT_ASSERT(mpBackupPanel->IsShown());
@@ -274,7 +276,7 @@ void TestRestore::RunTest()
 		wxCharBuffer buf = expected.mb_str();
 		CPPUNIT_ASSERT_EQUAL(expected, label);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(), 
-			mImages.GetEmptyImageId(),
+			mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(entry));
 		CPPUNIT_ASSERT_MESSAGE(buf.data(),
 			mpRestoreTree->GetItemTextColour(entry) ==
@@ -286,7 +288,7 @@ void TestRestore::RunTest()
 		{
 			ActivateTreeItemWaitEvent(mpRestoreTree, entry);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(),
-				mImages.GetCheckedImageId(),
+				mapImages->GetCheckedImageId(),
 				mpRestoreTree->GetItemImage(entry));
 		}
 	}
@@ -307,9 +309,9 @@ void TestRestore::RunTest()
 		CPPUNIT_ASSERT(entries[0].IsInclude());
 	}
 
-	CPPUNIT_ASSERT_EQUAL(mImages.GetPartialImageId(),
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetPartialImageId(),
 		mpRestoreTree->GetItemImage(mLocationId));
-	CPPUNIT_ASSERT_EQUAL(mImages.GetPartialImageId(),
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetPartialImageId(),
 		mpRestoreTree->GetItemImage(mRootId));
 	
 	CPPUNIT_ASSERT_EQUAL(1, pLocsList->GetCount());
@@ -398,17 +400,17 @@ void TestRestore::TestRestoreWholeDir()
 		if (mpRestoreTree->GetItemText(entry).IsSameAs(_("sub23")))
 		{
 			ActivateTreeItemWaitEvent(mpRestoreTree, entry);
-			CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+			CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 				mpRestoreTree->GetItemImage(entry));
 		}
 		else if (mpRestoreTree->GetItemText(entry).IsSameAs(_("df9834.dsf")))
 		{
-			CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+			CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 				mpRestoreTree->GetItemImage(entry));
 		}
 		else
 		{
-			CPPUNIT_ASSERT_EQUAL(mImages.GetEmptyImageId(),
+			CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 				mpRestoreTree->GetItemImage(entry));
 		}
 	}
@@ -448,13 +450,13 @@ void TestRestore::TestRestoreSpec()
 	
 	sub23id = GetItemIdFromPath(mpRestoreTree, mLocationId, _("sub23"));
 	CPPUNIT_ASSERT(sub23id.IsOk());
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 		mpRestoreTree->GetItemImage(sub23id));
 	
 	dhsfdss = GetItemIdFromPath(mpRestoreTree, mLocationId, 
 		_("sub23/dhsfdss"));
 	CPPUNIT_ASSERT(dhsfdss.IsOk());
-	CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(),
+	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(),
 		mpRestoreTree->GetItemImage(dhsfdss));
 }
 
@@ -464,21 +466,21 @@ void TestRestore::TestDoubleIncludes()
 	// another included item (i.e. double included)
 	{		
 		ActivateTreeItemWaitEvent(mpRestoreTree, sub23id);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetEmptyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(sub23id));
-		CPPUNIT_ASSERT_EQUAL(mImages.GetEmptyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
 		
 		ActivateTreeItemWaitEvent(mpRestoreTree, dhsfdss);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetPartialImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetPartialImageId(),
 			mpRestoreTree->GetItemImage(sub23id));
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
 
 		ActivateTreeItemWaitEvent(mpRestoreTree, sub23id);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(sub23id));
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
 	}
 
@@ -514,9 +516,9 @@ void TestRestore::TestDoubleAndConflictingIncludes()
 	// and the exclude used.
 	{
 		ActivateTreeItemWaitEvent(mpRestoreTree, dhsfdss);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(sub23id));
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
 	}
 
@@ -564,25 +566,25 @@ void TestRestore::TestIncludeInsideExclude()
 	// include a file and a dir inside the excluded dir, check that
 	// both are restored properly.
 	{
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(),
 			mpRestoreTree->GetItemImage(bfdlink_h));
 	
 		ActivateTreeItemWaitEvent(mpRestoreTree, bfdlink_h);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(bfdlink_h));
 
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedGreyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(),
 			mpRestoreTree->GetItemImage(dfsfd));
 	
 		ActivateTreeItemWaitEvent(mpRestoreTree, dfsfd);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(dfsfd));
 
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(),
 			mpRestoreTree->GetItemImage(a_out_h));
 	}
 
@@ -625,43 +627,43 @@ void TestRestore::TestRestoreServerRoot()
 {
 	// clear all entries, select the server root
 	{
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCrossedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
 		ActivateTreeItemWaitEvent(mpRestoreTree, dhsfdss);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedGreyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
 
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(sub23id));		
 		ActivateTreeItemWaitEvent(mpRestoreTree, sub23id);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetPartialImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetPartialImageId(),
 			mpRestoreTree->GetItemImage(sub23id));
 
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
 		ActivateTreeItemWaitEvent(mpRestoreTree, dhsfdss);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetPartialImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetPartialImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
 		
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(bfdlink_h));
 		ActivateTreeItemWaitEvent(mpRestoreTree, bfdlink_h);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetEmptyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(bfdlink_h));
 	
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(dfsfd));
 		ActivateTreeItemWaitEvent(mpRestoreTree, dfsfd);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetEmptyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(dfsfd));
 	
-		CPPUNIT_ASSERT_EQUAL(mImages.GetEmptyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
 
-		CPPUNIT_ASSERT_EQUAL(mImages.GetEmptyImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(mRootId));
 		ActivateTreeItemWaitEvent(mpRestoreTree, mRootId);
-		CPPUNIT_ASSERT_EQUAL(mImages.GetCheckedImageId(),
+		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(mRootId));
 	}
 

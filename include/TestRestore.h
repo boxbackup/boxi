@@ -46,7 +46,7 @@ class TestRestore : public TestWithServer
 	wxFileName testdataRestored;
 	wxTreeItemId sub23id, dhsfdss, mRootId, dfsfd, bfdlink_h, a_out_h, 
 		mLocationId;
-	FileImageList mImages;
+	std::auto_ptr<FileImageList> mapImages;
 	wxTreeCtrl* mpRestoreTree;
 
 	void TestRestoreWholeDir();
