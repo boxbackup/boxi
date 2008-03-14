@@ -2,7 +2,7 @@
  *            TestFrame.h
  *
  *  Sun Jan 22 22:35:37 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -26,6 +26,8 @@
 #define _TESTFRAME_H
 
 #include <vector>
+
+#include <wx/stackwalk.h>
 
 // #include <wx/wx.h>
 
@@ -100,11 +102,24 @@ class TestSetUpDecorator : public CppUnit::TestSetUp
 		CppUnit::Message(message, "Expression: " #condition), \
 		(line));
 
+#define CPPUNIT_ASSERT_MESSAGE_AT_FILE_LINE(message, condition, file, line) \
+	CppUnit::Asserter::failIf(!condition, \
+		CppUnit::Message(message, "Expression: " #condition), \
+		CppUnit::SourceLine(file, line));
+
 #define CPPUNIT_ASSERT_EQUAL_AT(expected, actual, line)          \
   ( CPPUNIT_NS::assertEquals( (expected),              \
                               (actual),                \
                               (line),    \
                               "" ) )
+
+/*
+#define CPPUNIT_ASSERT_EQUAL_MESSAGE(expected, actual, message) \
+  ( CPPUNIT_NS::assertEquals( (expected), \
+                              (actual), \
+                              CppUnit::SourceLine(), \
+                              (message) ) )
+*/
 
 namespace CppUnit
 {
@@ -130,6 +145,17 @@ namespace CppUnit
 			// return ost.str();
 		}
 	};
+
+	// specialisation for assertions of equality on signed and
+	// unsigned integers (e.g. integer constants vs. GetCount())
+	inline void assertEquals(int expected,
+		unsigned int actual,
+		SourceLine sourceLine,
+		const std::string &message)
+	{
+		assertEquals((unsigned int)expected, actual,
+			sourceLine, message);
+	}
 }
 
 class wxLogAsserter : public wxLog
@@ -187,37 +213,11 @@ class GuiTestBase : public CppUnit::TestCase
 	
 	private:
 	wxCommandEvent GetButtonClickEvent(wxWindow* pWindow);
-
-	public:	
-	void tearDown()
-	{
-		wxGetApp().ResetMessageBox();
-		
-		for (size_t i = 0; i < wxTopLevelWindows.GetCount(); i++)
-		{
-			wxWindow* pOpenWindow = 
-				wxTopLevelWindows.Item(i)->GetData();
-			CloseWindow(pOpenWindow);
-		}
+	std::auto_ptr<wxLogAsserter> mapAsserter;
 	
-		try
-		{	
-			while (wxTopLevelWindows.GetCount() > 0)
-			{
-				CPPUNIT_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
-			}
-		}
-		catch (std::exception &e)
-		{
-			printf("Caught exception %s in GuiTestBase::tearDown\n",
-				e.what());
-		}
-		catch (...)
-		{
-			printf("Caught unknown exception in "
-				"GuiTestBase::tearDown\n");
-		}
-	}	
+	public:
+	void setUp();
+	void tearDown();
 };
 
 class TestWithConfig : public GuiTestBase
@@ -232,6 +232,19 @@ class TestWithConfig : public GuiTestBase
 		if (mpConfig) mpConfig->Reset();
 		this->GuiTestBase::tearDown();
 	}
+};
+
+class StackWalker : public wxStackWalker
+{
+	private:
+	wxString m_StackTrace;
+
+	protected:
+	void OnStackFrame(const wxStackFrame& frame);
+
+	public:
+	static wxString GetStackTrace();
+	static wxString AppendTo(const wxString& rMessage);
 };
 
 #endif /* _TESTFRAME_H */

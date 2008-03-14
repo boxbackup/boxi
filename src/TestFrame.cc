@@ -2,7 +2,7 @@
  *            TestFrame.cc
  *
  *  Sun Jan 22 22:37:04 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -437,7 +437,43 @@ wxLogAsserter::wxLogAsserter()
 }
 
 wxLogAsserter::~wxLogAsserter() { wxLog::SetActiveTarget(mpOldTarget); }
+
+void StackWalker::OnStackFrame(const wxStackFrame& frame)
+{
+	if (frame.HasSourceLocation())
+	{
+		m_StackTrace.Append(frame.GetFileName());
+		m_StackTrace.Append(_(":"));
+		m_StackTrace << frame.GetLine();
+	}
+
+	if (frame.GetModule() != _(""))
+	{
+		m_StackTrace.Append(_("("));
+		m_StackTrace.Append(frame.GetModule());
+		m_StackTrace.Append(_(")"));
+	}
 	
+	m_StackTrace.Append(_(" "));
+	m_StackTrace.Append(frame.GetName());
+	m_StackTrace.Append(_("\n"));
+}
+
+wxString StackWalker::GetStackTrace()
+{ 
+	StackWalker walker;
+	walker.Walk();
+	return walker.m_StackTrace;
+}
+
+wxString StackWalker::AppendTo(const wxString& rMessage)
+{
+	wxString newMessage = rMessage;
+	newMessage.Append(_("\n"));
+	newMessage.Append(GetStackTrace());
+	return newMessage;
+}
+
 void wxLogAsserter::DoLog(wxLogLevel level, const wxChar *msg, time_t timestamp)
 {
 	wxString msgOut;
@@ -463,13 +499,55 @@ void wxLogAsserter::DoLog(wxLogLevel level, const wxChar *msg, time_t timestamp)
 		default:
 			msgOut.Printf(_("Unknown (level %d): "), level);
 	}
-	
+
+	msgOut.Append(msg);
+
+	msgOut.Append(_("\n"));
+	msgOut.Append(StackWalker::GetStackTrace());
+
 	wxCharBuffer buf = msgOut.mb_str();
 	CPPUNIT_ASSERT_MESSAGE(buf.data(), false);
 }
 
 GuiTestBase::GuiTestBase() 
 : CppUnit::TestCase("GuiTestBase") { }
+
+void GuiTestBase::setUp()
+{
+	mapAsserter.reset(new wxLogAsserter);
+}
+
+void GuiTestBase::tearDown()
+{
+	wxGetApp().ResetMessageBox();
+	
+	for (size_t i = 0; i < wxTopLevelWindows.GetCount(); i++)
+	{
+		wxWindow* pOpenWindow = 
+			wxTopLevelWindows.Item(i)->GetData();
+		CloseWindow(pOpenWindow);
+	}
+
+	try
+	{	
+		while (wxTopLevelWindows.GetCount() > 0)
+		{
+			CPPUNIT_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
+		}
+	}
+	catch (std::exception &e)
+	{
+		printf("Caught exception %s in GuiTestBase::tearDown\n",
+			e.what());
+	}
+	catch (...)
+	{
+		printf("Caught unknown exception in "
+			"GuiTestBase::tearDown\n");
+	}
+
+	mapAsserter.reset();
+}	
 
 class GuiStarter : public TestSetUpDecorator
 {
