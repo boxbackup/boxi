@@ -1,6 +1,0 @@
-
-For compilation and installation instructions, see the web site at
-
-	http://www.fluffy.co.uk/boxbackup/
-
-
