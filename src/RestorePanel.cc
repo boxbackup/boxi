@@ -2,7 +2,7 @@
  *            RestorePanel.cc
  *
  *  2005-12-31
- *  Copyright 2005-2006 Chris Wilson
+ *  Copyright 2005-2008 Chris Wilson
  *  Email <chris-boxisource@qwirx.com>
  ****************************************************************************/
 
@@ -25,9 +25,12 @@
  * YOU MUST NOT REMOVE THIS ATTRIBUTION!
  */
 
+#include "SandBox.h"
+
 #include <wx/button.h>
 #include <wx/datectrl.h>
 #include <wx/dateevt.h>
+#include <wx/filename.h>
 #include <wx/listbox.h>
 #include <wx/notebook.h>
 #include <wx/spinctrl.h>
