@@ -2,8 +2,8 @@
  *            BackupFilesPanel.h
  *
  *  Tue Mar  1 00:24:11 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2008 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -44,69 +44,6 @@
 class LocalServerSettings {
 	public:
 	bool mConnectOnDemand;
-};
-
-/**
-  * LocalFileTreeNode 
-  * Represents tree node state and generates structure of the
-  * Backup FileTree.
-  */
-  
-class LocalFileTreeNode : public wxTreeItemData {
-	public:
-	wxTreeItemId 		mTreeId;
-	ClientConfig*		mpConfig;
-	LocalServerSettings* mpServerSettings;
-	ServerConnection*   mpServerConnection;
-	wxTreeCtrl*			mpTreeCtrl;
-	LocalFileTreeNode*	mpRootNode;
-	LocalFileTreeNode*	mpParentNode;
-	wxString			mFileName;
-	bool				mIsDirectory;
-	wxString			mFullPath;
-	wxString			mLocationString;
-	wxString            mLocationPath;
-	wxString			mExcludedByString;
-	wxString			mIncludedByString;
-	bool				mExcluded;
-	Location*			mpLocation;
-	MyExcludeEntry*		mpExcludedBy;
-	MyExcludeEntry*		mpIncludedBy;
-	int64_t				mBoxFileId;
-	wxDateTime          mBoxFileLastModified;
-	wxDateTime          mLocalFileLastModified;
-	bool				mServerStateKnown;
-	bool				mFoundOnServer;
-	
-	LocalFileTreeNode();
-	~LocalFileTreeNode();
-	void AddChildren();
-	void ShowChildren(wxListCtrl *targetList);
-	void SetChecked(bool checked) { this->checked = checked; }
-	bool IsChecked() { return this->checked; }
-	void UpdateExcludedState(bool updateParents);
-	bool GetBoxFileId();
-	
-	static const int64_t ID_UNKNOWN = -1;
-	
-	enum ServerState {
-		SS_UNKNOWN = 0,
-		SS_OUTSIDE,
-		SS_EXCLUDED,
-		SS_ALIEN,
-		SS_MISSING,
-		SS_OUTOFDATE,
-		SS_TOONEW,
-		SS_DIRECTORY,
-		SS_PARTIAL,
-		SS_UPTODATE,
-	};
-
-	ServerState mServerState;
-	
-	private:
-	void ScanChildrenAndList(wxListCtrl *targetList, bool recurse);
-	bool checked;
 };
 
 /**
