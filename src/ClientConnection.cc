@@ -24,6 +24,8 @@
  * Contains software developed by Ben Summers
  */
 
+#include "SandBox.h"
+
 #include <iostream>
 
 #include <wx/file.h>
@@ -33,9 +35,8 @@
 #include <wx/tokenzr.h>
 #include <wx/txtstrm.h>
 
-#include "SandBox.h"
-#include "ClientConnection.h"
 #include "BoxException.h"
+#include "ClientConnection.h"
 
 ClientConnection::ClientConnection(ClientConfig* pConfig, 
 				 const wxString& rExecutablePath,
