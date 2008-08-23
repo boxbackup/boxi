@@ -113,6 +113,8 @@ class TestSetUpDecorator : public CppUnit::TestSetUp
                               (line),    \
                               "" ) )
 
+#define CPPUNIT_ASSERT_MESSAGE_WX(message, condition) \
+	CPPUNIT_ASSERT_MESSAGE(wxCharBuffer(message.mb_str()).data(), condition)
 /*
 #define CPPUNIT_ASSERT_EQUAL_MESSAGE(expected, actual, message) \
   ( CPPUNIT_NS::assertEquals( (expected), \
@@ -234,6 +236,7 @@ class TestWithConfig : public GuiTestBase
 	}
 };
 
+#if wxUSE_STACKWALKER
 class StackWalker : public wxStackWalker
 {
 	private:
@@ -246,5 +249,6 @@ class StackWalker : public wxStackWalker
 	static wxString GetStackTrace();
 	static wxString AppendTo(const wxString& rMessage);
 };
+#endif
 
 #endif /* _TESTFRAME_H */
