@@ -2,7 +2,7 @@
  *            Property.h
  *
  *  Mon Feb 28 23:36:29 2005
- *  Copyright 2005-2006 Chris Wilson
+ *  Copyright 2005-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -77,11 +77,12 @@ class Property {
 	Property(const char * pKeyName, PropertyChangeListener* pListener);
 	virtual ~Property() { }
 	
-	virtual void SetFrom(const Configuration* pConf) = 0;
+	virtual void SetFrom(const Configuration& rConf) = 0;
 	virtual void SetClean() = 0;
 	virtual bool IsClean () = 0;
 	virtual void Reset   () = 0;
 	virtual void Revert  () = 0;
+	virtual bool IsDefault() = 0;
 	const std::string& GetKeyName() { return mKeyName; }
 };
 
@@ -90,14 +91,15 @@ class BoolProperty : public Property
 	public:
 	BoolProperty(const char * pKeyName, bool value, 
 		PropertyChangeListener* pListener);
-	BoolProperty(const char * pKeyName, const Configuration* pConf,
+	BoolProperty(const char * pKeyName, const Configuration& rConf,
 		PropertyChangeListener* pListener);
 	
-	virtual void SetFrom(const Configuration* pConf);
+	virtual void SetFrom(const Configuration& rConf);
 	virtual void Reset();
 	virtual void Revert();
 	virtual void SetClean();
 	virtual bool IsClean();
+	virtual bool IsDefault();
 
 	const bool* GetPointer();
 	void Set(bool newValue);
@@ -116,15 +118,16 @@ class IntProperty : public Property
 	public:
 	IntProperty(const char * pKeyName, int value,
 		PropertyChangeListener* pListener);
-	IntProperty(const char * pKeyName, const Configuration* pConf,
+	IntProperty(const char * pKeyName, const Configuration& rConf,
 		PropertyChangeListener* pListener);
 	IntProperty(const char * pKeyName, PropertyChangeListener* pListener);
 	
-	virtual void SetFrom(const Configuration* pConf);
+	virtual void SetFrom(const Configuration& rConf);
 	virtual void Reset();
 	virtual void Revert();
 	virtual void SetClean();
 	virtual bool IsClean();
+	virtual bool IsDefault();
 
 	const int* GetPointer();
 	void Set(int newValue);
@@ -133,6 +136,7 @@ class IntProperty : public Property
 	bool GetInto(wxString& rDest);
 	bool GetInto(std::string& rDest);
 	bool GetInto(int& dest);
+	int GetInt() { return *(GetPointer()); }
 	bool IsConfigured() { return mConfigured; }
 	bool Is(int expectedValue)
 	{ return mConfigured && mValue == expectedValue; }
@@ -147,15 +151,16 @@ class StringProperty : public Property
 	public:
 	StringProperty(const char * pKeyName, const std::string& value,
 		PropertyChangeListener* pListener);
-	StringProperty(const char * pKeyName, const Configuration* pConf,
+	StringProperty(const char * pKeyName, const Configuration& rConf,
 		PropertyChangeListener* pListener);
 	StringProperty(const char * pKeyName, PropertyChangeListener* pListener);
 
-	virtual void SetFrom(const Configuration* pConf);
+	virtual void SetFrom(const Configuration& rConf);
 	virtual void Reset();
 	virtual void Revert();
 	virtual void SetClean();
 	virtual bool IsClean();
+	virtual bool IsDefault();
 		
 	const std::string* GetPointer();
 	void Set(const wxString&    rNewValue);
@@ -167,6 +172,7 @@ class StringProperty : public Property
 	bool IsConfigured() { return mConfigured; }
 	bool Is(const wxString& expectedValue)
 	{ return mConfigured && expectedValue.IsSameAs(wxString(mValue.c_str(), wxConvLibc)); }
+	std::string GetString() { return *GetPointer(); }
 	
 	private:
 	std::string mValue, mOriginalValue, mDefaultValue;

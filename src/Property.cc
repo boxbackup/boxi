@@ -2,7 +2,7 @@
  *            Property.cc
  *
  *  Thu Dec  1 12:55:13 2005
- *  Copyright 2005-2006 Chris Wilson
+ *  Copyright 2005-2008 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -42,7 +42,7 @@ BoolProperty::BoolProperty
 : Property(pKeyName, pListener) 
 {
 	mValue = value;
-	mConfigured = TRUE;
+	mConfigured = true;
 	
 	mDefaultValue = mValue;
 	mDefaultConfigured = mConfigured;
@@ -53,24 +53,24 @@ BoolProperty::BoolProperty
 BoolProperty::BoolProperty
 (
 	const char * pKeyName, 
-	const Configuration* pConf,
+	const Configuration& rConf,
 	PropertyChangeListener* pListener
 ) 
 : Property(pKeyName, pListener) 
 {
-	SetFrom(pConf);
+	SetFrom(rConf);
 
 	mDefaultValue = mValue;
 	mDefaultConfigured = mConfigured;
 }
 
-void BoolProperty::SetFrom(const Configuration* pConf) 
+void BoolProperty::SetFrom(const Configuration& rConf) 
 {
-	if (pConf->KeyExists(mKeyName.c_str())) {
-		mValue = pConf->GetKeyValueBool(mKeyName.c_str());
-		mConfigured = TRUE;
+	if (rConf.KeyExists(mKeyName)) {
+		mValue = rConf.GetKeyValueBool(mKeyName);
+		mConfigured = true;
 	} else {
-		mConfigured = FALSE;
+		mConfigured = false;
 	}
 	SetClean();
 }
@@ -82,16 +82,16 @@ const bool* BoolProperty::GetPointer()
 
 void BoolProperty::Set(bool newValue) 
 {
-	bool changed = (newValue != mValue || mConfigured == FALSE);
+	bool changed = (newValue != mValue || mConfigured == false);
 	mValue = newValue; 
-	mConfigured = TRUE; 
+	mConfigured = true; 
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
 void BoolProperty::Clear()
 { 
-	bool changed = (mConfigured == TRUE);
-	mConfigured = FALSE; 
+	bool changed = (mConfigured == true);
+	mConfigured = false; 
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
@@ -117,8 +117,8 @@ void BoolProperty::SetClean()
 
 bool BoolProperty::IsClean()  
 { 
-	if (mConfigured != mWasConfigured) return FALSE;
-	if (!mConfigured) return TRUE;
+	if (mConfigured != mWasConfigured) return false;
+	if (!mConfigured) return true;
 	return (mOriginalValue == mValue);
 }
 
@@ -126,6 +126,13 @@ void BoolProperty::Revert()
 { 
 	mConfigured = mWasConfigured;
 	mValue = mOriginalValue;
+}
+
+bool BoolProperty::IsDefault()  
+{ 
+	if (mConfigured != mDefaultConfigured) return false;
+	if (!mConfigured) return true;
+	return (mDefaultValue == mValue);
 }
 
 IntProperty::IntProperty
@@ -137,7 +144,7 @@ IntProperty::IntProperty
 : Property(pKeyName, pListener) 
 {
 	mValue = value;
-	mConfigured = TRUE;
+	mConfigured = true;
 	
 	mDefaultValue = mValue;
 	mDefaultConfigured = mConfigured;
@@ -148,12 +155,12 @@ IntProperty::IntProperty
 IntProperty::IntProperty
 (
 	const char * pKeyName, 
-	const Configuration* pConf,
+	const Configuration& rConf,
 	PropertyChangeListener* pListener
 ) 
 : Property(pKeyName, pListener)
 {
-	SetFrom(pConf);
+	SetFrom(rConf);
 
 	mDefaultValue = mValue;
 	mDefaultConfigured = mConfigured;
@@ -167,7 +174,7 @@ IntProperty::IntProperty
 : Property(pKeyName, pListener) 
 {
 	this->mValue = 0;
-	this->mConfigured = FALSE;
+	this->mConfigured = false;
 
 	mDefaultValue = mValue;
 	mDefaultConfigured = mConfigured;
@@ -175,13 +182,13 @@ IntProperty::IntProperty
 	SetClean();
 }
 
-void IntProperty::SetFrom(const Configuration* pConf) 
+void IntProperty::SetFrom(const Configuration& rConf) 
 {
-	if (pConf->KeyExists(mKeyName.c_str())) {
-		this->mValue = pConf->GetKeyValueInt(mKeyName.c_str());
-		this->mConfigured = TRUE;
+	if (rConf.KeyExists(mKeyName)) {
+		this->mValue = rConf.GetKeyValueInt(mKeyName);
+		this->mConfigured = true;
 	} else {
-		this->mConfigured = FALSE;
+		this->mConfigured = false;
 	}
 	SetClean();
 }
@@ -193,9 +200,9 @@ const int* IntProperty::GetPointer()
 
 void IntProperty::Set(int newValue) 
 { 
-	bool changed = (newValue != mValue || mConfigured == FALSE);
+	bool changed = (newValue != mValue || mConfigured == false);
 	mValue = newValue; 
-	mConfigured = TRUE; 
+	mConfigured = true; 
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
@@ -203,7 +210,7 @@ bool IntProperty::SetFromString(const wxString& rSource)
 {
 	if (rSource.Length() == 0) {
 		Clear();
-		return TRUE;
+		return true;
 	}
 	
 	unsigned int tempValue;
@@ -218,17 +225,17 @@ bool IntProperty::SetFromString(const wxString& rSource)
 	}
 	
 	if (*endptr != '\0') {
-		return FALSE;
+		return false;
 	}
 
 	Set(tempValue);
-	return TRUE;
+	return true;
 }
 
 void IntProperty::Clear() 
 { 
-	bool changed = (mConfigured == TRUE);
-	mConfigured = FALSE;
+	bool changed = (mConfigured == true);
+	mConfigured = false;
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
@@ -247,19 +254,19 @@ void IntProperty::Revert()
 
 bool IntProperty::GetInto(wxString& rDest) 
 { 
-	if (!mConfigured) return FALSE;
+	if (!mConfigured) return false;
 	rDest.Printf(wxT("%d"), mValue);
-	return TRUE;
+	return true;
 }
 
 bool IntProperty::GetInto(std::string& rDest) 
 { 
-	if (!mConfigured) return FALSE;
+	if (!mConfigured) return false;
 	wxString formatted;
 	formatted.Printf(wxT("%d"), mValue);
 	wxCharBuffer buf = formatted.mb_str(wxConvLibc);
 	rDest = buf.data();
-	return TRUE;
+	return true;
 }
 
 bool IntProperty::GetInto(int& dest) 
@@ -277,9 +284,16 @@ void IntProperty::SetClean()
 
 bool IntProperty::IsClean()  
 {
-	if (mConfigured != mWasConfigured) return FALSE;
-	if (!mConfigured) return TRUE;
+	if (mConfigured != mWasConfigured) return false;
+	if (!mConfigured) return true;
 	return (mOriginalValue == mValue);
+}
+
+bool IntProperty::IsDefault()  
+{ 
+	if (mConfigured != mDefaultConfigured) return false;
+	if (!mConfigured) return true;
+	return (mDefaultValue == mValue);
 }
 
 StringProperty::StringProperty
@@ -293,9 +307,9 @@ StringProperty::StringProperty
 	this->mValue = value;
 
 	if (value.length() > 0)
-		this->mConfigured = TRUE;
+		this->mConfigured = true;
 	else
-		this->mConfigured = FALSE;
+		this->mConfigured = false;
 
 	mDefaultValue = mValue;
 	mDefaultConfigured = mConfigured;
@@ -306,12 +320,12 @@ StringProperty::StringProperty
 StringProperty::StringProperty
 (
 	const char * pKeyName, 
-	const Configuration* pConf,
+	const Configuration& rConf,
 	PropertyChangeListener* pListener
 ) 
 : Property(pKeyName, pListener) 
 {
-	SetFrom(pConf);
+	SetFrom(rConf);
 
 	mDefaultValue = mValue;
 	mDefaultConfigured = mConfigured;
@@ -324,7 +338,7 @@ StringProperty::StringProperty
 ) 
 : Property(pKeyName, pListener) 
 {
-	this->mConfigured = FALSE;
+	this->mConfigured = false;
 
 	SetClean();
 
@@ -332,13 +346,13 @@ StringProperty::StringProperty
 	mDefaultConfigured = mConfigured;
 }
 
-void StringProperty::SetFrom(const Configuration* pConf)	
+void StringProperty::SetFrom(const Configuration& rConf)	
 {
-	if (pConf->KeyExists(mKeyName.c_str())) {
-		this->mValue = pConf->GetKeyValue(mKeyName.c_str());
-		this->mConfigured = TRUE;
+	if (rConf.KeyExists(mKeyName)) {
+		this->mValue = rConf.GetKeyValue(mKeyName);
+		this->mConfigured = true;
 	} else {
-		this->mConfigured = FALSE;
+		this->mConfigured = false;
 	}
 	SetClean();
 }
@@ -351,33 +365,33 @@ const std::string* StringProperty::GetPointer()
 void StringProperty::Set(const wxString& rNewValue) 
 {
 	wxString oldValueString(mValue.c_str(), wxConvLibc);
-	bool changed = (rNewValue != oldValueString || mConfigured == FALSE);
+	bool changed = (rNewValue != oldValueString || mConfigured == false);
 	wxCharBuffer buf = rNewValue.mb_str(wxConvLibc);
 	mValue = buf.data(); 
-	mConfigured = TRUE; 
+	mConfigured = true; 
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
 void StringProperty::Set(const std::string& rNewValue) 
 { 
-	bool changed = (rNewValue != mValue || mConfigured == FALSE);
+	bool changed = (rNewValue != mValue || mConfigured == false);
 	mValue = rNewValue; 
-	mConfigured = TRUE; 
+	mConfigured = true; 
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
 void StringProperty::Set(const char * pNewValue) 
 {	
-	bool changed = (pNewValue != mValue || mConfigured == FALSE);
+	bool changed = (pNewValue != mValue || mConfigured == false);
 	mValue = pNewValue; 
-	mConfigured = TRUE; 
+	mConfigured = true; 
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
 void StringProperty::Clear() 
 { 
-	bool changed = (mConfigured == TRUE);
-	mConfigured = FALSE;
+	bool changed = (mConfigured == true);
+	mConfigured = false;
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
 }
 
@@ -416,7 +430,14 @@ void StringProperty::SetClean()
 
 bool StringProperty::IsClean()  
 { 
-	if (mConfigured != mWasConfigured) return FALSE;
-	if (!mConfigured) return TRUE;
+	if (mConfigured != mWasConfigured) return false;
+	if (!mConfigured) return true;
 	return (mOriginalValue == mValue);
+}
+
+bool StringProperty::IsDefault()  
+{ 
+	if (mConfigured != mDefaultConfigured) return false;
+	if (!mConfigured) return true;
+	return (mDefaultValue == mValue);
 }
