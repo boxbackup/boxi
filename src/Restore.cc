@@ -48,6 +48,8 @@
 //
 // --------------------------------------------------------------------------
 
+#include "SandBox.h"
+
 #include <wx/wx.h>
 
 #include <sys/types.h>
@@ -57,8 +59,6 @@
 #include <unistd.h>
 #include <limits.h>
 #include <stdio.h>
-
-#include "SandBox.h"
 
 #define NDEBUG
 #include "Box.h"
