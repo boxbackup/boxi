@@ -31,7 +31,7 @@
 
 #include "ServerTLS.h"
 #include "Daemon.h"
-#include "BackupContext.h"
+#include "BackupStoreContext.h"
 #include "Configuration.h"
 #include "TLSContext.h"
 #include "BackupQueries.h"
@@ -106,6 +106,7 @@ class StoreServerThread : public wxThread
 	{
 		wxCharBuffer buf = rFilename.mb_str(wxConvLibc);
 		mDaemon.Load(buf.data());
+		mDaemon.SetSingleProcess(true);
 		mDaemon.Setup();
 	}
 
@@ -189,7 +190,8 @@ void CompareLocationExpectNoDifferences(const Configuration& rClientConfig,
 
 void CompareLocationExpectDifferences(const Configuration& rClientConfig, 
 	TLSContext& rTlsContext, const std::string& rLocationName, 
-	int numDiffs, int numDiffsModTime, int excludedDirs, int excludedFiles);
+	int numDiffs, int numDiffsModTime, int numUnchecked, int excludedDirs,
+	int excludedFiles);
 
 int64_t SearchDir(BackupStoreDirectory& rDir, const std::string& rChildName);
 

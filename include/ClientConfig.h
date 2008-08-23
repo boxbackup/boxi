@@ -2,7 +2,7 @@
  *            ClientConfig.h
  *
  *  Mon Feb 28 22:52:06 2005
- *  Copyright 2005-2006 Chris Wilson
+ *  Copyright 2005-2008 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -28,15 +28,9 @@
 #include "Configuration.h"
 
 #include "main.h"
-#include "Property.h"
+#include "ConfigChangeListener.h"
 #include "Location.h"
-
-class ConfigChangeListener 
-{
-	public:
-	virtual ~ConfigChangeListener() { }
-	virtual void NotifyChange() { }
-};
+#include "Property.h"
 
 class ClientConfig : 
 	public PropertyChangeListener, 
@@ -72,17 +66,19 @@ class ClientConfig :
 	bool IsClean();
 
 	void Load(const wxString& rConfigFileName);
+	void Load(const Configuration& rBoxConfig);
 	bool Save();
 	bool Save(const wxString& rConfigFileName);
 	void Reset();
+	Configuration GetBoxConfig();
 
-	const Location::List& GetLocations() { return mLocations; }
-	void AddLocation    (const Location& rNewLocation);
-	void ReplaceLocation(int index, const Location& rNewLocation);
+	const BoxiLocation::List& GetLocations() { return mLocations; }
+	void AddLocation    (const BoxiLocation& rNewLocation);
+	void ReplaceLocation(int index, const BoxiLocation& rNewLocation);
 	void RemoveLocation (int index);
-	void RemoveLocation (const Location& rOldLocation);
-	Location* GetLocation(const Location& rConstLocation);
-	Location* GetLocation(const wxString& rName);
+	void RemoveLocation (const BoxiLocation& rOldLocation);
+	BoxiLocation* GetLocation(const BoxiLocation& rConstLocation);
+	BoxiLocation* GetLocation(const wxString& rName);
 	
 	void AddListener   (ConfigChangeListener* pNewListener);
 	void RemoveListener(ConfigChangeListener* pOldListener);
@@ -91,8 +87,8 @@ class ClientConfig :
 	// implement PropertyChangeListener
 	virtual void OnPropertyChange   (Property*      pProp);
 	// implement LocationChangeListener
-	virtual void OnLocationChange   (Location*      pLocation);
-	virtual void OnExcludeListChange(MyExcludeList* pExcludeList);
+	virtual void OnLocationChange   (BoxiLocation*  pLocation);
+	virtual void OnExcludeListChange(BoxiExcludeList* pExcludeList);
 	
 	bool Check(wxString& rMsg);
 	
@@ -105,17 +101,18 @@ class ClientConfig :
 	
 	private:
 	wxString mConfigFileName;
-	std::auto_ptr<Configuration> mapConfig;
-	Location::List mLocations;
+	std::auto_ptr<Configuration> mapOriginalConfig;
+	BoxiLocation::List mLocations;
 	std::vector<ConfigChangeListener*> mListeners;
 	
-	static Location::List GetConfigurationLocations
+	static BoxiLocation::List GetConfigurationLocations
 		(const Configuration& conf);
-
-	/*
-	wxString ConvertCygwinPathToWindows(const char *cygPath);
-	wxString ConvertWindowsPathToCygwin(const char *winPath);
-	*/
+	
+	void AddToConfig(StringProperty& rProperty, Configuration& rConfig,
+		std::string rSubBlockName);
+	void AddToConfig(StringProperty& rProperty, Configuration& rConfig);
+	void AddToConfig(IntProperty& rProperty,    Configuration& rConfig);
+	void AddToConfig(BoolProperty& rProperty,   Configuration& rConfig);
 };
 
 #endif /* _CLIENTCONFIG_H */

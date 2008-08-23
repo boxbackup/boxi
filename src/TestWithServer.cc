@@ -2,7 +2,7 @@
  *            TestWithServer.cc
  *
  *  Sun Sep 24 13:49:55 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -75,63 +75,67 @@ void TestWithServer::setUp()
 	mBaseDir.AssignTempFileName(wxT("boxi-test-tempdir-"));
 	CPPUNIT_ASSERT(mBaseDir.FileExists());
 	CPPUNIT_ASSERT(wxRemoveFile(mBaseDir.GetFullPath()));
-	CPPUNIT_ASSERT(wxMkdir     (mBaseDir.GetFullPath(), 0700));
+
+	mBaseDir = wxFileName(mBaseDir.GetFullPath(), wxT(""));
+	CPPUNIT_ASSERT(mBaseDir.Mkdir(0700));
 	CPPUNIT_ASSERT(mBaseDir.DirExists());
 	
 	// create a directory to hold config files for the tests
-	mConfDir = wxFileName(mBaseDir.GetFullPath(), _("conf"));
-	CPPUNIT_ASSERT(wxMkdir(mConfDir.GetFullPath(), 0700));
+	mConfDir = mBaseDir;
+	mConfDir.AppendDir(wxT("conf"));
+	CPPUNIT_ASSERT(mConfDir.Mkdir(0700));
 	CPPUNIT_ASSERT(mConfDir.DirExists());
 	
 	// create a directory to hold bbstored's store temporarily
-	mStoreDir = wxFileName(mBaseDir.GetFullPath(), _("store"));
-	CPPUNIT_ASSERT(!mStoreDir.DirExists());
-	CPPUNIT_ASSERT(wxMkdir(mStoreDir.GetFullPath(), 0700));
+	mStoreDir = wxFileName(mBaseDir.GetFullPath(), wxT(""));
+	mStoreDir.AppendDir(wxT("store"));
+	CPPUNIT_ASSERT_MESSAGE_WX(mStoreDir.GetPath(), !mStoreDir.DirExists());
+	CPPUNIT_ASSERT(mStoreDir.Mkdir(0700));
 	CPPUNIT_ASSERT(mStoreDir.DirExists());
 
 	// create raidfile.conf for the store daemon
-	mRaidConfigFile = wxFileName(mConfDir.GetFullPath(), _("raidfile.conf"));
+	mRaidConfigFile = wxFileName(mConfDir.GetFullPath(), wxT("raidfile.conf"));
 	CPPUNIT_ASSERT(!mRaidConfigFile.FileExists());
 	
 	{
-		wxFileName mStoreDir0(mStoreDir.GetFullPath(), _("0_0"));
+		wxFileName mStoreDir0(mStoreDir.GetFullPath(), wxT("0_0"));
 		CPPUNIT_ASSERT(wxMkdir(mStoreDir0.GetFullPath(), 0700));
 		CPPUNIT_ASSERT(mStoreDir0.DirExists());
 	
-		wxFileName mStoreDir1(mStoreDir.GetFullPath(), _("0_1"));
+		wxFileName mStoreDir1(mStoreDir.GetFullPath(), wxT("0_1"));
 		CPPUNIT_ASSERT(wxMkdir(mStoreDir1.GetFullPath(), 0700));
 		CPPUNIT_ASSERT(mStoreDir1.DirExists());
 	
-		wxFileName mStoreDir2(mStoreDir.GetFullPath(), _("0_2"));
+		wxFileName mStoreDir2(mStoreDir.GetFullPath(), wxT("0_2"));
 		CPPUNIT_ASSERT(wxMkdir(mStoreDir2.GetFullPath(), 0700));
 		CPPUNIT_ASSERT(mStoreDir2.DirExists());
 	
 		wxFile mRaidConfigFileFile;
 		CPPUNIT_ASSERT(mRaidConfigFileFile.Create(mRaidConfigFile.GetFullPath()));
 		
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("disc0\n")));
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("{\n")));
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("\tSetNumber = 0\n")));
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("\tBlockSize = 2048\n")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("disc0\n")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("{\n")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("\tSetNumber = 0\n")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("\tBlockSize = 2048\n")));
 
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("\tDir0 = ")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("\tDir0 = ")));
 		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(mStoreDir0.GetFullPath()));
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("\n")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("\n")));
 
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("\tDir1 = ")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("\tDir1 = ")));
 		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(mStoreDir1.GetFullPath()));
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("\n")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("\n")));
 		
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("\tDir2 = ")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("\tDir2 = ")));
 		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(mStoreDir2.GetFullPath()));
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("\n")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("\n")));
 
-		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(_("}\n")));
+		CPPUNIT_ASSERT(mRaidConfigFileFile.Write(wxT("}\n")));
 		mRaidConfigFileFile.Close();
 	}
 	
 	// create accounts.txt for the store daemon
-	mAccountsFile = wxFileName(mConfDir.GetFullPath(), _("accounts.txt"));
+	mAccountsFile = wxFileName(mConfDir.GetFullPath(), wxT("accounts.txt"));
 	CPPUNIT_ASSERT(!mAccountsFile.FileExists());
 	
 	{
@@ -140,55 +144,55 @@ void TestWithServer::setUp()
 	}
 	
 	// create bbstored.conf for the store daemon
-	mStoreConfigFileName = wxFileName(mConfDir.GetFullPath(), _("bbstored.conf"));
+	mStoreConfigFileName = wxFileName(mConfDir.GetFullPath(), wxT("bbstored.conf"));
 	
 	{
 		wxFile storeConfigFile;
 		CPPUNIT_ASSERT(storeConfigFile.Create(mStoreConfigFileName.GetFullPath()));
 		
 		CPPUNIT_ASSERT(mRaidConfigFile.FileExists());
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("RaidFileConf = ")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("RaidFileConf = ")));
 		CPPUNIT_ASSERT(storeConfigFile.Write(mRaidConfigFile.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\n")));
 		
-		wxFileName mAccountsFile(mConfDir.GetFullPath(), _("accounts.txt"));
+		wxFileName mAccountsFile(mConfDir.GetFullPath(), wxT("accounts.txt"));
 		CPPUNIT_ASSERT(mAccountsFile.FileExists());
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("AccountDatabase = ")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("AccountDatabase = ")));
 		CPPUNIT_ASSERT(storeConfigFile.Write(mAccountsFile.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\n")));
 		
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("TimeBetweenHousekeeping = 900\n")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("Server\n")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("{\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("TimeBetweenHousekeeping = 900\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("Server\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("{\n")));
 	
-		wxFileName pidFile(mConfDir.GetFullPath(), _("bbstored.pid"));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tPidFile = ")));
+		wxFileName pidFile(mConfDir.GetFullPath(), wxT("bbstored.pid"));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\tPidFile = ")));
 		CPPUNIT_ASSERT(storeConfigFile.Write(pidFile.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\n")));
 	
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tListenAddresses = inet:127.0.0.1\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\tListenAddresses = inet:127.0.0.1\n")));
 		
 		wxFileName serverCert(MakeAbsolutePath(
-			_("../test/config/bbstored/server-cert.pem")));
+			wxT("../test/config/bbstored/server-cert.pem")));
 		CPPUNIT_ASSERT(serverCert.FileExists());
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tCertificateFile = ")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\tCertificateFile = ")));
 		CPPUNIT_ASSERT(storeConfigFile.Write(serverCert.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\n")));
 	
 		wxFileName serverKey(MakeAbsolutePath(
-			_("../test/config/bbstored/server-key.pem")));
+			wxT("../test/config/bbstored/server-key.pem")));
 		CPPUNIT_ASSERT(serverKey.FileExists());
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tPrivateKeyFile = ")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\tPrivateKeyFile = ")));
 		CPPUNIT_ASSERT(storeConfigFile.Write(serverKey.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\n")));
 	
 		wxFileName clientCA(MakeAbsolutePath(
-			_("../test/config/bbstored/client-ca.pem")));
+			wxT("../test/config/bbstored/client-ca.pem")));
 		CPPUNIT_ASSERT(clientCA.FileExists());
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\tTrustedCAsFile = ")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\tTrustedCAsFile = ")));
 		CPPUNIT_ASSERT(storeConfigFile.Write(clientCA.GetFullPath()));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("\n")));
-		CPPUNIT_ASSERT(storeConfigFile.Write(_("}\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("\n")));
+		CPPUNIT_ASSERT(storeConfigFile.Write(wxT("}\n")));
 	
 		storeConfigFile.Close();
 	}
@@ -196,10 +200,10 @@ void TestWithServer::setUp()
 	CPPUNIT_ASSERT(mStoreConfigFileName.FileExists());
 
 	{
-		wxString command = _("../boxbackup/release/bin/bbstoreaccounts"
+		wxString command = wxT("../boxbackup/release/bin/bbstoreaccounts"
 			"/bbstoreaccounts -c ");
 		command.Append(mStoreConfigFileName.GetFullPath());
-		command.Append(_(" create 2 0 100M 200M"));
+		command.Append(wxT(" create 2 0 100M 200M"));
 		
 		long result = wxExecute(command, wxEXEC_SYNC);
 		if (result != 0)
@@ -212,7 +216,8 @@ void TestWithServer::setUp()
 	}
 
 	// create a directory to hold the data that we will be backing up	
-	mTestDataDir = wxFileName(mBaseDir.GetFullPath(), _("testdata"));
+	mTestDataDir = wxFileName(mBaseDir.GetFullPath(), wxT(""));
+	mTestDataDir.AppendDir(wxT("testdata"));
 	CPPUNIT_ASSERT(mTestDataDir.Mkdir(0700));
 	
 	mpMainFrame = GetMainFrame();
@@ -225,7 +230,7 @@ void TestWithServer::setUp()
 	mapServer->Start();
 
 	mpMainFrame->DoFileOpen(MakeAbsolutePath(
-		_("../test/config/bbackupd.conf")).GetFullPath());
+		wxT("../test/config/bbackupd.conf")).GetFullPath());
 	wxString msg;
 	bool isOk = mpConfig->Check(msg);
 
@@ -274,25 +279,16 @@ void TestWithServer::setUp()
 	mpConfig->Save(mClientConfigFile.GetFullPath());
 	CPPUNIT_ASSERT(mClientConfigFile.FileExists());
 
-	{
-		std::string errs;
-		wxCharBuffer buf = mClientConfigFile.GetFullPath().mb_str(wxConvLibc);
-		mapClientConfig = Configuration::LoadAndVerify(buf.data(), 
-			&BackupDaemonConfigVerify, errs);
-		CPPUNIT_ASSERT(mapClientConfig.get());
-		CPPUNIT_ASSERT(errs.empty());
-	}
-	
 	SSLLib::Initialise();
 	// Read in the certificates creating a TLS context
-	std::string certFile(mapClientConfig->GetKeyValue("CertificateFile"));
-	std::string keyFile (mapClientConfig->GetKeyValue("PrivateKeyFile"));
-	std::string caFile  (mapClientConfig->GetKeyValue("TrustedCAsFile"));
+	std::string certFile(mpConfig->CertificateFile.GetString());
+	std::string keyFile (mpConfig->PrivateKeyFile.GetString());
+	std::string caFile  (mpConfig->TrustedCAsFile.GetString());
 	mTlsContext.Initialise(false, // as client
 		certFile.c_str(), keyFile.c_str(), caFile.c_str());
 	
 	// Initialise keys
-	BackupClientCryptoKeys_Setup(mapClientConfig->GetKeyValue("KeysFile").c_str());
+	BackupClientCryptoKeys_Setup(mpConfig->KeysFile.GetString());
 	
 	mpBackupPanel = wxDynamicCast
 	(
@@ -564,7 +560,10 @@ void TestWithServer::tearDown()
 	{
 		mpMainFrame->GetConnection()->Disconnect();
 	}
-	
+
+	// cannot shut down the server with a connection still open.
+	mapConn.reset();
+
 	if (mapServer.get())
 	{
 		mapServer->Stop();
@@ -596,27 +595,30 @@ void TestWithServer::SetupDefaultLocation()
 	CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
 		
 	CPPUNIT_ASSERT(!mpTestDataLocation);
-	Location testDirLoc(_("testdata"), mTestDataDir.GetFullPath(), mpConfig);
+	BoxiLocation testDirLoc(_("testdata"), mTestDataDir.GetPath(), mpConfig);
 	mpConfig->AddLocation(testDirLoc);
 	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
 	mpTestDataLocation = mpConfig->GetLocation(testDirLoc);
 	CPPUNIT_ASSERT(mpTestDataLocation);
 
-	MyExcludeList& rExcludes = mpTestDataLocation->GetExcludeList();
+	BoxiExcludeList& rExcludes = mpTestDataLocation->GetExcludeList();
 
-	#define ADD_ENTRY(type, path) \
-	rExcludes.AddEntry(MyExcludeEntry(theExcludeTypes[type], path))
+	#define ADD_ENTRY(type, value) \
+	rExcludes.AddEntry(BoxiExcludeEntry(theExcludeTypes[type], value))
+	#define ADD_ENTRY_PATH(type, path) \
+	ADD_ENTRY(type, MakeAbsolutePath(mTestDataDir,_(path)).GetFullPath())
 	
-	ADD_ENTRY(ETI_EXCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("excluded_1")).GetFullPath());
-	ADD_ENTRY(ETI_EXCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("excluded_2")).GetFullPath());
+	ADD_ENTRY_PATH(ETI_EXCLUDE_FILE, "excluded_1");
+	ADD_ENTRY_PATH(ETI_EXCLUDE_FILE, "excluded_2");
 	ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, wxString(_("\\.excludethis$")));
 	ADD_ENTRY(ETI_EXCLUDE_FILES_REGEX, wxString(_("EXCLUDE")));
-	ADD_ENTRY(ETI_ALWAYS_INCLUDE_FILE, MakeAbsolutePath(mTestDataDir,_("dont.excludethis")).GetFullPath());
-	ADD_ENTRY(ETI_EXCLUDE_DIR, MakeAbsolutePath(mTestDataDir,_("exclude_dir")).GetFullPath());
-	ADD_ENTRY(ETI_EXCLUDE_DIR, MakeAbsolutePath(mTestDataDir,_("exclude_dir_2")).GetFullPath());
+	ADD_ENTRY_PATH(ETI_ALWAYS_INCLUDE_FILE, "dont.excludethis");
+	ADD_ENTRY_PATH(ETI_EXCLUDE_DIR, "exclude_dir");
+	ADD_ENTRY_PATH(ETI_EXCLUDE_DIR, "exclude_dir_2");
 	ADD_ENTRY(ETI_EXCLUDE_DIRS_REGEX, wxString(_("not_this_dir")));
 	ADD_ENTRY(ETI_ALWAYS_INCLUDE_DIRS_REGEX, wxString(_("ALWAYSINCLUDE")));
 	
+	#undef ADD_ENTRY_PATH
 	#undef ADD_ENTRY
 
 	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());

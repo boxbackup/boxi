@@ -2,7 +2,7 @@
  *            RestoreProgressPanel.h
  *
  *  Sun Sep 3 21:02:39 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -32,17 +32,20 @@
 
 #define NDEBUG
 #include "TLSContext.h"
-#include "BackupClientContext.h"
-#include "BackupClientDirectoryRecord.h"
+// #include "BackupClientContext.h"
+// #include "BackupClientDirectoryRecord.h"
 #include "BackupDaemon.h"
 #include "BackupStoreException.h"
 #undef NDEBUG
 
 #include "BoxiApp.h"
-#include "ClientConfig.h"
-#include "ClientConnection.h"
+// #include "ClientConfig.h"
+// #include "ClientConnection.h"
 #include "ProgressPanel.h"
 
+class wxFileName;
+
+class ClientConfig;
 class ServerCacheNode;
 class ServerConnection;
 class RestoreSpec;
@@ -57,7 +60,7 @@ class RestoreProgressPanel : public ProgressPanel
 		wxWindow*         pParent
 	);
 
-	void StartRestore(const RestoreSpec& rSpec, wxFileName dest);
+	void StartRestore(const RestoreSpec& rSpec, wxFileName& rDest);
 
 	private:
 	ClientConfig*     mpConfig;
@@ -89,8 +92,8 @@ class RestoreProgressPanel : public ProgressPanel
 		ServerCacheNode* pCurrentNode, int blockSize);
 	bool RestoreFilesRecursive(const RestoreSpec& rSpec, 
 		ServerCacheNode* pNode, int64_t parentId, 
-		wxFileName localName, int blockSize);
-	wxFileName MakeLocalPath(wxFileName base, ServerCacheNode* pNode);
+		wxFileName& rLocalName, int blockSize);
+	// wxFileName MakeLocalPath(wxFileName& rBase, ServerCacheNode* pNode);
 
 	friend class TestRestore;
 	int GetConnectionIndex() { return mpConnection->GetConnectionIndex(); }

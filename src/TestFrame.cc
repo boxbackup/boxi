@@ -636,9 +636,9 @@ class GuiTestSuite : public CppUnit::TestFixture
 			) \
 		)
 		
-		ADD_TEST(TestWizard);
-		ADD_TEST(TestBackupConfig);
-		ADD_TEST(TestBackup);
+		// ADD_TEST(TestWizard);
+		// ADD_TEST(TestBackupConfig);
+		// ADD_TEST(TestBackup);
 		ADD_TEST(TestConfig);
 		ADD_TEST(TestRestore);
 		ADD_TEST(TestCompare);

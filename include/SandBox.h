@@ -2,8 +2,8 @@
  *            SandBox.h
  *  Safe way to include Box.h without redefining PACKAGE_NAME, etc.
  *  Mon Apr  4 20:35:39 2005
- *  Copyright  2005  Chris Wilson
- *  Email <boxi_BackupProgressPanel.h@qwirx.com>
+ *  Copyright 2005-2008 Chris Wilson
+ *  Email <chris+boxisource@qwirx.com>
  ****************************************************************************/
 
 /*
@@ -32,6 +32,19 @@
 	#error You must include SandBox.h BEFORE including Box.h or BoxPlatform.h
 #endif
 
+// Must define __MSVCRT_VERSION__ before including anything from wx,
+// and to a sufficiently high version that it works with Box Backup
+// before including Box.h, otherwise these two are mutually incompatible.
+#ifndef __MSVCRT_VERSION__
+	#define __MSVCRT_VERSION__ 0x0601
+#endif
+
+// We always build against Box Backup release objects, which were compiled
+// with NDEBUG defined, so we must do the same
+#ifndef NDEBUG
+	#define NDEBUG
+#endif
+
 #include <wx/wx.h>
 #include <wx/thread.h>
 
@@ -42,9 +55,7 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 
-#define NDEBUG
 #include "Box.h"
-#undef NDEBUG
 
 // now get our old #defines back
 #undef PACKAGE_NAME

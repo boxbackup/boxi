@@ -2,7 +2,7 @@
  *            TestConfig.cc
  *
  *  Tue May  9 19:41:28 2006
- *  Copyright  2006  Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -31,6 +31,7 @@
 #include "ClientConfig.h"
 #include "MainFrame.h"
 #include "TestConfig.h"
+#include "TestFileDialog.h"
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(TestConfig, "WxGuiTest");
 
@@ -52,30 +53,19 @@ void TestConfig::RunTest()
 	wxFileName configTestDir;
 	configTestDir.AssignTempFileName(wxT("boxi-configTestDir-"));
 	CPPUNIT_ASSERT(wxRemoveFile(configTestDir.GetFullPath()));
+	CPPUNIT_ASSERT(!configTestDir.FileExists());
+	
+	configTestDir = wxFileName(configTestDir.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(configTestDir.Mkdir(wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
-
 	CPPUNIT_ASSERT(configTestDir.DirExists());
+	
 	mConfigFileName = wxFileName(configTestDir.GetFullPath(),
 		wxT("config.foo"));
 	CPPUNIT_ASSERT(!mConfigFileName.FileExists());
 
+	// check that the wxFileDialog test hooks work OK
 	{
-		wxFileDialog dialog(
-			NULL, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
-			_("Box Backup client configuration file|bbackupd.conf"), 
-			wxSAVE | wxOVERWRITE_PROMPT, wxDefaultPosition);
-		wxString in = mConfigFileName.GetFullPath();
-		dialog.SetPath(mConfigFileName.GetFullPath());
-		dialog.SetFilename(mConfigFileName.GetFullName());
-
-		wxFileName fn(dialog.GetDirectory(), dialog.GetFilename());
-		wxString out = fn.GetFullPath();
-		CPPUNIT_ASSERT_EQUAL(in, out);
-	}
-
-	// check that test hooks work OK
-	{
-		wxFileDialog dialog(
+		TestFileDialog dialog(
 			NULL, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
 			_("Box Backup client configuration file|bbackupd.conf"), 
 			wxSAVE | wxOVERWRITE_PROMPT, wxDefaultPosition);
@@ -91,6 +81,20 @@ void TestConfig::RunTest()
 	// bug in GTK file chooser widget
 	// http://bugzilla.gnome.org/show_bug.cgi?id=340835
 	/*
+	{
+		wxFileDialog dialog(
+			NULL, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
+			_("Box Backup client configuration file|bbackupd.conf"), 
+			wxSAVE | wxOVERWRITE_PROMPT, wxDefaultPosition);
+		wxString in = mConfigFileName.GetFullPath();
+		dialog.SetPath(mConfigFileName.GetFullPath());
+		dialog.SetFilename(mConfigFileName.GetFullName());
+
+		wxFileName fn(dialog.GetDirectory(), dialog.GetFilename());
+		wxString out = fn.GetFullPath();
+		CPPUNIT_ASSERT_EQUAL(in, out);
+	}
+
 	{
 		GtkWidget* foo = gtk_file_chooser_dialog_new(
 			"hello",
@@ -157,6 +161,7 @@ void TestConfig::RunTest()
 	mpConfig->ExtendedLogging.Set(true);
 	mpConfig->AutomaticBackup.Set(false);
 
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.Is(wxT("/foo/req.foo")));
 	AssertConfigAsExpected();
 	AssertDirty();
 	
@@ -199,6 +204,7 @@ void TestConfig::RunTest()
 	AssertClean();
 	
 	LoadConfig();
+	CPPUNIT_ASSERT(!mpConfig->CertRequestFile.IsConfigured());
 	AssertConfigAsExpected();
 	AssertClean();
 
@@ -225,11 +231,11 @@ void TestConfig::RunTest()
 	AssertClean();
 
 	// load the saved configuration with all settings cleared
-	// cannot do this because of the bug in the file chooser widget
-	// wxGetApp().ExpectFileDialog(mConfigFileName.GetFullPath());
-	// ClickMenuItem(ID_File_Open, mpMainFrame);
-	// CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
-	mpMainFrame->DoFileOpen(mConfigFileName.GetFullPath());
+	// cannot do this because of the bug in the file chooser widget?
+	wxGetApp().ExpectFileDialog(mConfigFileName.GetFullPath());
+	ClickMenuItem(ID_File_Open, mpMainFrame);
+	CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
+	// mpMainFrame->DoFileOpen(mConfigFileName.GetFullPath());
 	AssertDefaultConfig();
 	AssertClean();
 
@@ -255,7 +261,7 @@ void TestConfig::AssertDefaultConfig()
 {
 	// check that all config options are at defaults
 	#define PROP(name) CPPUNIT_ASSERT_MESSAGE(#name \
-		" should not be dirty yet", mpConfig->name.IsClean());
+		" should be at default value", mpConfig->name.IsDefault());
 	#define STR_PROP_SUBCONF(name, section)  PROP(name)
 	#define STR_PROP(name)  PROP(name)
 	#define INT_PROP(name)  PROP(name)
@@ -323,7 +329,6 @@ void TestConfig::AssertConfigAsExpected()
 	#undef STR_PROP_SUBCONF
 	#undef PROP
 
-	CPPUNIT_ASSERT(!mpConfig->CertRequestFile.IsConfigured());
 	CPPUNIT_ASSERT(mpConfig->CertificateFile.Is(wxT("/foo/cert.foo")));
 	CPPUNIT_ASSERT(mpConfig->PrivateKeyFile.Is (wxT("/foo/privatekey.foo")));
 	CPPUNIT_ASSERT(mpConfig->DataDirectory.Is  (wxT("/var/bbackupd/foo")));

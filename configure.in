@@ -14,6 +14,10 @@ if test -z "$CFLAGS"; then
 	export CFLAGS="-g -O0"
 fi
 
+if test -z "$CXXFLAGS"; then
+	export CXXFLAGS="-g -O0"
+fi
+
 AC_ISC_POSIX
 AC_PROG_CC
 AM_PROG_CC_STDC
@@ -22,6 +26,20 @@ AC_CHECK_HEADERS([execinfo.h netinet/in.h regex.h sys/types.h sys/xattr.h])
 
 AC_PROG_CPP
 AC_PROG_CXX
+
+if test "x$GXX" = "xyes"; then
+  # Use -Wall if we have gcc. This gives better warnings
+  AC_SUBST([CXXFLAGS_STRICT], ['-Wall -Wundef'])
+
+  # Use -rdynamic if we have gcc, but not mingw. This is needed for backtrace
+  case $target_os in
+    mingw*) ;;
+    *)
+	dnl AC_SUBST([LDADD_RDYNAMIC], ['-rdynamic'])
+	LDFLAGS="$LDFLAGS -rdynamic"
+	;;
+  esac
+fi
 
 dnl GETTEXT_PACKAGE=boxi
 dnl AC_SUBST(GETTEXT_PACKAGE)
@@ -36,34 +54,32 @@ AM_GNU_GETTEXT
 
 AM_OPTIONS_WXCONFIG
 AM_PATH_WXCONFIG(2.3.2, wxWin=1)
-        if test "$wxWin" != 1; then
-        AC_MSG_ERROR([
-                wxWindows must be installed on your system.
 
-                Please check that wx-config is in path, the directory
-                where wxWindows libraries are installed (returned by
-                'wx-config --libs' or 'wx-config --static --libs' command)
-                is in LD_LIBRARY_PATH or equivalent variable and
-                wxWindows version is 2.3.2 or above.
-                ])
-        else
-               dnl Quick hack until wx-config does it
-               ac_save_LIBS=$LIBS
-               ac_save_CXXFLAGS=$CXXFLAGS
-               LIBS=$WX_LIBS
-               CXXFLAGS=$WX_CXXFLAGS
-               AC_LANG_SAVE
-               AC_LANG_CPLUSPLUS
-               AC_TRY_LINK([#include <wx/wx.h>],
-               [wxString test=""],
-               ,[])
-               AC_LANG_RESTORE
-               LIBS=$ac_save_LIBS
-               CXXFLAGS=$ac_save_CXXFLAGS
-        fi
+if test "$wxWin" != 1; then
+AC_MSG_ERROR([
+	wxWindows must be installed on your system.
 
-
-
+	Please check that wx-config is in path, the directory
+	where wxWindows libraries are installed (returned by
+	'wx-config --libs' or 'wx-config --static --libs' command)
+	is in LD_LIBRARY_PATH or equivalent variable and
+	wxWindows version is 2.3.2 or above.
+	])
+else
+       dnl Quick hack until wx-config does it
+       ac_save_LIBS=$LIBS
+       ac_save_CXXFLAGS=$CXXFLAGS
+       LIBS=$WX_LIBS
+       CXXFLAGS=$WX_CXXFLAGS
+       AC_LANG_SAVE
+       AC_LANG_CPLUSPLUS
+       AC_TRY_LINK([#include <wx/wx.h>],
+       [wxString test=""],
+       ,[])
+       AC_LANG_RESTORE
+       LIBS=$ac_save_LIBS
+       CXXFLAGS=$ac_save_CXXFLAGS
+fi
 
 dnl Checks for libraries.
 
@@ -96,20 +112,37 @@ AC_CHECK_HEADER([regex.h], [have_regex_h=yes])
 
 if test "$have_regex_h" = "yes"; then
   AC_DEFINE([HAVE_REGEX_H], [1], [Define to 1 if regex.h is available])
-  AC_SEARCH_LIBS([regcomp], ["pcreposix -lpcre"], [], [AC_MSG_ERROR(Boxi requires regular expressions)])
+else
+  AC_CHECK_HEADER([pcreposix.h], [have_pcreposix_h=yes])
+fi
+
+if test "$have_pcreposix_h" = "yes"; then
+  AC_DEFINE([PCRE_STATIC], [1], [Box Backup always uses static PCRE])
+  AC_SEARCH_LIBS([regcomp], ["pcreposix -lpcre"],,[have_pcreposix_h=no_regcomp])
+fi
+
+if test "$have_pcreposix_h" = "yes"; then
+  AC_DEFINE([HAVE_PCREPOSIX_H], [1], [Define to 1 if pcreposix.h is available])
+fi
+
+if test "$have_regex_h" = "yes" -o "$have_pcreposix_h" = "yes"; then
+  have_regex_support=yes
+  AC_DEFINE([HAVE_REGEX_SUPPORT], [1], [Define to 1 if regular expressions are supported])
+else
+  AC_MSG_ERROR([[No supported regular expression engine is installed]])
 fi
 
 # extract boxbackup in release build
 if ! (
-	cd boxbackup || exit 1
-	./bootstrap || exit 1 # PATCH IN RELEASE
-	echo "Configuring Box Backup with" \
-		$ax_check_ssl_headers $ax_check_ssl_lib \
-		--host=$host_alias --target=$target_alias
-	./configure $ax_check_ssl_headers $ax_check_ssl_lib \
-		--host=$host_alias --target=$target_alias \
-		|| exit 1
-	mv Makefile Makefile.in || exit 1
+	set -e
+	cd boxbackup
+	./bootstrap # PATCH IN RELEASE
+	export CC CXX CXXFLAGS LDFLAGS LIBS
+	BOX_CONFIG_OPTS="$ax_check_ssl_headers $ax_check_ssl_lib
+		--host=$host_alias --target=$target_alias"
+	echo "Configuring Box Backup with" $BOX_CONFIG_OPTS
+	./configure $BOX_CONFIG_OPTS
+	mv Makefile Makefile.in
 ); then
 	echo "Failed to configure Box Backup, aborting!"
 	exit 1

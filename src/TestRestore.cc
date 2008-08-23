@@ -2,7 +2,7 @@
  *            TestRestore.cc
  *
  *  Wed May 10 23:10:16 2006
- *  Copyright 2006-2007 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -422,7 +422,7 @@ void TestRestore::TestRestoreWholeDir()
 	CPPUNIT_ASSERT(mSub23.DirExists());
 	CPPUNIT_ASSERT(df9834_dsfRestored.FileExists());
 	CompareFiles(df9834_dsfOriginal, df9834_dsfRestored);
-	CompareExpectNoDifferences(*mapClientConfig, mTlsContext,
+	CompareExpectNoDifferences(mpConfig->GetBoxConfig(), mTlsContext,
 		_("testdata/sub23"), mSub23);
 	DeleteRecursive(mSub23);
 	CPPUNIT_ASSERT(wxRemoveFile(df9834_dsfRestored.GetFullPath()));
@@ -502,8 +502,8 @@ void TestRestore::TestDoubleIncludes()
 	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(mSub23.DirExists());
 	CPPUNIT_ASSERT(!df9834_dsfRestored.FileExists());
-	CompareExpectNoDifferences(*mapClientConfig, mTlsContext, _("testdata/sub23"),
-		mSub23);
+	CompareExpectNoDifferences(mpConfig->GetBoxConfig(), mTlsContext,
+		_("testdata/sub23"), mSub23);
 	DeleteRecursive(mSub23);
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
@@ -543,8 +543,8 @@ void TestRestore::TestDoubleAndConflictingIncludes()
 	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(mSub23.DirExists());
 	CPPUNIT_ASSERT(!df9834_dsfRestored.FileExists());
-	CompareExpectDifferences(*mapClientConfig, mTlsContext, _("testdata/sub23"),
-		mSub23, 1, 0);
+	CompareExpectDifferences(mpConfig->GetBoxConfig(), mTlsContext,
+		_("testdata/sub23"), mSub23, 1, 0);
 	DeleteRecursive(mSub23);
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
@@ -616,8 +616,8 @@ void TestRestore::TestIncludeInsideExclude()
 	
 	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(mSub23.DirExists());
-	CompareExpectDifferences(*mapClientConfig, mTlsContext, _("testdata/sub23"),
-		mSub23, 4, 0);
+	CompareExpectDifferences(mpConfig->GetBoxConfig(), mTlsContext,
+		_("testdata/sub23"), mSub23, 4, 0);
 	DeleteRecursive(mSub23);
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
@@ -683,8 +683,8 @@ void TestRestore::TestRestoreServerRoot()
 	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(testdataRestored.DirExists());
 	CPPUNIT_ASSERT(mSub23.DirExists());
-	CompareExpectNoDifferences(*mapClientConfig, mTlsContext, _("testdata"),
-		testdataRestored);
+	CompareExpectNoDifferences(mpConfig->GetBoxConfig(), mTlsContext,
+		_("testdata"), testdataRestored);
 	DeleteRecursive(testdataRestored);
 	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
 	
@@ -703,7 +703,7 @@ void TestRestore::TestOldAndDeletedFilesNotRestored()
 	CHECK_COMPARE_LOC_OK(0, 0);
 
 	Unzip(mTest2ZipFile, mTestDataDir, true);
-	CHECK_COMPARE_LOC_FAILS(2, 0, 0, 0);
+	CHECK_COMPARE_LOC_FAILS(2, 0, 0, 0, 0);
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
 	CHECK_RESTORE_OK(11, "86 kB");
@@ -711,7 +711,7 @@ void TestRestore::TestOldAndDeletedFilesNotRestored()
 	CPPUNIT_ASSERT_EQUAL(7, mpRestoreProgressPanel->GetConnectionIndex());
 
 	Unzip(mTest3ZipFile, mTestDataDir, true);
-	CHECK_COMPARE_LOC_FAILS(12, 0, 0, 0);
+	CHECK_COMPARE_LOC_FAILS(12, 0, 0, 0, 0);
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
 	CHECK_RESTORE_OK(17, "160 kB");

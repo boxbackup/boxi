@@ -25,6 +25,8 @@
  * YOU MUST NOT REMOVE THIS ATTRIBUTION!
  */
 
+#include "SandBox.h"
+
 #include <wx/button.h>
 #include <wx/listbox.h>
 #include <wx/notebook.h>
@@ -85,8 +87,8 @@ void BackupPanel::AddToNotebook(wxNotebook* pNotebook)
 void BackupPanel::Update()
 {
 	mpSourceList->Clear();
-	const Location::List& rLocations = mpConfig->GetLocations();
-	for (Location::ConstIterator pLoc = rLocations.begin();
+	const BoxiLocation::List& rLocations = mpConfig->GetLocations();
+	for (BoxiLocation::ConstIterator pLoc = rLocations.begin();
 		pLoc != rLocations.end(); pLoc++)
 	{
 		mpSourceList->Append(pLoc->GetPath());

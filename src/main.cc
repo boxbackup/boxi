@@ -47,8 +47,9 @@
 #include <cppunit/ui/text/TestRunner.h>
 
 #include "main.h"
-#include "TestFrame.h"
 #include "MainFrame.h"
+#include "TestFrame.h"
+#include "TestFileDialog.h"
 #include "WxGuiTestHelper.h"
 
 // #ifdef HAVE_CONFIG_H
@@ -271,7 +272,7 @@ void BoxiApp::OnIdle(wxIdleEvent& rEvent)
 	}
 }
 
-int BoxiApp::ShowFileDialog(wxFileDialog& rDialog)
+int BoxiApp::ShowFileDialog(TestFileDialog& rDialog)
 {
 	if (!mTesting)
 	{
@@ -314,7 +315,12 @@ int BoxiApp::ShowMessageBox
 	
 	if (mExpectedMessageId != messageId)
 	{
+		#if wxUSE_STACKWALKER
 		wxString msg2 = StackWalker::AppendTo(message);
+		#else
+		wxString msg2 = message;
+		#endif
+
 		wxCharBuffer buf = msg2.mb_str();
 		CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(), 
 			mExpectedMessageId, messageId);

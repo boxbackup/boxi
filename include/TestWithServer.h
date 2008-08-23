@@ -33,9 +33,6 @@ class StoreServer;
 class TestWithServer : public TestWithConfig
 {
 	public:
-	virtual void setUp();
-	virtual void tearDown();
-	virtual ~TestWithServer() { }
 	TestWithServer()
 	: TestWithConfig        (),
 	  mpTestDataLocation    (NULL),
@@ -46,12 +43,17 @@ class TestWithServer : public TestWithConfig
 	  mpBackupStartButton   (NULL),
 	  mpBackupProgressCloseButton (NULL)
 	{ }
-	
+	virtual ~TestWithServer()
+	{ }
+
+	virtual void setUp();
+	virtual void tearDown();
+
 	protected:
 	wxFileName mBaseDir, mConfDir, mStoreDir, mTestDataDir,
 		mStoreConfigFileName, mAccountsFile, mRaidConfigFile,
 		mClientConfigFile;
-	Location*  mpTestDataLocation;
+	BoxiLocation* mpTestDataLocation;
 	MainFrame* mpMainFrame;
 	wxPanel*   mpBackupPanel;
 	wxPanel*   mpBackupProgressPanel;
@@ -61,7 +63,6 @@ class TestWithServer : public TestWithConfig
 
 	std::auto_ptr<StoreServer> mapServer;
 	std::auto_ptr<ServerConnection> mapConn;
-	std::auto_ptr<Configuration> mapClientConfig;
 	TLSContext mTlsContext;
 	
 	void CompareFiles(const wxFileName& first, const wxFileName& second);
@@ -97,19 +98,20 @@ class TestWithServer : public TestWithConfig
 	}
 
 #define CHECK_COMPARE_OK() \
-	CompareExpectNoDifferences(*mapClientConfig, mTlsContext, \
+	CompareExpectNoDifferences(mpConfig->GetBoxConfig(), mTlsContext, \
 		_("testdata"), mTestDataDir);
 
 #define CHECK_COMPARE_FAILS(diffs, modified) \
-	CompareExpectDifferences(*mapClientConfig, mTlsContext, \
+	CompareExpectDifferences(mpConfig->GetBoxConfig(), mTlsContext, \
 		_("testdata"), mTestDataDir, diffs, modified);
 
 #define CHECK_COMPARE_LOC_OK(exdirs, exfiles) \
-	CompareLocationExpectNoDifferences(*mapClientConfig, mTlsContext, \
-		"testdata", exdirs, exfiles);
+	CompareLocationExpectNoDifferences(mpConfig->GetBoxConfig(), \
+		mTlsContext, "testdata", exdirs, exfiles);
 
-#define CHECK_COMPARE_LOC_FAILS(diffs, modified, exdirs, exfiles) \
-	CompareLocationExpectDifferences(*mapClientConfig, mTlsContext, \
-		"testdata", diffs, modified, exdirs, exfiles);
+#define CHECK_COMPARE_LOC_FAILS(diffs, modified, unchecked, exdirs, exfiles) \
+	CompareLocationExpectDifferences(mpConfig->GetBoxConfig(), \
+		mTlsContext, "testdata", diffs, modified, unchecked, exdirs, \
+		exfiles);
 
 #endif /* _TESTWITHSERVER_H */

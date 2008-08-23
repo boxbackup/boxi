@@ -2,7 +2,7 @@
  *            Location.h
  *
  *  Mon Feb 28 23:38:27 2005
- *  Copyright 2005-2006 Chris Wilson
+ *  Copyright 2005-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -66,19 +66,19 @@ enum ExcludedState
 	EST_ALWAYSINCLUDED,
 };
 
-class MyExcludeType 
+class BoxiExcludeType 
 {
 	private:
 
 	public:
-	MyExcludeType(ExcludeSense sense, ExcludeFileDir fileDir, 
+	BoxiExcludeType(ExcludeSense sense, ExcludeFileDir fileDir, 
 		ExcludeMatch match) 
 	: mSense(sense),
 	  mFileOrDir(fileDir),
 	  mMatch(match)
 	{ }
 
-	MyExcludeType(const MyExcludeType& rToCopy)
+	BoxiExcludeType(const BoxiExcludeType& rToCopy)
 	: mSense(rToCopy.mSense),
 	  mFileOrDir(rToCopy.mFileOrDir),
 	  mMatch(rToCopy.mMatch)
@@ -138,7 +138,7 @@ class MyExcludeType
 };
 
 #define numExcludeTypes 8
-extern MyExcludeType theExcludeTypes [];
+extern BoxiExcludeType theExcludeTypes [];
 
 enum ExcludeTypeIndex 
 {
@@ -161,31 +161,31 @@ enum ExcludeTypeIndex
 #define ET_ALWAYS_INCLUDE_FILE        theExcludeTypes[ETI_ALWAYS_INCLUDE_FILE]
 #define ET_ALWAYS_INCLUDE_FILES_REGEX theExcludeTypes[ETI_ALWAYS_INCLUDE_FILES_REGEX]
 
-class Location;
+class BoxiLocation;
 
-class MyExcludeEntry 
+class BoxiExcludeEntry 
 {
 	public:
-	typedef std::list<MyExcludeEntry> List;
+	typedef std::list<BoxiExcludeEntry> List;
 	typedef List::iterator            Iterator;
 	typedef List::const_iterator      ConstIterator;
 
 	private:
-	MyExcludeType* mpType;
+	BoxiExcludeType* mpType;
 	std::string mValue;
 
 	public:
-	MyExcludeEntry(MyExcludeType& rType, const std::string& rValue) 
+	BoxiExcludeEntry(BoxiExcludeType& rType, const std::string& rValue) 
 	: mpType(&rType),
 	  mValue(rValue)
 	{ }
 
-	MyExcludeEntry(MyExcludeType& rType, const wxString& rValue) 
+	BoxiExcludeEntry(BoxiExcludeType& rType, const wxString& rValue) 
 	: mpType(&rType),
 	  mValue(wxCharBuffer(rValue.mb_str(wxConvLibc)).data())
 	{ }
 
-	MyExcludeEntry(const MyExcludeEntry& rToCopy)
+	BoxiExcludeEntry(const BoxiExcludeEntry& rToCopy)
 	: mpType(rToCopy.mpType),
 	  mValue(rToCopy.mValue)
 	{ }
@@ -198,26 +198,26 @@ class MyExcludeEntry
 	const std::string GetFileDirString() const { return mpType->GetFileDirString(); }
 	const std::string GetMatchString()   const { return mpType->GetMatchString(); }
 	
-	MyExcludeType*       GetType()  const { return mpType; }
-	const std::string&   GetValue() const { return mValue; }
+	BoxiExcludeType*   GetType()  const { return mpType; }
+	const std::string& GetValue() const { return mValue; }
 	
 	wxString GetValueString() const 
 	{ 
 		return wxString(mValue.c_str(), wxConvLibc); 
 	}
 	
-	const std::string ToStringType() const { return mpType->ToString(); }
+	const std::string GetTypeName() const { return mpType->ToString(); }
 
 	std::string ToString() const
 	{
 		std::string buffer;
-		buffer.append(ToStringType());
+		buffer.append(GetTypeName());
 		buffer.append(" = ");
 		buffer.append(mValue);
 		return buffer;
 	}
 
-	bool IsSameAs(const MyExcludeEntry& other) const
+	bool IsSameAs(const BoxiExcludeEntry& other) const
 	{
 		if (other.GetSense()   != GetSense())      return FALSE;
 		if (other.GetFileDir() != GetFileDir())    return FALSE;
@@ -227,34 +227,35 @@ class MyExcludeEntry
 	}	
 };
 
-class MyExcludeList;
+class BoxiExcludeList;
 
 class LocationChangeListener 
 {
 	public:
-	virtual void OnLocationChange   (Location*      pLocation)    = 0;
-	virtual void OnExcludeListChange(MyExcludeList* pExcludeList) = 0;
+	virtual void OnLocationChange   (BoxiLocation*    pLocation)    = 0;
+	virtual void OnExcludeListChange(BoxiExcludeList* pExcludeList) = 0;
 	virtual ~LocationChangeListener() {}
 };
 
-class MyExcludeList 
+class BoxiExcludeList 
 {
 	private:
-	MyExcludeEntry::List mEntries;
+	BoxiExcludeEntry::List mEntries;
 	LocationChangeListener* mpListener;
 
 	public:
-	MyExcludeList(LocationChangeListener* pListener) 
+	BoxiExcludeList(LocationChangeListener* pListener) 
 	: mpListener(pListener) { };
 	
-	MyExcludeList(const Configuration& conf, LocationChangeListener* pListener);
+	BoxiExcludeList(const Configuration& conf,
+		LocationChangeListener* pListener);
 	
-	MyExcludeList(const MyExcludeList& rToCopy)
+	BoxiExcludeList(const BoxiExcludeList& rToCopy)
 	: mpListener(rToCopy.mpListener)
 	{
 		mEntries = rToCopy.mEntries;
 	}
-	void CopyFrom(const MyExcludeList& rToCopy)
+	void CopyFrom(const BoxiExcludeList& rToCopy)
 	{
 		mEntries = rToCopy.mEntries;
 
@@ -264,20 +265,24 @@ class MyExcludeList
 		}
 	}
 	
-	const MyExcludeEntry::List& GetEntries() const { return mEntries; }
-	void AddEntry(const MyExcludeEntry& rNewEntry);
-	void InsertEntry(int index, const MyExcludeEntry& rNewEntry);
-	void ReplaceEntry(const MyExcludeEntry& rOldEntry, 
-		const MyExcludeEntry& rNewEntry);
+	const BoxiExcludeEntry::List& GetEntries() const { return mEntries; }
+	void AddEntry(const BoxiExcludeEntry& rNewEntry);
+	void InsertEntry(int index, const BoxiExcludeEntry& rNewEntry);
+	void ReplaceEntry(const BoxiExcludeEntry& rOldEntry, 
+		const BoxiExcludeEntry& rNewEntry);
 	// void RemoveEntry(int index);
-	void RemoveEntry(const MyExcludeEntry& rOldEntry);
-	MyExcludeEntry* UnConstEntry(const MyExcludeEntry& rEntry);
-	bool IsSameAs(const MyExcludeList& rOther) const
+	void RemoveEntry(const BoxiExcludeEntry& rOldEntry);
+	BoxiExcludeEntry* UnConstEntry(const BoxiExcludeEntry& rEntry);
+	bool Contains(const BoxiExcludeEntry& rEntry)
 	{
-		const MyExcludeEntry::List& rOtherEntries = 
+		return (UnConstEntry(rEntry) != NULL);
+	}
+	bool IsSameAs(const BoxiExcludeList& rOther) const
+	{
+		const BoxiExcludeEntry::List& rOtherEntries = 
 			rOther.GetEntries();
 
-		MyExcludeEntry::ConstIterator myPos, otherPos;
+		BoxiExcludeEntry::ConstIterator myPos, otherPos;
 
 		for 
 		(
@@ -306,27 +311,26 @@ class MyExcludeList
 	{ mpListener = pListener; }
 	
 	private:
-	void _AddConfigList(const Configuration& conf, 
-		const std::string& keyName, MyExcludeType& type);
-	void _AddSeparatedList(const std::string& entries, MyExcludeType& type);
-
+	void _AddConfigList(const Configuration& conf, const std::string& keyName,
+		BoxiExcludeType& rType);
+	void _AddSeparatedList(const std::string& entries, BoxiExcludeType& rType);
 };
 
-class Location
+class BoxiLocation
 {
 	public:
-	typedef std::list<Location>  List;
+	typedef std::list<BoxiLocation>  List;
 	typedef List::iterator       Iterator;
 	typedef List::const_iterator ConstIterator;
 
 	private:
 	wxString mName;
 	wxString mPath;
-	MyExcludeList mExcluded;
+	BoxiExcludeList mExcluded;
 	LocationChangeListener* mpListener;
 	
 	public:
-	Location(const wxString& rName, const wxString& rPath, 
+	BoxiLocation(const wxString& rName, const wxString& rPath, 
 		LocationChangeListener* pListener)
 	: mName(rName),
 	  mPath(rPath),
@@ -334,7 +338,7 @@ class Location
 	  mpListener(pListener)
 	{ }
 	
-	Location(const Location& rToCopy) 
+	BoxiLocation(const BoxiLocation& rToCopy) 
 	: mName(rToCopy.mName),
 	  mPath(rToCopy.mPath),
 	  mExcluded(rToCopy.mExcluded),
@@ -343,9 +347,9 @@ class Location
 	
 	const wxString& GetName() const { return mName; }
 	const wxString& GetPath() const { return mPath; }
-	MyExcludeList& GetExcludeList() { return mExcluded; }
-	const MyExcludeList& GetExcludeList() const { return mExcluded; }
-	void SetExcludeList(const MyExcludeList& rSourceList) 
+	BoxiExcludeList& GetExcludeList() { return mExcluded; }
+	const BoxiExcludeList& GetExcludeList() const { return mExcluded; }
+	void SetExcludeList(const BoxiExcludeList& rSourceList) 
 	{ 
 		mExcluded.CopyFrom(rSourceList);
 		if (mpListener)
@@ -370,7 +374,7 @@ class Location
 		}
 	}
 
-	bool IsSameAs(const Location& rOther) const
+	bool IsSameAs(const BoxiLocation& rOther) const
 	{
 		if (! rOther.mName.IsSameAs(mName) ) return false;
 		if (! rOther.mPath.IsSameAs(mPath) ) return false;
@@ -379,14 +383,14 @@ class Location
 
 	/*	
 	bool IsExcluded(const wxString& rLocalFileName, bool mIsDirectory, 
-		const MyExcludeEntry** ppExcludedBy, 
-		const MyExcludeEntry** ppIncludedBy);
+		const BoxiExcludeEntry** ppExcludedBy, 
+		const BoxiExcludeEntry** ppIncludedBy);
 	*/
 	
 	ExcludedState GetExcludedState(const wxString& rLocalFileName, 
 		bool mIsDirectory, 
-		const MyExcludeEntry** ppExcludedBy, 
-		const MyExcludeEntry** ppIncludedBy,
+		const BoxiExcludeEntry** ppExcludedBy, 
+		const BoxiExcludeEntry** ppIncludedBy,
 		bool* pMatched);
 	
 	ExcludeList* GetBoxExcludeList(bool listDirs) const;

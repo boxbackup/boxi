@@ -2,7 +2,7 @@
  *            BackupProgressPanel.h
  *
  *  Mon Apr  4 20:35:39 2005
- *  Copyright 2005-2006 Chris Wilson
+ *  Copyright 2005-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -25,19 +25,19 @@
 #ifndef _BACKUP_PROGRESS_PANEL_H
 #define _BACKUP_PROGRESS_PANEL_H
 
-#include "SandBox.h"
+// #include "SandBox.h"
 
-#define NDEBUG
+// #define NDEBUG
 #include "TLSContext.h"
-#include "BackupClientContext.h"
-#include "BackupClientDirectoryRecord.h"
+// #include "BackupClientContext.h"
+// #include "BackupClientDirectoryRecord.h"
 #include "BackupDaemon.h"
 #include "BackupStoreException.h"
-#undef NDEBUG
+// #undef NDEBUG
 
-#include "BoxiApp.h"
-#include "ClientConfig.h"
-#include "ClientConnection.h"
+// #include "BoxiApp.h"
+// #include "ClientConfig.h"
+// #include "ClientConnection.h"
 #include "ProgressPanel.h"
 
 /** 
@@ -45,10 +45,13 @@
  * Shows status of a running backup and allows user to pause or cancel it.
  */
 
+class BackupClientDirectoryRecord;
+class BackupClientContext;
+
+class ClientConfig;
 class ServerConnection;
 
-class BackupProgressPanel 
-: public ProgressPanel, LocationResolver, RunStatusProvider, SysadminNotifier,
+class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	ProgressNotifier
 {
 	public:
@@ -62,45 +65,35 @@ class BackupProgressPanel
 	void StartBackup();
 
 	private:
-	class LocationRecord
-	{
-		public:
-		LocationRecord();
-		~LocationRecord();
-
-		private:
-		LocationRecord(const LocationRecord &);	// copy not allowed
-		LocationRecord &operator=(const LocationRecord &);
-
-		public:
-		std::string mName;
-		std::string mPath;
-		std::auto_ptr<BackupClientDirectoryRecord> mpDirectoryRecord;
-		int mIDMapIndex;
-		ExcludeList *mpExcludeFiles;
-		ExcludeList *mpExcludeDirs;
-	};
-
 	ClientConfig*     mpConfig;
+	/*
 	ServerConnection* mpConnection;
 	TLSContext        mTlsContext;
 	bool              mStorageLimitExceeded;
+	*/
 	bool              mBackupRunning;
 	bool              mBackupStopRequested;
-	std::vector<LocationRecord *> mLocations;
+	std::auto_ptr<BackupDaemon> mapDaemon;
+	
+	// BackupDaemon      mBackupDaemon;
+	// std::vector<LocationRecord *> mLocations;
 
 	// Unused entries in the root directory wait a while before being deleted
+	/*
 	box_time_t mDeleteUnusedRootDirEntriesAfter;	// time to delete them
 	std::vector<std::pair<int64_t,std::string> > mUnusedRootDirEntries;
 
 	std::vector<std::string> mIDMapMounts;
 	std::vector<BackupClientInodeToIDMap *> mCurrentIDMaps;
 	std::vector<BackupClientInodeToIDMap *> mNewIDMaps;
+	*/
 
 	/* LocationResolver interface */
+	/*
 	virtual bool FindLocationPathName(const std::string &rLocationName, 
 		std::string &rPathOut) const;
-		
+	*/
+	
 	/* RunStatusProvider interface */
 	virtual bool StopRun() { return mBackupStopRequested; }
 	
@@ -117,8 +110,11 @@ class BackupProgressPanel
 	}
 	
 	/* SysadminNotifier interface */
+	/*
 	virtual void NotifySysadmin(int Event) { }
+	*/
 	
+	/*
 	void SetupLocations(BackupClientContext &rClientContext);
 	void DeleteAllLocations();
 	void SetupIDMapsForSync();
@@ -131,8 +127,11 @@ class BackupProgressPanel
 	void FillIDMapVector(std::vector<BackupClientInodeToIDMap *> &rVector, bool NewMaps);
 	void MakeMapBaseName(unsigned int MountNumber, std::string &rNameOut) const;
 	void DeleteUnusedRootDirEntries(BackupClientContext &rContext);
-
+	*/
+	
 	/* ProgressNotifier interface */
+	virtual void NotifyIDMapsSetup(BackupClientContext& rContext);
+
 	virtual void NotifyScanDirectory(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath)
@@ -279,7 +278,44 @@ class BackupProgressPanel
 	{
 		NotifyMoreFilesDone(1, FileSize);
 	}
-	
+
+	virtual void NotifyMountPointSkipped(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) { }
+	virtual void NotifyFileExcluded(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) { }
+	virtual void NotifyDirExcluded(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) { }
+	virtual void NotifyUnsupportedFileType(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath) { }
+	virtual void NotifyFileUploadServerError(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath,
+		int type, int subtype) { }
+	virtual void NotifyDirectoryDeleted(
+		int64_t ObjectID,
+		const std::string& rRemotePath) { }
+	virtual void NotifyFileDeleted(
+		int64_t ObjectID,
+		const std::string& rRemotePath) { }
+	virtual void NotifyReadProgress(int64_t readSize, int64_t offset,
+		int64_t length, box_time_t elapsed, box_time_t finish)
+	{
+		wxYield();
+	}
+	virtual void NotifyReadProgress(int64_t readSize, int64_t offset,
+		int64_t length)
+	{
+		wxYield();
+	}
+	virtual void NotifyReadProgress(int64_t readSize, int64_t offset)
+	{
+		wxYield();
+	}
+
 	void CountDirectory
 	(
 		BackupClientContext& rContext,

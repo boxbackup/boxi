@@ -42,6 +42,10 @@ boxi_include_DATA = \
 	TestWithServer.h\
 	TestCompare.h\
 	ProgressPanel.h\
-	TestWizard.h
+	TestWizard.h \
+	ConfigChangeListener.h
 
 EXTRA_DIST = $(boxi_include_DATA)
+
+SUBDIRS = \
+	include

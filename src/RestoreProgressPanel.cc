@@ -2,7 +2,7 @@
  *            RestoreProgressPanel.cc
  *
  *  Sun Sep 3 21:02:39 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -79,8 +79,7 @@ RestoreProgressPanel::RestoreProgressPanel
 {
 }
 
-wxFileName RestoreProgressPanel::MakeLocalPath(wxFileName base, 
-	ServerCacheNode* pTargetNode)
+wxFileName MakeLocalPath(wxFileName& base, ServerCacheNode* pTargetNode)
 {
 	wxString remainingPath = pTargetNode->GetFullPath();
 	
@@ -151,7 +150,8 @@ wxFileName RestoreProgressPanel::MakeLocalPath(wxFileName base,
 	return outName;	
 }
 
-void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName dest)
+void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
+	wxFileName& rDest)
 {
 	RestoreSpec spec(rSpec);
 	LogToListBox logTo(mpErrorList);
@@ -163,7 +163,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 	{
 		wxString msg;
 		msg.Printf(wxT("Error: cannot start restore: %s"), errorMsg.c_str());
-		ReportFatalError(BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION, msg);
+		ReportFatalError(BM_RESTORE_FAILED_CANNOT_INIT_ENCRYPTION, msg);
 		return;
 	}
 	
@@ -172,7 +172,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 
 	if (storeHost.length() == 0) 
 	{
-		ReportFatalError(BM_BACKUP_FAILED_NO_STORE_HOSTNAME,
+		ReportFatalError(BM_RESTORE_FAILED_NO_STORE_HOSTNAME,
 			wxT("Error: cannot start restore: "
 			"You have not configured the Store Hostname!"));
 		return;
@@ -183,7 +183,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 
 	if (keysFile.length() == 0) 
 	{
-		ReportFatalError(BM_BACKUP_FAILED_NO_KEYS_FILE,
+		ReportFatalError(BM_RESTORE_FAILED_NO_KEYS_FILE,
 			wxT("Error: cannot start restore: "
 			"you have not configured the Keys File"));
 		return;
@@ -192,7 +192,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 	int acctNo;
 	if (!mpConfig->AccountNumber.GetInto(acctNo))
 	{
-		ReportFatalError(BM_BACKUP_FAILED_NO_ACCOUNT_NUMBER,
+		ReportFatalError(BM_RESTORE_FAILED_NO_ACCOUNT_NUMBER,
 			wxT("Error: cannot start restore: "
 			"you have not configured the Account Number"));
 		return;
@@ -201,7 +201,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 	BackupClientCryptoKeys_Setup(keysFile.c_str());
 
 	{
-		if (!wxMkdir(dest.GetFullPath()))
+		if (!wxMkdir(rDest.GetFullPath()))
 		{
 			ReportFatalError(BM_RESTORE_FAILED_TO_CREATE_OBJECT,
 				wxT("Error: cannot start restore: "
@@ -291,7 +291,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec, wxFileName des
 			if (i->IsInclude())
 			{
 				ServerCacheNode& rNode(i->GetNode());
-				wxFileName restoreDest = MakeLocalPath(dest, 
+				wxFileName restoreDest = MakeLocalPath(rDest, 
 					&rNode);
 				
 				if (restoreDest.IsOk())
@@ -478,7 +478,7 @@ void RestoreProgressPanel::CountFilesRecursive
 bool RestoreProgressPanel::RestoreFilesRecursive
 (
 	const RestoreSpec& rSpec, ServerCacheNode* pNode, int64_t parentId,
-	wxFileName localName, int blockSize
+	wxFileName& rLocalName, int blockSize
 )
 {
 	// stop if requested
@@ -527,19 +527,19 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 	// In the special case of restoring the root, don't complain about it.
 	if (!pNode->IsRoot())
 	{
-		if (localName.FileExists() || localName.DirExists())
+		if (rLocalName.FileExists() || rLocalName.DirExists())
 		{
 			wxString msg;
 			msg.Printf(_("Error: failed to finish restore: "
 				"object already exists: '%s'"), 
-				localName.GetFullPath().c_str());
+				rLocalName.GetFullPath().c_str());
 			ReportFatalError(
 				BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS, msg);
 			return false;
 		}
 	}
 	
-	wxCharBuffer namebuf = localName.GetFullPath().mb_str(wxConvLibc);
+	wxCharBuffer namebuf = rLocalName.GetFullPath().mb_str(wxConvLibc);
 		
 	if (pVersion->IsDeleted())
 	{
@@ -552,12 +552,12 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 		// And don't try to create the root a second time.
 		if (!pNode->IsRoot())
 		{
-			if (!wxMkdir(localName.GetFullPath()))
+			if (!wxMkdir(rLocalName.GetFullPath()))
 			{
 				wxString msg;
 				msg.Printf(_("Error: failed to finish restore: "
 					"cannot create directory: '%s'"), 
-					localName.GetFullPath().c_str());
+					rLocalName.GetFullPath().c_str());
 				ReportFatalError(
 					BM_RESTORE_FAILED_TO_CREATE_OBJECT, msg);
 				return false;
@@ -580,7 +580,7 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 		for (ServerCacheNode::Iterator i = pChildren->begin();
 			i != pChildren->end(); i++)
 		{
-			wxFileName childName(localName.GetFullPath(),
+			wxFileName childName(rLocalName.GetFullPath(),
 				i->GetFileName());
 			if (!RestoreFilesRecursive(rSpec, &(*i), 
 				pVersion->GetBoxFileId(), childName, 

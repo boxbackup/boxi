@@ -152,22 +152,22 @@ void ComparePanel::NotifyChange()
 
 void ComparePanel::Update()
 {
-	Location* pOldSelectedLoc = NULL;
+	BoxiLocation* pOldSelectedLoc = NULL;
 	int newSelectedIndex = wxNOT_FOUND;
 	
 	if (mpOneLocChoice->GetSelection() != wxNOT_FOUND)
 	{
-		pOldSelectedLoc = (Location*)mpOneLocChoice->GetClientData
+		pOldSelectedLoc = (BoxiLocation*)mpOneLocChoice->GetClientData
 			(mpOneLocChoice->GetSelection());
 	}
 	
 	mpOneLocChoice->Clear();
 	
-	const Location::List& rLocations = mpConfig->GetLocations();
-	for (Location::ConstIterator cpLoc = rLocations.begin();
+	const BoxiLocation::List& rLocations = mpConfig->GetLocations();
+	for (BoxiLocation::ConstIterator cpLoc = rLocations.begin();
 		cpLoc != rLocations.end(); cpLoc++)
 	{
-		Location* pLoc = mpConfig->GetLocation(*cpLoc);
+		BoxiLocation* pLoc = mpConfig->GetLocation(*cpLoc);
 
 		wxString locString;
 		locString.Printf(wxT("%s -> %s"), 

@@ -2,8 +2,8 @@
  *            ClientConfig.cc
  *
  *  Mon Feb 28 22:52:32 2005
- *  Copyright  2005  Chris Wilson
- *  anjuta@qwirx.com
+ *  Copyright 2005-2008 Chris Wilson
+ *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -25,6 +25,8 @@
  *  Tim Hudson (tjh@cryptsoft.com), under their source redistribution license.
  */
 
+#include "SandBox.h"
+
 #include <sys/types.h>
 
 #include <wx/file.h>
@@ -33,8 +35,6 @@
 
 #include <openssl/err.h>
 #include <openssl/pem.h>
-
-#include "SandBox.h"
 
 #define NDEBUG
 #include "Box.h"
@@ -89,28 +89,34 @@ ClientConfig::ClientConfig(const wxString& rConfigFileName)
 #undef INIT_PROP_EMPTY
 #undef INIT_PROP
 
-Location::List ClientConfig::GetConfigurationLocations(
+BoxiLocation::List ClientConfig::GetConfigurationLocations(
 	const Configuration& conf)
 {
 	const Configuration& rLocations = 
 		conf.GetSubConfiguration("BackupLocations");
-	Location::List locs;
+	BoxiLocation::List locs;
 
-	for (std::list<std::pair<std::string, Configuration> >::const_iterator 
-		i  = rLocations.mSubConfigurations.begin();
-		i != rLocations.mSubConfigurations.end(); 
-		i++)
+	std::vector<std::string> locNames =
+		rLocations.GetSubConfigurationNames();
+	
+	for(std::vector<std::string>::iterator
+		pLocName  = locNames.begin();
+		pLocName != locNames.end();
+		pLocName++)
 	{
-		std::string name = i->first;
-		std::string path = i->second.GetKeyValue("Path");
+		const Configuration& rConfig(
+			rLocations.GetSubConfiguration(*pLocName));
+
+		std::string name = *pLocName;
+		std::string path = rConfig.GetKeyValue("Path");
 		
-		Location loc
+		BoxiLocation loc
 		(
 			wxString(name.c_str(), wxConvLibc), 
 			wxString(path.c_str(), wxConvLibc), NULL
 		);
 
-		MyExcludeList ex(i->second, NULL);
+		BoxiExcludeList ex(rConfig, NULL);
 		loc.SetExcludeList(ex);
 		
 		locs.push_back(loc);
@@ -123,10 +129,11 @@ void ClientConfig::Load(const wxString& rConfigFileName)
 {
 	std::string errs;
 
-	wxCharBuffer buf = rConfigFileName.mb_str(wxConvLibc);	
-	mapConfig = Configuration::LoadAndVerify(buf.data(), NULL, errs);
-		
-	if (mapConfig.get() == 0 || !errs.empty())
+	wxCharBuffer buf = rConfigFileName.mb_str(wxConvLibc);
+	std::auto_ptr<Configuration> apBoxConfig =
+		Configuration::LoadAndVerify(buf.data(), NULL, errs);
+	
+	if (apBoxConfig.get() == 0 || !errs.empty())
 	{
 		wxString *exception = new wxString();
 		exception->Printf(
@@ -135,74 +142,166 @@ void ClientConfig::Load(const wxString& rConfigFileName)
 		throw exception;
 	}
 
-	this->mConfigFileName = rConfigFileName;
-	
-	#define DIR_PROP(name) \
-		name.SetFrom(mapConfig.get());
-	#define DIR_PROP_SUBCONF(name, subconf) \
-		if (mapConfig->SubConfigurationExists(#subconf)) \
-		{ name.SetFrom(&(mapConfig->GetSubConfiguration(#subconf))); } \
+	Load(*apBoxConfig);
+
+	mConfigFileName = rConfigFileName;
+}
+
+void ClientConfig::Load(const Configuration& rBoxConfig)
+{
+	#define STR_PROP_SUBCONF(name, subconf) \
+		if (rBoxConfig.SubConfigurationExists(#subconf)) \
+		{ name.SetFrom(rBoxConfig.GetSubConfiguration(#subconf)); } \
 		else { name.Clear(); }
 	#define STR_PROP(name) \
-		name.SetFrom(mapConfig.get());
+		name.SetFrom(rBoxConfig);
 	#define INT_PROP(name) \
-		name.SetFrom(mapConfig.get());
+		name.SetFrom(rBoxConfig);
 	#define BOOL_PROP(name) \
-		name.SetFrom(mapConfig.get());
+		name.SetFrom(rBoxConfig);
 
-	STR_PROP(StoreHostname)
-	INT_PROP(AccountNumber)
-
-	DIR_PROP(CertificateFile)
-	DIR_PROP(PrivateKeyFile)
-	DIR_PROP(DataDirectory)
-	DIR_PROP(NotifyScript)
-	DIR_PROP(TrustedCAsFile)
-	DIR_PROP(KeysFile)
-	DIR_PROP(SyncAllowScript)
-	DIR_PROP(CommandSocket)
-	DIR_PROP(StoreObjectInfoFile)
-	DIR_PROP_SUBCONF(PidFile, Server)
-	
-	INT_PROP(UpdateStoreInterval)
-	INT_PROP(MinimumFileAge)
-	INT_PROP(MaxUploadWait)
-	INT_PROP(FileTrackingSizeThreshold)
-	INT_PROP(DiffingUploadSizeThreshold)
-	INT_PROP(MaximumDiffingTime)
-	INT_PROP(MaxFileTimeInFuture)
-	INT_PROP(KeepAliveTime)
-	
-	BOOL_PROP(ExtendedLogging)
-	BOOL_PROP(AutomaticBackup)
-	
+	STR_PROPS
+	INT_PROPS
+	BOOL_PROPS
+		
 	#undef BOOL_PROP
 	#undef INT_PROP
 	#undef STR_PROP
-	#undef DIR_PROP_SUBCONF
-	#undef DIR_PROP
+	#undef STR_PROP_SUBCONF
 
-	mLocations = GetConfigurationLocations(*mapConfig);
+	mLocations = GetConfigurationLocations(rBoxConfig);
 	
-	for (Location::Iterator i = mLocations.begin();
+	for (BoxiLocation::Iterator i = mLocations.begin();
 		i != mLocations.end(); i++)
 	{
 		i->SetListener(this);
 	}
 	
+	mapOriginalConfig.reset(new Configuration(rBoxConfig));
+
 	SetClean();
 	NotifyListeners();
 }	
 
-void ClientConfig::AddLocation(const Location& rNewLoc) 
+void ClientConfig::AddToConfig(StringProperty& rProperty,
+	Configuration& rConfig, std::string rSubBlockName)
+{
+	if (!rProperty.GetPointer())
+	{
+		return;
+	}
+	
+	if (!rConfig.SubConfigurationExists(rSubBlockName))
+	{
+		Configuration newSubConf(rSubBlockName);
+		rConfig.AddSubConfig(rSubBlockName, newSubConf);
+	}
+	
+	AddToConfig(rProperty,
+		rConfig.GetSubConfigurationEditable(rSubBlockName));
+}
+
+void ClientConfig::AddToConfig(StringProperty& rProperty, 
+	Configuration& rConfig)
+{	
+	if (!rProperty.GetPointer())
+	{
+		return;
+	}
+
+	std::string value = *(rProperty.GetPointer());
+	rConfig.AddKeyValue(rProperty.GetKeyName(), value);
+}
+
+void ClientConfig::AddToConfig(IntProperty& rProperty, 
+	Configuration& rConfig)
+{	
+	if (!rProperty.GetPointer())
+	{
+		return;
+	}
+
+	int value = *(rProperty.GetPointer());
+	wxString buffer;
+	buffer.Printf(wxT("%d"), value);
+	wxCharBuffer buf2 = buffer.mb_str();
+	rConfig.AddKeyValue(rProperty.GetKeyName(), buf2.data());
+}
+
+void ClientConfig::AddToConfig(BoolProperty& rProperty,
+	Configuration& rConfig)
+{	
+	if (!rProperty.GetPointer())
+	{
+		return;
+	}
+
+	bool value = *(rProperty.GetPointer());
+	rConfig.AddKeyValue(rProperty.GetKeyName(), value ? "yes" : "no");
+}
+
+Configuration ClientConfig::GetBoxConfig()
+{
+	Configuration Root("<root>");
+	
+	#define STR_PROP_SUBCONF(prop, subconf) \
+		AddToConfig(prop, Root, #subconf);
+	#define STR_PROP(prop) \
+		AddToConfig(prop, Root);
+	#define INT_PROP(prop) \
+		AddToConfig(prop, Root);
+	#define BOOL_PROP(prop) \
+		AddToConfig(prop, Root);
+
+	STR_PROPS
+	INT_PROPS
+	BOOL_PROPS
+		
+	#undef BOOL_PROP
+	#undef INT_PROP
+	#undef STR_PROP
+	#undef STR_PROP_SUBCONF
+
+	Configuration BoxLocations("BackupLocations");
+	const BoxiLocation::List& rLocations = GetLocations();
+
+	for (BoxiLocation::ConstIterator pLocation = rLocations.begin();
+		pLocation != rLocations.end(); pLocation++) 
+	{
+		wxCharBuffer namebuf(pLocation->GetName().mb_str());
+		Configuration BoxLocation(namebuf.data());
+		
+		wxCharBuffer pathbuf(pLocation->GetPath().mb_str());
+		BoxLocation.AddKeyValue("Path", pathbuf.data());
+		
+		const BoxiExcludeEntry::List& rEntries = 
+			pLocation->GetExcludeList().GetEntries();
+		
+		for (BoxiExcludeEntry::ConstIterator
+			pEntry  = rEntries.begin();
+			pEntry != rEntries.end(); pEntry++) 
+		{
+			BoxLocation.AddKeyValue(pEntry->GetTypeName(),
+				pEntry->GetValue());
+		}
+		
+		BoxLocations.AddSubConfig(namebuf.data(), BoxLocation);
+	}
+
+	Root.AddSubConfig("BackupLocations", BoxLocations);
+	
+	return Root;
+}	
+
+void ClientConfig::AddLocation(const BoxiLocation& rNewLoc) 
 {
 	mLocations.push_back(rNewLoc);
 	NotifyListeners();
 }
 
-void ClientConfig::ReplaceLocation(int target, const Location& rNewLoc) 
+void ClientConfig::ReplaceLocation(int target, const BoxiLocation& rNewLoc) 
 {
-	Location::Iterator current;
+	BoxiLocation::Iterator current;
 	int i;
 
 	for 
@@ -221,7 +320,7 @@ void ClientConfig::ReplaceLocation(int target, const Location& rNewLoc)
 
 void ClientConfig::RemoveLocation(int target) 
 {
-	Location::Iterator current;
+	BoxiLocation::Iterator current;
 	int i;
 
 	for 
@@ -238,9 +337,9 @@ void ClientConfig::RemoveLocation(int target)
 	}
 }
 
-void ClientConfig::RemoveLocation(const Location& rOldLocation) 
+void ClientConfig::RemoveLocation(const BoxiLocation& rOldLocation) 
 {
-	Location::Iterator current;
+	BoxiLocation::Iterator current;
 	
 	for (current = mLocations.begin(); 
 		current != mLocations.end();
@@ -255,9 +354,9 @@ void ClientConfig::RemoveLocation(const Location& rOldLocation)
 	}
 }
 
-Location* ClientConfig::GetLocation(const Location& rConstLocation)
+BoxiLocation* ClientConfig::GetLocation(const BoxiLocation& rConstLocation)
 {
-	for (Location::Iterator pLoc = mLocations.begin();
+	for (BoxiLocation::Iterator pLoc = mLocations.begin();
 		pLoc != mLocations.end(); pLoc++)
 	{
 		if (pLoc->IsSameAs(rConstLocation))
@@ -269,9 +368,9 @@ Location* ClientConfig::GetLocation(const Location& rConstLocation)
 	return NULL;
 }
 
-Location* ClientConfig::GetLocation(const wxString& rName)
+BoxiLocation* ClientConfig::GetLocation(const wxString& rName)
 {
-	for (Location::Iterator pLoc = mLocations.begin();
+	for (BoxiLocation::Iterator pLoc = mLocations.begin();
 		pLoc != mLocations.end(); pLoc++)
 	{
 		if (pLoc->GetName().IsSameAs(rName))
@@ -321,50 +420,6 @@ bool ClientConfig::Save()
 	return Save(mConfigFileName);
 }
 
-/*
-wxString ClientConfig::ConvertCygwinPathToWindows(const char *cygPath)
-{
-	wxFileName fn(wxString(cygPath, wxConvLibc), wxPATH_UNIX);
-	fn.MakeAbsolute();
-	wxString fs = fn.GetFullPath();
-	
-	if (fs.StartsWith(wxT("/cygdrive/")))
-	{
-		fn.RemoveDir(0);
-		fs = fn.GetFullPath();
-		wxString drive = fs.Mid(1, 1);
-		fn.RemoveDir(0);
-		fn.SetVolume(drive);
-	}
-	
-	return fn.GetFullPath();
-}
-
-wxString ClientConfig::ConvertWindowsPathToCygwin(const char *winPath)
-{
-	wxFileName fn(wxString(winPath, wxConvLibc));
-	fn.MakeAbsolute();
-	wxString cygfile;
-	
-	cygfile.Printf(wxT("/cygdrive/%s/%s/"), fn.GetVolume().c_str(),
-		fn.GetPath(0, wxPATH_UNIX).c_str());
-	
-	if (fn.HasName())
-	{
-		cygfile.Append(fn.GetName());
-		cygfile.Append(wxT("/"));
-	}
-	
-	if (fn.HasExt())
-	{
-		cygfile.Append(wxT("."));
-		cygfile.Append(fn.GetExt());
-	}
-	
-	return cygfile;
-}
-*/
-
 bool ClientConfig::Save(const wxString& rConfigFileName) 
 {
 	wxTempFile file(rConfigFileName);
@@ -388,22 +443,12 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 		file.Write(buffer); \
 	}
 
-	#ifdef __CYGWIN__
-	#define WRITE_DIR_PROP(name) \
-	if (const std::string * value = name.GetPointer()) { \
-		wxString cygpath = ConvertWindowsPathToCygwin(value.c_str()); \
-		buffer.Printf(wxT(#name " = %s\n"), \
-			wxString(cygpath.c_str(), wxConvLibc).c_str()); \
-		file.Write(buffer); \
-	}
-	#else /* ! __CYGWIN__ */
 	#define WRITE_DIR_PROP(name) \
 	if (const std::string * value = name.GetPointer()) { \
 		buffer.Printf(wxT(#name " = %s\n"), \
 			wxString(value->c_str(), wxConvLibc).c_str()); \
 		file.Write(buffer); \
 	}
-	#endif
 
 	#define WRITE_INT_PROP_FMT(name, fmt) \
 	if (const int * value = name.GetPointer()) { \
@@ -461,10 +506,10 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 		file.Write(buffer);
 	}
 	
-	const Location::List& rLocations = GetLocations();
+	const BoxiLocation::List& rLocations = GetLocations();
 	file.Write(wxT("BackupLocations\n{\n"));
 	
-	for (Location::ConstIterator pLocation = rLocations.begin();
+	for (BoxiLocation::ConstIterator pLocation = rLocations.begin();
 		pLocation != rLocations.end(); pLocation++) 
 	{
 		buffer.Printf(wxT("\t%s\n\t{\n\t\tPath = %s\n"),
@@ -472,10 +517,11 @@ bool ClientConfig::Save(const wxString& rConfigFileName)
 			pLocation->GetPath().c_str());
 		file.Write(buffer);
 		
-		const MyExcludeEntry::List& rEntries = 
+		const BoxiExcludeEntry::List& rEntries = 
 			pLocation->GetExcludeList().GetEntries();
 		
-		for (MyExcludeEntry::ConstIterator pEntry = rEntries.begin();
+		for (BoxiExcludeEntry::ConstIterator
+			pEntry  = rEntries.begin();
 			pEntry != rEntries.end(); pEntry++) 
 		{
 			buffer.Printf(wxT("\t\t%s\n"), 
@@ -510,7 +556,7 @@ void ClientConfig::Reset()
 	CertRequestFile.Reset();
 	
 	mConfigFileName = wxT("");
-	mapConfig.reset();
+	mapOriginalConfig.reset();
 	mLocations.clear();
 }
 
@@ -543,14 +589,14 @@ bool ClientConfig::IsClean()
 	#undef STR_PROP_SUBCONF
 	#undef PROP
 
-	Location::List oldLocs;
+	BoxiLocation::List oldLocs;
 	
-	if (mapConfig.get())
+	if (mapOriginalConfig.get())
 	{
-		oldLocs = GetConfigurationLocations(*mapConfig);
+		oldLocs = GetConfigurationLocations(*mapOriginalConfig);
 	}
 	
-	Location::Iterator pOld, pNew;
+	BoxiLocation::Iterator pOld, pNew;
 	for 
 	(
 		pOld  = oldLocs.begin(), pNew  = mLocations.begin();
@@ -577,12 +623,12 @@ void ClientConfig::OnPropertyChange(Property* pProp)
 	NotifyListeners();
 }
 
-void ClientConfig::OnLocationChange(Location* pLocation)
+void ClientConfig::OnLocationChange(BoxiLocation* pLocation)
 {
 	NotifyListeners();
 }
 
-void ClientConfig::OnExcludeListChange(MyExcludeList* pExcludeList)
+void ClientConfig::OnExcludeListChange(BoxiExcludeList* pExcludeList)
 {
 	NotifyListeners();
 }
@@ -925,7 +971,7 @@ static wxString gVerifyError;
 
 static int VerifyCertificateCallback(int ok, X509_STORE_CTX *pContext)
 {
-	if (ok) return ok;
+	if (ok) return true;
 	
 	wxString errorMessage;
 	
@@ -943,7 +989,7 @@ static int VerifyCertificateCallback(int ok, X509_STORE_CTX *pContext)
 		X509_verify_cert_error_string(pContext->error), wxConvLibc));
 	
 	gVerifyError = errorMessage;
-	return ok;
+	return false;
 }
 
 template<typename T, void free_T(T*)>
@@ -1546,5 +1592,4 @@ bool ClientConfig::CheckCryptoKeysFile(wxString* pMsgOut)
 	}
 
 	return true;
-
 }

@@ -26,17 +26,18 @@
 #define _BACKUPLOCATIONSPANEL_H
 
 #include <wx/wx.h>
-#include <wx/filename.h>
-#include <wx/listctrl.h>
-#include <wx/treectrl.h>
+// #include <wx/filename.h>
+// #include <wx/listctrl.h>
+// #include <wx/treectrl.h>
 
-#include "ClientConfig.h"
+#include "ConfigChangeListener.h"
 
 class BackupTreeNode;
 class LocalFileTree;
 class ClientConfig;
 class LocationsPanel;
 class MainFrame;
+class wxTreeEvent;
 
 class BackupLocationsPanel : public wxPanel, public ConfigChangeListener 
 {

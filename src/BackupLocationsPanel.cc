@@ -2,7 +2,7 @@
  *            BackupLocationsPanel.cc
  *
  *  Tue Mar  1 00:26:30 2005
- *  Copyright 2005-2006 Chris Wilson
+ *  Copyright 2005-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -35,11 +35,11 @@
 class BackupTreeNode : public LocalFileNode 
 {
 	private:
-	Location*     mpLocation;
-	const MyExcludeEntry* mpExcludedBy;
-	const MyExcludeEntry* mpIncludedBy;
+	BoxiLocation* mpLocation;
+	const BoxiExcludeEntry* mpExcludedBy;
+	const BoxiExcludeEntry* mpIncludedBy;
 	ClientConfig* mpConfig;
-	int           mIconId;
+	int mIconId;
 	
 	public:
 	BackupTreeNode(ClientConfig* pConfig,   const wxString& path);
@@ -47,10 +47,10 @@ class BackupTreeNode : public LocalFileNode
 	virtual LocalFileNode* CreateChildNode(LocalFileNode* pParent, 
 		const wxString& rPath);
 
-	Location*               GetLocation()   const { return mpLocation; }
+	BoxiLocation*           GetLocation()   const { return mpLocation; }
 	ClientConfig*           GetConfig()     const { return mpConfig; }
-	const MyExcludeEntry*   GetExcludedBy() const { return mpExcludedBy; }
-	const MyExcludeEntry*   GetIncludedBy() const { return mpIncludedBy; }
+	const BoxiExcludeEntry*   GetExcludedBy() const { return mpExcludedBy; }
+	const BoxiExcludeEntry*   GetIncludedBy() const { return mpIncludedBy; }
 
 	virtual int UpdateState(FileImageList& rImageList, bool updateParents);
 };
@@ -101,15 +101,15 @@ int BackupTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 		mpIncludedBy = NULL;
 	}
 		
-	const Location::List& rLocations = mpConfig->GetLocations();
+	const BoxiLocation::List& rLocations = mpConfig->GetLocations();
 
 	if (!mpLocation) 
 	{
 		// determine whether or not this node's path
 		// is inside a backup location.
 	
-		for (Location::ConstIterator pLoc = 
-			rLocations.begin();
+		for (BoxiLocation::ConstIterator
+			pLoc  = rLocations.begin();
 			pLoc != rLocations.end(); pLoc++)
 		{
 			const wxString& rPath = pLoc->GetPath();
@@ -197,12 +197,12 @@ int BackupTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 		// check whether our path is a prefix to any configured location,
 		// to decide whether to display a blank or a partially included icon.
 		
-		const Location::List& rLocations = mpConfig->GetLocations();
+		const BoxiLocation::List& rLocations = mpConfig->GetLocations();
 		wxFileName thisNodePath(GetFullPath());
 		bool found = false;
 		
-		for (Location::ConstIterator pLoc = 
-			rLocations.begin();
+		for (BoxiLocation::ConstIterator
+			pLoc  = rLocations.begin();
 			pLoc != rLocations.end() && !found; pLoc++)
 		{
 			#ifdef WIN32
@@ -327,35 +327,35 @@ void EditorPanel::NotifyChange()
 
 void EditorPanel::PopulateLocationList(wxControlWithItems* pTargetList)
 {
-	Location* pSelectedLoc = NULL;
+	BoxiLocation* pSelectedLoc = NULL;
 	{
 		long selected = pTargetList->GetSelection();
 		if (selected != wxNOT_FOUND)
 		{
-			pSelectedLoc = (Location*)( pTargetList->GetClientData(selected) );
+			pSelectedLoc = (BoxiLocation*)( pTargetList->GetClientData(selected) );
 		}
 	}
 	
 	pTargetList->Clear();
-	const Location::List& rLocs = mpConfig->GetLocations();
+	const BoxiLocation::List& rLocs = mpConfig->GetLocations();
 	
-	for (Location::ConstIterator pLoc = rLocs.begin();
+	for (BoxiLocation::ConstIterator pLoc = rLocs.begin();
 		pLoc != rLocs.end(); pLoc++)
 	{
-		const MyExcludeList& rExclude = pLoc->GetExcludeList();
+		const BoxiExcludeList& rExclude = pLoc->GetExcludeList();
 		
 		wxString locString;
 		locString.Printf(wxT("%s -> %s"), 
 			pLoc->GetPath().c_str(), pLoc->GetName().c_str());
 		
-		const MyExcludeEntry::List& rExcludes = rExclude.GetEntries();
+		const BoxiExcludeEntry::List& rExcludes = rExclude.GetEntries();
 		
 		if (rExcludes.size() > 0)
 		{
 			locString.Append(wxT(" ("));
 
 			int size = rExcludes.size();
-			for (MyExcludeEntry::ConstIterator pExclude = rExcludes.begin();
+			for (BoxiExcludeEntry::ConstIterator pExclude = rExcludes.begin();
 				pExclude != rExcludes.end(); pExclude++)
 			{
 				wxString entryDesc(pExclude->ToString().c_str(), wxConvLibc);
@@ -415,8 +415,8 @@ class LocationsPanel : public EditorPanel
 	virtual void OnChangeLocationDetails(wxCommandEvent& rEvent);
 	
 	private:
-	void SelectLocation(const Location& rLocation);
-	Location* GetSelectedLocation();
+	void SelectLocation(const BoxiLocation& rLocation);
+	BoxiLocation* GetSelectedLocation();
 	
 	DECLARE_EVENT_TABLE()
 };
@@ -444,7 +444,7 @@ void LocationsPanel::PopulateList()
 
 void LocationsPanel::UpdateEnabledState() 
 {
-	const Location::List& rLocs = mpConfig->GetLocations();
+	const BoxiLocation::List& rLocs = mpConfig->GetLocations();
 
 	// Enable the Add and Edit buttons if the current values 
 	// don't match any existing entry, and the Remove button 
@@ -452,7 +452,7 @@ void LocationsPanel::UpdateEnabledState()
 
 	bool matchExistingEntry = FALSE;
 	
-	for (Location::ConstIterator pLocation = rLocs.begin();
+	for (BoxiLocation::ConstIterator pLocation = rLocs.begin();
 		pLocation != rLocs.end(); pLocation++)
 	{
 		if (mpNameText->GetValue().IsSameAs(pLocation->GetName()) &&
@@ -501,7 +501,7 @@ void LocationsPanel::OnSelectListItem(wxCommandEvent &event)
 	PopulateControls();
 }
 
-Location* LocationsPanel::GetSelectedLocation()
+BoxiLocation* LocationsPanel::GetSelectedLocation()
 {
 	int selected = mpList->GetSelection();	
 	if (selected == wxNOT_FOUND)
@@ -509,13 +509,13 @@ Location* LocationsPanel::GetSelectedLocation()
 		return NULL;
 	}
 	
-	Location* pLocation = (Location*)( mpList->GetClientData(selected) );
+	BoxiLocation* pLocation = (BoxiLocation*)( mpList->GetClientData(selected) );
 	return pLocation;
 }
 
 void LocationsPanel::PopulateControls()
 {
-	Location* pLocation = GetSelectedLocation();
+	BoxiLocation* pLocation = GetSelectedLocation();
 
 	if (pLocation)
 	{
@@ -538,11 +538,11 @@ void LocationsPanel::OnChangeLocationDetails(wxCommandEvent& rEvent)
 
 void LocationsPanel::OnClickButtonAdd(wxCommandEvent &event)
 {
-	Location newLoc(
+	BoxiLocation newLoc(
 		mpNameText->GetValue(),
 		mpPathText->GetValue(), mpConfig);
 
-	Location* pOldLocation = GetSelectedLocation();
+	BoxiLocation* pOldLocation = GetSelectedLocation();
 	if (pOldLocation)
 	{
 		newLoc.SetExcludeList(pOldLocation->GetExcludeList());
@@ -554,7 +554,7 @@ void LocationsPanel::OnClickButtonAdd(wxCommandEvent &event)
 
 void LocationsPanel::OnClickButtonEdit(wxCommandEvent &event)
 {
-	Location* pLocation = GetSelectedLocation();
+	BoxiLocation* pLocation = GetSelectedLocation();
 	if (!pLocation)
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_LOCATION_DOES_NOT_EXIST,
@@ -569,7 +569,7 @@ void LocationsPanel::OnClickButtonEdit(wxCommandEvent &event)
 
 void LocationsPanel::OnClickButtonRemove(wxCommandEvent &event)
 {
-	Location* pLocation = GetSelectedLocation();
+	BoxiLocation* pLocation = GetSelectedLocation();
 	if (!pLocation)
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_LOCATION_DOES_NOT_EXIST,
@@ -581,11 +581,11 @@ void LocationsPanel::OnClickButtonRemove(wxCommandEvent &event)
 	PopulateControls();
 }
 
-void LocationsPanel::SelectLocation(const Location& rLocation)
+void LocationsPanel::SelectLocation(const BoxiLocation& rLocation)
 {
-	for (int i = 0; i < mpList->GetCount(); i++)
+	for (size_t i = 0; i < mpList->GetCount(); i++)
 	{
-		Location* pLocation = (Location*)( mpList->GetClientData(i) );
+		BoxiLocation* pLocation = (BoxiLocation*)( mpList->GetClientData(i) );
 		if (pLocation->IsSameAs(rLocation)) 
 		{
 			mpList->SetSelection(i);
@@ -615,11 +615,11 @@ class ExclusionsPanel : public EditorPanel
 	virtual void OnChangeExcludeDetails(wxCommandEvent& rEvent);
 	
 	private:
-	void SelectExclusion(const MyExcludeEntry& rEntry);
-	Location* GetSelectedLocation();
-	MyExcludeEntry* GetSelectedEntry();
-	MyExcludeEntry  CreateNewEntry();
-	const MyExcludeEntry::List* GetSelectedLocEntries();
+	void SelectExclusion(const BoxiExcludeEntry& rEntry);
+	BoxiLocation* GetSelectedLocation();
+	BoxiExcludeEntry* GetSelectedEntry();
+	BoxiExcludeEntry  CreateNewEntry();
+	const BoxiExcludeEntry::List* GetSelectedLocEntries();
 	
 	DECLARE_EVENT_TABLE()
 };
@@ -666,32 +666,32 @@ ExclusionsPanel::ExclusionsPanel(wxWindow* pParent, ClientConfig *pConfig)
 	NotifyChange();
 }
 
-Location* ExclusionsPanel::GetSelectedLocation()
+BoxiLocation* ExclusionsPanel::GetSelectedLocation()
 {
 	int selectedLocIndex = mpLocationList->GetSelection();
 	if (selectedLocIndex == wxNOT_FOUND) return NULL;
 	
-	Location* mpLocation = (Location*)( 
+	BoxiLocation* mpLocation = (BoxiLocation*)( 
 		mpLocationList->GetClientData(selectedLocIndex) );
 	return mpLocation;
 }
 	
-const MyExcludeEntry::List* ExclusionsPanel::GetSelectedLocEntries()
+const BoxiExcludeEntry::List* ExclusionsPanel::GetSelectedLocEntries()
 {	
-	Location* mpLocation = GetSelectedLocation();
+	BoxiLocation* mpLocation = GetSelectedLocation();
 	if (!mpLocation) return NULL;
 		
-	MyExcludeList& rExcludeList = mpLocation->GetExcludeList();
+	BoxiExcludeList& rExcludeList = mpLocation->GetExcludeList();
 	return &rExcludeList.GetEntries();
 }
 
-MyExcludeEntry* ExclusionsPanel::GetSelectedEntry()
+BoxiExcludeEntry* ExclusionsPanel::GetSelectedEntry()
 {
 	int selected = mpList->GetSelection();
 	if (selected == wxNOT_FOUND)
 		return NULL;
 	
-	MyExcludeEntry* pEntry = (MyExcludeEntry*)( mpList->GetClientData(selected) );
+	BoxiExcludeEntry* pEntry = (BoxiExcludeEntry*)( mpList->GetClientData(selected) );
 	return pEntry;
 }
 
@@ -699,16 +699,16 @@ void ExclusionsPanel::PopulateList()
 {
 	PopulateLocationList(mpLocationList);
 	
-	MyExcludeEntry* pSelectedEntry = GetSelectedEntry();	
+	BoxiExcludeEntry* pSelectedEntry = GetSelectedEntry();	
 	mpList->Clear();
 	
-	Location* pLocation = GetSelectedLocation();
+	BoxiLocation* pLocation = GetSelectedLocation();
 	if (!pLocation) return;
 	
-	MyExcludeList& rExcludeList = pLocation->GetExcludeList();
-	const MyExcludeEntry::List& rEntries = rExcludeList.GetEntries();
+	BoxiExcludeList& rExcludeList = pLocation->GetExcludeList();
+	const BoxiExcludeEntry::List& rEntries = rExcludeList.GetEntries();
 	
-	for (MyExcludeEntry::ConstIterator pEntry = rEntries.begin();
+	for (BoxiExcludeEntry::ConstIterator pEntry = rEntries.begin();
 		pEntry != rEntries.end(); pEntry++)
 	{
 		wxString exString(pEntry->ToString().c_str(), wxConvLibc);
@@ -753,10 +753,10 @@ void ExclusionsPanel::UpdateEnabledState()
 
 	bool matchExistingEntry = FALSE;
 	
-	const MyExcludeEntry::List* pEntries = GetSelectedLocEntries();
+	const BoxiExcludeEntry::List* pEntries = GetSelectedLocEntries();
 	if (pEntries) 
 	{
-		for (MyExcludeEntry::ConstIterator pEntry = pEntries->begin();
+		for (BoxiExcludeEntry::ConstIterator pEntry = pEntries->begin();
 			pEntry != pEntries->end(); pEntry++)
 		{
 			int selection = mpTypeList->GetSelection();
@@ -825,9 +825,10 @@ void ExclusionsPanel::PopulateControls()
 
 	if (selected != wxNOT_FOUND)
 	{
-		MyExcludeEntry* pEntry = (MyExcludeEntry*)( mpList->GetClientData(selected) );
+		BoxiExcludeEntry* pEntry =
+			(BoxiExcludeEntry*)( mpList->GetClientData(selected) );
 		
-		for (int i = 0; i < mpTypeList->GetCount(); i++)
+		for (size_t i = 0; i < mpTypeList->GetCount(); i++)
 		{
 			if (mpTypeList->GetClientData(i) == pEntry->GetType())
 			{
@@ -847,17 +848,17 @@ void ExclusionsPanel::OnChangeExcludeDetails(wxCommandEvent& rEvent)
 	UpdateEnabledState();
 }
 
-MyExcludeEntry ExclusionsPanel::CreateNewEntry()
+BoxiExcludeEntry ExclusionsPanel::CreateNewEntry()
 {
-	MyExcludeType* pType = NULL;
+	BoxiExcludeType* pType = NULL;
 	
 	long selectedType = mpTypeList->GetSelection();
 	if (selectedType != wxNOT_FOUND)
 	{
-		pType = (MyExcludeType*)( mpTypeList->GetClientData(selectedType) );
+		pType = (BoxiExcludeType*)( mpTypeList->GetClientData(selectedType) );
 	}
 
-	return MyExcludeEntry(*pType, mpValueText->GetValue());
+	return BoxiExcludeEntry(*pType, mpValueText->GetValue());
 }
 
 void ExclusionsPanel::OnClickButtonAdd(wxCommandEvent &event)
@@ -870,10 +871,10 @@ void ExclusionsPanel::OnClickButtonAdd(wxCommandEvent &event)
 		return;
 	}
 
-	MyExcludeEntry newEntry = CreateNewEntry();
+	BoxiExcludeEntry newEntry = CreateNewEntry();
 	
-	Location* pLocation = GetSelectedLocation();
-	MyExcludeList& rList = pLocation->GetExcludeList();	
+	BoxiLocation* pLocation = GetSelectedLocation();
+	BoxiExcludeList& rList = pLocation->GetExcludeList();	
 	rList.AddEntry(newEntry);
 	// calls listeners, updates list and tree automatically
 	
@@ -891,7 +892,7 @@ void ExclusionsPanel::OnClickButtonEdit(wxCommandEvent &event)
 		return;
 	}
 
-	MyExcludeEntry* pOldEntry = GetSelectedEntry();
+	BoxiExcludeEntry* pOldEntry = GetSelectedEntry();
 	if (!pOldEntry)
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_EXCLUDE_ENTRY_NOT_SELECTED,
@@ -908,10 +909,10 @@ void ExclusionsPanel::OnClickButtonEdit(wxCommandEvent &event)
 		return;
 	}
 
-	MyExcludeEntry newEntry = CreateNewEntry();
+	BoxiExcludeEntry newEntry = CreateNewEntry();
 	
-	Location* pLocation = GetSelectedLocation();
-	MyExcludeList& rList = pLocation->GetExcludeList();
+	BoxiLocation* pLocation = GetSelectedLocation();
+	BoxiExcludeList& rList = pLocation->GetExcludeList();
 	
 	rList.ReplaceEntry(*pOldEntry, newEntry);
 	SelectExclusion(newEntry);
@@ -919,7 +920,7 @@ void ExclusionsPanel::OnClickButtonEdit(wxCommandEvent &event)
 
 void ExclusionsPanel::OnClickButtonRemove(wxCommandEvent &event)
 {
-	MyExcludeEntry* pOldEntry = GetSelectedEntry();
+	BoxiExcludeEntry* pOldEntry = GetSelectedEntry();
 	if (!pOldEntry)
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_LOCATION_DOES_NOT_EXIST,
@@ -928,17 +929,17 @@ void ExclusionsPanel::OnClickButtonRemove(wxCommandEvent &event)
 		return;
 	}
 
-	Location* pLocation = GetSelectedLocation();
-	MyExcludeList& rList = pLocation->GetExcludeList();
+	BoxiLocation* pLocation = GetSelectedLocation();
+	BoxiExcludeList& rList = pLocation->GetExcludeList();
 	rList.RemoveEntry(*pOldEntry);
 	PopulateControls();
 }
 
-void ExclusionsPanel::SelectExclusion(const MyExcludeEntry& rEntry)
+void ExclusionsPanel::SelectExclusion(const BoxiExcludeEntry& rEntry)
 {
-	for (int i = 0; i < mpList->GetCount(); i++)
+	for (size_t i = 0; i < mpList->GetCount(); i++)
 	{
-		MyExcludeEntry* pEntry = (MyExcludeEntry*)( mpList->GetClientData(i) );
+		BoxiExcludeEntry* pEntry = (BoxiExcludeEntry*)( mpList->GetClientData(i) );
 		if (pEntry->IsSameAs(rEntry)) 
 		{
 			mpList->SetSelection(i);
@@ -1030,10 +1031,10 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 	if (pTreeNode->IsRoot()) return;
 	#endif
 
-	Location*             pLocation   = pTreeNode->GetLocation();
-	const MyExcludeEntry* pExcludedBy = pTreeNode->GetExcludedBy();
-	const MyExcludeEntry* pIncludedBy = pTreeNode->GetIncludedBy();
-	MyExcludeList*        pList       = NULL;
+	BoxiLocation*           pLocation   = pTreeNode->GetLocation();
+	const BoxiExcludeEntry* pExcludedBy = pTreeNode->GetExcludedBy();
+	const BoxiExcludeEntry* pIncludedBy = pTreeNode->GetIncludedBy();
+	BoxiExcludeList*        pList       = NULL;
 
 	if (pLocation) 
 	{
@@ -1046,20 +1047,20 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 	// any time an exclude entry is added or removed,
 	// because all mpExcludedBy/IncludedBy pointers 
 	// will be invalidated and must be recalculated.
-	BackupTreeNode* pLocationRoot = NULL;
-	for (pLocationRoot = pTreeNode; pLocationRoot != NULL;)
+	BackupTreeNode* pLocationNode = NULL;
+	for (pLocationNode = pTreeNode; pLocationNode != NULL;)
 	{
 		BackupTreeNode* pParentNode = 
-			(BackupTreeNode*)pLocationRoot->GetParentNode();
+			(BackupTreeNode*)pLocationNode->GetParentNode();
 		if (pParentNode == NULL ||
 			pParentNode->GetLocation() != pLocation)
 		{
 			break;
 		}
-		pLocationRoot = pParentNode;
+		pLocationNode = pParentNode;
 	}
 
-	wxASSERT(!(pLocation   && !pLocationRoot));
+	wxASSERT(!(pLocation   && !pLocationNode));
 	wxASSERT(!(pLocation   && !pList));
 	wxASSERT(!(pIncludedBy && !pList));
 	wxASSERT(!(pExcludedBy && !pList));
@@ -1086,6 +1087,28 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			{
 				doDelete = true;
 				warnUser = false;
+					
+				// There may also be a couple of rules
+				// which exclude all files and dirs
+				// under this directory, added by the
+				// AlwaysInclude tree code below.
+				// If so, delete them both.
+
+				wxString regex(wxT("^"));
+				regex.Append(pTreeNode->GetFullPath());
+				regex.Append(wxT("/"));
+				
+				BoxiExcludeEntry excludeFiles(
+					ET_EXCLUDE_FILES_REGEX, regex);
+				BoxiExcludeEntry excludeDirs(
+					ET_EXCLUDE_DIRS_REGEX, regex);
+				
+				if (pList->Contains(excludeFiles) &&
+					pList->Contains(excludeDirs))
+				{
+					pList->RemoveEntry(excludeFiles);
+					pList->RemoveEntry(excludeDirs);
+				}
 			}
 		}
 		
@@ -1117,7 +1140,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		if (doDelete && pList) 
 		{
 			pList->RemoveEntry(*pIncludedBy);
-			pUpdateFrom = pLocationRoot;
+			pUpdateFrom = pLocationNode;
 		}			
 	} 
 	else if (pExcludedBy != NULL)
@@ -1163,7 +1186,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			{
 				pExclude = pPos;
 				
-				MyExcludeEntry newEntry(
+				BoxiExcludeEntry newEntry(
 					pPos->IsDirectory() 
 					? ET_ALWAYS_INCLUDE_DIR
 					: ET_ALWAYS_INCLUDE_FILE,
@@ -1186,9 +1209,9 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				wxString path(wxT("^"));
 				path.Append(pExclude->GetFullPath());
 				path.Append(wxT("/"));
-				pList->InsertEntry(pos, MyExcludeEntry(
+				pList->InsertEntry(pos, BoxiExcludeEntry(
 					ET_EXCLUDE_FILES_REGEX, path));
-				pList->InsertEntry(pos, MyExcludeEntry(
+				pList->InsertEntry(pos, BoxiExcludeEntry(
 					ET_EXCLUDE_DIRS_REGEX, path));
 			}
 			
@@ -1197,20 +1220,20 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				wxString path(wxT("^"));
 				path.Append(pTreeNode->GetFullPath());
 				path.Append(wxT("/"));
-				pList->AddEntry(MyExcludeEntry(
+				pList->AddEntry(BoxiExcludeEntry(
 					ET_ALWAYS_INCLUDE_DIRS_REGEX, path));
-				pList->AddEntry(MyExcludeEntry(
+				pList->AddEntry(BoxiExcludeEntry(
 					ET_ALWAYS_INCLUDE_FILES_REGEX, path));
 			}
 			else
 			{
-				pList->AddEntry(MyExcludeEntry(
+				pList->AddEntry(BoxiExcludeEntry(
 					ET_ALWAYS_INCLUDE_FILE, 
 					pTreeNode->GetFullPath()));
 			}
 		}
 
-		pUpdateFrom = pLocationRoot;
+		pUpdateFrom = pLocationNode;
 	}
 	else if (pLocation != NULL)
 	{
@@ -1245,7 +1268,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		
 		if (!handled && pList) 
 		{
-			MyExcludeEntry newEntry(
+			BoxiExcludeEntry newEntry(
 				theExcludeTypes[
 					pTreeNode->IsDirectory() 
 					? ETI_EXCLUDE_DIR
@@ -1253,7 +1276,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				pTreeNode->GetFullPath());
 
 			pList->AddEntry(newEntry);
-			pUpdateFrom = pLocationRoot;
+			pUpdateFrom = pLocationNode;
 		}
 	}
 	else
@@ -1267,7 +1290,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			newLocName = _("root");
 		}
 		
-		const Location::List& rLocs = mpConfig->GetLocations();
+		const BoxiLocation::List& rLocs = mpConfig->GetLocations();
 		bool foundUnique = false;
 		int counter = 1;
 		
@@ -1275,7 +1298,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		{
 			foundUnique = true;
 			
-			for (Location::ConstIterator i = rLocs.begin();
+			for (BoxiLocation::ConstIterator i = rLocs.begin();
 				i != rLocs.end(); i++)
 			{
 				if (newLocName.IsSameAs(i->GetName().c_str()))
@@ -1292,7 +1315,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				path.GetName().c_str(), counter++);
 		}
 		
-		Location newLoc(newLocName, pTreeNode->GetFullPath(), mpConfig);
+		BoxiLocation newLoc(newLocName, pTreeNode->GetFullPath(), mpConfig);
 		mpConfig->AddLocation(newLoc);
 		pUpdateFrom = mpRootNode;
 	}

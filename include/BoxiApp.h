@@ -33,8 +33,7 @@
 #include "main.h"
 
 class TestSetUpDecorator;
-
-class wxFileDialog;
+class TestFileDialog;
 
 namespace CppUnit
 {
@@ -76,7 +75,7 @@ class BoxiApp : public wxApp
 	}
 	bool IsTestMode() { return mTesting; }
 	
-	int  ShowFileDialog  (wxFileDialog& rDialog);
+	int  ShowFileDialog  (TestFileDialog& rDialog);
 	void ExpectFileDialog(const wxString& rPathToReturn);
 	bool ShowedFileDialog() { return !mExpectingFileDialog; }
 	

@@ -2,7 +2,7 @@
  *            Location.cc
  *
  *  Mon Feb 28 23:38:45 2005
- *  Copyright 2005-2007 Chris Wilson
+ *  Copyright 2005-2008 Chris Wilson
  *  chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -22,9 +22,18 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include "SandBox.h"
+
 #include <set>
 #include <string>
-#include <regex.h>
+
+#ifdef HAVE_REGEX_H
+	#include <regex.h>
+#endif
+
+#ifdef HAVE_PCREPOSIX_H
+	#include <pcreposix.h>
+#endif
 
 #include <wx/filename.h>
 #include <wx/log.h>
@@ -37,38 +46,38 @@
 #include "Location.h"
 #undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 
-MyExcludeType theExcludeTypes [] = {
-	MyExcludeType(ES_EXCLUDE,       EFD_DIR,  EM_EXACT),
-	MyExcludeType(ES_EXCLUDE,       EFD_DIR,  EM_REGEX),
-	MyExcludeType(ES_EXCLUDE,       EFD_FILE, EM_EXACT),
-	MyExcludeType(ES_EXCLUDE,       EFD_FILE, EM_REGEX),
-	MyExcludeType(ES_ALWAYSINCLUDE, EFD_DIR,  EM_EXACT),
-	MyExcludeType(ES_ALWAYSINCLUDE, EFD_DIR,  EM_REGEX),
-	MyExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, EM_EXACT),
-	MyExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, EM_REGEX),
+BoxiExcludeType theExcludeTypes [] = {
+	BoxiExcludeType(ES_EXCLUDE,       EFD_DIR,  EM_EXACT),
+	BoxiExcludeType(ES_EXCLUDE,       EFD_DIR,  EM_REGEX),
+	BoxiExcludeType(ES_EXCLUDE,       EFD_FILE, EM_EXACT),
+	BoxiExcludeType(ES_EXCLUDE,       EFD_FILE, EM_REGEX),
+	BoxiExcludeType(ES_ALWAYSINCLUDE, EFD_DIR,  EM_EXACT),
+	BoxiExcludeType(ES_ALWAYSINCLUDE, EFD_DIR,  EM_REGEX),
+	BoxiExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, EM_EXACT),
+	BoxiExcludeType(ES_ALWAYSINCLUDE, EFD_FILE, EM_REGEX),
 };
 
-MyExcludeList::MyExcludeList(const Configuration& conf, 
+BoxiExcludeList::BoxiExcludeList(const Configuration& conf, 
 	LocationChangeListener* pListener) 
 : mpListener(pListener)
 {
-	for (size_t i = 0; i < sizeof(theExcludeTypes) / sizeof(MyExcludeType); i++)
+	for (size_t i = 0; i < sizeof(theExcludeTypes) / sizeof(BoxiExcludeType); i++)
 	{
-		MyExcludeType& t = theExcludeTypes[i];
+		BoxiExcludeType& t = theExcludeTypes[i];
 		_AddConfigList(conf, t.ToString(), t);
 	}
 }	
 
-inline void MyExcludeList::_AddConfigList(const Configuration& conf, 
-	const std::string& keyName, MyExcludeType& type)
+inline void BoxiExcludeList::_AddConfigList(const Configuration& conf, 
+	const std::string& keyName, BoxiExcludeType& type)
 {
 	if (!conf.KeyExists(keyName.c_str())) return;
 	std::string value = conf.GetKeyValue(keyName.c_str());
 	_AddSeparatedList(value, type);
 }
 
-inline void MyExcludeList::_AddSeparatedList(const std::string& entries, 
-	MyExcludeType& type)
+inline void BoxiExcludeList::_AddSeparatedList(const std::string& entries, 
+	BoxiExcludeType& type)
 {
 	std::vector<std::string> temp;
 	SplitString(entries, Configuration::MultiValueSeparator, temp);
@@ -76,13 +85,13 @@ inline void MyExcludeList::_AddSeparatedList(const std::string& entries,
 		temp.begin(); i != temp.end(); i++)
 	{
 		std::string temp = *i;
-		mEntries.push_back(MyExcludeEntry(type, temp));
+		mEntries.push_back(BoxiExcludeEntry(type, temp));
 	}
 }
 
-void MyExcludeList::AddEntry(const MyExcludeEntry& rNewEntry) 
+void BoxiExcludeList::AddEntry(const BoxiExcludeEntry& rNewEntry) 
 {
-	for (MyExcludeEntry::ConstIterator 
+	for (BoxiExcludeEntry::ConstIterator 
 		i  = mEntries.begin();
 		i != mEntries.end(); i++)
 	{
@@ -100,9 +109,9 @@ void MyExcludeList::AddEntry(const MyExcludeEntry& rNewEntry)
 	}
 }
 
-void MyExcludeList::InsertEntry(int index, const MyExcludeEntry& rNewEntry) 
+void BoxiExcludeList::InsertEntry(int index, const BoxiExcludeEntry& rNewEntry) 
 {
-	for (MyExcludeEntry::ConstIterator 
+	for (BoxiExcludeEntry::ConstIterator 
 		i  = mEntries.begin();
 		i != mEntries.end(); i++)
 	{
@@ -112,7 +121,7 @@ void MyExcludeList::InsertEntry(int index, const MyExcludeEntry& rNewEntry)
 		}
 	}
 
-	MyExcludeEntry::Iterator i;
+	BoxiExcludeEntry::Iterator i;
 		
 	for (i = mEntries.begin();
 	     i != mEntries.end() && index > 0;
@@ -127,10 +136,10 @@ void MyExcludeList::InsertEntry(int index, const MyExcludeEntry& rNewEntry)
 	}
 }
 
-void MyExcludeList::ReplaceEntry(const MyExcludeEntry& rOldEntry, 
-	const MyExcludeEntry& rNewEntry) 
+void BoxiExcludeList::ReplaceEntry(const BoxiExcludeEntry& rOldEntry, 
+	const BoxiExcludeEntry& rNewEntry) 
 {
-	std::list<MyExcludeEntry>::iterator current;
+	std::list<BoxiExcludeEntry>::iterator current;
 	for (current = mEntries.begin(); 
 		current != mEntries.end() && !current->IsSameAs(rOldEntry); current++) 
 		{ }
@@ -143,9 +152,9 @@ void MyExcludeList::ReplaceEntry(const MyExcludeEntry& rOldEntry,
 }
 
 /*
-void MyExcludeList::RemoveEntry(int target) 
+void BoxiExcludeList::RemoveEntry(int target) 
 {
-	std::list<MyExcludeEntry>::iterator current;
+	std::list<BoxiExcludeEntry>::iterator current;
 	for (current = mEntries.begin();
 		current != mEntries.end() && target != 0;
 		current++, target--) { }
@@ -161,9 +170,9 @@ void MyExcludeList::RemoveEntry(int target)
 }
 */
 
-void MyExcludeList::RemoveEntry(const MyExcludeEntry& rOldEntry) 
+void BoxiExcludeList::RemoveEntry(const BoxiExcludeEntry& rOldEntry) 
 {
-	std::list<MyExcludeEntry>::iterator current;
+	std::list<BoxiExcludeEntry>::iterator current;
 	for (current = mEntries.begin(); 
 		current != mEntries.end() && !current->IsSameAs(rOldEntry); current++) 
 		{ }
@@ -178,9 +187,9 @@ void MyExcludeList::RemoveEntry(const MyExcludeEntry& rOldEntry)
 	}
 }
 
-MyExcludeEntry* MyExcludeList::UnConstEntry(const MyExcludeEntry& rEntry)
+BoxiExcludeEntry* BoxiExcludeList::UnConstEntry(const BoxiExcludeEntry& rEntry)
 {
-	std::list<MyExcludeEntry>::iterator current;
+	std::list<BoxiExcludeEntry>::iterator current;
 	for (current = mEntries.begin(); 
 		current != mEntries.end() && !current->IsSameAs(rEntry); current++) 
 		{ }
@@ -193,7 +202,7 @@ MyExcludeEntry* MyExcludeList::UnConstEntry(const MyExcludeEntry& rEntry)
 
 /*
 bool Location::IsExcluded(const wxString& rLocalFileName, bool mIsDirectory, 
-	const MyExcludeEntry** ppExcludedBy, const MyExcludeEntry** ppIncludedBy)
+	const BoxiExcludeEntry** ppExcludedBy, const BoxiExcludeEntry** ppIncludedBy)
 {
 	ExcludedState state = GetExcludedState(rLocalFileName, mIsDirectory,
 		ppExcludedBy, ppIncludedBy);
@@ -204,14 +213,14 @@ bool Location::IsExcluded(const wxString& rLocalFileName, bool mIsDirectory,
 }
 */
 
-ExcludedState Location::GetExcludedState(const wxString& rLocalFileName, 
-	bool mIsDirectory, const MyExcludeEntry** ppExcludedBy, 
-	const MyExcludeEntry** ppIncludedBy, bool* pMatched)
+ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName, 
+	bool mIsDirectory, const BoxiExcludeEntry** ppExcludedBy, 
+	const BoxiExcludeEntry** ppIncludedBy, bool* pMatched)
 {
 	//wxLogDebug(wxT(" checking whether %s is excluded..."), 
 	//	rLocalFileName.c_str());
 	
-	const std::list<MyExcludeEntry>& rExcludeList =
+	const std::list<BoxiExcludeEntry>& rExcludeList =
 		mExcluded.GetEntries();
 
 	wxFileName fn(rLocalFileName);
@@ -248,7 +257,7 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 	{
 		// wxLogDebug(wxT(" pass %d"), pass);
 
-		for (MyExcludeEntry::ConstIterator 
+		for (BoxiExcludeEntry::ConstIterator 
 			pEntry  = rExcludeList.begin();
 			pEntry != rExcludeList.end(); pEntry++)
 		{
@@ -371,18 +380,18 @@ ExcludedState Location::GetExcludedState(const wxString& rLocalFileName,
 //		Created: 28/1/04
 //
 // --------------------------------------------------------------------------
-ExcludeList* Location::GetBoxExcludeList(bool listDirs) const
+ExcludeList* BoxiLocation::GetBoxExcludeList(bool listDirs) const
 {
 	// Create the exclude list
 	ExcludeList *pExclude = new ExcludeList;
 	ExcludeList *pInclude = new ExcludeList;
 	pExclude->SetAlwaysIncludeList(pInclude);
 	
-	const MyExcludeEntry::List& rEntries(mExcluded.GetEntries());
+	const BoxiExcludeEntry::List& rEntries(mExcluded.GetEntries());
 	
 	try
 	{
-		for (MyExcludeEntry::ConstIterator 
+		for (BoxiExcludeEntry::ConstIterator 
 			pEntry  = rEntries.begin();
 			pEntry != rEntries.end(); pEntry++)
 		{
