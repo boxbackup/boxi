@@ -22,6 +22,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <wx/filename.h>
 #include <wx/notebook.h>
 
 #include "SandBox.h"
@@ -38,6 +39,7 @@
 #include "GeneralPanel.h"
 #include "MainFrame.h"
 #include "TestFrame.h"
+#include "TestFileDialog.h"
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_MENU(ID_File_New,     MainFrame::OnFileNew)
@@ -145,15 +147,15 @@ static const wxChar *FILETYPES = wxT(
 
 void MainFrame::OnFileOpen(wxCommandEvent& event) 
 {
-	wxFileDialog* pOpenFileDialog = new wxFileDialog(
+	TestFileDialog openFileDialog(
 		this, wxT("Open file"), wxT(""), wxT("bbackupd.conf"), 
 		FILETYPES, wxOPEN | wxFILE_MUST_EXIST, 
 		wxDefaultPosition);
 
-	if (wxGetApp().ShowFileDialog(*pOpenFileDialog) != wxID_OK)
+	if (wxGetApp().ShowFileDialog(openFileDialog) != wxID_OK)
 		return;
 
-	DoFileOpen(pOpenFileDialog->GetPath());
+	DoFileOpen(openFileDialog.GetPath());
 }
 
 void MainFrame::DoFileOpen(const wxString& path)
@@ -246,7 +248,7 @@ void MainFrame::DoFileSaveAs()
 
 void MainFrame::DoFileSaveAs2() 
 {
-	wxFileDialog saveFileDialog(
+	TestFileDialog saveFileDialog(
 		this, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
 		FILETYPES, wxSAVE | wxOVERWRITE_PROMPT, 
 		wxDefaultPosition);
