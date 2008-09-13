@@ -196,7 +196,7 @@ void RestorePanel::OnClickStartButton(wxCommandEvent& rEvent)
 		return;
 	}
 
-	if (dest.DirExists() || dest.FileExists())
+	if (wxFileName(dest.GetFullPath(), _("")).DirExists() || dest.FileExists())
 	{
 		wxGetApp().ShowMessageBox(BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS,
 			_("Cannot start restore: the destination path already exists"),
