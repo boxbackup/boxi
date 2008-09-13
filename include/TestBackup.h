@@ -39,9 +39,6 @@
 
 #include "TestWithServer.h"
 
-class BackupStoreAccountDatabase;
-class BackupStoreAccounts;
-
 class TestBackup : public TestWithServer
 {
 	public:
@@ -61,103 +58,6 @@ class TestBackup : public TestWithServer
 	void TestRenameDir();
 	void TestRestore();
 	void CleanUp();
-};
-
-class TestBackupStoreDaemon
-: public ServerTLS<BOX_PORT_BBSTORED, 1, false>,
-  public HousekeepingInterface
-{
-	public:
-	TestBackupStoreDaemon()
-	: mStateKnownCondition(mConditionLock),
-	  mStateListening(false), mStateDead(false)
-	{ }
-	
-	virtual void Run();
-	virtual void Setup();
-	virtual bool Load(const std::string& file);
-	
-	wxMutex     mConditionLock;
-	wxCondition mStateKnownCondition;
-	bool        mStateListening;
-	bool        mStateDead;
-
-	virtual void SendMessageToHousekeepingProcess(const void *Msg, int MsgLen)
-	{ }
-
-	protected:
-	virtual void NotifyListenerIsReady();
-	virtual void Connection(SocketStreamTLS &rStream);
-	virtual const ConfigurationVerify *GetConfigVerify() const;
-
-	private:
-	void SetupInInitialProcess();
-	BackupStoreAccountDatabase *mpAccountDatabase;
-	BackupStoreAccounts *mpAccounts;
-};
-
-class StoreServerThread : public wxThread
-{
-	TestBackupStoreDaemon mDaemon;
-
-	public:
-	StoreServerThread(const wxString& rFilename)
-	: wxThread(wxTHREAD_JOINABLE)
-	{
-		wxCharBuffer buf = rFilename.mb_str(wxConvLibc);
-		mDaemon.Load(buf.data());
-		mDaemon.SetSingleProcess(true);
-		mDaemon.Setup();
-	}
-
-	~StoreServerThread()
-	{
-		Stop();
-	}
-
-	void Start();
-	void Stop();
-	
-	const Configuration& GetConfiguration()
-	{
-		return mDaemon.GetConfiguration();
-	}
-
-	private:
-	virtual ExitCode Entry();
-};
-
-class StoreServer
-{
-	private:
-	std::auto_ptr<StoreServerThread> mapThread;
-	wxString mConfigFile;
-
-	public:
-	StoreServer(const wxString& rFilename)
-	: mConfigFile(rFilename)
-	{ }
-
-	~StoreServer()
-	{
-		if (mapThread.get())
-		{
-			Stop();
-		}
-	}
-
-	void Start();
-	void Stop();
-
-	const Configuration& GetConfiguration()
-	{
-		if (!mapThread.get()) 
-		{
-			throw "not running";
-		}
-		
-		return mapThread->GetConfiguration();
-	}
 };
 
 void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,

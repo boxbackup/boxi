@@ -48,8 +48,11 @@
 #include "RaidFileController.h"
 #include "BackupDaemonConfigVerify.h"
 #include "BackupClientCryptoKeys.h"
+#include "BackupConstants.h"
+#include "BackupStoreConfigVerify.h"
 #include "BackupStoreConstants.h"
 #include "BackupStoreException.h"
+#include "autogen_BackupProtocolServer.h"
 
 #include "main.h"
 #include "BoxiApp.h"
@@ -66,6 +69,176 @@
 #include "RestoreFilesPanel.h"
 
 #undef TLS_CLASS_IMPLEMENTATION_CPP
+
+const ConfigurationVerify *TestBackupStoreDaemon::GetConfigVerify() const
+{
+	return &BackupConfigFileVerify;
+}
+
+void TestBackupStoreDaemon::NotifyListenerIsReady()
+{
+	wxMutexLocker lock(mConditionLock);
+	mStateListening = true;
+	mStateKnownCondition.Signal();
+}
+
+void TestBackupStoreDaemon::SetupInInitialProcess()
+{
+	const Configuration &config(GetConfiguration());
+	
+	// Initialise the raid files controller
+	RaidFileController::GetController().Initialise(
+		config.GetKeyValue("RaidFileConf").c_str());
+	
+	// Load the account database
+	mapAccountDatabase = BackupStoreAccountDatabase::Read(
+			config.GetKeyValue("AccountDatabase").c_str());
+	
+	// Create a accounts object
+	mapAccounts.reset(new BackupStoreAccounts(*mapAccountDatabase));
+	
+	// Ready to go!
+}
+
+void TestBackupStoreDaemon::Setup() 
+{ 
+	SetupInInitialProcess(); 
+}
+
+bool TestBackupStoreDaemon::Load(const std::string& file) 
+{ 
+	return Configure(file); 
+}
+
+void TestBackupStoreDaemon::Run()
+{ 
+	ServerTLS<BOX_PORT_BBSTORED, 1, false>::Run(); 
+}
+
+void TestBackupStoreDaemon::Connection(SocketStreamTLS &rStream)
+{
+	// Get the common name from the certificate
+	std::string clientCommonName(rStream.GetPeerCommonName());
+	
+	// Log the name
+	// ::syslog(LOG_INFO, "Certificate CN: %s\n", clientCommonName.c_str());
+	
+	// Check it
+	int32_t id;
+	if(::sscanf(clientCommonName.c_str(), "BACKUP-%x", &id) != 1)
+	{
+		// Bad! Disconnect immediately
+		return;
+	}
+
+	// Make ps listings clearer
+	// SetProcessTitle("client %08x", id);
+
+	// Create a context, using this ID
+	BackupStoreContext context(id, *this);
+	
+	// See if the client has an account?
+	if(mapAccounts->AccountExists(id))
+	{
+		std::string root;
+		int discSet;
+		mapAccounts->GetAccountRoot(id, root, discSet);
+		context.SetClientHasAccount(root, discSet);
+	}
+
+	// Handle a connection with the backup protocol
+	BackupProtocolServer server(rStream);
+	server.SetLogToSysLog(false);
+	server.SetTimeout(BACKUP_STORE_TIMEOUT);
+	server.DoServer(context);
+	context.CleanUp();
+}
+
+void StoreServerThread::Start()
+{
+	wxMutexLocker lock(mDaemon.mConditionLock);
+	CPPUNIT_ASSERT(lock.IsOk());
+	// CPPUNIT_ASSERT_EQUAL(wxMUTEX_NO_ERROR, mDaemon.mConditionLock.Lock());
+	CPPUNIT_ASSERT_EQUAL(wxTHREAD_NO_ERROR, Create());
+	CPPUNIT_ASSERT_EQUAL(wxTHREAD_NO_ERROR, Run());
+	
+	// wait until listening thread is ready to accept connections
+	CPPUNIT_ASSERT_EQUAL(wxCOND_NO_ERROR,
+		mDaemon.mStateKnownCondition.Wait());
+	CPPUNIT_ASSERT(mDaemon.mStateListening);
+	CPPUNIT_ASSERT(!mDaemon.mStateDead);
+}
+
+void StoreServerThread::Stop()
+{
+	if (!IsAlive()) return;
+	mDaemon.SetTerminateWanted();
+	wxLogNull nolog;
+	wxThreadError err = Delete();
+	if (err != wxTHREAD_NO_ERROR)
+	{
+		wxString msg;
+		msg.Printf(_("Failed to wait for server thread: error %d"),
+			err);
+		wxGetApp().ShowMessageBox(BM_TEST_WAIT_FOR_THREAD_FAILED,
+			msg, _("Boxi Error"), wxOK | wxICON_ERROR, NULL);
+	}
+}
+
+StoreServerThread::ExitCode StoreServerThread::Entry()
+{
+	try
+	{
+		mDaemon.Run();
+		return 0;
+	}
+	catch (BoxException& e)
+	{
+		printf("Server thread died due to exception: %s\n",
+			e.what());
+	}
+	catch (...)
+	{
+		printf("Server thread died due to unknown exception\n");
+	}
+	mDaemon.mStateListening = false;
+	mDaemon.mStateDead = true;
+	mDaemon.mStateKnownCondition.Signal();
+	return (void *)1;
+}
+
+void StoreServer::Start()
+{
+	if (mapThread.get()) 
+	{
+		throw "already running";
+	}
+	
+	mapThread.reset(new StoreServerThread(mConfigFile)),
+	mapThread->Start();
+}
+
+void StoreServer::Stop()
+{
+	if (!mapThread.get()) 
+	{
+		throw "not running";
+	}
+
+	mapThread->Stop();
+	mapThread.reset();
+}
+
+TestWithServer::TestWithServer()
+: TestWithConfig        (),
+  mpTestDataLocation    (NULL),
+  mpMainFrame           (NULL),
+  mpBackupPanel         (NULL),
+  mpBackupProgressPanel (NULL),
+  mpBackupErrorList     (NULL),
+  mpBackupStartButton   (NULL),
+  mpBackupProgressCloseButton (NULL)
+{ }
 
 void TestWithServer::setUp()
 {
@@ -632,3 +805,8 @@ void TestWithServer::RemoveDefaultLocation()
 	CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
 	mpTestDataLocation = NULL;
 }
+
+void TestWithServer::StartServer() { mapServer->Start(); }
+void TestWithServer::StopServer()  { mapServer->Stop(); }
+
+TestWithServer::~TestWithServer() { }

@@ -2,7 +2,7 @@
  *            TestWithServer.h
  *
  *  Sun Sep 24 13:49:55 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -25,26 +25,117 @@
 #ifndef _TESTWITHSERVER_H
 #define _TESTWITHSERVER_H
 
+#include <wx/filename.h>
+
+#include "BackupStoreAccounts.h"
+#include "BackupStoreAccountDatabase.h"
+#include "RaidFileController.h"
+
 #include "TestFrame.h"
 #include "ServerConnection.h"
 
-class StoreServer;
+class TestBackupStoreDaemon
+: public ServerTLS<BOX_PORT_BBSTORED, 1, false>,
+  public HousekeepingInterface
+{
+	public:
+	TestBackupStoreDaemon()
+	: mStateKnownCondition(mConditionLock),
+	  mStateListening(false), mStateDead(false)
+	{ }
+	
+	virtual void Run();
+	virtual void Setup();
+	virtual bool Load(const std::string& file);
+	
+	wxMutex     mConditionLock;
+	wxCondition mStateKnownCondition;
+	bool        mStateListening;
+	bool        mStateDead;
+
+	virtual void SendMessageToHousekeepingProcess(const void *Msg, int MsgLen)
+	{ }
+
+	protected:
+	virtual void NotifyListenerIsReady();
+	virtual void Connection(SocketStreamTLS &rStream);
+	virtual const ConfigurationVerify *GetConfigVerify() const;
+
+	private:
+	void SetupInInitialProcess();
+	std::auto_ptr<BackupStoreAccountDatabase> mapAccountDatabase;
+	std::auto_ptr<BackupStoreAccounts> mapAccounts;
+};
+
+class StoreServerThread : public wxThread
+{
+	TestBackupStoreDaemon mDaemon;
+
+	public:
+	StoreServerThread(const wxString& rFilename)
+	: wxThread(wxTHREAD_JOINABLE)
+	{
+		wxCharBuffer buf = rFilename.mb_str(wxConvLibc);
+		mDaemon.Load(buf.data());
+		mDaemon.SetSingleProcess(true);
+		mDaemon.Setup();
+	}
+
+	~StoreServerThread()
+	{
+		Stop();
+	}
+
+	void Start();
+	void Stop();
+	
+	const Configuration& GetConfiguration()
+	{
+		return mDaemon.GetConfiguration();
+	}
+
+	private:
+	virtual ExitCode Entry();
+};
+
+class StoreServer
+{
+	private:
+	std::auto_ptr<StoreServerThread> mapThread;
+	wxString mConfigFile;
+
+	public:
+	StoreServer(const wxString& rFilename)
+	: mConfigFile(rFilename)
+	{ }
+
+	~StoreServer()
+	{
+		if (mapThread.get())
+		{
+			Stop();
+		}
+	}
+
+	void Start();
+	void Stop();
+
+	const Configuration& GetConfiguration()
+	{
+		if (!mapThread.get()) 
+		{
+			throw "not running";
+		}
+		
+		return mapThread->GetConfiguration();
+	}
+};
 
 class TestWithServer : public TestWithConfig
 {
 	public:
-	TestWithServer()
-	: TestWithConfig        (),
-	  mpTestDataLocation    (NULL),
-	  mpMainFrame           (NULL),
-	  mpBackupPanel         (NULL),
-	  mpBackupProgressPanel (NULL),
-	  mpBackupErrorList     (NULL),
-	  mpBackupStartButton   (NULL),
-	  mpBackupProgressCloseButton (NULL)
-	{ }
-	virtual ~TestWithServer()
-	{ }
+	TestWithServer();
+	virtual ~TestWithServer();
 
 	virtual void setUp();
 	virtual void tearDown();
@@ -61,7 +152,6 @@ class TestWithServer : public TestWithConfig
 	wxButton*  mpBackupStartButton;
 	wxButton*  mpBackupProgressCloseButton;
 
-	std::auto_ptr<StoreServer> mapServer;
 	std::auto_ptr<ServerConnection> mapConn;
 	TLSContext mTlsContext;
 	
@@ -73,6 +163,11 @@ class TestWithServer : public TestWithConfig
 		
 	void SetupDefaultLocation();
 	void RemoveDefaultLocation();
+	
+	void StartServer();
+	void StopServer();
+	
+	std::auto_ptr<StoreServer> mapServer;
 };
 
 #define CHECK_BACKUP() \
