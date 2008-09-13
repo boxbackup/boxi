@@ -2,8 +2,8 @@
  *            TestConfig.h
  *
  *  Sat Aug 12 14:35:33 2006
- *  Copyright  2006  Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2006-2008 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
@@ -41,6 +41,7 @@ class TestConfig : public TestWithConfig
 	void LoadConfig();
 	void AssertDefaultConfig();
 	void AssertConfigAsExpected();
+	void AssertClearConfig();
 	void ClearConfig();
 	void AssertClean();
 	void AssertDirty();

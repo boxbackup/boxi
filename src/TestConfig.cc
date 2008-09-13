@@ -209,7 +209,6 @@ void TestConfig::RunTest()
 	AssertClean();
 
 	ClearConfig();
-	AssertDefaultConfig();
 	AssertDirty();
 
 	// save the configuration with all settings cleared
@@ -222,7 +221,7 @@ void TestConfig::RunTest()
 	CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
 	CPPUNIT_ASSERT(wxGetApp().ShowedMessageBox());
 	CPPUNIT_ASSERT(mConfigFileName.FileExists());
-	AssertDefaultConfig();
+	AssertClearConfig();
 	AssertClean();
 
 	// back to default configuration
@@ -236,7 +235,7 @@ void TestConfig::RunTest()
 	ClickMenuItem(ID_File_Open, mpMainFrame);
 	CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
 	// mpMainFrame->DoFileOpen(mConfigFileName.GetFullPath());
-	AssertDefaultConfig();
+	AssertClearConfig();
 	AssertClean();
 
 	// back to default configuration again
@@ -303,12 +302,12 @@ void TestConfig::AssertDefaultConfig()
 void TestConfig::LoadConfig()
 {
 	// open the saved configuration again
-	// cannot do this because of the bug in the file chooser widget
-	// wxGetApp().ExpectFileDialog(mConfigFileName.GetFullPath());
-	// ClickMenuItem(ID_File_Open, mpMainFrame);
-	// CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
-	mpMainFrame->DoFileOpen(mConfigFileName.GetFullPath());
-	AssertConfigAsExpected();
+	// cannot do this because of the bug in the file chooser widget?
+	wxGetApp().ExpectFileDialog(mConfigFileName.GetFullPath());
+	ClickMenuItem(ID_File_Open, mpMainFrame);
+	CPPUNIT_ASSERT(wxGetApp().ShowedFileDialog());
+	// mpMainFrame->DoFileOpen(mConfigFileName.GetFullPath());
+	// AssertConfigAsExpected();
 }
 
 void TestConfig::AssertConfigAsExpected()
@@ -358,6 +357,23 @@ void TestConfig::ClearConfig()
 	// check that all config options are configured, and clear them
 	#define PROP(name) \
 		mpConfig->name.Clear(); \
+		CPPUNIT_ASSERT(!mpConfig->name.IsConfigured());
+	#define STR_PROP_SUBCONF(name, section)  PROP(name)
+	#define STR_PROP(name)  PROP(name)
+	#define INT_PROP(name)  PROP(name)
+	#define BOOL_PROP(name)
+	ALL_PROPS
+	#undef BOOL_PROP
+	#undef INT_PROP
+	#undef STR_PROP
+	#undef STR_PROP_SUBCONF
+	#undef PROP
+}
+
+void TestConfig::AssertClearConfig()
+{
+	// check that all config options are configured, and clear them
+	#define PROP(name) \
 		CPPUNIT_ASSERT(!mpConfig->name.IsConfigured());
 	#define STR_PROP_SUBCONF(name, section)  PROP(name)
 	#define STR_PROP(name)  PROP(name)
