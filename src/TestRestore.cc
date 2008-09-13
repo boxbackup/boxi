@@ -357,10 +357,10 @@ void TestRestore::RunTest()
 	
 	CHECK_RESTORE_OK(1, "18 kB");
 	
-	CPPUNIT_ASSERT(mRestoreDest.DirExists());
+	CPPUNIT_ASSERT(wxFileName::DirExists(mRestoreDest.GetFullPath()));
 	wxFileName testdataRestored = MakeAbsolutePath(mRestoreDest, 
 		_("testdata"));
-	CPPUNIT_ASSERT(testdataRestored.DirExists());
+	CPPUNIT_ASSERT(wxFileName::DirExists(testdataRestored.GetFullPath()));
 	wxFileName df9834_dsfRestored = MakeAbsolutePath(testdataRestored, 
 		_("df9834.dsf"));
 	CPPUNIT_ASSERT(df9834_dsfRestored.FileExists());
