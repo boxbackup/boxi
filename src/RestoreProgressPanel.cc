@@ -527,7 +527,8 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 	// In the special case of restoring the root, don't complain about it.
 	if (!pNode->IsRoot())
 	{
-		if (rLocalName.FileExists() || rLocalName.DirExists())
+		if (rLocalName.FileExists() ||
+			wxDirExists(rLocalName.GetFullPath()))
 		{
 			wxString msg;
 			msg.Printf(_("Error: failed to finish restore: "
