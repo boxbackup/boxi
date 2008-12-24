@@ -351,7 +351,7 @@ void CompareBackup(const Configuration& rClientConfig,
 	);
 
 	// Set up a context for our work
-	BackupQueries query(connection, rClientConfig);
+	BackupQueries query(connection, rClientConfig, false /* read-write */);
 
 	wxCharBuffer remote = rRemoteDir.mb_str(wxConvLibc);
 	wxCharBuffer local  = rLocalPath.GetFullPath().mb_str(wxConvLibc);
