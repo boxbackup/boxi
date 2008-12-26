@@ -43,9 +43,11 @@ boxi_include_DATA = \
 	TestCompare.h\
 	ProgressPanel.h\
 	TestWizard.h \
-	ConfigChangeListener.h
+	ConfigChangeListener.h \
+	BackupFilesPanel.h \
+	Common.h \
+	CompareFilesPanel.h \
+	Database.h
 
 EXTRA_DIST = $(boxi_include_DATA)
 
-SUBDIRS = \
-	include
