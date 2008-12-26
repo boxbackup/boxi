@@ -673,7 +673,7 @@ void TestWithServer::CompareDirsInternal(wxFileName file1, wxFileName file2,
 		}
 	}
 
-	if (file1.DirExists())
+	if (wxFileName::DirExists(file1.GetFullPath()))
 	{
 		wxArrayString expectedEntries;
 		wxDir expected(file1.GetFullPath());

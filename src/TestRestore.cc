@@ -230,7 +230,7 @@ void TestRestore::RunTest()
 	);
 	CPPUNIT_ASSERT(mpRestoreTree);
 	
-	wxTreeItemId mRootId = mpRestoreTree->GetRootItem();
+	mRootId = mpRestoreTree->GetRootItem();
 	CPPUNIT_ASSERT(mRootId.IsOk());
 	CPPUNIT_ASSERT_EQUAL(wxString(_("/ (server root)")),
 		mpRestoreTree->GetItemText(mRootId));
@@ -358,15 +358,15 @@ void TestRestore::RunTest()
 	CHECK_RESTORE_OK(1, "18 kB");
 	
 	CPPUNIT_ASSERT(wxFileName::DirExists(mRestoreDest.GetFullPath()));
-	wxFileName testdataRestored = MakeAbsolutePath(mRestoreDest, 
-		_("testdata"));
+	testdataRestored = MakeAbsolutePath(mRestoreDest, _("testdata"));
 	CPPUNIT_ASSERT(wxFileName::DirExists(testdataRestored.GetFullPath()));
-	wxFileName df9834_dsfRestored = MakeAbsolutePath(testdataRestored, 
-		_("df9834.dsf"));
+	
+	df9834_dsfRestored = MakeAbsolutePath(testdataRestored, _("df9834.dsf"));
 	CPPUNIT_ASSERT(df9834_dsfRestored.FileExists());
-	wxFileName df9834_dsfOriginal = MakeAbsolutePath(mTestDataDir, 
-		_("df9834.dsf"));
+	
+	df9834_dsfOriginal = MakeAbsolutePath(mTestDataDir, _("df9834.dsf"));
 	CompareFiles(df9834_dsfOriginal, df9834_dsfRestored);
+	
 	CPPUNIT_ASSERT(wxRemoveFile(df9834_dsfRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
 	
@@ -847,10 +847,10 @@ void TestRestore::TestRestoreToDate()
 	// So there should be 2 differences to start with.
 	
 	wxFileName expectedRestoreDir(mBaseDir.GetFullPath(), _("expected"));
-	CPPUNIT_ASSERT(expectedRestoreDir.Mkdir(0700));
+	CPPUNIT_ASSERT(wxMkdir(expectedRestoreDir.GetFullPath(), 0700));
 	wxFileName expectedTestDataDir(expectedRestoreDir.GetFullPath(), 
 		_("testdata"));
-	CPPUNIT_ASSERT(expectedTestDataDir.Mkdir(0700));
+	CPPUNIT_ASSERT(wxMkdir(expectedTestDataDir.GetFullPath(), 0700));
 	Unzip(mTest2ZipFile, expectedTestDataDir, true);
 	
 	CompareDirs(expectedRestoreDir, mRestoreDest, 2);
@@ -866,7 +866,7 @@ void TestRestore::TestRestoreToDate()
 	{
 		wxFileName createMe = MakeAbsolutePath(expectedRestoreDir,
 			_("testdata/sub23/ping!"));
-		CPPUNIT_ASSERT(!createMe.DirExists());
+		CPPUNIT_ASSERT(!wxFileName::DirExists(createMe.GetFullPath()));
 		CPPUNIT_ASSERT(wxMkdir(createMe.GetFullPath()));
 	}
 	
