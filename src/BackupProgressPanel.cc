@@ -122,7 +122,15 @@ void BackupProgressPanel::StartBackup()
 	
 	try
 	{
+		// Touch a file to record times in filesystem.
+		// This is the ONLY part of OnBackupStart() that Boxi runs
+		mapDaemon->TouchFileInWorkingDir("last_sync_start");
+		
 		mapDaemon->RunSyncNow();
+
+		// Touch a file to record times in filesystem.
+		// This is the ONLY part of OnBackupFinish() that Boxi runs
+		mapDaemon->TouchFileInWorkingDir("last_sync_finish");
 
 		if (mapDaemon->StorageLimitExceeded())
 		{
