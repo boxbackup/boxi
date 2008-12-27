@@ -2,8 +2,8 @@
  *            BackupDaemonPanel.h
  *
  *  Mon Apr  4 20:35:39 2005
- *  Copyright  2005  Chris Wilson
- *  Email <boxi_BackupDaemonPanel.h@qwirx.com>
+ *  Copyright 2005-2008 Chris Wilson
+ *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
 /*
