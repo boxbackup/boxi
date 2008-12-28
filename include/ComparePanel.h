@@ -2,7 +2,7 @@
  *            ComparePanel.h
  *
  *  Tue Mar  1 00:24:11 2005
- *  Copyright 2005-2006 Chris Wilson
+ *  Copyright 2005-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -29,7 +29,7 @@
 
 #include "FunctionPanel.h"
 
-class CompareProgressPanel;
+class CompareFilesPanel;
 class ServerConnection;
 
 class wxChoice;
@@ -38,6 +38,14 @@ class wxGenericDirCtrl;
 class wxNotebook;
 class wxRadioButton;
 class wxTreeCtrl;
+
+class CompareParams
+{
+	private:
+	CompareParams(const CompareParams& rToCopy) { /* forbidden */ }
+	CompareParams& operator=(const CompareParams& rToCopy)
+	{ return *this; /* forbidden */ }
+};
 
 class ComparePanel : public wxPanel, public ConfigChangeListener
 {
@@ -53,9 +61,9 @@ class ComparePanel : public wxPanel, public ConfigChangeListener
 	void AddToNotebook(wxNotebook* pNotebook);
 	
 	private:	
-	ServerConnection*     mpServerConnection;
-	ClientConfig*         mpConfig;
-	MainFrame*            mpMainFrame;
+	ServerConnection* mpServerConnection;
+	ClientConfig*     mpConfig;
+	MainFrame*        mpMainFrame;
 	
 	wxRadioButton* mpAllLocsRadio;
 	wxRadioButton* mpOneLocRadio;
@@ -66,7 +74,7 @@ class ComparePanel : public wxPanel, public ConfigChangeListener
 	wxGenericDirCtrl* mpDirLocalTree;
 	wxTreeCtrl*       mpDirRemoteTree;
 	
-	// CompareProgressPanel* mpProgressPanel;
+	CompareFilesPanel* mpFilesPanel;
 
 	void Update();
 	void OnClickStartButton(wxCommandEvent& rEvent);

@@ -242,7 +242,7 @@ class ClientConnection : public wxThread
 	bool _sendCommand(const char * cmd) 
 	{
 		mpSocket->Write(cmd, strlen(cmd));
-		char *newline = "\n";
+		const char *newline = "\n";
 		mpSocket->Write(newline, strlen(newline));
 		
 		wxString cmd2(cmd, wxConvLibc);

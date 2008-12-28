@@ -41,9 +41,9 @@ class CompareFilesPanel : public wxPanel
 	(
 		ClientConfig*     pConfig,
 		ServerConnection* pServerConnection,
-		MainFrame*        pMainFrame,
-		wxWindow*         pParent,
-		wxPanel*          pPanelToShowOnClose
+		/* MainFrame*        pMainFrame, */
+		wxWindow*         pParent
+		/* wxPanel*          pPanelToShowOnClose */
 	);
 	
 	private:

@@ -2,7 +2,7 @@
  *            TestCompare.cc
  *
  *  Sun Sep 24 14:45:40 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -264,24 +264,6 @@ void TestCompare::RunTest()
 	CPPUNIT_ASSERT(pRemoteDirCtrl->IsEnabled());
 	CPPUNIT_ASSERT(!pCompareOneLocChoice->IsEnabled());
 
-	/*
-	wxListBox* pLocsList = wxDynamicCast
-	(
-		pComparePanel->FindWindow(ID_Function_Source_List), wxListBox
-	);
-	CPPUNIT_ASSERT(pLocsList);
-	CPPUNIT_ASSERT_EQUAL(0, pLocsList->GetCount());
-	
-	wxPanel* pCompareFilesPanel = wxDynamicCast
-	(
-		mpMainFrame->FindWindow(ID_Compare_Files_Panel), wxPanel
-	);
-	CPPUNIT_ASSERT(pCompareFilesPanel);
-
-	CPPUNIT_ASSERT(!pCompareFilesPanel->IsShown());	
-	ClickButtonWaitEvent(ID_Compare_Panel, ID_Function_Source_Button);
-	CPPUNIT_ASSERT(pCompareFilesPanel->IsShown());
-	
 	{
 		wxFileName testSpaceZipFile(_("../test/data/spacetest1.zip"));
 		CPPUNIT_ASSERT(testSpaceZipFile.FileExists());
@@ -316,6 +298,26 @@ void TestCompare::RunTest()
 		Unzip(test3ZipFile, mTestDataDir, true);
 	}
 
+	CHECK_BACKUP_OK();
+
+	ClickRadioWaitEvent(pCompareAllRadio);
+	CPPUNIT_ASSERT(!pCompareOneLocChoice->IsEnabled());
+	CPPUNIT_ASSERT(!pLocalDirCtrl->IsEnabled());
+	CPPUNIT_ASSERT(!pRemoteDirCtrl->IsEnabled());
+
+	wxPanel* pProgressPanel = wxDynamicCast
+	(
+		mpMainFrame->FindWindow(ID_Compare_Progress_Panel), wxPanel
+	);
+	CPPUNIT_ASSERT(pProgressPanel);
+
+	CPPUNIT_ASSERT(!pProgressPanel->IsShown());	
+	ClickButtonWaitEvent(ID_Compare_Panel, ID_Function_Start_Button);
+	CPPUNIT_ASSERT(pProgressPanel->IsShown());
+
+	// CHECK_COMPARE_LOC_OK(3, 4);
+
+	/*
 	wxTreeCtrl* pCompareTree = wxDynamicCast
 	(
 		pCompareFilesPanel->FindWindow(ID_Server_File_Tree), 
@@ -325,9 +327,6 @@ void TestCompare::RunTest()
 	*/
 	
 	/*	
-	CHECK_BACKUP_OK();
-	CHECK_COMPARE_LOC_OK(3, 4);
-	
 	wxTreeItemId rootId = pRestoreTree->GetRootItem();
 	CPPUNIT_ASSERT(rootId.IsOk());
 	CPPUNIT_ASSERT_EQUAL(wxString(_("/ (server root)")),

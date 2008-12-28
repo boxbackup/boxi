@@ -47,7 +47,6 @@ boxi_include_DATA = \
 	BackupFilesPanel.h \
 	Common.h \
 	CompareFilesPanel.h \
-	Database.h
-
-EXTRA_DIST = $(boxi_include_DATA)
+	Database.h \
+	CompareProgressPanel.h
 

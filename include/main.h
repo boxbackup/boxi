@@ -54,6 +54,7 @@ enum {
 	ID_Compare_Panel,
 	ID_Backup_Progress_Panel,
 	ID_Restore_Progress_Panel,
+	ID_Compare_Progress_Panel,
 
 	ID_General_Setup_Wizard_Button,
 	ID_General_Setup_Advanced_Button,

@@ -69,7 +69,9 @@ boxi_SOURCES = \
 	TestWithServer.cc\
 	TestCompare.cc\
 	ProgressPanel.cc\
-	TestBackupConfig2.cc
+	TestBackupConfig2.cc \
+	CompareFilesPanel.cc \
+	CompareProgressPanel.cc
 
 boxi_LDFLAGS = 
 

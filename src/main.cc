@@ -195,16 +195,6 @@ bool BoxiApp::OnInit()
 	signal(SIGPIPE, sigpipe_handler);	
 	#endif
 
-	/*
-	if (cmdParser.Found(wxT("t")))
-	{
-		TestFrame* pTestFrame = new TestFrame(wxString(argv[0]));
-		pTestFrame->Show(TRUE);
-	}
-	else
-	{
-	*/
-	
 	if (cmdParser.Found(wxT("t")))
 	{
 		mTesting = true;
@@ -219,10 +209,6 @@ bool BoxiApp::OnInit()
 		);
 		frame->Show(TRUE);
 	}
-	
-	/*
-	}
-	*/
 	
   	return TRUE;
 }

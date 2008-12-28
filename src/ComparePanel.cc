@@ -30,6 +30,7 @@
 #include <wx/splitter.h>
 
 #include "ComparePanel.h"
+#include "CompareFilesPanel.h"
 #include "MainFrame.h"
 #include "ParamPanel.h"
 
@@ -52,6 +53,10 @@ ComparePanel::ComparePanel
   mpConfig(pConfig),
   mpMainFrame(pMainFrame)
 {
+	mpFilesPanel = new CompareFilesPanel(pConfig, 
+		mpMainFrame->GetConnection(), pParent);
+	mpFilesPanel->Hide();
+
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 
 	wxStaticBoxSizer* pSourceBox = new wxStaticBoxSizer(wxVERTICAL, this, 
@@ -245,6 +250,10 @@ void ComparePanel::OnClickStartButton(wxCommandEvent& rEvent)
 	wxYield();
 	mpProgressPanel->StartRestore(mpFilesPanel->GetRestoreSpec(), dest);
 	*/
+	
+	mpMainFrame->ShowPanel(mpFilesPanel);
+	wxYield();
+	// mpFilesPanel->StartBackup();
 }
 
 void ComparePanel::UpdateEnabledState()
