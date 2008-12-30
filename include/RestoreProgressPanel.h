@@ -30,17 +30,11 @@
 
 #include "SandBox.h"
 
-#define NDEBUG
 #include "TLSContext.h"
-// #include "BackupClientContext.h"
-// #include "BackupClientDirectoryRecord.h"
 #include "BackupDaemon.h"
 #include "BackupStoreException.h"
-#undef NDEBUG
 
 #include "BoxiApp.h"
-// #include "ClientConfig.h"
-// #include "ClientConnection.h"
 #include "ProgressPanel.h"
 
 class wxFileName;

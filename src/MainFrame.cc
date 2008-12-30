@@ -2,7 +2,7 @@
  *            MainFrame.cc
  *
  *  Sun Jan 22 22:36:58 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -31,14 +31,9 @@
 #include "ServerConnection.h"
 #undef TLS_CLASS_IMPLEMENTATION_CPP
 
-#include "BackupDaemonPanel.h"
-#include "BackupLocationsPanel.h"
-#include "BackupPanel.h"
-#include "BackupProgressPanel.h"
-#include "ClientInfoPanel.h"
+#include "BoxiApp.h"
 #include "GeneralPanel.h"
 #include "MainFrame.h"
-#include "TestFrame.h"
 #include "TestFileDialog.h"
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)

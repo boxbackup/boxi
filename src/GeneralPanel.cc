@@ -216,3 +216,8 @@ void GeneralPanel::OnSetupAdvancedButtonClick(wxCommandEvent& event)
 {
 	mpMainFrame->ShowPanel(mpConfigPanel);
 }
+
+void GeneralPanel::RefreshConfig()
+{
+	mpConfigPanel->Reload();
+}

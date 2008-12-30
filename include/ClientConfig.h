@@ -25,6 +25,10 @@
 #ifndef _CLIENTCONFIG_H
 #define _CLIENTCONFIG_H
 
+#include "SandBox.h"
+
+#include <regex.h> // needed by ExcludeList
+
 #include "Configuration.h"
 
 #include "main.h"

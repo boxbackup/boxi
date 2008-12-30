@@ -54,6 +54,7 @@ class ProgressPanel : public wxPanel
 	private:
 	friend class TestBackup;
 	friend class TestRestore;
+	friend class TestCompare;
 	int GetProgressMax();
 	int GetProgressPos();
 	wxString GetNumFilesTotalString();

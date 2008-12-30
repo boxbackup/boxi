@@ -64,7 +64,7 @@
 #include "MainFrame.h"
 #include "Restore.h"
 #include "RestoreFilesPanel.h"
-#include "RestoreProgressPanel.h"
+#include "CompareProgressPanel.h"
 #include "ServerConnection.h"
 
 #undef TLS_CLASS_IMPLEMENTATION_CPP
@@ -125,6 +125,45 @@ static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root,
 	}
 	
 	return none;
+}
+
+void TestCompare::AssertCompareOK(int files, const std::string& rBytes)
+{
+	wxString filesString;
+	filesString.Printf(_T("%d"), files);
+	
+	BOXI_ASSERT(!mpProgressPanel->IsShown());
+	
+	ClickButtonWaitEvent(ID_Compare_Panel, ID_Function_Start_Button);
+	BOXI_ASSERT(mpProgressPanel->IsShown());
+	
+	BOXI_ASSERT(mpErrorList->GetCount() >= 1);
+	BOXI_ASSERT_EQUAL(wxString(_("Compare Finished")),
+		mpErrorList->GetString(0));	
+	BOXI_ASSERT_EQUAL(1, mpErrorList->GetCount());
+	
+	ClickButtonWaitEvent(ID_Compare_Progress_Panel, wxID_CANCEL);
+	BOXI_ASSERT(!mpProgressPanel->IsShown());
+	
+	mpMainFrame->GetConnection()->Disconnect();
+	
+	BOXI_ASSERT_EQUAL(filesString,
+		mpProgressPanel->GetNumFilesTotalString());
+	BOXI_ASSERT_EQUAL(wxString(rBytes.c_str(), wxConvLibc),
+		mpProgressPanel->GetNumBytesTotalString());
+	
+	BOXI_ASSERT_EQUAL(filesString,
+		mpProgressPanel->GetNumFilesDoneString());
+	BOXI_ASSERT_EQUAL(wxString(rBytes.c_str(), wxConvLibc),
+		mpProgressPanel->GetNumBytesDoneString());
+	
+	BOXI_ASSERT_EQUAL(wxString(_("0")),
+		mpProgressPanel->GetNumFilesRemainingString());
+	BOXI_ASSERT_EQUAL(wxString(_("0 B")),
+		mpProgressPanel->GetNumBytesRemainingString());
+	
+	BOXI_ASSERT_EQUAL(files, mpProgressPanel->GetProgressPos());
+	BOXI_ASSERT_EQUAL(files, mpProgressPanel->GetProgressMax());
 }
 
 void TestCompare::RunTest()
@@ -305,17 +344,22 @@ void TestCompare::RunTest()
 	CPPUNIT_ASSERT(!pLocalDirCtrl->IsEnabled());
 	CPPUNIT_ASSERT(!pRemoteDirCtrl->IsEnabled());
 
-	wxPanel* pProgressPanel = wxDynamicCast
+	mpProgressPanel = wxDynamicCast
 	(
-		mpMainFrame->FindWindow(ID_Compare_Progress_Panel), wxPanel
+		mpMainFrame->FindWindow(ID_Compare_Progress_Panel),
+		CompareProgressPanel
 	);
-	CPPUNIT_ASSERT(pProgressPanel);
+	CPPUNIT_ASSERT(mpProgressPanel);
 
-	CPPUNIT_ASSERT(!pProgressPanel->IsShown());	
-	ClickButtonWaitEvent(ID_Compare_Panel, ID_Function_Start_Button);
-	CPPUNIT_ASSERT(pProgressPanel->IsShown());
+	mpErrorList = wxDynamicCast
+	(
+		mpProgressPanel->FindWindow(ID_BackupProgress_ErrorList), 
+		wxListBox
+	);
+	CPPUNIT_ASSERT(mpErrorList);
+	CPPUNIT_ASSERT_EQUAL(0, mpErrorList->GetCount());
 
-	// CHECK_COMPARE_LOC_OK(3, 4);
+	AssertCompareOK(36, "224 kB");
 
 	/*
 	wxTreeCtrl* pCompareTree = wxDynamicCast

@@ -30,6 +30,8 @@
  * The above attribution must not be removed or modified!
  */
 
+#include "SandBox.h"
+
 #include <signal.h>
 
 #include <wx/wx.h>
@@ -52,13 +54,7 @@
 #include "TestFileDialog.h"
 #include "WxGuiTestHelper.h"
 
-// #ifdef HAVE_CONFIG_H
-// #  include <config.h>
-// #endif
-
-#define NDEBUG
 #include "SSLLib.h"
-#undef NDEBUG
 
 bool ViewDeleted = true;
 

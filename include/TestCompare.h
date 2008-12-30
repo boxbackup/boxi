@@ -2,7 +2,7 @@
  *            TestCompare.h
  *
  *  Sun Sep 24 14:45:40 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -27,11 +27,19 @@
 
 #include "TestWithServer.h"
 
+class CompareProgressPanel;
+
 class TestCompare : public TestWithServer
 {
 	public:
 	static CppUnit::Test *suite();
 	virtual void RunTest();
+		
+	private:
+	CompareProgressPanel* mpProgressPanel;
+	wxListBox* mpErrorList;
+
+	void AssertCompareOK(int files, const std::string& rBytes);
 };
 
 #endif /* _TESTCOMPARE_H */

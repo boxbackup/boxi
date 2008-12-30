@@ -36,10 +36,8 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 
-#define NDEBUG
 #include "Box.h"
 #include "BackupDaemonConfigVerify.h"
-#undef NDEBUG
 
 #include "main.h"
 #include "ClientConfig.h"

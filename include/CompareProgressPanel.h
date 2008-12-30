@@ -30,17 +30,6 @@
 
 #include "SandBox.h"
 
-#define NDEBUG
-#include "TLSContext.h"
-// #include "BackupClientContext.h"
-// #include "BackupClientDirectoryRecord.h"
-#include "BackupDaemon.h"
-#include "BackupStoreException.h"
-#undef NDEBUG
-
-#include "BoxiApp.h"
-// #include "ClientConfig.h"
-// #include "ClientConnection.h"
 #include "ProgressPanel.h"
 
 class wxFileName;
@@ -48,7 +37,7 @@ class wxFileName;
 class ClientConfig;
 class ServerConnection;
 class ServerCacheNode;
-class CompareParams;
+class BoxiCompareParams;
 
 class CompareProgressPanel : public ProgressPanel
 {
@@ -60,18 +49,19 @@ class CompareProgressPanel : public ProgressPanel
 		wxWindow*         pParent
 	);
 
-	void StartCompare(const CompareParams& rParams);
+	void StartCompare(const BoxiCompareParams& rParams);
 
 	private:
 	ClientConfig*     mpConfig;
 	ServerConnection* mpConnection;
-	TLSContext        mTlsContext;
 	
 	bool mCompareRunning;
 	bool mCompareStopRequested;
 
-	void CountDirectory(BackupClientContext& rContext,
+	/*
+	void CountDirectory(const BoxiCompareParams& rParams,
 		const std::string &rLocalPath);
+	*/
 	
 	virtual void OnStopCloseClicked(wxCommandEvent& event) 
 	{ 
@@ -85,17 +75,19 @@ class CompareProgressPanel : public ProgressPanel
 		}
 	}
 	
-	void CountFilesRecursive(const CompareParams& rParams, 
+	void CountFilesRecursive(const BoxiCompareParams& rParams, 
 		ServerCacheNode* pRootNode, 
 		ServerCacheNode* pCurrentNode, int blockSize);
-	bool CompareFilesRecursive(const CompareParams& rParams,
+	bool CompareFilesRecursive(const BoxiCompareParams& rParams,
 		ServerCacheNode* pNode, int64_t parentId, 
 		wxFileName& rLocalName, int blockSize);
 	// wxFileName MakeLocalPath(wxFileName& rBase, ServerCacheNode* pNode);
 
+	/*
 	friend class TestRestore;
 	int GetConnectionIndex() { return mpConnection->GetConnectionIndex(); }
-
+	*/
+	
 	DECLARE_EVENT_TABLE()
 };
 

@@ -25,19 +25,19 @@
 #ifndef _SERVERCONNECTION_H
 #define _SERVERCONNECTION_H
 
+#include "SandBox.h"
+
 #ifdef TLS_CLASS_IMPLEMENTATION_CPP
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #endif // TLS_CLASS_IMPLEMENTATION_CPP
 
-#define NDEBUG
 #include "SSLLib.h"
 #include "Socket.h"
 #include "SocketStreamTLS.h"
 #include "TLSContext.h"
 #include "autogen_BackupProtocolClient.h"
 #include "BackupStoreDirectory.h"
-#undef NDEBUG
 
 #include "ClientConfig.h"
 
@@ -83,6 +83,15 @@ class ServerConnection {
 	
 	bool ListDirectory(int64_t theDirectoryId, int16_t excludeFlags, 
 		BackupStoreDirectory& rDirectoryObject);
+		
+	BackupProtocolClient* GetProtocolClient(bool Writable)
+	{
+		if (!Connect(Writable))
+		{
+			return NULL;
+		}
+		return mpConnection;
+	}
 
 	private:
 	wxString mErrorMessage;

@@ -39,30 +39,24 @@
 
 #include "SandBox.h"
 
-#define NDEBUG
-#define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
-#include "BackupClientContext.h"
-#include "BackupClientDirectoryRecord.h"
-#include "BackupClientCryptoKeys.h"
-#include "BackupClientInodeToIDMap.h"
-#include "FileModificationTime.h"
-#include "MemBlockStream.h"
-#include "BackupStoreConstants.h"
+#include "BackupQueries.h"
 #include "BackupStoreException.h"
-#include "Utils.h"
-#undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
-#undef NDEBUG
+#include "TLSContext.h"
 
 #include "main.h"
-#include "RestoreFilesPanel.h"
 #include "CompareProgressPanel.h"
 #include "ServerConnection.h"
+#include "BackupStoreException.h"
+
+#include "BoxiApp.h"
+// #include "ClientConfig.h"
+// #include "ClientConnection.h"
 
 //DECLARE_EVENT_TYPE(myEVT_CLIENT_NOTIFY, -1)
 //DEFINE_EVENT_TYPE(myEVT_CLIENT_NOTIFY)
 
 BEGIN_EVENT_TABLE(CompareProgressPanel, wxPanel)
-EVT_BUTTON(wxID_CANCEL, CompareProgressPanel::OnStopCloseClicked)
+	EVT_BUTTON(wxID_CANCEL, CompareProgressPanel::OnStopCloseClicked)
 END_EVENT_TABLE()
 
 CompareProgressPanel::CompareProgressPanel
@@ -154,13 +148,13 @@ wxFileName MakeLocalPath(wxFileName& base, ServerCacheNode* pTargetNode)
 }
 */
 
-void CompareProgressPanel::StartCompare(const CompareParams& rParams)
+void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 {
+	LogToListBox logTo(mpErrorList);
+	mpErrorList->Clear();
+
 	/*
 	RestoreSpec spec(rSpec);
-	LogToListBox logTo(mpErrorList);
-	
-	mpErrorList->Clear();
 
 	wxString errorMsg;
 	if (!mpConnection->InitTlsContext(mTlsContext, errorMsg))
@@ -213,19 +207,21 @@ void CompareProgressPanel::StartCompare(const CompareParams& rParams)
 			return;
 		}
 	}
+	*/
 	
 	ResetCounters();
 	
-	mRestoreRunning = true;
-	mRestoreStopRequested = false;
-	SetSummaryText(_("Starting Restore"));
-	SetStopButtonLabel(_("Stop Restore"));
+	mCompareRunning = true;
+	mCompareStopRequested = false;
+	SetSummaryText(_("Starting Compare"));
+	SetStopButtonLabel(_("Stop Compare"));
 
 	Layout();
 	wxYield();
 	
 	try 
 	{
+		/*
 		// count files to restore
 		std::auto_ptr<BackupProtocolClientAccountUsage> accountInfo = 
 			mpConnection->GetAccountUsage();
@@ -346,33 +342,60 @@ void CompareProgressPanel::StartCompare(const CompareParams& rParams)
 			SetSummaryText(_("Restore Finished"));
 			mpErrorList->Append(_("Restore Finished"));
 		}
+		*/
 		
+		Configuration BoxConfig(mpConfig->GetBoxConfig());
+		BackupProtocolClient* pClient =
+			mpConnection->GetProtocolClient(false);
+		if (!pClient)
+		{
+			THROW_EXCEPTION(ConnectionException, 
+				SocketConnectError);
+		}
+			
+		BackupQueries queries(*pClient,	BoxConfig, false);
+		
+		BackupQueries::CompareParams BBParams;
+		const Configuration& rLocations(
+			BoxConfig.GetSubConfiguration("BackupLocations"));
+		std::vector<std::string> locNames =
+			rLocations.GetSubConfigurationNames();
+		for(std::vector<std::string>::iterator
+			pLocName  = locNames.begin();
+			pLocName != locNames.end();
+			pLocName++)
+		{
+			queries.CompareLocation(*pLocName, BBParams);
+		}
+
+		SetSummaryText(_("Compare Finished"));
+		mpErrorList->Append(_("Compare Finished"));
+
 		mpProgressGauge->Hide();
 	}
 	catch (ConnectionException& e) 
 	{
-		SetSummaryText(_("Restore Failed"));
+		SetSummaryText(_("Compare Failed"));
 		wxString msg;
-		msg.Printf(_("Error: cannot start restore: "
+		msg.Printf(_("Error: cannot start compare: "
 			"Failed to connect to server: %s"),
 			wxString(e.what(), wxConvLibc).c_str());
 		ReportFatalError(BM_BACKUP_FAILED_CONNECT_FAILED, msg);
 	}
 	catch (std::exception& e) 
 	{
-		SetSummaryText(_("Restore Failed"));
+		SetSummaryText(_("Compare Failed"));
 		wxString msg;
-		msg.Printf(_("Error: failed to finish restore: %s"),
+		msg.Printf(_("Error: failed to finish compare: %s"),
 			wxString(e.what(), wxConvLibc).c_str());
 		ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR, msg);
 	}
 	catch (...)
 	{
-		SetSummaryText(_("Restore Failed"));
+		SetSummaryText(_("Compare Failed"));
 		ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR,
-			wxT("Error: failed to finish restore: unknown error"));
+			wxT("Error: failed to finish compare: unknown error"));
 	}	
-	*/
 	
 	SetSummaryText(_("Idle (nothing to do)"));
 	mCompareRunning = false;
@@ -382,7 +405,7 @@ void CompareProgressPanel::StartCompare(const CompareParams& rParams)
 
 void CompareProgressPanel::CountFilesRecursive
 (
-	const CompareParams& rParams, 
+	const BoxiCompareParams& rParams, 
 	ServerCacheNode* pRootNode, 
 	ServerCacheNode* pCurrentNode,
 	int blockSize
@@ -453,8 +476,8 @@ void CompareProgressPanel::CountFilesRecursive
 
 bool CompareProgressPanel::CompareFilesRecursive
 (
-	const CompareParams& rParams, ServerCacheNode* pNode, int64_t parentId,
-	wxFileName& rLocalName, int blockSize
+	const BoxiCompareParams& rParams, ServerCacheNode* pNode,
+	int64_t parentId, wxFileName& rLocalName, int blockSize
 )
 {
 	// stop if requested

@@ -38,13 +38,8 @@
 #include <wx/filename.h>
 #include <wx/log.h>
 
-#define NDEBUG
-#include "Utils.h"
-#undef NDEBUG
-
-#define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #include "Location.h"
-#undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
+#include "Utils.h"
 
 BoxiExcludeType theExcludeTypes [] = {
 	BoxiExcludeType(ES_EXCLUDE,       EFD_DIR,  EM_EXACT),

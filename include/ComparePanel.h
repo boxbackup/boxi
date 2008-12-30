@@ -29,7 +29,7 @@
 
 #include "FunctionPanel.h"
 
-class CompareFilesPanel;
+class CompareProgressPanel;
 class ServerConnection;
 
 class wxChoice;
@@ -39,11 +39,14 @@ class wxNotebook;
 class wxRadioButton;
 class wxTreeCtrl;
 
-class CompareParams
+class BoxiCompareParams
 {
+	public:
+	BoxiCompareParams() { }
+	
 	private:
-	CompareParams(const CompareParams& rToCopy) { /* forbidden */ }
-	CompareParams& operator=(const CompareParams& rToCopy)
+	BoxiCompareParams(const BoxiCompareParams& rToCopy) { /* forbidden */ }
+	BoxiCompareParams& operator=(const BoxiCompareParams& rToCopy)
 	{ return *this; /* forbidden */ }
 };
 
@@ -74,7 +77,8 @@ class ComparePanel : public wxPanel, public ConfigChangeListener
 	wxGenericDirCtrl* mpDirLocalTree;
 	wxTreeCtrl*       mpDirRemoteTree;
 	
-	CompareFilesPanel* mpFilesPanel;
+	/*CompareFilesPanel* mpFilesPanel;*/
+	CompareProgressPanel* mpProgressPanel;
 
 	void Update();
 	void OnClickStartButton(wxCommandEvent& rEvent);

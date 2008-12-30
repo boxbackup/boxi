@@ -60,7 +60,6 @@
 #include <limits.h>
 #include <stdio.h>
 
-#define NDEBUG
 #include "Box.h"
 #include "BackupClientRestore.h"
 #include "autogen_BackupProtocolClient.h"
@@ -72,7 +71,6 @@
 #include "CollectInBufferStream.h"
 #include "FileStream.h"
 #include "Utils.h"
-#undef NDEBUG
 
 #include "Restore.h"
 

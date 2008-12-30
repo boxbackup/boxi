@@ -41,9 +41,13 @@
 
 // We always build against Box Backup release objects, which were compiled
 // with NDEBUG defined, so we must do the same
-#ifndef NDEBUG
-	#define NDEBUG
-#endif
+#undef BOX_RELEASE_BUILD // avoid warnings about redefinition
+#define BOX_RELEASE_BUILD "Do not undefine or redefine BOX_RELEASE_BUILD"
+
+// Including regex.h is the least of our worries, wx is much bigger
+#undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
+#define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED "Do not undefine or redefine EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED"
+// #include <regex.h> // needed by ExcludeList
 
 #include <wx/wx.h>
 #include <wx/thread.h>

@@ -55,7 +55,7 @@ class GeneralPanel : public wxPanel
 	);
 
 	void AddToNotebook(wxNotebook* pNotebook);
-	void RefreshConfig() { mpConfigPanel->Reload(); }
+	void RefreshConfig();
 		
 	private:
 	MainFrame*       mpMainFrame;

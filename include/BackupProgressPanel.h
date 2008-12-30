@@ -31,8 +31,9 @@
 #include "TLSContext.h"
 // #include "BackupClientContext.h"
 // #include "BackupClientDirectoryRecord.h"
-#include "BackupDaemon.h"
-#include "BackupStoreException.h"
+#include "BackupDaemonInterface.h"
+#include "RunStatusProvider.h"
+// #include "BackupStoreException.h"
 // #undef NDEBUG
 
 // #include "BoxiApp.h"

@@ -765,14 +765,14 @@ void TestWithServer::tearDown()
 
 void TestWithServer::SetupDefaultLocation()
 {
-	CPPUNIT_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
+	BOXI_ASSERT_EQUAL((size_t)0, mpConfig->GetLocations().size());
 		
-	CPPUNIT_ASSERT(!mpTestDataLocation);
+	BOXI_ASSERT(!mpTestDataLocation);
 	BoxiLocation testDirLoc(_("testdata"), mTestDataDir.GetPath(), mpConfig);
 	mpConfig->AddLocation(testDirLoc);
-	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+	BOXI_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
 	mpTestDataLocation = mpConfig->GetLocation(testDirLoc);
-	CPPUNIT_ASSERT(mpTestDataLocation);
+	BOXI_ASSERT(mpTestDataLocation);
 
 	BoxiExcludeList& rExcludes = mpTestDataLocation->GetExcludeList();
 
@@ -794,7 +794,7 @@ void TestWithServer::SetupDefaultLocation()
 	#undef ADD_ENTRY_PATH
 	#undef ADD_ENTRY
 
-	CPPUNIT_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
+	BOXI_ASSERT_EQUAL((size_t)1, mpConfig->GetLocations().size());
 }
 
 void TestWithServer::RemoveDefaultLocation()

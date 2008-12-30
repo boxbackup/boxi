@@ -218,7 +218,6 @@ AC_SUBST(x_LIBS)
 AC_OUTPUT([
 Makefile
 po/Makefile
-boxbackup/Makefile
 include/Makefile
 intl/Makefile
 src/Makefile
