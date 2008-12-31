@@ -25,6 +25,8 @@
 #include <sys/time.h> // for utimes()
 #include <utime.h> // for utime()
 
+#include <regex.h>
+
 #include <openssl/ssl.h>
 
 #include <wx/button.h>
@@ -301,28 +303,31 @@ static void SetLimit(const Configuration &rConfig, int32_t ID,
 	info->Save();
 }
 
-void CompareBackup(const Configuration& rClientConfig, 
-	TLSContext& rTlsContext, BackupQueries::CompareParams& rParams,
-	const wxString& rRemoteDir, const wxFileName& rLocalPath)
+box_time_t GetLatestFileUploadTime(const Configuration& rClientConfig)
 {
 	// Try and work out the time before which all files should be on the server
-	{
-		std::string syncTimeFilename =
-			rClientConfig.GetKeyValue("DataDirectory") + 
-			DIRECTORY_SEPARATOR + "last_sync_start";
+	std::string syncTimeFilename =
+		rClientConfig.GetKeyValue("DataDirectory") + 
+		DIRECTORY_SEPARATOR + "last_sync_start";
 
-		// Stat it to get file time
-		struct stat st;
-		if(::stat(syncTimeFilename.c_str(), &st) == 0)
-		{
-			// Files modified after this time shouldn't be on the 
-			// server, so report errors slightly differently
-			rParams.mLatestFileUploadTime = FileModificationTime(st)
-				- SecondsToBoxTime(rClientConfig.GetKeyValueInt(
-					"MinimumFileAge"));
-		}
+	// Stat it to get file time
+	struct stat st;
+	if(::stat(syncTimeFilename.c_str(), &st) == 0)
+	{
+		// Files modified after this time shouldn't be on the 
+		// server, so report errors slightly differently
+		return FileModificationTime(st)
+			- SecondsToBoxTime(rClientConfig.GetKeyValueInt(
+				"MinimumFileAge"));
 	}
 
+	return 0;
+}
+
+void CompareBackup(const Configuration& rClientConfig, TLSContext& rTlsContext,
+	BackupQueries::CompareParams& rParams, const wxString& rRemoteDir,
+	const wxFileName& rLocalPath)
+{
 	// Connect to server
 	SocketStreamTLS socket;
 	socket.Open(rTlsContext, Socket::TypeINET, 
@@ -364,9 +369,13 @@ void CompareExpectNoDifferences(const Configuration& rClientConfig,
 	TLSContext& rTlsContext, const wxString& rRemoteDir, 
 	const wxFileName& rLocalPath)
 {
-	BackupQueries::CompareParams params;
+	BackupQueries::CompareParams params(false, // QuickCompare
+		false, // IgnoreExcludes
+		false, // IgnoreAttributes
+		GetLatestFileUploadTime(rClientConfig));
 	params.mQuietCompare = false;
-	CompareBackup(rClientConfig, rTlsContext, params, rRemoteDir, rLocalPath);
+	CompareBackup(rClientConfig, rTlsContext, params, rRemoteDir,
+		rLocalPath);
 
 	CPPUNIT_ASSERT_EQUAL(0, params.mDifferences);
 	CPPUNIT_ASSERT_EQUAL(0, params.mDifferencesExplainedByModTime);
@@ -378,9 +387,13 @@ void CompareExpectDifferences(const Configuration& rClientConfig,
 	TLSContext& rTlsContext, const wxString& rRemoteDir, 
 	const wxFileName& rLocalPath, int numDiffs, int numDiffsModTime)
 {
-	BackupQueries::CompareParams params;
+	BackupQueries::CompareParams params(false, // QuickCompare
+		false, // IgnoreExcludes
+		false, // IgnoreAttributes
+		GetLatestFileUploadTime(rClientConfig));
 	params.mQuietCompare = true;
-	CompareBackup(rClientConfig, rTlsContext, params, rRemoteDir, rLocalPath);
+	CompareBackup(rClientConfig, rTlsContext, params, rRemoteDir,
+		rLocalPath);
 
 	CPPUNIT_ASSERT_EQUAL(numDiffs, params.mDifferences);
 	CPPUNIT_ASSERT_EQUAL(numDiffsModTime, 
@@ -418,10 +431,9 @@ void CompareLocation(const Configuration& rConfig,
 	const Configuration &loc(locations.GetSubConfiguration(rLocationName.c_str()));
 	
 	// Generate the exclude lists
-	if(!rParams.mIgnoreExcludes)
+	if(!rParams.IgnoreExcludes())
 	{
-		rParams.mpExcludeFiles = BackupClientMakeExcludeList_Files(loc);
-		rParams.mpExcludeDirs = BackupClientMakeExcludeList_Dirs(loc);
+		rParams.LoadExcludeLists(loc);
 	}
 			
 	// Then get it compared
@@ -430,16 +442,16 @@ void CompareLocation(const Configuration& rConfig,
 	wxString localPath(loc.GetKeyValue("Path").c_str(), wxConvLibc);
 	CompareBackup(rConfig, rTlsContext, rParams, 
 		remotePath, localPath);
-	
-	// Delete exclude lists
-	rParams.DeleteExcludeLists();
 }
 
 void CompareLocationExpectNoDifferences(const Configuration& rClientConfig, 
 	TLSContext& rTlsContext, const std::string& rLocationName,
 	int excludedDirs, int excludedFiles)
 {
-	BackupQueries::CompareParams params;
+	BackupQueries::CompareParams params(false, // QuickCompare
+		false, // IgnoreExcludes
+		false, // IgnoreAttributes
+		GetLatestFileUploadTime(rClientConfig));
 	params.mQuietCompare = false;
 	CompareLocation(rClientConfig, rTlsContext, rLocationName, params);
 
@@ -455,7 +467,10 @@ void CompareLocationExpectDifferences(const Configuration& rClientConfig,
 	int numDiffs, int numDiffsModTime, int numUnchecked, int excludedDirs,
 	int excludedFiles)
 {
-	BackupQueries::CompareParams params;
+	BackupQueries::CompareParams params(false, // QuickCompare
+		false, // IgnoreExcludes
+		false, // IgnoreAttributes
+		GetLatestFileUploadTime(rClientConfig));
 	params.mQuietCompare = true;
 	CompareLocation(rClientConfig, rTlsContext, rLocationName, params);
 

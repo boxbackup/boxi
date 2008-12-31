@@ -25,20 +25,11 @@
 #ifndef _BACKUP_PROGRESS_PANEL_H
 #define _BACKUP_PROGRESS_PANEL_H
 
-// #include "SandBox.h"
+#include "SandBox.h"
 
-// #define NDEBUG
 #include "TLSContext.h"
-// #include "BackupClientContext.h"
-// #include "BackupClientDirectoryRecord.h"
 #include "BackupDaemonInterface.h"
 #include "RunStatusProvider.h"
-// #include "BackupStoreException.h"
-// #undef NDEBUG
-
-// #include "BoxiApp.h"
-// #include "ClientConfig.h"
-// #include "ClientConnection.h"
 #include "ProgressPanel.h"
 
 /** 

@@ -30,6 +30,8 @@
 
 #include "SandBox.h"
 
+#include "BoxBackupCompareParams.h"
+
 #include "ProgressPanel.h"
 
 class wxFileName;
@@ -88,6 +90,204 @@ class CompareProgressPanel : public ProgressPanel
 	int GetConnectionIndex() { return mpConnection->GetConnectionIndex(); }
 	*/
 	
+	public:
+
+	virtual void NotifyLocalDirMissing(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{
+		wxString msg;
+		msg.Printf(_("Local directory '%s' does not exist, "
+			"but remote directory does."),
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		// mDifferences ++;
+	}
+	
+	virtual void NotifyLocalDirAccessFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{
+		wxString msg;
+		msg.Printf(_("Failed to access local directory '%s': %s"),
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+			wxString(GetNativeErrorMessage().c_str(),
+				wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		// mUncheckedFiles ++;
+	}
+
+	virtual void NotifyStoreDirMissingAttributes(
+		const std::string& rLocalPath, const std::string& rRemotePath)
+	{
+		wxString msg;
+		msg.Printf(_("Store directory '%s' doesn't have attributes."),
+			wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+	}
+
+	virtual void NotifyRemoteFileMissing(const std::string& rLocalPath,
+		const std::string& rRemotePath,	bool modifiedAfterLastSync)
+	{
+		wxString msg;
+		msg.Printf(_("Local file '%s' exists, but remote file '%s' "
+			"does not."),
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+			wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+		
+		// mDifferences ++;
+		
+		if(modifiedAfterLastSync)
+		{
+			// mDifferencesExplainedByModTime ++;
+			msg += _(" (modified since the last backup)");
+		}
+
+		mpErrorList->Append(msg);
+	}
+
+	virtual void NotifyLocalFileMissing(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{
+		wxString msg;
+		msg.Printf(_("Remote file '%s' exists, but local file '%s' "
+			"does not."),
+			wxString(rRemotePath.c_str(), wxConvLibc).c_str(),
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		// mDifferences ++;
+	}
+
+	virtual void NotifyExcludedFileNotDeleted(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{
+		wxString msg;
+		msg.Printf(_("Local file '%s' is excluded, but remote file "
+			"'%s' still exists."),
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+			wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		// mDifferences ++;
+	}
+	
+	virtual void NotifyDownloadFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes,
+		BoxException& rException)
+	{
+		wxString msg;
+		msg.Printf(_("Failed to download remote file '%s': "
+			"%s (%d/%d)"),
+			wxString(rRemotePath.c_str(), wxConvLibc).c_str(),
+			wxString(rException.what(), wxConvLibc).c_str(),
+			rException.GetType(), rException.GetSubType());
+		mpErrorList->Append(msg);
+		// mUncheckedFiles ++;
+	}
+
+	virtual void NotifyDownloadFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes,
+		std::exception& rException)
+	{
+		wxString msg;
+		msg.Printf(_("Failed to download remote file '%s': %s"),
+			wxString(rRemotePath.c_str(), wxConvLibc).c_str(),
+			wxString(rException.what(), wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		// mUncheckedFiles ++;
+	}
+
+	virtual void NotifyDownloadFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes)
+	{
+		wxString msg;
+		msg.Printf(_("Failed to download remote file '%s'"),
+			wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+		mpErrorList->Append(msg);
+		// mUncheckedFiles ++;
+	}
+
+	virtual void NotifyExcludedFile(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{
+		// mExcludedFiles ++;
+	}
+
+	virtual void NotifyExcludedDir(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{
+		// mExcludedDirs ++;
+	}
+
+	virtual void NotifyDirCompared(const std::string& rLocalPath,
+		const std::string& rRemotePath,	bool HasDifferentAttributes,
+		bool modifiedAfterLastSync)
+	{
+		if (HasDifferentAttributes)
+		{
+			wxString msg;
+			
+			msg.Printf(_("Local directory '%s' has different "
+				"attributes to store directory '%s'."),
+				wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+				wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+			// mDifferences ++;
+			
+			if(modifiedAfterLastSync)
+			{
+				msg += _(" (modified since the last backup)");
+				// mDifferencesExplainedByModTime ++;
+			}
+			
+			mpErrorList->Append(msg);
+		}
+	}
+	
+	virtual void NotifyFileCompared(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes,
+		bool HasDifferentAttributes, bool HasDifferentContents,
+		bool modifiedAfterLastSync, bool newAttributesApplied)
+	{
+		if (HasDifferentAttributes)
+		{
+			wxString msg;
+			
+			msg.Printf(_("Local file '%s' has different attributes "
+				"to store file '%s'."),
+				wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+				wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+			// mDifferences ++;
+			
+			if(modifiedAfterLastSync)
+			{
+				msg += _(" (modified since the last backup)");
+				// mDifferencesExplainedByModTime ++;
+			}
+			else if(newAttributesApplied)
+			{
+				msg += _(" (new attributes applied)");
+			}
+			
+			mpErrorList->Append(msg);
+		}
+
+		if (HasDifferentContents)
+		{
+			wxString msg;
+			
+			msg.Printf(_("Local file '%s' has different contents "
+				"to store file '%s'."),
+				wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+				wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+			// mDifferences ++;
+			
+			if(modifiedAfterLastSync)
+			{
+				// mDifferencesExplainedByModTime ++;
+				msg += _(" (modified since the last backup)");
+			}
+
+			mpErrorList->Append(msg);
+		}
+	}
+		
 	DECLARE_EVENT_TABLE()
 };
 

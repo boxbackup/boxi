@@ -42,11 +42,11 @@
 #include "BackupQueries.h"
 #include "BackupStoreException.h"
 #include "TLSContext.h"
+#include "BoxBackupCompareParams.h"
 
 #include "main.h"
 #include "CompareProgressPanel.h"
 #include "ServerConnection.h"
-#include "BackupStoreException.h"
 
 #include "BoxiApp.h"
 // #include "ClientConfig.h"
@@ -54,6 +54,99 @@
 
 //DECLARE_EVENT_TYPE(myEVT_CLIENT_NOTIFY, -1)
 //DEFINE_EVENT_TYPE(myEVT_CLIENT_NOTIFY)
+
+class BoxiCompareParamsShim : public BoxBackupCompareParams
+{
+	private:
+	CompareProgressPanel* mpProgress;
+	
+	public:
+	BoxiCompareParamsShim(CompareProgressPanel* pProgress,
+		bool QuickCompare, bool IgnoreExcludes, bool IgnoreAttributes,
+		box_time_t LatestFileUploadTime)
+	: BoxBackupCompareParams(QuickCompare, IgnoreExcludes, IgnoreAttributes,
+		LatestFileUploadTime),
+	  mpProgress(pProgress)
+	{ }
+		
+	/* BoxBackupCompareParams interface implementation */
+	
+	virtual void NotifyLocalDirMissing(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{ mpProgress->NotifyLocalDirMissing(rLocalPath, rRemotePath); }
+	
+	virtual void NotifyLocalDirAccessFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{ mpProgress->NotifyLocalDirAccessFailed(rLocalPath, rRemotePath); }
+
+	virtual void NotifyStoreDirMissingAttributes(
+		const std::string& rLocalPath, const std::string& rRemotePath)
+	{ mpProgress->NotifyStoreDirMissingAttributes(rLocalPath, rRemotePath); }
+
+	virtual void NotifyRemoteFileMissing(const std::string& rLocalPath,
+		const std::string& rRemotePath,	bool modifiedAfterLastSync)
+	{
+		mpProgress->NotifyRemoteFileMissing(rLocalPath, rRemotePath,
+			modifiedAfterLastSync);
+	}
+
+	virtual void NotifyLocalFileMissing(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{ mpProgress->NotifyLocalFileMissing(rLocalPath, rRemotePath); }
+
+	virtual void NotifyExcludedFileNotDeleted(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{ mpProgress->NotifyExcludedFileNotDeleted(rLocalPath, rRemotePath); }
+	
+	virtual void NotifyDownloadFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes,
+		BoxException& rException)
+	{
+		mpProgress->NotifyDownloadFailed(rLocalPath, rRemotePath,
+			NumBytes, rException);
+	}
+
+	virtual void NotifyDownloadFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes,
+		std::exception& rException)
+	{
+		mpProgress->NotifyDownloadFailed(rLocalPath, rRemotePath,
+			NumBytes, rException);
+	}
+
+	virtual void NotifyDownloadFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes)
+	{
+		mpProgress->NotifyDownloadFailed(rLocalPath, rRemotePath,
+			NumBytes);
+	}
+
+	virtual void NotifyExcludedFile(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{ mpProgress->NotifyExcludedFile(rLocalPath, rRemotePath); }
+
+	virtual void NotifyExcludedDir(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{ mpProgress->NotifyExcludedDir(rLocalPath, rRemotePath); }
+
+	virtual void NotifyDirCompared(const std::string& rLocalPath,
+		const std::string& rRemotePath,	bool HasDifferentAttributes,
+		bool modifiedAfterLastSync)
+	{
+		mpProgress->NotifyDirCompared(rLocalPath, rRemotePath,
+			HasDifferentAttributes, modifiedAfterLastSync);
+	}
+	
+	virtual void NotifyFileCompared(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes,
+		bool HasDifferentAttributes, bool HasDifferentContents,
+		bool modifiedAfterLastSync, bool newAttributesApplied)
+	{
+		mpProgress->NotifyFileCompared(rLocalPath, rRemotePath,
+			NumBytes, HasDifferentAttributes, HasDifferentContents,
+			modifiedAfterLastSync, newAttributesApplied);
+	}
+};
 
 BEGIN_EVENT_TABLE(CompareProgressPanel, wxPanel)
 	EVT_BUTTON(wxID_CANCEL, CompareProgressPanel::OnStopCloseClicked)
@@ -355,7 +448,8 @@ void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 			
 		BackupQueries queries(*pClient,	BoxConfig, false);
 		
-		BackupQueries::CompareParams BBParams;
+		BoxiCompareParamsShim BBParams(this, false, false, false,
+			GetCurrentBoxTime() /* FIXME last backup time */);
 		const Configuration& rLocations(
 			BoxConfig.GetSubConfiguration("BackupLocations"));
 		std::vector<std::string> locNames =
