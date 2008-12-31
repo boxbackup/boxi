@@ -22,6 +22,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include "SandBox.h"
+
+#include <errno.h>
+
 #include <wx/button.h>
 #include <wx/gauge.h>
 #include <wx/intl.h>
@@ -29,6 +33,8 @@
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/textctrl.h>
+
+#include "BackupStoreException.h"
 
 #include "main.h"
 #include "BoxiApp.h"
@@ -285,4 +291,128 @@ void ProgressPanel::SetCurrentText(const wxString& rText)
 void ProgressPanel::SetStopButtonLabel(const wxString& rLabel)
 {
 	mpStopCloseButton->SetLabel(rLabel);
+}
+
+// --------------------------------------------------------------------------
+//
+// Function
+//		Name:    ProgressPanel::CountLocalFiles(
+//			 ExclusionOracle& rExclusionOracle,
+//			 const std::string &rLocalPath)
+//		Purpose: Recursively count files in a local directory
+//			 and subdirectories.
+//		Created: 2003/10/08
+//
+// --------------------------------------------------------------------------
+void ProgressPanel::CountLocalFiles(ExclusionOracle& rExclusionOracle,
+	const std::string &rLocalPath)
+{
+	NotifyCountDirectory(rLocalPath);
+	
+	// Signal received by daemon?
+	if(IsStopRequested())
+	{
+		// Yes. Stop now.
+		THROW_EXCEPTION(BackupStoreException, SignalReceived)
+	}
+	
+	// Read directory entries, counting number and size of files,
+	// and recursing into directories.
+	size_t  filesCounted = 0;
+	int64_t bytesCounted = 0;
+	
+	// read the contents...
+	DIR *dirHandle = 0;
+	try
+	{
+		dirHandle = ::opendir(rLocalPath.c_str());
+		if(dirHandle == 0)
+		{
+			// Ignore this directory for now.
+			return;
+		}
+		
+		struct dirent *en = 0;
+		struct stat st;
+		std::string filename;
+		while((en = ::readdir(dirHandle)) != 0)
+		{
+			// Don't need to use LinuxWorkaround_FinishDirentStruct(en, rLocalPath.c_str());
+			// on Linux, as a stat is performed to get all this info
+
+			if(en->d_name[0] == '.' && 
+				(en->d_name[1] == '\0' || (en->d_name[1] == '.' && en->d_name[2] == '\0')))
+			{
+				// ignore, it's . or ..
+				continue;
+			}
+
+			// Stat file to get info
+			filename = rLocalPath + DIRECTORY_SEPARATOR + en->d_name;
+			if(::lstat(filename.c_str(), &st) != 0)
+			{
+				/*
+				rParams.GetProgressNotifier().NotifyFileStatFailed(
+					(BackupClientDirectoryRecord*)NULL, 
+					filename, strerror(errno));
+				THROW_EXCEPTION(CommonException, OSFileError)
+				*/
+				wxString msg;
+				msg.Printf(wxT("Error counting files in '%s': %s"),
+					wxString(filename.c_str(), wxConvLibc).c_str(),
+					wxString(strerror(errno),  wxConvLibc).c_str());
+				mpErrorList->Append(msg);
+			}
+
+			int type = st.st_mode & S_IFMT;
+			if(type == S_IFREG || type == S_IFLNK)
+			{
+				// File or symbolic link
+
+				// Exclude it?
+				if (rExclusionOracle.IsExcludedFile(filename))
+				{
+					// Next item!
+					continue;
+				}
+
+				filesCounted++;
+				bytesCounted += st.st_size;
+			}
+			else if(type == S_IFDIR)
+			{
+				// Directory
+				
+				// Exclude it?
+				if (rExclusionOracle.IsExcludedDir(filename))
+				{
+					// Next item!
+					continue;
+				}
+				
+				CountLocalFiles(rExclusionOracle, filename);
+			}
+			else
+			{
+				continue;
+			}
+		}
+
+		if(::closedir(dirHandle) != 0)
+		{
+			THROW_EXCEPTION(CommonException, OSFileError)
+		}
+		dirHandle = 0;
+		
+	}
+	catch(...)
+	{
+		if(dirHandle != 0)
+		{
+			::closedir(dirHandle);
+		}
+		throw;
+	}
+
+	NotifyMoreFilesCounted(filesCounted, bytesCounted);
 }

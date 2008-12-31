@@ -60,6 +60,8 @@ class CompareProgressPanel : public ProgressPanel
 	bool mCompareRunning;
 	bool mCompareStopRequested;
 
+	virtual bool IsStopRequested() { return mCompareStopRequested; }
+
 	/*
 	void CountDirectory(const BoxiCompareParams& rParams,
 		const std::string &rLocalPath);
@@ -286,6 +288,8 @@ class CompareProgressPanel : public ProgressPanel
 
 			mpErrorList->Append(msg);
 		}
+		
+		NotifyMoreFilesDone(1, NumBytes);
 	}
 		
 	DECLARE_EVENT_TABLE()

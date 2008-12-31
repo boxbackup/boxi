@@ -32,12 +32,10 @@
 
 #ifdef HAVE_REGEX_H
 	#include <regex.h>
-	#define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #endif
 
 #ifdef HAVE_PCREPOSIX_H
 	#include <pcreposix.h>
-	#define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #endif
 
 #ifdef HAVE_MNTENT_H
@@ -195,6 +193,26 @@ void BackupProgressPanel::StartBackup()
 	mpProgressGauge->Hide();	
 }
 
+class BackupExclusionOracle : public ProgressPanel::ExclusionOracle
+{
+	private:
+	BackupClientContext& mrContext;
+	
+	public:
+	BackupExclusionOracle(BackupClientContext& rContext)
+	: mrContext(rContext)
+	{ }
+	
+	virtual bool IsExcludedFile(const std::string& rFileName)
+	{
+		return mrContext.ExcludeFile(rFileName);
+	}
+	virtual bool IsExcludedDir(const std::string& rDirName)
+	{
+		return mrContext.ExcludeDir(rDirName);
+	}
+};
+
 void BackupProgressPanel::NotifyIDMapsSetup(BackupClientContext& rContext)
 {
 	BackupDaemon::Locations& rLocs(mapDaemon->GetLocations());
@@ -205,7 +223,8 @@ void BackupProgressPanel::NotifyIDMapsSetup(BackupClientContext& rContext)
 		i != rLocs.end(); i++)
 	{
 		BackupDaemon::Location* pLocation = *i;
-		CountDirectory(rContext, pLocation->mPath);
+		BackupExclusionOracle oracle(rContext);
+		CountLocalFiles(oracle,	pLocation->mPath);
 	}
 	
 	mpProgressGauge->SetRange(GetNumFilesTotal());
@@ -214,128 +233,4 @@ void BackupProgressPanel::NotifyIDMapsSetup(BackupClientContext& rContext)
 
 	SetSummaryText(_("Backing up files"));
 	wxYield();
-}
-
-// --------------------------------------------------------------------------
-//
-// Function
-//		Name:    BackupClientDirectoryRecord::SyncDirectory(BackupClientDirectoryRecord::SyncParams &, int64_t, const std::string &, bool)
-//		Purpose: Recursively synchronise a local directory with the server.
-//		Created: 2003/10/08
-//
-// --------------------------------------------------------------------------
-void BackupProgressPanel::CountDirectory(BackupClientContext& rContext,
-	const std::string &rLocalPath)
-{
-	NotifyCountDirectory(rLocalPath);
-	
-	// Signal received by daemon?
-	if(StopRun())
-	{
-		// Yes. Stop now.
-		THROW_EXCEPTION(BackupStoreException, SignalReceived)
-	}
-	
-	// Read directory entries, counting number and size of files,
-	// and recursing into directories.
-	size_t  filesCounted = 0;
-	int64_t bytesCounted = 0;
-	
-	// BLOCK
-	{		
-		// read the contents...
-		DIR *dirHandle = 0;
-		try
-		{
-			dirHandle = ::opendir(rLocalPath.c_str());
-			if(dirHandle == 0)
-			{
-				// Ignore this directory for now.
-				return;
-			}
-			
-			struct dirent *en = 0;
-			struct stat st;
-			std::string filename;
-			while((en = ::readdir(dirHandle)) != 0)
-			{
-				// Don't need to use LinuxWorkaround_FinishDirentStruct(en, rLocalPath.c_str());
-				// on Linux, as a stat is performed to get all this info
-
-				if(en->d_name[0] == '.' && 
-					(en->d_name[1] == '\0' || (en->d_name[1] == '.' && en->d_name[2] == '\0')))
-				{
-					// ignore, it's . or ..
-					continue;
-				}
-
-				// Stat file to get info
-				filename = rLocalPath + DIRECTORY_SEPARATOR + en->d_name;
-				if(::lstat(filename.c_str(), &st) != 0)
-				{
-					/*
-					rParams.GetProgressNotifier().NotifyFileStatFailed(
-						(BackupClientDirectoryRecord*)NULL, 
-						filename, strerror(errno));
-					THROW_EXCEPTION(CommonException, OSFileError)
-					*/
-					wxString msg;
-					msg.Printf(wxT("Error counting files in '%s': %s"),
-						wxString(filename.c_str(), wxConvLibc).c_str(),
-						wxString(strerror(errno),  wxConvLibc).c_str());
-					mpErrorList->Append(msg);
-				}
-
-				int type = st.st_mode & S_IFMT;
-				if(type == S_IFREG || type == S_IFLNK)
-				{
-					// File or symbolic link
-
-					// Exclude it?
-					if (rContext.ExcludeFile(filename))
-					{
-						// Next item!
-						continue;
-					}
-
-					filesCounted++;
-					bytesCounted += st.st_size;
-				}
-				else if(type == S_IFDIR)
-				{
-					// Directory
-					
-					// Exclude it?
-					if (rContext.ExcludeDir(filename))
-					{
-						// Next item!
-						continue;
-					}
-					
-					CountDirectory(rContext, filename);
-				}
-				else
-				{
-					continue;
-				}
-			}
-	
-			if(::closedir(dirHandle) != 0)
-			{
-				THROW_EXCEPTION(CommonException, OSFileError)
-			}
-			dirHandle = 0;
-			
-		}
-		catch(...)
-		{
-			if(dirHandle != 0)
-			{
-				::closedir(dirHandle);
-			}
-			throw;
-		}
-	}
-
-	NotifyMoreFilesCounted(filesCounted, bytesCounted);
 }

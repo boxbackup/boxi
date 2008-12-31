@@ -359,7 +359,7 @@ void TestCompare::RunTest()
 	CPPUNIT_ASSERT(mpErrorList);
 	CPPUNIT_ASSERT_EQUAL(0, mpErrorList->GetCount());
 
-	AssertCompareOK(36, "224 kB");
+	AssertCompareOK(32, "224 kB"); /* + 4 excluded files = 36 */
 
 	/*
 	wxTreeCtrl* pCompareTree = wxDynamicCast

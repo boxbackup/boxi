@@ -39,8 +39,6 @@
 
 #include "SandBox.h"
 
-#define NDEBUG
-#define EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
 #include "BackupClientContext.h"
 #include "BackupClientDirectoryRecord.h"
 #include "BackupClientCryptoKeys.h"
@@ -50,8 +48,6 @@
 #include "BackupStoreConstants.h"
 #include "BackupStoreException.h"
 #include "Utils.h"
-#undef EXCLUDELIST_IMPLEMENTATION_REGEX_T_DEFINED
-#undef NDEBUG
 
 #include "main.h"
 #include "RestoreFilesPanel.h"

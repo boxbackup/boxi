@@ -55,7 +55,8 @@
 //DECLARE_EVENT_TYPE(myEVT_CLIENT_NOTIFY, -1)
 //DEFINE_EVENT_TYPE(myEVT_CLIENT_NOTIFY)
 
-class BoxiCompareParamsShim : public BoxBackupCompareParams
+class BoxiCompareParamsShim : public BoxBackupCompareParams,
+	public ProgressPanel::ExclusionOracle
 {
 	private:
 	CompareProgressPanel* mpProgress;
@@ -68,7 +69,7 @@ class BoxiCompareParamsShim : public BoxBackupCompareParams
 		LatestFileUploadTime),
 	  mpProgress(pProgress)
 	{ }
-		
+	
 	/* BoxBackupCompareParams interface implementation */
 	
 	virtual void NotifyLocalDirMissing(const std::string& rLocalPath,
@@ -145,6 +146,18 @@ class BoxiCompareParamsShim : public BoxBackupCompareParams
 		mpProgress->NotifyFileCompared(rLocalPath, rRemotePath,
 			NumBytes, HasDifferentAttributes, HasDifferentContents,
 			modifiedAfterLastSync, newAttributesApplied);
+	}
+
+	/* ProgressPanel::ExclusionOracle interface implementation */
+	
+	virtual bool IsExcludedFile(const std::string& rFileName)
+	{
+		return BoxBackupCompareParams::IsExcludedFile(rFileName);
+	}
+	
+	virtual bool IsExcludedDir(const std::string& rDirName)
+	{
+		return BoxBackupCompareParams::IsExcludedDir(rDirName);
 	}
 };
 
@@ -452,8 +465,29 @@ void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 			GetCurrentBoxTime() /* FIXME last backup time */);
 		const Configuration& rLocations(
 			BoxConfig.GetSubConfiguration("BackupLocations"));
+
 		std::vector<std::string> locNames =
 			rLocations.GetSubConfigurationNames();
+
+		// Go through the records, counting files and bytes
+		for(std::vector<std::string>::iterator
+			pLocName  = locNames.begin();
+			pLocName != locNames.end();
+			pLocName++)
+		{
+			const Configuration& rLocation(
+				rLocations.GetSubConfiguration(*pLocName));
+			BBParams.LoadExcludeLists(rLocation);
+			CountLocalFiles(BBParams, rLocation.GetKeyValue("Path"));
+		}
+		
+		mpProgressGauge->SetRange(GetNumFilesTotal());
+		mpProgressGauge->SetValue(0);
+		mpProgressGauge->Show();
+
+		SetSummaryText(_("Backing up files"));
+		wxYield();
+
 		for(std::vector<std::string>::iterator
 			pLocName  = locNames.begin();
 			pLocName != locNames.end();

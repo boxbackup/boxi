@@ -2,7 +2,7 @@
  *            ProgressPanel.h
  *
  *  Sun Oct  1 22:44:02 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2008 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -45,6 +45,13 @@ class ProgressPanel : public wxPanel
 		const wxString& name = wxT("Progress Panel")
 	);
 
+	class ExclusionOracle
+	{
+		public:
+		virtual bool IsExcludedFile(const std::string& rFileName) = 0;
+		virtual bool IsExcludedDir (const std::string& rDirName)  = 0;
+	};
+	
 	protected:
 	wxListBox* mpErrorList;
 	wxGauge*   mpProgressGauge;
@@ -96,6 +103,21 @@ class ProgressPanel : public wxPanel
 	void SetSummaryText    (const wxString& rText);
 	void SetCurrentText    (const wxString& rText);
 	void SetStopButtonLabel(const wxString& rLabel);
+
+	virtual bool IsStopRequested() = 0;
+		
+	void CountLocalFiles(ExclusionOracle& rExclusionOracle,
+		const std::string &rLocalPath);
+	
+	void NotifyCountDirectory(const std::string& rLocalPath)
+	{
+		wxString msg;
+		msg.Printf(wxT("Counting files in directory '%s'"), 
+			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+		SetCurrentText(msg);
+		Layout();
+		wxYield();
+	}	
 };
 
 class LogToListBox : public wxLog

@@ -64,6 +64,8 @@ class RestoreProgressPanel : public ProgressPanel
 	bool mRestoreRunning;
 	bool mRestoreStopRequested;
 
+	virtual bool IsStopRequested() { return mRestoreStopRequested; }
+
 	void CountDirectory(BackupClientContext& rContext,
 		const std::string &rLocalPath);
 	

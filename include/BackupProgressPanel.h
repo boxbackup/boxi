@@ -65,6 +65,9 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	*/
 	bool              mBackupRunning;
 	bool              mBackupStopRequested;
+		
+	virtual bool IsStopRequested() { return mBackupStopRequested; }
+		
 	std::auto_ptr<BackupDaemon> mapDaemon;
 	
 	// BackupDaemon      mBackupDaemon;
@@ -308,22 +311,6 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 		wxYield();
 	}
 
-	void CountDirectory
-	(
-		BackupClientContext& rContext,
-		const std::string &rLocalPath
-	);
-
-	void NotifyCountDirectory(const std::string& rLocalPath)
-	{
-		wxString msg;
-		msg.Printf(wxT("Counting files in directory '%s'"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
-		SetCurrentText(msg);
-		Layout();
-		wxYield();
-	}
-	
 	DECLARE_EVENT_TABLE()
 };
 
