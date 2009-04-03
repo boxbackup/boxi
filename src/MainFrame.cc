@@ -22,10 +22,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include "SandBox.h"
+
 #include <wx/filename.h>
 #include <wx/notebook.h>
-
-#include "SandBox.h"
 
 #define TLS_CLASS_IMPLEMENTATION_CPP
 #include "ServerConnection.h"

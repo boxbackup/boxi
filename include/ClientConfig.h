@@ -25,8 +25,6 @@
 #ifndef _CLIENTCONFIG_H
 #define _CLIENTCONFIG_H
 
-#include "SandBox.h"
-
 #ifdef HAVE_PCREPOSIX_H
 	#include <pcreposix.h>
 #else

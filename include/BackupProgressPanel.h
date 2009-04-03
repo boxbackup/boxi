@@ -25,8 +25,6 @@
 #ifndef _BACKUP_PROGRESS_PANEL_H
 #define _BACKUP_PROGRESS_PANEL_H
 
-#include "SandBox.h"
-
 #include "TLSContext.h"
 #include "BackupDaemonInterface.h"
 #include "RunStatusProvider.h"

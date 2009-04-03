@@ -25,10 +25,6 @@
 #ifndef _LOCATION_H
 #define _LOCATION_H
 
-// #include <wx/wx.h>
-
-#include "SandBox.h"
-
 #include "BoxConfig.h"
 #include "Configuration.h"
 #include "ExcludeList.h"

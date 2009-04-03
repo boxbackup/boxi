@@ -28,8 +28,6 @@
 #include <wx/wx.h>
 #include <wx/thread.h>
 
-#include "SandBox.h"
-
 #include "TLSContext.h"
 #include "BackupDaemon.h"
 #include "BackupStoreException.h"

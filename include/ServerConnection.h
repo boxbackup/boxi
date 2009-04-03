@@ -25,8 +25,6 @@
 #ifndef _SERVERCONNECTION_H
 #define _SERVERCONNECTION_H
 
-#include "SandBox.h"
-
 #ifdef TLS_CLASS_IMPLEMENTATION_CPP
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
