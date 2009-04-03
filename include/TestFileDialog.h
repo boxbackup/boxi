@@ -17,7 +17,6 @@
 class TestFileDialog: public wxFileDialog
 {
 public:
-	TestFileDialog () : wxFileDialog() { }
 	TestFileDialog(wxWindow *parent,
 		const wxString& message = wxFileSelectorPromptStr,
 		const wxString& defaultDir = wxEmptyString,

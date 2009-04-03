@@ -24,6 +24,8 @@
  *  Tim Hudson (tjh@cryptsoft.com), under their source redistribution license.
  */
 
+#include "SandBox.h"
+
 #include <wx/file.h>
 #include <wx/html/htmlwin.h>
 #include <wx/progdlg.h>

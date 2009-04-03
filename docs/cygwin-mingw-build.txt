@@ -4,23 +4,28 @@ Building for Windows Native using Cygwin
 Install Cygwin, Zlib, OpenSSL and PCRE as described in 
 boxbackup/docs/backup/win32_build_on_cygwin_using_mingw.txt
 
-Download wxMSW-2.6.3.tar.gz and untar it. Edit setup.h.in and change
-this line:
+Additionally install the following Cygwin packages:
 
-	#define wxUSE_STACKWALKER 0
+ * Devel/pkg-config
+
+Download wxMSW-2.6.3.tar.gz and untar it. Edit setup.h.in and change
+these lines:
+
+	#define wxUSE_STACKWALKER   0
+	#define wxUSE_FSVOLUME      0
 
 to:
 
-	#define wxUSE_STACKWALKER 1
+	#define wxUSE_STACKWALKER   1
+	#define wxUSE_FSVOLUME      1
 
 Configure as follows:
 
-	export CC="gcc -mno-cygwin -mthreads"
-	export CXX="g++ -mno-cygwin -mthreads"
-	./configure --enable-unicode --enable-shared --disable-static \
-		--disable-optimise --enable-debug --enable-debug_gdb \
-		--with-msw --without-expat --host=i686-pc-cygwin \
-		--build=i686-pc-cygwin --target=i686-pc-mingw32
+	./configure --enable-unicode --enable-debug --enable-shared \
+		--disable-static --enable-debug_gdb --with-msw \
+		--without-expat --target=i686-pc-mingw32 \
+		CC="gcc -mno-cygwin -mthreads" \
+		CXX="g++ -mno-cygwin -mthreads"
 	make
 	make install
 

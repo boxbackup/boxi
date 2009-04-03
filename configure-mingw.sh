@@ -7,16 +7,16 @@ if [ ! -x "configure" ]; then
 	fi
 fi
 
-export CC="gcc -mno-cygwin"
-export CPP="gcc -mno-cygwin -E"
-export CXX="g++ -mno-cygwin"
-export LD="g++ -mno-cygwin"
-export CFLAGS="-mno-cygwin -mthreads"
-export CXXFLAGS="-mno-cygwin -mthreads"
-export LDFLAGS="-mno-cygwin -mthreads -L/usr/i686-pc-mingw32/lib"
-export LIBS="-lcrypto -lws2_32 -lgdi32"
-
-if ! ./configure --target=i686-pc-mingw32; then
+if ! ./configure --target=i686-pc-mingw32 \
+	CC="gcc -mno-cygwin" \
+	CPP="gcc -mno-cygwin -E" \
+	CXX="g++ -mno-cygwin" \
+	LD="g++ -mno-cygwin" \
+	CFLAGS="-mthreads" \
+	CXXFLAGS="-mthreads" \
+	LDFLAGS="-mthreads -L/usr/i686-pc-mingw32/lib" \
+	LIBS="-lcrypto -lws2_32 -lgdi32"
+then
 	echo "Error: configure failed, aborting." >&2
 	exit 1
 fi

@@ -22,6 +22,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include "SandBox.h"
+
 #include <wx/wx.h>
 #include <wx/artprov.h>
 #include <wx/filename.h>

@@ -25,6 +25,8 @@
  * YOU MUST NOT REMOVE THIS ATTRIBUTION!
  */
 
+#include "SandBox.h"
+
 #include <wx/html/htmlwin.h>
 
 #include "main.h"
