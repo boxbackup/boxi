@@ -142,7 +142,6 @@ if ! (
 		--host=$host_alias --target=$target_alias"
 	echo "Configuring Box Backup with" $BOX_CONFIG_OPTS
 	./configure $BOX_CONFIG_OPTS
-	mv Makefile Makefile.in
 ); then
 	echo "Failed to configure Box Backup, aborting!"
 	exit 1
@@ -211,9 +210,9 @@ AC_DEFINE_UNQUOTED(PACKAGE_HELP_DIR, "${packageprefix}/${packagehelpdir}")
 AC_DEFINE_UNQUOTED(PACKAGE_MENU_DIR, "${packageprefix}/${packagemenudir}")
 AC_DEFINE_UNQUOTED(PACKAGE_SOURCE_DIR, "${packagesrcdir}")
 
-PKG_CHECK_MODULES(x, cppunit)
-AC_SUBST(x_CFLAGS)
-AC_SUBST(x_LIBS)
+dnl PKG_CHECK_MODULES(x, cppunit)
+dnl AC_SUBST(x_CFLAGS)
+dnl AC_SUBST(x_LIBS)
 
 AC_OUTPUT([
 Makefile
