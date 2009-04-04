@@ -27,7 +27,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <regex.h>
 #include <errno.h>
 
 #include <iostream>
@@ -735,19 +734,18 @@ void BackupFilesPanel::UpdateExcludedStatePrivate(wxTreeItemId &rNodeId)
 		{
 			pNode->mLocalFileLastModified = wxDateTime(st.st_mtime);
 			if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+			{
 				pNode->mServerState = LocalFileTreeNode::SS_ALIEN;
+			}
 		} 
 		else 
 		{
-// System files are unreadable under Cygwin?
-#ifndef __CYGWIN__
 			wxString msg;
 			msg.Printf(wxT("Error getting information about "
 					"local file %s:\n\n%s"),
 				pNode->mFullPath.c_str(), strerror(errno));
 			wxMessageBox(msg, wxT("Boxi Error"), 
 				wxOK | wxICON_ERROR, NULL);
-#endif
 		}
 	}
 	
