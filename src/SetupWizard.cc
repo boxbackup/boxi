@@ -1542,6 +1542,7 @@ class DataDirectoryPage : public SetupWizardPage
 		
 		if (wxFileName::DirExists(dataDir.GetFullPath()))
 		{
+			#ifndef WIN32
 			struct stat st;
 			wxCharBuffer buf = dataDirName.mb_str();
 
@@ -1570,6 +1571,7 @@ class DataDirectoryPage : public SetupWizardPage
 				ShowError(msg, BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
 				return false;
 			}
+			#endif // !WIN32
 
 			// dir exists and has good permissions
 			return true;
