@@ -83,6 +83,8 @@ boxi_LDADD = \
 	../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o \
 	../boxbackup/release/bin/bbackupd/autogen_ClientException.o \
 	../boxbackup/release/bin/bbackupd/BackupDaemon.o \
+	../boxbackup/release/bin/bbackupd/Win32BackupService.o \
+	../boxbackup/release/bin/bbackupd/Win32ServiceFunctions.o \
 	../boxbackup/release/bin/bbstored/BBStoreDHousekeeping.o \
 	../boxbackup/release/bin/bbstored/HousekeepStoreAccount.o \
 	../boxbackup/release/bin/bbstored/BackupStoreContext.o \
