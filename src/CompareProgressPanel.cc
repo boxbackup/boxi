@@ -25,9 +25,10 @@
  * YOU MUST NOT REMOVE THIS ATTRIBUTION!
  */
 
+#include "SandBox.h"
+
 #include <errno.h>
 #include <stdio.h>
-#include <regex.h>
 
 #include <wx/statbox.h>
 #include <wx/listbox.h>
@@ -36,8 +37,6 @@
 #include <wx/dir.h>
 #include <wx/file.h>
 #include <wx/filename.h>
-
-#include "SandBox.h"
 
 #include "BackupQueries.h"
 #include "BackupStoreException.h"
@@ -70,19 +69,29 @@ class BoxiCompareParamsShim : public BoxBackupCompareParams,
 	  mpProgress(pProgress)
 	{ }
 	
-	/* BoxBackupCompareParams interface implementation */
+	/*
+	BoxBackupCompareParams interface implementation, forwarding
+	events to CompareProgressPanel
+	*/
 	
 	virtual void NotifyLocalDirMissing(const std::string& rLocalPath,
 		const std::string& rRemotePath)
-	{ mpProgress->NotifyLocalDirMissing(rLocalPath, rRemotePath); }
+	{
+		mpProgress->NotifyLocalDirMissing(rLocalPath, rRemotePath);
+	}
 	
 	virtual void NotifyLocalDirAccessFailed(const std::string& rLocalPath,
 		const std::string& rRemotePath)
-	{ mpProgress->NotifyLocalDirAccessFailed(rLocalPath, rRemotePath); }
+	{
+		mpProgress->NotifyLocalDirAccessFailed(rLocalPath, rRemotePath);
+	}
 
 	virtual void NotifyStoreDirMissingAttributes(
 		const std::string& rLocalPath, const std::string& rRemotePath)
-	{ mpProgress->NotifyStoreDirMissingAttributes(rLocalPath, rRemotePath); }
+	{
+		mpProgress->NotifyStoreDirMissingAttributes(rLocalPath,
+			rRemotePath);
+	}
 
 	virtual void NotifyRemoteFileMissing(const std::string& rLocalPath,
 		const std::string& rRemotePath,	bool modifiedAfterLastSync)
@@ -93,11 +102,16 @@ class BoxiCompareParamsShim : public BoxBackupCompareParams,
 
 	virtual void NotifyLocalFileMissing(const std::string& rLocalPath,
 		const std::string& rRemotePath)
-	{ mpProgress->NotifyLocalFileMissing(rLocalPath, rRemotePath); }
+	{
+		mpProgress->NotifyLocalFileMissing(rLocalPath, rRemotePath);
+	}
 
 	virtual void NotifyExcludedFileNotDeleted(const std::string& rLocalPath,
 		const std::string& rRemotePath)
-	{ mpProgress->NotifyExcludedFileNotDeleted(rLocalPath, rRemotePath); }
+	{
+		mpProgress->NotifyExcludedFileNotDeleted(rLocalPath,
+			rRemotePath);
+	}
 	
 	virtual void NotifyDownloadFailed(const std::string& rLocalPath,
 		const std::string& rRemotePath, int64_t NumBytes,
@@ -148,6 +162,18 @@ class BoxiCompareParamsShim : public BoxBackupCompareParams,
 			modifiedAfterLastSync, newAttributesApplied);
 	}
 
+	virtual void NotifyDirComparing(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{
+		mpProgress->NotifyDirComparing(rLocalPath, rRemotePath);
+	}
+
+	virtual void NotifyFileComparing(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{
+		mpProgress->NotifyDirComparing(rLocalPath, rRemotePath);
+	}
+
 	/* ProgressPanel::ExclusionOracle interface implementation */
 	
 	virtual bool IsExcludedFile(const std::string& rFileName)
@@ -181,140 +207,11 @@ CompareProgressPanel::CompareProgressPanel
 
 wxFileName MakeLocalPath(wxFileName& base, ServerCacheNode* pTargetNode);
 
-/*
-wxFileName MakeLocalPath(wxFileName& base, ServerCacheNode* pTargetNode)
-{
-	wxString remainingPath = pTargetNode->GetFullPath();
-	
-	if (!remainingPath.StartsWith(_("/")))
-	{
-		return wxFileName();
-	}
-	remainingPath = remainingPath.Mid(1);
-
-	wxString currentPath;
-	wxFileName outName(base.GetFullPath(), wxEmptyString);
-	
-	for (int index = remainingPath.Find('/'); index != -1; 
-		index = remainingPath.Find('/'))
-	{
-		if (index <= 0)
-		{
-			return wxFileName();
-		}
-		
-		wxString pathComponent = remainingPath.Mid(0, index);
-		outName.AppendDir(pathComponent);
-		if (!outName.DirExists() && !wxMkdir(outName.GetFullPath()))
-		{
-			return wxFileName();
-		}
-		
-		currentPath.Append(_("/"));
-		currentPath.Append(pathComponent);
-		remainingPath = remainingPath.Mid(index + 1);
-		
-		// Find the server cache node corresponding to the
-		// directory we just created, and restore its attributes.
-		ServerCacheNode* pCurrentNode = NULL;
-		
-		for (pCurrentNode = pTargetNode; 
-			pCurrentNode->GetParent() != pCurrentNode && 
-			!(pCurrentNode->GetFullPath().IsSameAs(currentPath));
-			pCurrentNode = pCurrentNode->GetParent())
-		{ ; }
-
-		// make sure that we found one		
-		if (!(pCurrentNode->GetFullPath().IsSameAs(currentPath)))
-		{
-			return wxFileName();
-		}
-		
-		// retrieve most recent attributes, and apply them
-		ServerFileVersion* pVersion = pCurrentNode->GetMostRecent();
-		if (!pVersion)
-		{
-			return wxFileName();
-		}
-
-		if (pVersion->HasAttributes())
-		{
-			wxCharBuffer namebuf = outName.GetFullPath().mb_str();
-			pVersion->GetAttributes().WriteAttributes(namebuf.data());
-		}
-	}
-		
-	outName.SetFullName(remainingPath);	
-	if (!outName.IsOk())
-	{
-		return wxFileName();
-	}
-	
-	return outName;	
-}
-*/
-
 void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 {
 	LogToListBox logTo(mpErrorList);
 	mpErrorList->Clear();
 
-	/*
-	RestoreSpec spec(rSpec);
-
-	wxString errorMsg;
-	if (!mpConnection->InitTlsContext(mTlsContext, errorMsg))
-	{
-		wxString msg;
-		msg.Printf(wxT("Error: cannot start restore: %s"), errorMsg.c_str());
-		ReportFatalError(BM_RESTORE_FAILED_CANNOT_INIT_ENCRYPTION, msg);
-		return;
-	}
-	
-	std::string storeHost;
-	mpConfig->StoreHostname.GetInto(storeHost);
-
-	if (storeHost.length() == 0) 
-	{
-		ReportFatalError(BM_RESTORE_FAILED_NO_STORE_HOSTNAME,
-			wxT("Error: cannot start restore: "
-			"You have not configured the Store Hostname!"));
-		return;
-	}
-
-	std::string keysFile;
-	mpConfig->KeysFile.GetInto(keysFile);
-
-	if (keysFile.length() == 0) 
-	{
-		ReportFatalError(BM_RESTORE_FAILED_NO_KEYS_FILE,
-			wxT("Error: cannot start restore: "
-			"you have not configured the Keys File"));
-		return;
-	}
-
-	int acctNo;
-	if (!mpConfig->AccountNumber.GetInto(acctNo))
-	{
-		ReportFatalError(BM_RESTORE_FAILED_NO_ACCOUNT_NUMBER,
-			wxT("Error: cannot start restore: "
-			"you have not configured the Account Number"));
-		return;
-	}
-	
-	BackupClientCryptoKeys_Setup(keysFile.c_str());
-
-	{
-		if (!wxMkdir(rDest.GetFullPath()))
-		{
-			ReportFatalError(BM_RESTORE_FAILED_TO_CREATE_OBJECT,
-				wxT("Error: cannot start restore: "
-				"cannot create the destination directory"));
-			return;
-		}
-	}
-	*/
-	
 	ResetCounters();
 	
 	mCompareRunning = true;
@@ -327,128 +224,7 @@ void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 	
 	try 
 	{
-		/*
-		// count files to restore
-		std::auto_ptr<BackupProtocolClientAccountUsage> accountInfo = 
-			mpConnection->GetAccountUsage();
-		int blockSize = 0;
-		if (accountInfo.get())
-		{
-			blockSize = accountInfo->GetBlockSize();
-		}
-		else
-		{
-			mpErrorList->Append(_("Warning: failed to get account "
-				"information from server, file size will not "
-				"be reported"));
-		}
-		
-		RestoreSpecEntry::Vector entries = spec.GetEntries();
-		for (RestoreSpecEntry::ConstIterator i = entries.begin();
-			i != entries.end(); i++)
-		{
-			// Duplicate entries may be removed from the list
-			// by CountFilesRecursive, so check whether the
-			// current entry has been removed, and if so, skip it.
-			RestoreSpecEntry::Vector newEntries = spec.GetEntries();
-			bool foundEntry = false;
-			
-			for (RestoreSpecEntry::ConstIterator j = newEntries.begin();
-				j != newEntries.end(); j++)
-			{
-				if (j->IsSameAs(*i))
-				{
-					foundEntry = true;
-					break;
-				}
-			}
-			
-			if (!foundEntry)
-			{
-				// no longer in the list, skip it.
-				continue;
-			}
-			
-			if (i->IsInclude())
-			{
-				ServerCacheNode* pNode = &(i->GetNode());
-				CountFilesRecursive(spec, pNode, pNode, 
-					blockSize);
-			}
-		}
-		
-		mpProgressGauge->SetRange(GetNumFilesTotal());
-		mpProgressGauge->SetValue(0);
-		mpProgressGauge->Show();
-
-		SetSummaryText(_("Restoring files"));
-		wxYield();
-		
-		// Entries may have been changed by removing duplicates
-		// in CountFilesRecursive. Reload the list.
-		entries = spec.GetEntries();
-		
-		bool succeeded = false;
-		
-		// Go through the records again, this time syncing them
-		for (RestoreSpecEntry::Iterator i = entries.begin();
-			i != entries.end(); i++)
-		{
-			if (i->IsInclude())
-			{
-				ServerCacheNode& rNode(i->GetNode());
-				wxFileName restoreDest = MakeLocalPath(rDest, 
-					&rNode);
-				
-				if (restoreDest.IsOk())
-				{
-					ServerCacheNode* pParentNode =
-						rNode.GetParent();
-					int64_t parentId = -1; // invalid
-					
-					if (pParentNode == NULL)
-					{
-						// restoring the root directory.
-						// parentId is ignored for 
-						// directories, which is good
-						// because we don't have one!
-					}
-					else
-					{
-						parentId = pParentNode->GetMostRecent()->GetBoxFileId();
-					}
-					
-					succeeded = RestoreFilesRecursive(spec, 
-						&rNode, parentId, restoreDest, 
-						blockSize);
-				}
-				else
-				{
-					succeeded = false;
-				}
-				
-			}
-			
-			if (!succeeded) break;
-		}
-		
-		if (mRestoreStopRequested)
-		{
-			SetSummaryText(_("Restore Interrupted"));
-			ReportFatalError(BM_BACKUP_FAILED_INTERRUPTED,
-				wxT("Restore interrupted by user"));
-		}
-		else if (!succeeded)
-		{
-			SetSummaryText(_("Restore Failed"));
-			mpErrorList->Append(_("Restore Failed"));
-		}
-		else
-		{
-			SetSummaryText(_("Restore Finished"));
-			mpErrorList->Append(_("Restore Finished"));
-		}
-		*/
+		SetCurrentText(_("Connecting to server"));
 		
 		Configuration BoxConfig(mpConfig->GetBoxConfig());
 		BackupProtocolClient* pClient =
@@ -458,6 +234,9 @@ void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 			THROW_EXCEPTION(ConnectionException, 
 				SocketConnectError);
 		}
+
+		SetSummaryText(_("Counting Files to Compare"));
+		SetCurrentText(_(""));
 			
 		BackupQueries queries(*pClient,	BoxConfig, false);
 		
@@ -485,7 +264,7 @@ void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 		mpProgressGauge->SetValue(0);
 		mpProgressGauge->Show();
 
-		SetSummaryText(_("Backing up files"));
+		SetSummaryText(_("Comparing files"));
 		wxYield();
 
 		for(std::vector<std::string>::iterator
@@ -529,215 +308,4 @@ void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 	mCompareRunning = false;
 	mCompareStopRequested = false;
 	SetStopButtonLabel(_("Close"));
-}
-
-void CompareProgressPanel::CountFilesRecursive
-(
-	const BoxiCompareParams& rParams, 
-	ServerCacheNode* pRootNode, 
-	ServerCacheNode* pCurrentNode,
-	int blockSize
-)
-{
-	// stop if requested
-	if (mCompareStopRequested) return;
-	
-	/*
-	ServerFileVersion* pVersion = GetVersionToRestore(pCurrentNode, rSpec);
-	if (!pVersion)
-	{
-		// no version available, cannot restore
-		return;
-	}
-	
-	RestoreSpecEntry::Vector specs = rSpec.GetEntries();
-
-	for (RestoreSpecEntry::Iterator i = specs.begin();
-		i != specs.end(); i++)
-	{
-		if (&(i->GetNode()) == pCurrentNode)
-		{
-			if (i->IsInclude() && pCurrentNode != pRootNode)
-			{
-				// Redundant entry in include list.
-				// Remove it to prevent double restoring.
-				rSpec.Remove(*i);
-			}
-			else if (!i->IsInclude())
-			{
-				// excluded, stop here.
-				return;
-			}
-		}
-	}
-	
-	if (pVersion->IsDeleted())
-	{
-		// ignore deleted files for now. fixme.
-		return;
-	}
-	
-	if (pVersion->IsDirectory())
-	{
-		ServerCacheNode::SafeVector* pChildren = 
-			pCurrentNode->GetChildren();
-		wxASSERT(pChildren);
-		
-		if (!pChildren)
-		{
-			return;
-		}
-		
-		for (ServerCacheNode::Iterator i = pChildren->begin();
-			i != pChildren->end(); i++)
-		{
-			CountFilesRecursive(rSpec, pRootNode, &(*i), 
-				blockSize);
-		}
-	}
-	else
-	{
-		NotifyMoreFilesCounted(1, pVersion->GetSizeBlocks() * blockSize);
-	}
-	*/
-}
-
-bool CompareProgressPanel::CompareFilesRecursive
-(
-	const BoxiCompareParams& rParams, ServerCacheNode* pNode,
-	int64_t parentId, wxFileName& rLocalName, int blockSize
-)
-{
-	// stop if requested
-	if (mCompareStopRequested) return false;
-		
-	/*
-	ServerFileVersion* pVersion = GetVersionToRestore(pNode, rSpec);
-	
-	RestoreSpecEntry::Vector specs = rSpec.GetEntries();
-	for (RestoreSpecEntry::Iterator i = specs.begin();
-		i != specs.end(); i++)
-	{
-		if (&(i->GetNode()) != pNode)
-		{
-			// no match
-			continue;
-		}
-		
-		if (! i->IsInclude())
-		{
-			// excluded, stop here.
-			return true;
-		}
-		
-		// Must be included. If the user explicitly included a file
-		// and we can't find it, then we must report an error.
-		// Otherwise, silently ignore it (!).
-
-		if (!pVersion)
-		{
-			// no version available, cannot restore this file
-			wxString msg;
-			msg.Printf(_("Failed to restore '%s': not found on server"),
-				pNode->GetFullPath().c_str());
-			mpErrorList->Append(msg);
-			return false;
-		}
-	}
-	
-	if (!pVersion)
-	{
-		// no version available, cannot restore this file
-		return true;
-	}
-
-	// The restore root directory always exists, because we just created it.
-	// In the special case of restoring the root, don't complain about it.
-	if (!pNode->IsRoot())
-	{
-		if (rLocalName.FileExists() ||
-			wxDirExists(rLocalName.GetFullPath()))
-		{
-			wxString msg;
-			msg.Printf(_("Error: failed to finish restore: "
-				"object already exists: '%s'"), 
-				rLocalName.GetFullPath().c_str());
-			ReportFatalError(
-				BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS, msg);
-			return false;
-		}
-	}
-	
-	wxCharBuffer namebuf = rLocalName.GetFullPath().mb_str(wxConvLibc);
-		
-	if (pVersion->IsDeleted())
-	{
-		// ignore deleted files for now. fixme.
-		return true;
-	}
-	
-	if (pVersion->IsDirectory())
-	{
-		// And don't try to create the root a second time.
-		if (!pNode->IsRoot())
-		{
-			if (!wxMkdir(rLocalName.GetFullPath()))
-			{
-				wxString msg;
-				msg.Printf(_("Error: failed to finish restore: "
-					"cannot create directory: '%s'"), 
-					rLocalName.GetFullPath().c_str());
-				ReportFatalError(
-					BM_RESTORE_FAILED_TO_CREATE_OBJECT, msg);
-				return false;
-			}
-
-			if (pVersion->HasAttributes())
-			{
-				pVersion->GetAttributes().WriteAttributes(namebuf.data());
-			}
-		}
-		
-		ServerCacheNode::SafeVector* pChildren = pNode->GetChildren();
-		wxASSERT(pChildren);
-		
-		if (!pChildren)
-		{
-			return false;
-		}
-		
-		for (ServerCacheNode::Iterator i = pChildren->begin();
-			i != pChildren->end(); i++)
-		{
-			wxFileName childName(rLocalName.GetFullPath(),
-				i->GetFileName());
-			if (!RestoreFilesRecursive(rSpec, &(*i), 
-				pVersion->GetBoxFileId(), childName, 
-				blockSize))
-			{
-				return false;
-			}
-		}
-	}
-	else
-	{		
-		if (!mpConnection->GetFile(parentId, pVersion->GetBoxFileId(), 
-			namebuf.data()))
-		{
-			return false;
-		}
-		
-		// Decode the file -- need to do different things depending on whether 
-		// the directory entry has additional attributes
-		if(pVersion->HasAttributes())
-		{
-			// Use these attributes
-			pVersion->GetAttributes().WriteAttributes(namebuf.data());
-		}
-
-		NotifyMoreFilesDone(1, pVersion->GetSizeBlocks() * blockSize);		
-	}
-	*/
-	
-	return true;
 }
