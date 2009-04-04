@@ -2,7 +2,7 @@
  *            ProgressPanel.cc
  *
  *  Sun Oct  1 22:44:26 2006
- *  Copyright 2006 Chris Wilson
+ *  Copyright 2006-2009 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -71,14 +71,16 @@ ProgressPanel::ProgressPanel
 	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	mpCurrentText = new wxStaticText(this, wxID_ANY, 
-		wxT("Idle (nothing to do)"));
+		wxT("Idle (nothing to do)"), wxDefaultPosition, wxDefaultSize,
+		wxST_NO_AUTORESIZE);
 	pCurrentBox->Add(mpCurrentText, 0, wxGROW | wxALL, 4);
 	
 	wxStaticBoxSizer* pErrorsBox = new wxStaticBoxSizer(wxVERTICAL,
 		this, wxT("Errors"));
 	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
-	mpErrorList = new wxListBox(this, ID_BackupProgress_ErrorList);
+	mpErrorList = new wxListBox(this, ID_BackupProgress_ErrorList,
+		wxDefaultPosition, wxDefaultSize, 0, NULL, wxLB_HSCROLL);
 	pErrorsBox->Add(mpErrorList, 1, wxGROW | wxALL, 4);
 
 	wxStaticBoxSizer* pStatsBox = new wxStaticBoxSizer(wxVERTICAL,
@@ -149,6 +151,7 @@ void ProgressPanel::NotifyMoreFilesCounted(size_t numAdditionalFiles,
 	str.Printf(wxT("%d"), mNumFilesCounted);
 	mpNumFilesTotal->SetValue(str);
 	mpNumBytesTotal->SetValue(FormatNumBytes(mNumBytesCounted));
+	wxYield();
 }
 
 void ProgressPanel::NotifyMoreFilesDone(size_t numAdditionalFiles, 
@@ -286,6 +289,13 @@ void ProgressPanel::SetSummaryText(const wxString& rText)
 void ProgressPanel::SetCurrentText(const wxString& rText)
 {
 	mpCurrentText->SetLabel(rText);
+	wxSize size = mpCurrentText->GetSize();
+	mpCurrentText->Wrap(size.GetWidth());
+	size = mpCurrentText->GetSize();
+	// set minimum and maximum size to laid-out size
+	mpCurrentText->SetSizeHints(size, size);
+	// resize everything else to take account of new label size
+	Layout();
 }
 
 void ProgressPanel::SetStopButtonLabel(const wxString& rLabel)
@@ -333,7 +343,7 @@ void ProgressPanel::CountLocalFiles(ExclusionOracle& rExclusionOracle,
 		}
 		
 		struct dirent *en = 0;
-		struct stat st;
+		EMU_STRUCT_STAT st;
 		std::string filename;
 		while((en = ::readdir(dirHandle)) != 0)
 		{
@@ -349,7 +359,7 @@ void ProgressPanel::CountLocalFiles(ExclusionOracle& rExclusionOracle,
 
 			// Stat file to get info
 			filename = rLocalPath + DIRECTORY_SEPARATOR + en->d_name;
-			if(::lstat(filename.c_str(), &st) != 0)
+			if(EMU_LSTAT(filename.c_str(), &st) != 0)
 			{
 				/*
 				rParams.GetProgressNotifier().NotifyFileStatFailed(
