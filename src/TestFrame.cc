@@ -25,6 +25,8 @@
  *  Tim Hudson (tjh@cryptsoft.com), under their source redistribution license.
  */
 
+#include "SandBox.h"
+
 // #include <wx/thread.h>
 #include <wx/datectrl.h>
 #include <wx/dateevt.h>
@@ -38,7 +40,6 @@
 
 #define TLS_CLASS_IMPLEMENTATION_CPP
 
-#include "SandBox.h"
 #include "Box.h"
 #include "MainFrame.h"
 #include "SetupWizard.h"
@@ -438,6 +439,7 @@ wxLogAsserter::wxLogAsserter()
 
 wxLogAsserter::~wxLogAsserter() { wxLog::SetActiveTarget(mpOldTarget); }
 
+#if wxUSE_STACKWALKER
 void StackWalker::OnStackFrame(const wxStackFrame& frame)
 {
 	if (frame.HasSourceLocation())
@@ -473,6 +475,7 @@ wxString StackWalker::AppendTo(const wxString& rMessage)
 	newMessage.Append(GetStackTrace());
 	return newMessage;
 }
+#endif // wxUSE_STACKWALKER
 
 void wxLogAsserter::DoLog(wxLogLevel level, const wxChar *msg, time_t timestamp)
 {
@@ -503,7 +506,10 @@ void wxLogAsserter::DoLog(wxLogLevel level, const wxChar *msg, time_t timestamp)
 	msgOut.Append(msg);
 
 	msgOut.Append(_("\n"));
+
+	#if wxUSE_STACKWALKER
 	msgOut.Append(StackWalker::GetStackTrace());
+	#endif
 
 	wxCharBuffer buf = msgOut.mb_str();
 	CPPUNIT_ASSERT_MESSAGE(buf.data(), false);
