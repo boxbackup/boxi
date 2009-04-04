@@ -22,6 +22,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include "SandBox.h"
+
 #include <sys/time.h> // for utimes()
 #include <utime.h> // for utime()
 
@@ -44,7 +46,6 @@
 
 #define TLS_CLASS_IMPLEMENTATION_CPP
 
-#include "SandBox.h"
 #include "Box.h"
 #include "BackupClientRestore.h"
 #include "RaidFileController.h"
