@@ -22,10 +22,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include "SandBox.h"
+
 #include <sys/time.h> // for utimes()
 #include <utime.h> // for utime()
-
-#include <regex.h>
 
 #include <openssl/ssl.h>
 
@@ -42,7 +42,6 @@
 
 #define TLS_CLASS_IMPLEMENTATION_CPP
 
-#include "SandBox.h"
 #include "Box.h"
 #include "BackupClientRestore.h"
 #include "BackupStoreDaemon.h"
@@ -311,8 +310,8 @@ box_time_t GetLatestFileUploadTime(const Configuration& rClientConfig)
 		DIRECTORY_SEPARATOR + "last_sync_start";
 
 	// Stat it to get file time
-	struct stat st;
-	if(::stat(syncTimeFilename.c_str(), &st) == 0)
+	EMU_STRUCT_STAT st;
+	if(EMU_STAT(syncTimeFilename.c_str(), &st) == 0)
 	{
 		// Files modified after this time shouldn't be on the 
 		// server, so report errors slightly differently
