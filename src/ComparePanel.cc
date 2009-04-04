@@ -223,7 +223,7 @@ void ComparePanel::AddToNotebook(wxNotebook* pNotebook)
 {
 	pNotebook->AddPage(this, wxT("Compare"));
 	// pNotebook->AddPage(mpFilesPanel, wxT("Compare Files"));
-	// pNotebook->AddPage(mpProgressPanel, wxT("Compare Progress"));
+	pNotebook->AddPage(mpProgressPanel, wxT("Compare Progress"));
 }
 
 /*
