@@ -25,9 +25,10 @@
  * YOU MUST NOT REMOVE THIS ATTRIBUTION!
  */
 
+#include "SandBox.h"
+
 #include <errno.h>
 #include <stdio.h>
-#include <regex.h>
 
 #include <wx/statbox.h>
 #include <wx/listbox.h>
@@ -36,8 +37,6 @@
 #include <wx/dir.h>
 #include <wx/file.h>
 #include <wx/filename.h>
-
-#include "SandBox.h"
 
 #include "BackupClientContext.h"
 #include "BackupClientDirectoryRecord.h"
@@ -218,7 +217,10 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 	
 	try 
 	{
-		// count files to restore
+		SetCurrentText(_("Connecting to server"));
+		mpConnection->Connect(false);
+
+		SetSummaryText(_("Checking account details"));
 		std::auto_ptr<BackupProtocolClientAccountUsage> accountInfo = 
 			mpConnection->GetAccountUsage();
 		int blockSize = 0;
@@ -233,6 +235,9 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 				"be reported"));
 		}
 		
+		SetSummaryText(_("Counting Files to Restore"));
+		SetCurrentText(_(""));
+
 		RestoreSpecEntry::Vector entries = spec.GetEntries();
 		for (RestoreSpecEntry::ConstIterator i = entries.begin();
 			i != entries.end(); i++)
@@ -365,7 +370,8 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 			wxT("Error: failed to finish restore: unknown error"));
 	}	
 
-	SetSummaryText(_("Idle (nothing to do)"));
+	SetSummaryText(_("Restore Finished"));
+	SetCurrentText(_("Idle (nothing to do)"));
 	mRestoreRunning = false;
 	mRestoreStopRequested = false;
 	SetStopButtonLabel(_("Close"));
@@ -449,6 +455,12 @@ void RestoreProgressPanel::CountFilesRecursive
 	
 	if (pVersion->IsDirectory())
 	{
+		wxString message;
+		message.Printf(_("Counting files in %s"), 
+			pCurrentNode->GetFullPath().c_str());
+		SetCurrentText(message);
+		wxYield();
+
 		ServerCacheNode::SafeVector* pChildren = 
 			pCurrentNode->GetChildren();
 		wxASSERT(pChildren);
@@ -546,6 +558,10 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 	
 	if (pVersion->IsDirectory())
 	{
+		wxString message;
+		message.Printf(_("Reading %s"), pNode->GetFullPath().c_str());
+		SetCurrentText(message);
+
 		// And don't try to create the root a second time.
 		if (!pNode->IsRoot())
 		{
@@ -589,6 +605,10 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 	}
 	else
 	{		
+		wxString message;
+		message.Printf(_("Restoring %s"), pNode->GetFullPath().c_str());
+		SetCurrentText(message);
+
 		if (!mpConnection->GetFile(parentId, pVersion->GetBoxFileId(), 
 			namebuf.data()))
 		{
