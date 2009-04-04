@@ -30,14 +30,6 @@
 #include <errno.h>
 #include <stdio.h>
 
-#ifdef HAVE_REGEX_H
-	#include <regex.h>
-#endif
-
-#ifdef HAVE_PCREPOSIX_H
-	#include <pcreposix.h>
-#endif
-
 #ifdef HAVE_MNTENT_H
 	#include <mntent.h>
 #endif

@@ -25,12 +25,6 @@
 #ifndef _CLIENTCONFIG_H
 #define _CLIENTCONFIG_H
 
-#ifdef HAVE_PCREPOSIX_H
-	#include <pcreposix.h>
-#else
-	#include <regex.h> // needed by ExcludeList
-#endif
-
 #include "Configuration.h"
 
 #include "main.h"

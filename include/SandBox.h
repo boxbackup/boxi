@@ -74,4 +74,10 @@
 	#error BoxPlatform.h did not define BOXPLATFORM__H, fix this file!
 #endif
 
+#ifdef HAVE_PCREPOSIX_H
+	#include <pcreposix.h>
+#else
+	#include <regex.h>
+#endif
+
 #endif // _SAND_BOX_H

@@ -27,14 +27,6 @@
 #include <set>
 #include <string>
 
-#ifdef HAVE_REGEX_H
-	#include <regex.h>
-#endif
-
-#ifdef HAVE_PCREPOSIX_H
-	#include <pcreposix.h>
-#endif
-
 #include <wx/filename.h>
 #include <wx/log.h>
 
