@@ -22,10 +22,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-// #include <openssl/bio.h>
-
-// class SSL;
-// class SSL_CTX;
+#include "SandBox.h"
 
 #include <wx/button.h>
 #include <wx/dir.h>
@@ -39,37 +36,13 @@
 #include <cppunit/TestSuite.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-// #define TLS_CLASS_IMPLEMENTATION_CPP
-
-#include "SandBox.h"
 #include "Box.h"
-// #include "BackupClientRestore.h"
-// #include "BackupStoreDaemon.h"
-// #include "RaidFileController.h"
-// #include "BackupStoreAccountDatabase.h"
-// #include "BackupStoreAccounts.h"
-// #include "BackupContext.h"
-// #include "autogen_BackupProtocolServer.h"
-// #include "BackupStoreConfigVerify.h"
-// #include "BackupQueries.h"
-// #include "BackupDaemonConfigVerify.h"
-// #include "BackupClientCryptoKeys.h"
-// #include "BackupStoreConstants.h"
-// #include "BackupStoreInfo.h"
-// #include "StoreStructure.h"
-// #include "NamedLock.h"
 
 #include "main.h"
 #include "BoxiApp.h"
 #include "ClientConfig.h"
 #include "MainFrame.h"
-// #include "SetupWizard.h"
-// #include "SslConfig.h"
 #include "TestBackupConfig.h"
-
-// #include "ServerConnection.h"
-
-// #undef TLS_CLASS_IMPLEMENTATION_CPP
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(TestBackupConfig, "WxGuiTest");
 
