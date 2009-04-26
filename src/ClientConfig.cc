@@ -380,6 +380,26 @@ BoxiLocation* ClientConfig::GetLocation(const wxString& rName)
 	return NULL;
 }
 
+BoxiLocation* ClientConfig::GetLocation(int target)
+{
+	BoxiLocation::Iterator current;
+	int i;
+
+	for 
+	(
+		current  = mLocations.begin(), i = 0;
+		current != mLocations.end() && i < target; 
+		current++, i++
+	) { }
+
+	if (i == target)
+	{
+		return GetLocation(*current);
+	}
+
+	return NULL;
+}
+
 void ClientConfig::AddListener(ConfigChangeListener* pNewListener)
 {
 	for (std::vector<ConfigChangeListener*>::iterator i = mListeners.begin();
