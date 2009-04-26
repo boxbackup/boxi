@@ -150,7 +150,8 @@ void MainFrame::OnFileOpen(wxCommandEvent& event)
 	if (wxGetApp().ShowFileDialog(openFileDialog) != wxID_OK)
 		return;
 
-	DoFileOpen(openFileDialog.GetPath());
+	wxFileName fn(openFileDialog.GetPath(), openFileDialog.GetFilename());
+	DoFileOpen(fn.GetFullPath());
 }
 
 void MainFrame::DoFileOpen(const wxString& path)
