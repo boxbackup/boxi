@@ -163,6 +163,9 @@ void TestConfig::RunTest()
 	mpConfig->ExtendedLogging.Set(true);
 	mpConfig->AutomaticBackup.Set(false);
 
+	BoxiLocation loc(_("hello"), _("test\u00e6\u00f8\u00e5test"), NULL);
+	mpConfig->AddLocation(loc);
+
 	CPPUNIT_ASSERT(mpConfig->CertRequestFile.Is(wxT("/foo/req.foo")));
 	AssertConfigAsExpected();
 	AssertDirty();
@@ -352,6 +355,15 @@ void TestConfig::AssertConfigAsExpected()
 	CPPUNIT_ASSERT(mpConfig->KeepAliveTime.Is(8));
 	CPPUNIT_ASSERT(mpConfig->ExtendedLogging.Is(true));
 	CPPUNIT_ASSERT(mpConfig->AutomaticBackup.Is(false));
+
+	const BoxiLocation::List& rLocs(mpConfig->GetLocations());
+	CPPUNIT_ASSERT_EQUAL((size_t)1, rLocs.size());
+
+	BoxiLocation* pLoc = mpConfig->GetLocation(*rLocs.begin());
+	CPPUNIT_ASSERT(pLoc);
+	CPPUNIT_ASSERT_EQUAL((wxString)_("hello"), pLoc->GetName());
+	CPPUNIT_ASSERT_EQUAL((wxString)_("test\u00e6\u00f8\u00e5test"),
+		pLoc->GetPath());
 }
 
 void TestConfig::ClearConfig()
