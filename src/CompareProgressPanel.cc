@@ -144,6 +144,10 @@ class BoxiCompareParamsShim : public BoxBackupCompareParams,
 		const std::string& rRemotePath)
 	{ mpProgress->NotifyExcludedDir(rLocalPath, rRemotePath); }
 
+	virtual void NotifyDirComparing(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{ mpProgress->NotifyDirComparing(rLocalPath, rRemotePath); }
+
 	virtual void NotifyDirCompared(const std::string& rLocalPath,
 		const std::string& rRemotePath,	bool HasDifferentAttributes,
 		bool modifiedAfterLastSync)
@@ -151,6 +155,10 @@ class BoxiCompareParamsShim : public BoxBackupCompareParams,
 		mpProgress->NotifyDirCompared(rLocalPath, rRemotePath,
 			HasDifferentAttributes, modifiedAfterLastSync);
 	}
+	
+	virtual void NotifyFileComparing(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{ mpProgress->NotifyFileComparing(rLocalPath, rRemotePath); }
 	
 	virtual void NotifyFileCompared(const std::string& rLocalPath,
 		const std::string& rRemotePath, int64_t NumBytes,

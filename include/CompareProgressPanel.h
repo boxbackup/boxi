@@ -90,6 +90,16 @@ class CompareProgressPanel : public ProgressPanel
 	int GetConnectionIndex() { return mpConnection->GetConnectionIndex(); }
 	*/
 	
+	void NotifyComparing(const wxString& rLocalPath, bool IsFile)
+	{
+		wxString msg;
+		msg.Printf(wxT("Comparing %s '%s'"),
+			IsFile ? _("file") : _("directory"), rLocalPath.c_str());
+		SetCurrentText(msg);
+		Layout();
+		wxYield();
+	}
+	
 	public:
 
 	virtual void NotifyLocalDirMissing(const std::string& rLocalPath,
@@ -216,6 +226,12 @@ class CompareProgressPanel : public ProgressPanel
 		// mExcludedDirs ++;
 	}
 
+	virtual void NotifyDirComparing(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{
+		NotifyComparing(wxString(rLocalPath.c_str(), wxConvLibc), false);
+	}
+	
 	virtual void NotifyDirCompared(const std::string& rLocalPath,
 		const std::string& rRemotePath,	bool HasDifferentAttributes,
 		bool modifiedAfterLastSync)
@@ -238,6 +254,12 @@ class CompareProgressPanel : public ProgressPanel
 			
 			mpErrorList->Append(msg);
 		}
+	}
+	
+	virtual void NotifyFileComparing(const std::string& rLocalPath,
+		const std::string& rRemotePath)
+	{
+		NotifyComparing(wxString(rLocalPath.c_str(), wxConvLibc), true);
 	}
 	
 	virtual void NotifyFileCompared(const std::string& rLocalPath,
