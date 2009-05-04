@@ -147,6 +147,15 @@ if ! (
 	exit 1
 fi
 
+if ! (
+	set -e
+	cd wxchart
+	./configure
+); then
+	echo "Failed to configure wxChart, aborting!"
+	exit 1
+fi
+
 dnl Set PACKAGE_LOCALE_DIR in config.h.
 if test "x${prefix}" = "xNONE"; then
   AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR, "${ac_default_prefix}/${DATADIRNAME}/locale", [Package local directory])
@@ -220,5 +229,6 @@ po/Makefile
 include/Makefile
 intl/Makefile
 src/Makefile
+wxchart/Makefile
 ])
 
