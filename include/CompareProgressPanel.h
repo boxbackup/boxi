@@ -312,15 +312,6 @@ class CompareProgressPanel : public ProgressPanel
 		NotifyMoreFilesDone(1, NumBytes);
 	}
 
-	virtual void NotifyDirComparing(const std::string& rLocalPath,
-		const std::string& rRemotePath)
-	{
-		wxString message;
-		message.Printf(_("Comparing %s"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
-		SetCurrentText(message);
-	}
-
 	DECLARE_EVENT_TABLE()
 };
 

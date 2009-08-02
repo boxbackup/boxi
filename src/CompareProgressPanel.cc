@@ -170,18 +170,6 @@ class BoxiCompareParamsShim : public BoxBackupCompareParams,
 			modifiedAfterLastSync, newAttributesApplied);
 	}
 
-	virtual void NotifyDirComparing(const std::string& rLocalPath,
-		const std::string& rRemotePath)
-	{
-		mpProgress->NotifyDirComparing(rLocalPath, rRemotePath);
-	}
-
-	virtual void NotifyFileComparing(const std::string& rLocalPath,
-		const std::string& rRemotePath)
-	{
-		mpProgress->NotifyDirComparing(rLocalPath, rRemotePath);
-	}
-
 	/* ProgressPanel::ExclusionOracle interface implementation */
 	
 	virtual bool IsExcludedFile(const std::string& rFileName)
