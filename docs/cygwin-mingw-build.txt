@@ -7,16 +7,15 @@ boxbackup/docs/backup/win32_build_on_cygwin_using_mingw.txt
 Additionally install the following Cygwin packages:
 
  * Devel/pkg-config
+ * Devel/libtool
 
-Download wxMSW-2.6.3.tar.gz and untar it. Edit setup.h.in and change
-these lines:
+Download wxMSW-2.8.10.zip and untar it. Edit setup.h.in and change
+this line:
 
-	#define wxUSE_STACKWALKER   0
 	#define wxUSE_FSVOLUME      0
 
 to:
 
-	#define wxUSE_STACKWALKER   1
 	#define wxUSE_FSVOLUME      1
 
 Configure as follows:
