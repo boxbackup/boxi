@@ -478,7 +478,7 @@ void TestWizard::TestPrivateKeyPage()
 	wxCharBuffer buf = existingpath.mb_str();
 	CPPUNIT_ASSERT_MESSAGE(buf.data(), 
 		chmod(buf.data(), 0777) == 0);
-	CPPUNIT_ASSERT_MESSAGE(buf.data(), unlink(buf.data()) == 0);
+	CPPUNIT_ASSERT_MESSAGE(buf.data(), wxRemoveFile(existingpath));
 	CPPUNIT_ASSERT(existing.Create(existingpath, false, 
 		wxS_IRUSR | wxS_IWUSR));
 	CPPUNIT_ASSERT(wxFile::Access(existingpath, wxFile::read));
