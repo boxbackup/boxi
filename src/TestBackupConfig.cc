@@ -115,8 +115,14 @@ void DeleteRecursive(const wxFileName& rPath)
 		wxCharBuffer buf = rPath.GetFullPath().mb_str(wxConvLibc);
 		CPPUNIT_ASSERT_MESSAGE(buf.data(), wxRmdir(rPath.GetFullPath()));
 	}
-	else // rPath.FileExists() doesn't catch symlinks
+	else
+	#ifdef WIN32
+		if (rPath.FileExists()) // no symlinks on windows
+	#else
+ 		// rPath.FileExists() doesn't catch symlinks
+	#endif
 	{
+		
 		CPPUNIT_ASSERT(wxRemoveFile(rPath.GetFullPath()));
 	}
 }
