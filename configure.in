@@ -225,7 +225,7 @@ dnl AC_SUBST(x_LIBS)
 
 AC_OUTPUT([
 Makefile
-po/Makefile
+po/Makefile.in
 include/Makefile
 intl/Makefile
 src/Makefile
