@@ -150,8 +150,17 @@ void MainFrame::OnFileOpen(wxCommandEvent& event)
 	if (wxGetApp().ShowFileDialog(openFileDialog) != wxID_OK)
 		return;
 
+	/*
+	There seems to be a wxFilename change bug here. Tests fail with
+	this code:
+	*/
+	DoFileOpen(openFileDialog.GetPath());
+	/*
+	I had changed it to this, to make the tests pass:
 	wxFileName fn(openFileDialog.GetPath(), openFileDialog.GetFilename());
 	DoFileOpen(fn.GetFullPath());
+	but that breaks the application.
+	*/
 }
 
 void MainFrame::DoFileOpen(const wxString& path)
