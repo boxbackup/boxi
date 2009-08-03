@@ -192,9 +192,9 @@ ClientConnection::Error ClientConnection::_GetClientPidSlow(long& rPid)
 	std::string PidFilePathStr;
 	if (!mpConfig->PidFile.GetInto(PidFilePathStr))
 		return ERR_NOPIDCONFIG;
-	wxString PidFilePath(PidFilePathStr.c_str(), wxConvLibc);
+	wxString PidFilePath(PidFilePathStr.c_str(), wxConvBoxi);
 		
-	wxFileName DaemonPidFile(wxString(PidFilePath.c_str(), wxConvLibc));
+	wxFileName DaemonPidFile(wxString(PidFilePath.c_str(), wxConvBoxi));
 	if (!wxFileName::FileExists(DaemonPidFile.GetFullPath()))
 	{
 		wxLogDebug(wxT("PID file not found (%s)"), 
@@ -392,7 +392,7 @@ ClientConnection::Error ClientConnection::DoReadLine()
 	if (Line == "error")
 		return ERR_CMDFAILED;
 	
-	wxString line2(Line.c_str(), wxConvLibc);
+	wxString line2(Line.c_str(), wxConvBoxi);
 	wxString rest;
 	if (line2.StartsWith(wxT("state "), &rest)) 
 	{

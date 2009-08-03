@@ -113,7 +113,7 @@ class ProgressPanel : public wxPanel
 	{
 		wxString msg;
 		msg.Printf(wxT("Counting files in directory '%s'"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
 		SetCurrentText(msg);
 		Layout();
 		wxYield();

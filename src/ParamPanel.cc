@@ -40,7 +40,7 @@ void BoundStringCtrl::Reload()
 	const std::string * pValue = mrStringProp.GetPointer();
 	if (pValue) 
 	{
-		wxString valueString(pValue->c_str(), wxConvLibc);
+		wxString valueString(pValue->c_str(), wxConvBoxi);
 		SetValue(valueString);
 		// work around Windows bug
 		mrStringProp.Set(pValue->c_str());
@@ -55,7 +55,7 @@ void BoundStringCtrl::Reload()
 void BoundStringCtrl::OnChange()
 {
 	wxString tempString = GetValue();
-	wxCharBuffer buf = tempString.mb_str(wxConvLibc);
+	wxCharBuffer buf = tempString.mb_str(wxConvBoxi);
 	if (tempString.Length() == 0) {
 		mrStringProp.Clear();
 	} else {
@@ -73,7 +73,7 @@ void IntCtrl::Reload()
 	int value = mValue;
 	wxString ValueString;
 	ValueString.Printf(
-		wxString(mFormat.c_str(), wxConvLibc), 
+		wxString(mFormat.c_str(), wxConvBoxi), 
 		mValue);
 	SetValue(ValueString);
 	// work around Windows bug
@@ -93,7 +93,7 @@ void IntCtrl::OnChange()
 	unsigned int tempValue;
 	char *endptr;
 
-	wxCharBuffer buf = tempString.mb_str(wxConvLibc);
+	wxCharBuffer buf = tempString.mb_str(wxConvBoxi);
 	
 	if (tempString.StartsWith(wxT("0x"))) 
 	{
@@ -124,7 +124,7 @@ void BoundIntCtrl::Reload()
 	{
 		wxString ValueString;
 		ValueString.Printf(
-			wxString(mFormat.c_str(), wxConvLibc), 
+			wxString(mFormat.c_str(), wxConvBoxi), 
 			*ValuePtr);
 		int ValueInt = *ValuePtr;
 		SetValue(ValueString);
@@ -149,7 +149,7 @@ void BoundIntCtrl::OnChange()
 	unsigned int tempValue;
 	char *endptr;
 
-	wxCharBuffer buf = tempString.mb_str(wxConvLibc);
+	wxCharBuffer buf = tempString.mb_str(wxConvBoxi);
 	
 	if (tempString.StartsWith(wxT("0x"))) {
 		tempValue = strtol(buf.data() + 2, &endptr, 16);
@@ -263,7 +263,7 @@ BoundStringCtrl* ParamPanel::AddParam(const wxChar * pLabel,
 	const wxChar* pFileSpec, const wxChar* pFileExtDefault)
 {
 	mpSizer->Add(
-		new wxStaticText(this, -1, wxString(pLabel, wxConvLibc), 
+		new wxStaticText(this, -1, wxString(pLabel, wxConvBoxi), 
 			wxDefaultPosition),
 		1, wxALIGN_CENTER_VERTICAL);
 

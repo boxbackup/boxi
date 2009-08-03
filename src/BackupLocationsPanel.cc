@@ -360,7 +360,7 @@ void EditorPanel::PopulateLocationList(wxControlWithItems* pTargetList)
 			for (BoxiExcludeEntry::ConstIterator pExclude = rExcludes.begin();
 				pExclude != rExcludes.end(); pExclude++)
 			{
-				wxString entryDesc(pExclude->ToString().c_str(), wxConvLibc);
+				wxString entryDesc(pExclude->ToString().c_str(), wxConvBoxi);
 				locString.Append(entryDesc);
 				
 				if (--size)
@@ -646,7 +646,7 @@ ExclusionsPanel::ExclusionsPanel(wxWindow* pParent, ClientConfig *pConfig)
 	{
 		excludeTypes[i] = wxString(
 			theExcludeTypes[i].ToString().c_str(), 
-			wxConvLibc);
+			wxConvBoxi);
 	}
 
 	mpTypeList = new wxChoice(this, ID_BackupLoc_ExcludeTypeList, 
@@ -713,7 +713,7 @@ void ExclusionsPanel::PopulateList()
 	for (BoxiExcludeEntry::ConstIterator pEntry = rEntries.begin();
 		pEntry != rEntries.end(); pEntry++)
 	{
-		wxString exString(pEntry->ToString().c_str(), wxConvLibc);
+		wxString exString(pEntry->ToString().c_str(), wxConvBoxi);
 		int newIndex = mpList->Append(exString);
 		mpList->SetClientData(newIndex, rExcludeList.UnConstEntry(*pEntry));
 		
@@ -1084,7 +1084,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		if (pIncludedBy->GetMatch() == EM_EXACT)
 		{
 			wxFileName fn(wxString(
-				pIncludedBy->GetValue().c_str(), wxConvLibc));
+				pIncludedBy->GetValue().c_str(), wxConvBoxi));
 			if (fn.SameAs(pTreeNode->GetFullPath()))
 			{
 				doDelete = true;
@@ -1117,7 +1117,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		if (warnUser) 
 		{
 			wxString PathToExclude(pIncludedBy->GetValue().c_str(), 
-				wxConvLibc);
+				wxConvBoxi);
 			
 			wxString msg;
 			msg.Printf(wxT(
@@ -1158,7 +1158,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		if (pExcludedBy->GetMatch() == EM_EXACT)
 		{
 			wxFileName fn(wxString(
-				pExcludedBy->GetValue().c_str(), wxConvLibc));
+				pExcludedBy->GetValue().c_str(), wxConvBoxi));
 			if (fn.SameAs(pTreeNode->GetFullPath()))
 			{
 				if (pList)

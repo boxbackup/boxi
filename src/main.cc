@@ -61,7 +61,7 @@ bool ViewDeleted = true;
 void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor, 
 	bool growToFit, wxSizer *sizer) 
 {
-	sizer->Add(new wxStaticText(panel, -1, wxString(label, wxConvLibc), 
+	sizer->Add(new wxStaticText(panel, -1, wxString(label, wxConvBoxi), 
 		wxDefaultPosition), 0, wxALIGN_CENTER_VERTICAL);
 
 	if (growToFit) 

@@ -150,12 +150,12 @@ void TestCompare::AssertCompareOK(int files, const std::string& rBytes)
 	
 	BOXI_ASSERT_EQUAL(filesString,
 		mpProgressPanel->GetNumFilesTotalString());
-	BOXI_ASSERT_EQUAL(wxString(rBytes.c_str(), wxConvLibc),
+	BOXI_ASSERT_EQUAL(wxString(rBytes.c_str(), wxConvBoxi),
 		mpProgressPanel->GetNumBytesTotalString());
 	
 	BOXI_ASSERT_EQUAL(filesString,
 		mpProgressPanel->GetNumFilesDoneString());
-	BOXI_ASSERT_EQUAL(wxString(rBytes.c_str(), wxConvLibc),
+	BOXI_ASSERT_EQUAL(wxString(rBytes.c_str(), wxConvBoxi),
 		mpProgressPanel->GetNumBytesDoneString());
 	
 	BOXI_ASSERT_EQUAL(wxString(_("0")),

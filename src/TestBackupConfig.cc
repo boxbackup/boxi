@@ -112,7 +112,7 @@ void DeleteRecursive(const wxFileName& rPath)
 		// directory is closed, otherwise we can't delete
 		// it on Win32.
 		
-		wxCharBuffer buf = rPath.GetFullPath().mb_str(wxConvLibc);
+		wxCharBuffer buf = rPath.GetFullPath().mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT_MESSAGE(buf.data(), wxRmdir(rPath.GetFullPath()));
 	}
 	else
@@ -164,7 +164,7 @@ void TestBackupConfig::RunTest()
 
 	if (!isOk)
 	{
-		wxCharBuffer buf = msg.mb_str(wxConvLibc);
+		wxCharBuffer buf = msg.mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT_MESSAGE(buf.data(), isOk);
 	}
 		

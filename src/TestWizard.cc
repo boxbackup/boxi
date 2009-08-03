@@ -80,7 +80,7 @@ X509* TestWizard::LoadCertificate
 	BIO* pCertBio = BIO_new(BIO_s_file());
 	CPPUNIT_ASSERT(pCertBio);
 	
-	wxCharBuffer buf = rCertFile.GetFullPath().mb_str(wxConvLibc);
+	wxCharBuffer buf = rCertFile.GetFullPath().mb_str(wxConvBoxi);
 	int result = BIO_read_filename(pCertBio, buf.data());
 	CPPUNIT_ASSERT(result > 0);
 	
@@ -119,7 +119,7 @@ void TestWizard::SignRequestWithKey
 	BIO* pRequestBio = BIO_new(BIO_s_file());
 	CPPUNIT_ASSERT_MESSAGE("Failed to create an OpenSSL BIO", pRequestBio);
 	
-	wxCharBuffer buf = rRequestFile.GetFullPath().mb_str(wxConvLibc);
+	wxCharBuffer buf = rRequestFile.GetFullPath().mb_str(wxConvBoxi);
 	char* filename = strdup(buf.data());
 	CPPUNIT_ASSERT_MESSAGE("Failed to read certificate signing request",
 		BIO_read_filename(pRequestBio, filename) > 0);
@@ -254,7 +254,7 @@ void TestWizard::SignRequestWithKey
 	BIO* pOut = BIO_new(BIO_s_file());
 	CPPUNIT_ASSERT_MESSAGE("Failed to create output BIO", pOut);
 
-	buf = rCertFile.GetFullPath().mb_str(wxConvLibc);
+	buf = rCertFile.GetFullPath().mb_str(wxConvBoxi);
 	filename = strdup(buf.data());
 	CPPUNIT_ASSERT_MESSAGE("Failed to set output filename", 
 		BIO_write_filename(pOut, filename));
@@ -298,7 +298,7 @@ void TestWizard::CheckForwardErrorImpl
 	msg.Printf(_("Expected error message was not shown: %s"),
 		rMessageName.c_str());
 	
-	wxCharBuffer buf = msg.mb_str(wxConvLibc);
+	wxCharBuffer buf = msg.mb_str(wxConvBoxi);
 	CPPUNIT_ASSERT_MESSAGE_AT(buf.data(), wxGetApp().ShowedMessageBox(), 
 		rLine);
 	
@@ -710,7 +710,7 @@ void TestWizard::SignCertificate()
 		pKeyOutBio);
 	
 	wxCharBuffer filename = 
-		clientCaKeyFileName.GetFullPath().mb_str(wxConvLibc);
+		clientCaKeyFileName.GetFullPath().mb_str(wxConvBoxi);
 	CPPUNIT_ASSERT_MESSAGE("Failed to open key file using an "
 		"OpenSSL BIO",
 		BIO_write_filename(pKeyOutBio, filename.data()) >= 0);
@@ -798,7 +798,7 @@ void TestWizard::SignCertificate()
 	CPPUNIT_ASSERT_MESSAGE("X.509 subject name was null", 
 		pX509SubjectName);
 
-	wxCharBuffer subject = certSubject.mb_str(wxConvLibc);
+	wxCharBuffer subject = certSubject.mb_str(wxConvBoxi);
 	CPPUNIT_ASSERT_MESSAGE("Failed to add common name to "
 		"certificate request",
 		X509_NAME_add_entry_by_NID(pX509SubjectName, 
@@ -842,7 +842,7 @@ void TestWizard::SignCertificate()
 		"certificate request", X509_REQ_verify(pRequest, pKey));
 	
 	wxCharBuffer buf = 
-		clientCaCsrFileName.GetFullPath().mb_str(wxConvLibc);
+		clientCaCsrFileName.GetFullPath().mb_str(wxConvBoxi);
 	CPPUNIT_ASSERT_MESSAGE("Failed to set certificate request "
 		"output filename", 
 		BIO_write_filename(pRequestBio, buf.data()) > 0);
@@ -1183,7 +1183,7 @@ void TestWizard::TestConfigOptionalRequiredItems()
 	// check that the configuration verifies OK
 	wxString msg;
 	bool isOk = mpConfig->Check(msg);
-	wxCharBuffer buf = msg.mb_str(wxConvLibc);
+	wxCharBuffer buf = msg.mb_str(wxConvBoxi);
 	CPPUNIT_ASSERT_MESSAGE(buf.data(), isOk);
 	
 	// save it
@@ -1197,7 +1197,7 @@ void TestWizard::TestConfigOptionalRequiredItems()
 		wxString assertMsg; \
 		assertMsg.Printf(wxT("Clearing " #name " caused " \
 			"config check to fail: %s"), msg.c_str()); \
-		buf = assertMsg.mb_str(wxConvLibc); \
+		buf = assertMsg.mb_str(wxConvBoxi); \
 		CPPUNIT_ASSERT_MESSAGE(buf.data(), isOk); \
 		}
 
@@ -1217,7 +1217,7 @@ void TestWizard::TestConfigOptionalRequiredItems()
 	
 	// still OK?
 	isOk = mpConfig->Check(msg);
-	buf = msg.mb_str(wxConvLibc);
+	buf = msg.mb_str(wxConvBoxi);
 	CPPUNIT_ASSERT_MESSAGE(buf.data(), isOk);
 	
 	#define CHECK_REQUIRED_PROPERTY(name) \

@@ -352,7 +352,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 		wxString msg;
 		msg.Printf(_("Error: cannot start restore: "
 			"Failed to connect to server: %s"),
-			wxString(e.what(), wxConvLibc).c_str());
+			wxString(e.what(), wxConvBoxi).c_str());
 		ReportFatalError(BM_BACKUP_FAILED_CONNECT_FAILED, msg);
 	}
 	catch (std::exception& e) 
@@ -360,7 +360,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 		SetSummaryText(_("Restore Failed"));
 		wxString msg;
 		msg.Printf(_("Error: failed to finish restore: %s"),
-			wxString(e.what(), wxConvLibc).c_str());
+			wxString(e.what(), wxConvBoxi).c_str());
 		ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR, msg);
 	}
 	catch (...)
@@ -548,7 +548,7 @@ bool RestoreProgressPanel::RestoreFilesRecursive
 		}
 	}
 	
-	wxCharBuffer namebuf = rLocalName.GetFullPath().mb_str(wxConvLibc);
+	wxCharBuffer namebuf = rLocalName.GetFullPath().mb_str(wxConvBoxi);
 		
 	if (pVersion->IsDeleted())
 	{

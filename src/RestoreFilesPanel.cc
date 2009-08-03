@@ -657,7 +657,7 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 	wxFileName destFile(restoreToDialog->GetPath());
 	if (destFile.DirExists() || destFile.FileExists()) {
 		wxString msg("The selected destination file or directory "
-			"already exists: ", wxConvLibc);
+			"already exists: ", wxConvBoxi);
 		msg.Append(destFile.GetFullPath());
 		wxMessageBox(msg, wxT("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
@@ -668,7 +668,7 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 	
 	if (wxFileName::FileExists(destParentDir.GetFullPath())) {
 		wxString msg("The selected destination directory "
-			"is actually a file: ", wxConvLibc);
+			"is actually a file: ", wxConvBoxi);
 		msg.Append(destParentDir.GetFullPath());
 		wxMessageBox(msg, wxT("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
@@ -677,7 +677,7 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 	
 	if (! wxFileName::DirExists(destParentDir.GetFullPath())) {
 		wxString msg("The selected destination directory "
-			"does not exist: ", wxConvLibc);
+			"does not exist: ", wxConvBoxi);
 		msg.Append(destParentDir.GetFullPath());
 		wxMessageBox(msg, wxT("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
@@ -685,8 +685,8 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 	}
 	
 	int result;
-	wxString destFileName(destFile.GetFullPath().c_str(), wxConvLibc);
-	wxCharBuffer destFileBuf = destFileName.mb_str(wxConvLibc);	
+	wxString destFileName(destFile.GetFullPath().c_str(), wxConvBoxi);
+	wxCharBuffer destFileBuf = destFileName.mb_str(wxConvBoxi);	
 
 	try {
 		// Go and restore...
@@ -711,20 +711,20 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 			result = Restore_Complete;
 		}
 	} catch (BoxException &e) {
-		wxString msg("ERROR: Restore failed: ", wxConvLibc);
+		wxString msg("ERROR: Restore failed: ", wxConvBoxi);
 
 		if (e.GetType()    == ConnectionException::ExceptionType &&
 			e.GetSubType() == ConnectionException::TLSReadFailed) 
 		{
 			// protocol object has more details than just TLSReadFailed
 			msg.append(wxString(
-				mpServerConnection->ErrorString(), wxConvLibc));
+				mpServerConnection->ErrorString(), wxConvBoxi));
 			
 			// connection to server is probably dead, so close it now.
 			mpServerConnection->Disconnect();
 			mpTreeCtrl->CollapseAndReset(node->GetId());
 		} else {
-			msg.Append(wxString(e.what(), wxConvLibc));
+			msg.Append(wxString(e.what(), wxConvBoxi));
 		}
 
 		wxMessageBox(msg, wxT("Boxi Error"), 

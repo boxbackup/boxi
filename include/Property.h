@@ -28,6 +28,7 @@
 #include <string>
 #include <wx/string.h>
 
+#include "main.h"
 #include "Configuration.h"
 
 #define STR_PROPS \
@@ -171,7 +172,7 @@ class StringProperty : public Property
 	bool GetInto(wxString&    rDest);
 	bool IsConfigured() { return mConfigured; }
 	bool Is(const wxString& expectedValue)
-	{ return mConfigured && expectedValue.IsSameAs(wxString(mValue.c_str(), wxConvLibc)); }
+	{ return mConfigured && expectedValue.IsSameAs(wxString(mValue.c_str(), wxConvBoxi)); }
 	std::string GetString() { return *GetPointer(); }
 	
 	private:

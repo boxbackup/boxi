@@ -75,7 +75,7 @@ class StoreServerThread : public wxThread
 	StoreServerThread(const wxString& rFilename)
 	: wxThread(wxTHREAD_JOINABLE)
 	{
-		wxCharBuffer buf = rFilename.mb_str(wxConvLibc);
+		wxCharBuffer buf = rFilename.mb_str(wxConvBoxi);
 		mDaemon.Load(buf.data());
 		mDaemon.SetSingleProcess(true);
 		mDaemon.Setup();

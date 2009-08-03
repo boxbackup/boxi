@@ -357,8 +357,8 @@ void CompareBackup(const Configuration& rClientConfig, TLSContext& rTlsContext,
 	// Set up a context for our work
 	BackupQueries query(connection, rClientConfig, false /* read-write */);
 
-	wxCharBuffer remote = rRemoteDir.mb_str(wxConvLibc);
-	wxCharBuffer local  = rLocalPath.GetFullPath().mb_str(wxConvLibc);
+	wxCharBuffer remote = rRemoteDir.mb_str(wxConvBoxi);
+	wxCharBuffer local  = rLocalPath.GetFullPath().mb_str(wxConvBoxi);
 	query.Compare(remote.data(), local.data(), rParams);
 
 	connection.QueryFinished();
@@ -437,8 +437,8 @@ void CompareLocation(const Configuration& rConfig,
 			
 	// Then get it compared
 	std::string localPathString = std::string("/") + rLocationName;
-	wxString remotePath(localPathString.c_str(), wxConvLibc);
-	wxString localPath(loc.GetKeyValue("Path").c_str(), wxConvLibc);
+	wxString remotePath(localPathString.c_str(), wxConvBoxi);
+	wxString localPath(loc.GetKeyValue("Path").c_str(), wxConvBoxi);
 	CompareBackup(rConfig, rTlsContext, rParams, 
 		remotePath, localPath);
 }
@@ -696,7 +696,7 @@ void TestBackup::RunTest()
 	{
 		// New symlink
 		wxCharBuffer buf = wxFileName(mTestDataDir.GetFullPath(),
-			_("symlink-to-dir")).GetFullPath().mb_str(wxConvLibc);
+			_("symlink-to-dir")).GetFullPath().mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
 	}
 	#endif		
@@ -725,7 +725,7 @@ void TestBackup::RunTest()
 	{
 		// Delete symlink
 		wxCharBuffer buf = wxFileName(mTestDataDir.GetFullPath(),
-			_("symlink-to-dir")).GetFullPath().mb_str(wxConvLibc);
+			_("symlink-to-dir")).GetFullPath().mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT(::unlink(buf.data()) == 0);
 	}
 	#endif
@@ -746,7 +746,7 @@ void TestBackup::RunTest()
 	}
 	#else // !WIN32
 	{
-		wxCharBuffer buf = placeHolderName.GetFullPath().mb_str(wxConvLibc);
+		wxCharBuffer buf = placeHolderName.GetFullPath().mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
 	}
 	#endif
@@ -766,7 +766,7 @@ void TestBackup::RunTest()
 	}
 	#else // !WIN32
 	{
-		wxCharBuffer buf = dirTestDirName.GetFullPath().mb_str(wxConvLibc);
+		wxCharBuffer buf = dirTestDirName.GetFullPath().mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
 	}
 	#endif
@@ -786,7 +786,7 @@ void TestBackup::RunTest()
 	}
 	#else // !WIN32
 	{
-		wxCharBuffer buf = placeHolderName2.GetFullPath().mb_str(wxConvLibc);
+		wxCharBuffer buf = placeHolderName2.GetFullPath().mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
 	}
 	#endif
@@ -808,7 +808,7 @@ void TestBackup::RunTest()
 	}
 	#else // !WIN32
 	{
-		wxCharBuffer buf = dirTestDirName.GetFullPath().mb_str(wxConvLibc);
+		wxCharBuffer buf = dirTestDirName.GetFullPath().mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
 	}
 	#endif
@@ -833,23 +833,22 @@ void TestBackup::RunTest()
 void TestBackup::TestRenameTrackedOverDeleted()
 {
 	// case which went wrong: rename a tracked file over a deleted file
-	#ifdef WIN32
-	CPPUNIT_ASSERT(wxRemoveFile(MakeAbsolutePath(mTestDataDir, 
-		_("x1/dsfdsfs98.fd")).GetFullPath()));
-	#endif
+	wxString source = MakeAbsolutePath(mTestDataDir,
+		_("df9834.dsf")).GetFullPath();
+	wxString target = MakeAbsolutePath(mTestDataDir, 
+		_("x1/dsfdsfs98.fd")).GetFullPath();
+
+	CPPUNIT_ASSERT(wxFileExists(source));
+	CPPUNIT_ASSERT(!wxFileExists(target));
 	
-	CPPUNIT_ASSERT(wxRenameFile(
-		MakeAbsolutePath(mTestDataDir, _("df9834.dsf")).GetFullPath(),
-		MakeAbsolutePath(mTestDataDir, _("x1/dsfdsfs98.fd")).GetFullPath()));
+	CPPUNIT_ASSERT(wxRenameFile(source, target));
 
 	// Run another backup and check that it works
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
 
 	// Move that file back
-	CPPUNIT_ASSERT(wxRenameFile(
-		MakeAbsolutePath(mTestDataDir, _("x1/dsfdsfs98.fd")).GetFullPath(),
-		MakeAbsolutePath(mTestDataDir, _("df9834.dsf")).GetFullPath()));
+	CPPUNIT_ASSERT(wxRenameFile(target, source));
 }
 
 void TestBackup::TestVeryOldFiles()
@@ -880,7 +879,7 @@ void TestBackup::TestModifyExisting()
 	struct timeval times[2];
 	BoxTimeToTimeval(SecondsToBoxTime((time_t)(365*24*60*60)), times[1]);
 	times[0] = times[1];
-	wxCharBuffer buf = fileToUpdate.GetFullPath().mb_str(wxConvLibc);
+	wxCharBuffer buf = fileToUpdate.GetFullPath().mb_str(wxConvBoxi);
 	CPPUNIT_ASSERT(::utimes(buf.data(), times) == 0);
 
 	// Run another backup and check that it works
@@ -1035,7 +1034,7 @@ void TestBackup::TestBackupOfAttributes()
 	// Change attributes on an original file.
 	{
 		wxCharBuffer buf = MakeAbsolutePath(mTestDataDir, _("df9834.dsf"))
-			.GetFullPath().mb_str(wxConvLibc);
+			.GetFullPath().mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT(::chmod(buf.data(), 0423) == 0);
 	}
 	
@@ -1044,7 +1043,7 @@ void TestBackup::TestBackupOfAttributes()
 
 	wxFileName testFileName = MakeAbsolutePath(mTestDataDir, 
 		_("f1.dat"));
-	wxCharBuffer buf = testFileName.GetFullPath().mb_str(wxConvLibc);
+	wxCharBuffer buf = testFileName.GetFullPath().mb_str(wxConvBoxi);
 
 	#ifndef WIN32		
 	// make one of the files unreadable, expect a compare failure
@@ -1058,7 +1057,7 @@ void TestBackup::TestBackupOfAttributes()
 	#ifdef WIN32
 	wxString cmd = _("attrib +r ");
 	cmd.Append(testFileName.GetFullPath());
-	wxCharBuffer cmdbuf = cmd.mb_str(wxConvLibc);
+	wxCharBuffer cmdbuf = cmd.mb_str(wxConvBoxi);
 	int compareReturnValue = ::system(cmdbuf.data());
 	CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
 	#else
@@ -1071,7 +1070,7 @@ void TestBackup::TestBackupOfAttributes()
 	#ifdef WIN32
 	cmd = _("attrib -r ");
 	cmd.Append(testFileName.GetFullPath());
-	cmdbuf = cmd.mb_str(wxConvLibc);
+	cmdbuf = cmd.mb_str(wxConvBoxi);
 	compareReturnValue = ::system(cmdbuf.data());
 	CPPUNIT_ASSERT_EQUAL(0, compareReturnValue);
 	#else
@@ -1190,7 +1189,7 @@ void TestBackup::TestRenameDir()
 		SecondsToBoxTime((time_t)(365*24*60*60)), 
 		times[1]);
 	times[0] = times[1];
-	wxCharBuffer buf = fn.GetFullPath().mb_str(wxConvLibc);
+	wxCharBuffer buf = fn.GetFullPath().mb_str(wxConvBoxi);
 	CPPUNIT_ASSERT(::utimes(buf.data(), times) == 0);
 
 	CHECK_BACKUP_OK();

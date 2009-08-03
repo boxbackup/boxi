@@ -245,7 +245,7 @@ class ClientConnection : public wxThread
 		const char *newline = "\n";
 		mpSocket->Write(newline, strlen(newline));
 		
-		wxString cmd2(cmd, wxConvLibc);
+		wxString cmd2(cmd, wxConvBoxi);
 		wxLogDebug(wxT("wrote to daemon: '%s'"), cmd2.c_str());
 		return TRUE;
 	}

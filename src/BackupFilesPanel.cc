@@ -301,7 +301,7 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 		{
 			ExcludeMatch match = pEntry->GetMatch();
 			std::string  value = pEntry->GetValue();
-			wxString value2(value.c_str(), wxConvLibc);
+			wxString value2(value.c_str(), wxConvBoxi);
 			bool matched = false;
 			
 			// std::cout << "Checking against " << pExclude->ToString() << ": ";
@@ -349,7 +349,7 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 				else
 				{
 					wxCharBuffer buf = 
-						mFullPath.mb_str(wxConvLibc);
+						mFullPath.mb_str(wxConvBoxi);
 					int result = regexec(apr.get(), 
 						buf.data(), 0, 0, 0);
 					matched = (result == 0);
@@ -369,7 +369,7 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 				mpExcludedBy = &(*pEntry);
 				mExcludedByString = wxString(
 					pEntry->ToString().c_str(),
-					wxConvLibc);
+					wxConvBoxi);
 			} 
 			else if (sense == ES_ALWAYSINCLUDE) 
 			{
@@ -377,7 +377,7 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 				mpIncludedBy = &(*pEntry);
 				mIncludedByString = wxString(
 					pEntry->ToString().c_str(),
-					wxConvLibc);
+					wxConvBoxi);
 			}
 		}
 	}
@@ -438,7 +438,7 @@ bool LocalFileTreeNode::GetBoxFileId()
 	}
 
 	BackupStoreDirectory::Iterator i(dir);
-	wxCharBuffer buf = LookupName.mb_str(wxConvLibc);
+	wxCharBuffer buf = LookupName.mb_str(wxConvBoxi);
 	BackupStoreFilenameClear fn(buf.data());
 	BackupStoreDirectory::Entry *en = i.FindMatchingClearName(fn);
 	
@@ -728,7 +728,7 @@ void BackupFilesPanel::UpdateExcludedStatePrivate(wxTreeItemId &rNodeId)
 
 	{
 		struct stat st;
-		wxCharBuffer buf = pNode->mFullPath.mb_str(wxConvLibc);
+		wxCharBuffer buf = pNode->mFullPath.mb_str(wxConvBoxi);
 		if (::stat(buf.data(), &st) 
 			== 0) 
 		{

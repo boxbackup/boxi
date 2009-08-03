@@ -131,7 +131,7 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	{
 		wxString msg;
 		msg.Printf(wxT("Scanning directory '%s'"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
 		SetCurrentText(msg);
 		Layout();
 		wxYield();
@@ -144,8 +144,8 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	{
 		wxString msg;
 		msg.Printf(wxT("Failed to read directory '%s': %s"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
-			wxString(rErrorMsg.c_str(),  wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
+			wxString(rErrorMsg.c_str(),  wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		wxYield();
 	}
@@ -165,8 +165,8 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	{
 		wxString msg;
 		msg.Printf(wxT("Failed to list directory '%s': %s"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
-			wxString(rErrorMsg.c_str(),  wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
+			wxString(rErrorMsg.c_str(),  wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		wxYield();
 	}
@@ -178,8 +178,8 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	{
 		wxString msg;
 		msg.Printf(wxT("Failed to read file '%s': %s"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
-			wxString(rErrorMsg.c_str(),  wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
+			wxString(rErrorMsg.c_str(),  wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		wxYield();
 	}
@@ -191,7 +191,7 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 		wxString msg;
 		msg.Printf(wxT("Warning: file modified in the future "
 				"(check your system clock): '%s'"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		wxYield();
 	}
@@ -202,7 +202,7 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	{ 
 		wxString msg;
 		msg.Printf(wxT("Failed to send file '%s': no more space available"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		wxYield();
 	}
@@ -217,13 +217,13 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 			rException.GetSubType() == CommonException::AccessDenied)
 		{
 			msg.Printf(wxT("Failed to send file '%s': Access denied"), 
-				wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+				wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
 		}
 		else
 		{
 			msg.Printf(wxT("Failed to send file '%s': %s"), 
-				wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
-				wxString(rException.what(),  wxConvLibc).c_str());
+				wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
+				wxString(rException.what(),  wxConvBoxi).c_str());
 		}
 		mpErrorList->Append(msg);
 		wxYield();
@@ -235,7 +235,7 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	{
 		wxString msg;
 		msg.Printf(wxT("Backing up file '%s'"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
 		SetCurrentText(msg);
 		Layout();
 		wxYield();
@@ -247,7 +247,7 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	{
 		wxString msg;
 		msg.Printf(wxT("Backing up file '%s' (sending patch)"), 
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
 		SetCurrentText(msg);
 		Layout();
 		wxYield();

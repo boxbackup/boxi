@@ -38,7 +38,7 @@ class BoundCtrl
 
 	public:
 	BoundCtrl(Property& rProp) 
-	: mName(rProp.GetKeyName().c_str(), wxConvLibc) { }
+	: mName(rProp.GetKeyName().c_str(), wxConvBoxi) { }
 	virtual ~BoundCtrl() { }
 
 	virtual void Reload()   = 0;
@@ -82,7 +82,7 @@ class IntCtrl : public wxTextCtrl
 		const char * pFormat)
 	: wxTextCtrl(parent, id, wxT("")),
 	  mValue(initialValue),
-	  mFormat(pFormat, wxConvLibc)
+	  mFormat(pFormat, wxConvBoxi)
 	{
 		Reload();
 	}
@@ -112,7 +112,7 @@ class BoundIntCtrl : public wxTextCtrl, public BoundCtrl {
 	: wxTextCtrl(parent, id, wxT("")),
 	  BoundCtrl(rIntProp),
 	  mrIntProp(rIntProp),
-	  mFormat(pFormat, wxConvLibc)
+	  mFormat(pFormat, wxConvBoxi)
 	{
 		Reload();
 	}

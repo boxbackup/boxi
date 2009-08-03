@@ -70,9 +70,9 @@ void ServerConnection::HandleException(message_t code, const wxString& when,
 		mpConnection->GetLastError(type, subtype);
 	
 	if (type == 1000) {
-		msg.append(wxString(ErrorString(type, subtype), wxConvLibc)); 
+		msg.append(wxString(ErrorString(type, subtype), wxConvBoxi)); 
 	} else {
-		msg.Append(wxString(e.what(), wxConvLibc));
+		msg.Append(wxString(e.what(), wxConvBoxi));
 	}
 	
 	wxGetApp().ShowMessageBox(code, msg, wxT("Boxi Error"), 
@@ -149,7 +149,7 @@ bool ServerConnection::InitTlsContext(TLSContext& target, wxString& rErrorMsg)
 		rErrorMsg = wxT(
 			"There is something wrong with your Certificate "
 			"File, Private Key File, or Trusted CAs File. (");
-		rErrorMsg.Append(wxString(e.what(), wxConvLibc));
+		rErrorMsg.Append(wxString(e.what(), wxConvBoxi));
 		rErrorMsg.Append(wxT(")"));
 		return FALSE;
 	}
@@ -265,7 +265,7 @@ bool ServerConnection::GetFile(
 	catch (BoxException& e) 
 	{
 		wxString msg(wxT("Error retrieving file from server: "));
-		msg.Append(wxString(destFileName, wxConvLibc));
+		msg.Append(wxString(destFileName, wxConvBoxi));
 		HandleException(BM_SERVER_CONNECTION_RETRIEVE_FAILED, msg, e);
 		return FALSE;
 	}	
@@ -394,7 +394,7 @@ const char * ServerConnection::ErrorString(int type, int subtype)
 			mErrorMessage.Printf(
 				wxT("Unknown protocol error: %d/%d"), 
 				type, subtype);
-			buf = mErrorMessage.mb_str(wxConvLibc);
+			buf = mErrorMessage.mb_str(wxConvBoxi);
 			return buf.data();
 		}
 	} 
@@ -402,7 +402,7 @@ const char * ServerConnection::ErrorString(int type, int subtype)
 	{
 		mErrorMessage.Printf(wxT("Unknown error: %d/%d"), 
 			type, subtype);
-		buf = mErrorMessage.mb_str(wxConvLibc);
+		buf = mErrorMessage.mb_str(wxConvBoxi);
 		return buf.data();
 	}
 }

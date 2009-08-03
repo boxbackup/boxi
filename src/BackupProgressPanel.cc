@@ -139,7 +139,7 @@ void BackupProgressPanel::StartBackup()
 		wxString msg;
 		msg.Printf(_("Error: cannot start backup: "
 			"Failed to connect to server\n\n%s"),
-			wxString(e.what(), wxConvLibc).c_str());
+			wxString(e.what(), wxConvBoxi).c_str());
 		ReportFatalError(BM_BACKUP_FAILED_CONNECT_FAILED, msg);
 	}
 	catch (BackupStoreException& be)
@@ -155,7 +155,7 @@ void BackupProgressPanel::StartBackup()
 			SetSummaryText(_("Backup Failed"));
 			wxString msg;
 			msg.Printf(_("Backup Failed: %s"),
-				wxString(be.what(), wxConvLibc).c_str());
+				wxString(be.what(), wxConvBoxi).c_str());
 			ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR, msg);
 		}
 	}
@@ -164,7 +164,7 @@ void BackupProgressPanel::StartBackup()
 		SetSummaryText(_("Backup Failed"));
 		wxString msg;
 		msg.Printf(_("Backup Failed: %s"),
-			wxString(e.what(), wxConvLibc).c_str());
+			wxString(e.what(), wxConvBoxi).c_str());
 		ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR, msg);
 	}
 	catch (...) 

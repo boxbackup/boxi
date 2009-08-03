@@ -109,7 +109,7 @@ void BackupPanel::Update()
 	std::string server;
 	if (mpConfig->StoreHostname.GetInto(server))
 		tmp.Printf(wxT("server %s"), 
-			wxString(server.c_str(), wxConvLibc).c_str());
+			wxString(server.c_str(), wxConvBoxi).c_str());
 	else
 		tmp = wxT("unknown server");
 	label.Append(tmp);

@@ -250,12 +250,12 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 		{
 			ExcludeMatch match = pEntry->GetMatch();
 			std::string  value = pEntry->GetValue();
-			wxString value2(value.c_str(), wxConvLibc);
+			wxString value2(value.c_str(), wxConvBoxi);
 			bool matched = false;
 
 			{
 				std::string name = pEntry->ToString();
-				wxString name2(name.c_str(), wxConvLibc);
+				wxString name2(name.c_str(), wxConvBoxi);
 				//wxLogDebug(wxT("  checking against %s"),
 				//	name2.c_str());
 			}
@@ -308,7 +308,7 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 				}
 				else
 				{
-					wxCharBuffer buf = rLocalFileName.mb_str(wxConvLibc);
+					wxCharBuffer buf = rLocalFileName.mb_str(wxConvBoxi);
 					int result = regexec(apr.get(), buf.data(), 0, 0, 0);
 					matched = (result == 0);
 				}

@@ -282,7 +282,7 @@ void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 		wxString msg;
 		msg.Printf(_("Error: cannot start compare: "
 			"Failed to connect to server: %s"),
-			wxString(e.what(), wxConvLibc).c_str());
+			wxString(e.what(), wxConvBoxi).c_str());
 		ReportFatalError(BM_BACKUP_FAILED_CONNECT_FAILED, msg);
 	}
 	catch (std::exception& e) 
@@ -290,7 +290,7 @@ void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 		SetSummaryText(_("Compare Failed"));
 		wxString msg;
 		msg.Printf(_("Error: failed to finish compare: %s"),
-			wxString(e.what(), wxConvLibc).c_str());
+			wxString(e.what(), wxConvBoxi).c_str());
 		ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR, msg);
 	}
 	catch (...)

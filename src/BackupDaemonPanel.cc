@@ -131,7 +131,7 @@ BackupDaemonPanel::BackupDaemonPanel(
 
 void BackupDaemonPanel::HandleClientEvent() {
 	mpClientConnStatus->SetValue(
-		wxString(mClientConn.GetStateStr(), wxConvLibc));
+		wxString(mClientConn.GetStateStr(), wxConvBoxi));
 	mpClientError->SetValue(mClientConn.GetLastErrorMsg());
 
 	wxString ClientState;

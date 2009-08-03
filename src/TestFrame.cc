@@ -642,13 +642,12 @@ class GuiTestSuite : public CppUnit::TestFixture
 			) \
 		)
 		
-		// ADD_TEST(TestWizard);
-		// ADD_TEST(TestBackupConfig);
-		// ADD_TEST(TestBackup);
-		// ADD_TEST(TestConfig);
-		// ADD_TEST(TestRestore);
+		ADD_TEST(TestWizard);
+		ADD_TEST(TestBackupConfig);
+		ADD_TEST(TestBackup);
+		ADD_TEST(TestConfig);
+		ADD_TEST(TestRestore);
 		ADD_TEST(TestCompare);
-		// ADD_TEST(TestOpenWizard);
 		
 		#undef ADD_TEST
 	
@@ -865,7 +864,7 @@ MainFrame* GuiTestBase::GetMainFrame()
 	pFrame = new MainFrame 
 	(
 		NULL,
-		wxString(g_argv[0], wxConvLibc),
+		wxString(g_argv[0], wxConvBoxi),
 		wxPoint(50, 50), wxSize(600, 500)
 	);
 	pFrame->Show(TRUE);

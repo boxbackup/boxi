@@ -29,8 +29,6 @@
 
 #include <wx/stackwalk.h>
 
-// #include <wx/wx.h>
-
 #include <cppunit/Asserter.h>
 #include <cppunit/TestAssert.h>
 #include <cppunit/TestCase.h>
@@ -169,10 +167,10 @@ namespace CppUnit
 		
 		static std::string toString(const wxString& x)
 		{
-			wxCharBuffer buf = x.mb_str(wxConvLibc);
+			wxCharBuffer buf = x.mb_str(wxConvBoxi);
 			std::string ret = buf.data();
 			return ret;
-			// std::string text = '"' + x.mb_str(wxConvLibc).data() + '"';    
+			// std::string text = '"' + x.mb_str(wxConvBoxi).data() + '"';    
 			// return text;
 			// adds quote around the string to see whitespace
 			// std::ostringstream ost;

@@ -108,7 +108,7 @@ class CompareProgressPanel : public ProgressPanel
 		wxString msg;
 		msg.Printf(_("Local directory '%s' does not exist, "
 			"but remote directory does."),
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		// mDifferences ++;
 	}
@@ -118,9 +118,9 @@ class CompareProgressPanel : public ProgressPanel
 	{
 		wxString msg;
 		msg.Printf(_("Failed to access local directory '%s': %s"),
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
 			wxString(GetNativeErrorMessage().c_str(),
-				wxConvLibc).c_str());
+				wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		// mUncheckedFiles ++;
 	}
@@ -130,7 +130,7 @@ class CompareProgressPanel : public ProgressPanel
 	{
 		wxString msg;
 		msg.Printf(_("Store directory '%s' doesn't have attributes."),
-			wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+			wxString(rRemotePath.c_str(), wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 	}
 
@@ -140,8 +140,8 @@ class CompareProgressPanel : public ProgressPanel
 		wxString msg;
 		msg.Printf(_("Local file '%s' exists, but remote file '%s' "
 			"does not."),
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
-			wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
+			wxString(rRemotePath.c_str(), wxConvBoxi).c_str());
 		
 		// mDifferences ++;
 		
@@ -160,8 +160,8 @@ class CompareProgressPanel : public ProgressPanel
 		wxString msg;
 		msg.Printf(_("Remote file '%s' exists, but local file '%s' "
 			"does not."),
-			wxString(rRemotePath.c_str(), wxConvLibc).c_str(),
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str());
+			wxString(rRemotePath.c_str(), wxConvBoxi).c_str(),
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		// mDifferences ++;
 	}
@@ -172,8 +172,8 @@ class CompareProgressPanel : public ProgressPanel
 		wxString msg;
 		msg.Printf(_("Local file '%s' is excluded, but remote file "
 			"'%s' still exists."),
-			wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
-			wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
+			wxString(rRemotePath.c_str(), wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		// mDifferences ++;
 	}
@@ -185,8 +185,8 @@ class CompareProgressPanel : public ProgressPanel
 		wxString msg;
 		msg.Printf(_("Failed to download remote file '%s': "
 			"%s (%d/%d)"),
-			wxString(rRemotePath.c_str(), wxConvLibc).c_str(),
-			wxString(rException.what(), wxConvLibc).c_str(),
+			wxString(rRemotePath.c_str(), wxConvBoxi).c_str(),
+			wxString(rException.what(), wxConvBoxi).c_str(),
 			rException.GetType(), rException.GetSubType());
 		mpErrorList->Append(msg);
 		// mUncheckedFiles ++;
@@ -198,8 +198,8 @@ class CompareProgressPanel : public ProgressPanel
 	{
 		wxString msg;
 		msg.Printf(_("Failed to download remote file '%s': %s"),
-			wxString(rRemotePath.c_str(), wxConvLibc).c_str(),
-			wxString(rException.what(), wxConvLibc).c_str());
+			wxString(rRemotePath.c_str(), wxConvBoxi).c_str(),
+			wxString(rException.what(), wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		// mUncheckedFiles ++;
 	}
@@ -209,7 +209,7 @@ class CompareProgressPanel : public ProgressPanel
 	{
 		wxString msg;
 		msg.Printf(_("Failed to download remote file '%s'"),
-			wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+			wxString(rRemotePath.c_str(), wxConvBoxi).c_str());
 		mpErrorList->Append(msg);
 		// mUncheckedFiles ++;
 	}
@@ -229,7 +229,7 @@ class CompareProgressPanel : public ProgressPanel
 	virtual void NotifyDirComparing(const std::string& rLocalPath,
 		const std::string& rRemotePath)
 	{
-		NotifyComparing(wxString(rLocalPath.c_str(), wxConvLibc), false);
+		NotifyComparing(wxString(rLocalPath.c_str(), wxConvBoxi), false);
 	}
 	
 	virtual void NotifyDirCompared(const std::string& rLocalPath,
@@ -242,8 +242,8 @@ class CompareProgressPanel : public ProgressPanel
 			
 			msg.Printf(_("Local directory '%s' has different "
 				"attributes to store directory '%s'."),
-				wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
-				wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+				wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
+				wxString(rRemotePath.c_str(), wxConvBoxi).c_str());
 			// mDifferences ++;
 			
 			if(modifiedAfterLastSync)
@@ -259,7 +259,7 @@ class CompareProgressPanel : public ProgressPanel
 	virtual void NotifyFileComparing(const std::string& rLocalPath,
 		const std::string& rRemotePath)
 	{
-		NotifyComparing(wxString(rLocalPath.c_str(), wxConvLibc), true);
+		NotifyComparing(wxString(rLocalPath.c_str(), wxConvBoxi), true);
 	}
 	
 	virtual void NotifyFileCompared(const std::string& rLocalPath,
@@ -273,8 +273,8 @@ class CompareProgressPanel : public ProgressPanel
 			
 			msg.Printf(_("Local file '%s' has different attributes "
 				"to store file '%s'."),
-				wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
-				wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+				wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
+				wxString(rRemotePath.c_str(), wxConvBoxi).c_str());
 			// mDifferences ++;
 			
 			if(modifiedAfterLastSync)
@@ -296,8 +296,8 @@ class CompareProgressPanel : public ProgressPanel
 			
 			msg.Printf(_("Local file '%s' has different contents "
 				"to store file '%s'."),
-				wxString(rLocalPath.c_str(), wxConvLibc).c_str(),
-				wxString(rRemotePath.c_str(), wxConvLibc).c_str());
+				wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
+				wxString(rRemotePath.c_str(), wxConvBoxi).c_str());
 			// mDifferences ++;
 			
 			if(modifiedAfterLastSync)

@@ -90,7 +90,7 @@ void SetupWizardPage::ShowSslError(const wxString& rMsgBase,
 	message_t MessageId)
 {
 	unsigned long err = ERR_get_error();
-	wxString sslErrorMsg(ERR_error_string(err, NULL), wxConvLibc);
+	wxString sslErrorMsg(ERR_error_string(err, NULL), wxConvBoxi);
 	
 	wxString msg = rMsgBase;
 	
@@ -98,11 +98,11 @@ void SetupWizardPage::ShowSslError(const wxString& rMsgBase,
 	if (reason != NULL)
 	{
 		msg.Append(wxT(": "));
-		msg.Append(wxString(reason, wxConvLibc));
+		msg.Append(wxString(reason, wxConvBoxi));
 	}
 	
 	msg.Append(wxT("\n\nThe full error code is: "));
-	msg.Append(wxString(ERR_error_string(err, NULL), wxConvLibc));
+	msg.Append(wxString(ERR_error_string(err, NULL), wxConvBoxi));
 	
 	ShowError(msg, MessageId);
 }	
@@ -545,7 +545,7 @@ class PrivateKeyPage : public FileSavingPage
 	
 	bool CreateNewKeyWithBio(BIGNUM* pBigNum, RSA* pRSA, BIO* pKeyOutBio)
 	{
-		wxCharBuffer buf = GetFileNameString().mb_str(wxConvLibc);
+		wxCharBuffer buf = GetFileNameString().mb_str(wxConvBoxi);
 		int result = BIO_write_filename(pKeyOutBio, buf.data());
 		
 		if (result <= 0)
@@ -700,7 +700,7 @@ class CertRequestPage : public FileSavingPage
 	
 	bool CheckCertRequestWithBio(BIO* pRequestBio)
 	{
-		wxCharBuffer buf = GetFileNameString().mb_str(wxConvLibc);
+		wxCharBuffer buf = GetFileNameString().mb_str(wxConvBoxi);
 		
 		if (BIO_read_filename(pRequestBio, buf.data()) <= 0)
 		{
@@ -917,7 +917,7 @@ class CertRequestPage : public FileSavingPage
 		
 		X509_NAME* pX509SubjectName = X509_REQ_get_subject_name(pRequest);
 
-		wxCharBuffer buf = certSubject.mb_str(wxConvLibc);
+		wxCharBuffer buf = certSubject.mb_str(wxConvBoxi);
 		int result = X509_NAME_add_entry_by_NID(pX509SubjectName, 
 			commonNameNid, MBSTRING_ASC, 
 			(unsigned char *)buf.data(), -1, -1, 0);
@@ -994,7 +994,7 @@ class CertRequestPage : public FileSavingPage
 			return FALSE;
 		}
 		
-		buf = GetFileNameString().mb_str(wxConvLibc);
+		buf = GetFileNameString().mb_str(wxConvBoxi);
 		result = BIO_write_filename(pRequestBio, buf.data());
 		
 		if (result <= 0)
@@ -1330,7 +1330,7 @@ class CryptoKeyPage : public FileSavingPage
 			return FALSE;
 		}
 		
-		wxCharBuffer buf = GetFileNameString().mb_str(wxConvLibc);
+		wxCharBuffer buf = GetFileNameString().mb_str(wxConvBoxi);
 		int result = BIO_write_filename(pKeyOutBio, buf.data());
 		
 		if (!result)
@@ -1549,7 +1549,7 @@ class DataDirectoryPage : public SetupWizardPage
 			if (stat(buf.data(), &st) != 0 ||
 				(st.st_mode & 0700) != 0700)
 			{
-				wxString err(strerror(errno), wxConvLibc);
+				wxString err(strerror(errno), wxConvBoxi);
 				wxString msg;
 				msg.Printf(wxT("The specified data directory "
 					"(%s) is not accessible (%s)"), 
@@ -1602,7 +1602,7 @@ class DataDirectoryPage : public SetupWizardPage
 		
 		{
 			struct stat st;
-			wxCharBuffer buf = parent.GetFullPath().mb_str(wxConvLibc);
+			wxCharBuffer buf = parent.GetFullPath().mb_str(wxConvBoxi);
 
 			if (stat(buf.data(), &st) != 0 ||
 				(st.st_mode & 0700) != 0700)
@@ -1631,7 +1631,7 @@ class DataDirectoryPage : public SetupWizardPage
 			if (stat(buf.data(), &st) != 0 ||
 				(st.st_mode & 0700) != 0700)
 			{
-				wxString err(strerror(errno), wxConvLibc);
+				wxString err(strerror(errno), wxConvBoxi);
 				wxString msg;
 				msg.Printf(wxT("The specified data directory "
 					"(%s) is not accessible (%s)"), 

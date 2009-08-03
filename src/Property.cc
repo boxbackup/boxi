@@ -218,7 +218,7 @@ bool IntProperty::SetFromString(const wxString& rSource)
 	unsigned int tempValue;
 	char *endptr;
 
-	wxCharBuffer buf = rSource.mb_str(wxConvLibc);
+	wxCharBuffer buf = rSource.mb_str(wxConvBoxi);
 	
 	if (rSource.StartsWith(wxT("0x"))) {
 		tempValue = strtol(buf.data() + 2, &endptr, 16);
@@ -266,7 +266,7 @@ bool IntProperty::GetInto(std::string& rDest)
 	if (!mConfigured) return false;
 	wxString formatted;
 	formatted.Printf(wxT("%d"), mValue);
-	wxCharBuffer buf = formatted.mb_str(wxConvLibc);
+	wxCharBuffer buf = formatted.mb_str(wxConvBoxi);
 	rDest = buf.data();
 	return true;
 }
@@ -366,9 +366,9 @@ const std::string* StringProperty::GetPointer()
 
 void StringProperty::Set(const wxString& rNewValue) 
 {
-	wxString oldValueString(mValue.c_str(), wxConvLibc);
+	wxString oldValueString(mValue.c_str(), wxConvBoxi);
 	bool changed = (rNewValue != oldValueString || mConfigured == false);
-	wxCharBuffer buf = rNewValue.mb_str(wxConvLibc);
+	wxCharBuffer buf = rNewValue.mb_str(wxConvBoxi);
 	mValue = buf.data(); 
 	mConfigured = true; 
 	if (changed && mpListener) mpListener->OnPropertyChange(this);
@@ -420,7 +420,7 @@ bool StringProperty::GetInto(std::string& rDest)
 bool StringProperty::GetInto(wxString& rDest) 
 {
 	if (mConfigured) 
-		rDest = wxString(mValue.c_str(), wxConvLibc); 
+		rDest = wxString(mValue.c_str(), wxConvBoxi); 
 	return mConfigured;
 }
 

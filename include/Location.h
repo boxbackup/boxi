@@ -29,6 +29,8 @@
 #include "Configuration.h"
 #include "ExcludeList.h"
 
+#include "main.h"
+
 enum ExcludeSense 
 {
 	ES_UNKNOWN = 0,
@@ -175,7 +177,7 @@ class BoxiExcludeEntry
 
 	BoxiExcludeEntry(BoxiExcludeType& rType, const wxString& rValue) 
 	: mpType(&rType),
-	  mValue(wxCharBuffer(rValue.mb_str(wxConvLibc)).data())
+	  mValue(wxCharBuffer(rValue.mb_str(wxConvBoxi)).data())
 	{ }
 
 	BoxiExcludeEntry(const BoxiExcludeEntry& rToCopy)
@@ -196,7 +198,7 @@ class BoxiExcludeEntry
 	
 	wxString GetValueString() const 
 	{ 
-		return wxString(mValue.c_str(), wxConvLibc); 
+		return wxString(mValue.c_str(), wxConvBoxi); 
 	}
 	
 	const std::string GetTypeName() const { return mpType->ToString(); }

@@ -220,4 +220,18 @@ void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor,
 extern int     g_argc;
 extern char ** g_argv;
 
+/*
+On most platforms, the encoding of filenames in the config file
+is the native encoding, and therefore supported by wxConvBoxi.
+However Windows uses Unicode for all filenames, which can therefore
+contain characters not supported by the native encoding, so Box Backup
+uses UTF8 in all configuration files, and Boxi must do the same.
+*/
+
+#ifdef WIN32
+	#define wxConvBoxi wxConvUTF8
+#else
+	#define wxConvBoxi wxConvLibc
+#endif
+
 #endif /* _MAIN_H */

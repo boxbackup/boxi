@@ -382,7 +382,7 @@ void TestWithServer::setUp()
 		long result = wxExecute(command, wxEXEC_SYNC);
 		if (result != 0)
 		{
-			wxCharBuffer buf = command.mb_str(wxConvLibc);
+			wxCharBuffer buf = command.mb_str(wxConvBoxi);
 			printf("Failed to execute command '%s': error %d\n",
 				buf.data(), (int)result);
 			CPPUNIT_ASSERT_EQUAL(0, (int)result);
@@ -410,7 +410,7 @@ void TestWithServer::setUp()
 
 	if (!isOk)
 	{
-		wxCharBuffer buf = msg.mb_str(wxConvLibc);
+		wxCharBuffer buf = msg.mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT_MESSAGE(buf.data(), isOk);
 	}
 	
@@ -419,7 +419,7 @@ void TestWithServer::setUp()
 	isOk = mapConn->InitTlsContext(mTlsContext, msg);
 	if (!isOk)
 	{
-		wxCharBuffer buf = msg.mb_str(wxConvLibc);
+		wxCharBuffer buf = msg.mb_str(wxConvBoxi);
 		CPPUNIT_ASSERT_MESSAGE(buf.data(), isOk);
 	}
 	

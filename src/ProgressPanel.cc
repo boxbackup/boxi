@@ -369,8 +369,8 @@ void ProgressPanel::CountLocalFiles(ExclusionOracle& rExclusionOracle,
 				*/
 				wxString msg;
 				msg.Printf(wxT("Error counting files in '%s': %s"),
-					wxString(filename.c_str(), wxConvLibc).c_str(),
-					wxString(strerror(errno),  wxConvLibc).c_str());
+					wxString(filename.c_str(), wxConvBoxi).c_str(),
+					wxString(strerror(errno),  wxConvBoxi).c_str());
 				mpErrorList->Append(msg);
 			}
 

@@ -177,7 +177,7 @@ void MainFrame::DoFileOpen(const wxString& path)
 		wxString str;
 		str.Printf(wxT("Failed to load configuration file (%s):\n\n"), 
 			path.c_str());
-		str.Append(wxString(e.what(), wxConvLibc));
+		str.Append(wxString(e.what(), wxConvBoxi));
 		wxGetApp().ShowMessageBox(BM_MAIN_FRAME_CONFIG_LOAD_FAILED,
 			str, wxT("Boxi Error"), wxOK | wxICON_ERROR, NULL);
 		return;

@@ -219,7 +219,7 @@ class ServerCacheNode
 	static wxString GetDecryptedName(BackupStoreDirectory::Entry* pDirEntry)
 	{
 		BackupStoreFilenameClear clear(pDirEntry->GetName());
-		wxString name(clear.GetClearFilename().c_str(), wxConvLibc);
+		wxString name(clear.GetClearFilename().c_str(), wxConvBoxi);
 		return name;
 	}
 		
