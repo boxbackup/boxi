@@ -161,14 +161,14 @@ void ProgressPanel::NotifyMoreFilesDone(size_t numAdditionalFiles,
 	mNumBytesDone += numAdditionalBytes;
 
 	wxString str;
-	str.Printf(wxT("%d"), mNumFilesDone);
+	str.Printf(wxT("%" wxLongLongFmtSpec "d"), (int64_t)mNumFilesDone);
 	mpNumFilesDone->SetValue(str);
 	mpNumBytesDone->SetValue(FormatNumBytes(mNumBytesDone));
 	
 	int64_t numFilesRemaining = mNumFilesCounted - mNumFilesDone;
 	int64_t numBytesRemaining = mNumBytesCounted - mNumBytesDone;
 
-	str.Printf(wxT("%d"), numFilesRemaining);
+	str.Printf(wxT("%" wxLongLongFmtSpec "d"), numFilesRemaining);
 	mpNumFilesRemaining->SetValue(str);
 	mpNumBytesRemaining->SetValue(FormatNumBytes(numBytesRemaining));
 	
@@ -289,12 +289,16 @@ void ProgressPanel::SetSummaryText(const wxString& rText)
 void ProgressPanel::SetCurrentText(const wxString& rText)
 {
 	mpCurrentText->SetLabel(rText);
+	// the following attempt to make the label wrap doesn't compile
+	// on wx 2.6.x and doesn't work anyway
+	/*
 	wxSize size = mpCurrentText->GetSize();
 	mpCurrentText->Wrap(size.GetWidth());
 	size = mpCurrentText->GetSize();
 	// set minimum and maximum size to laid-out size
 	mpCurrentText->SetSizeHints(size, size);
 	// resize everything else to take account of new label size
+	*/
 	Layout();
 }
 

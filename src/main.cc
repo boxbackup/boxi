@@ -325,8 +325,13 @@ void BoxiApp::ExpectMessageBox(message_t messageId, int response,
 	mExpectedMessageResponse = response;
 }
 
+#if wxCHECK_VERSION(2,8,0)
 void BoxiApp::OnAssertFailure(const wxChar *file, int line,
 	const wxChar *func, const wxChar *cond, const wxChar *msg)
+#else
+void BoxiApp::OnAssert(const wxChar *file, int line,
+	const wxChar *cond, const wxChar *msg)
+#endif
 {
 	if (mTesting)
 	{
@@ -338,6 +343,10 @@ void BoxiApp::OnAssertFailure(const wxChar *file, int line,
 	}
 	else
 	{
+		#if wxCHECK_VERSION(2,8,0)
 		wxApp::OnAssertFailure(file, line, func, cond, msg);
+		#else
+		wxApp::OnAssert(file, line, cond, msg);
+		#endif
 	}
 }

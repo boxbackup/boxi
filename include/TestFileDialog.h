@@ -22,12 +22,19 @@ public:
 		const wxString& defaultDir = wxEmptyString,
 		const wxString& defaultFile = wxEmptyString,
 		const wxString& wildCard = wxFileSelectorDefaultWildcardStr,
-		long style = wxFD_DEFAULT_STYLE,
+		#if wxCHECK_VERSION(2,8,0)
+			long style = wxFD_DEFAULT_STYLE
+		#else
+			long style = wxOPEN
+		#endif
+		/*
 		const wxPoint& pos = wxDefaultPosition,
 		const wxSize& sz = wxDefaultSize,
-		const wxString& name = wxFileDialogNameStr)
+		const wxString& name = wxFileDialogNameStr
+		*/
+		)
 	: wxFileDialog(parent, message, defaultDir, defaultFile, wildCard,
-		style, pos, sz, name)
+		style /*pos, sz, name*/)
 	{ }
 
 	virtual void SetPath(const wxString& path)

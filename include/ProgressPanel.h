@@ -50,6 +50,7 @@ class ProgressPanel : public wxPanel
 		public:
 		virtual bool IsExcludedFile(const std::string& rFileName) = 0;
 		virtual bool IsExcludedDir (const std::string& rDirName)  = 0;
+		virtual ~ExclusionOracle() { }
 	};
 	
 	protected:

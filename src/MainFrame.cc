@@ -144,8 +144,7 @@ void MainFrame::OnFileOpen(wxCommandEvent& event)
 {
 	TestFileDialog openFileDialog(
 		this, wxT("Open file"), wxT(""), wxT("bbackupd.conf"), 
-		FILETYPES, wxOPEN | wxFILE_MUST_EXIST, 
-		wxDefaultPosition);
+		FILETYPES, wxOPEN | wxFILE_MUST_EXIST);
 
 	if (wxGetApp().ShowFileDialog(openFileDialog) != wxID_OK)
 		return;
@@ -255,8 +254,7 @@ void MainFrame::DoFileSaveAs2()
 {
 	TestFileDialog saveFileDialog(
 		this, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
-		FILETYPES, wxSAVE | wxOVERWRITE_PROMPT, 
-		wxDefaultPosition);
+		FILETYPES, wxSAVE | wxOVERWRITE_PROMPT);
 
 	if (wxGetApp().ShowFileDialog(saveFileDialog) != wxID_OK)
 		return;
