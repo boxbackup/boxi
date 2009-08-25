@@ -214,7 +214,7 @@ static wxString MySslProgressCallbackMessage(int n)
 static void MySslProgressCallback(int p, int n, void* cbinfo)
 {
 	wxProgressDialog* pProgress = (wxProgressDialog *)cbinfo;
-	pProgress->Update(0, MySslProgressCallbackMessage(++numChecked));
+	pProgress->Pulse(MySslProgressCallbackMessage(++numChecked));
 }
 
 class FileSavingPage : public SetupWizardPage
@@ -1475,202 +1475,212 @@ class DataDirectoryPage : public SetupWizardPage
 	}
 	
 	virtual ~DataDirectoryPage() { }
+	virtual SetupWizardPage_id_t GetPageId() { return BWP_DATA_DIR; }
+	virtual void OnWizardPageChanging(wxWizardEvent& event);
+	virtual bool CheckDataDirectory();
+};
 
-	void OnWizardPageChanging(wxWizardEvent& event)
-	{
-		// always allow moving backwards
-		if (!event.GetDirection())
-			return;
+void DataDirectoryPage::OnWizardPageChanging(wxWizardEvent& event)
+{
+	// always allow moving backwards
+	if (!event.GetDirection())
+		return;
 
-		bool isOk = CheckDataDirectory();
-		
-		if (isOk) 
-		{
-			wxString dataDirName;
-			wxASSERT(mpConfig->DataDirectory.GetInto(dataDirName));
-			wxFileName socket (dataDirName, wxT("bbackupd.sock"));
-			wxFileName pidfile(dataDirName, wxT("bbackupd.pid"));
-			mpConfig->CommandSocket.Set(socket.GetFullPath());
-			mpConfig->PidFile      .Set(pidfile.GetFullPath());
-		}
-		else
-		{
-			event.Veto();
-		}
-	}
-	
-	bool CheckDataDirectory()
+	bool isOk = CheckDataDirectory();
+	wxString dataDirName;
+
+	if (isOk) 
 	{
-		wxString dataDirName;
-		if (!mpConfig->DataDirectory.GetInto(dataDirName))
+		isOk &= mpConfig->DataDirectory.GetInto(dataDirName);
+		if (!isOk)
 		{
 			ShowError(wxT("The data directory is not set"),
 				BM_SETUP_WIZARD_NO_FILE_NAME);
-			return false;
 		}
-		
-		if (wxFileName::FileExists(dataDirName))
-		{
-			ShowError(wxT("The specified data directory already "
-				"exists as a file"),
-				BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
-			return false;
-		}
+	}
 
-		if (wxFileName::DirExists(dataDirName) && 
-			! wxFile::Access(dataDirName, wxFile::read))
-		{
-			ShowError(wxT("The specified data directory already "
-				"exists and is not readable. Please make "
-				"it readable and writable, or choose another one."),
-				BM_SETUP_WIZARD_FILE_NOT_READABLE);
-			return false;
-		}
+	if (isOk)
+	{
+		wxFileName socket (dataDirName, wxT("bbackupd.sock"));
+		wxFileName pidfile(dataDirName, wxT("bbackupd.pid"));
+		mpConfig->CommandSocket.Set(socket.GetFullPath());
+		mpConfig->PidFile      .Set(pidfile.GetFullPath());
+	}
+	else
+	{
+		event.Veto();
+	}
+}
 
-		if (wxFileName::DirExists(dataDirName) && 
-			! wxFile::Access(dataDirName, wxFile::write))
-		{
-			ShowError(wxT("The specified data directory already "
-				"exists and is not writable. Please make "
-				"it writable, or choose another one."),
-				BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
-			return false;
-		}
-
-		wxFileName dataDir(dataDirName);
-		wxFileName parent(dataDir.GetPath());
-		
-		if (wxFileName::DirExists(dataDir.GetFullPath()))
-		{
-			#ifndef WIN32
-			struct stat st;
-			wxCharBuffer buf = dataDirName.mb_str();
-
-			if (stat(buf.data(), &st) != 0 ||
-				(st.st_mode & 0700) != 0700)
-			{
-				wxString err(strerror(errno), wxConvBoxi);
-				wxString msg;
-				msg.Printf(wxT("The specified data directory "
-					"(%s) is not accessible (%s)"), 
-					dataDirName.c_str(), err.c_str());
-				ShowError(msg, BM_SETUP_WIZARD_FILE_NOT_READABLE);
-				return false;
-			}
-	
-			if (st.st_mode & 0077)
-			{
-				wxString msg;
-				msg.Printf(wxT("The specified data directory (%s) "
-					"already exists, and is accessible to other "
-					"users. This is dangerous and not allowed.\n\n"
-					"Please remove all permissions for other users "
-					"to access the data directory, or choose a "
-					"different one"),
-					dataDirName.c_str());
-				ShowError(msg, BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
-				return false;
-			}
-			#endif // !WIN32
-
-			// dir exists and has good permissions
-			return true;
-		}
-		
-		// dir does not exist, can we create it?
-
-		if (!wxFileName::DirExists(parent.GetFullPath()))
-		{
-			wxString msg;
-			msg.Printf(wxT("The specified data directory (%s) "
-				"does not exist, and cannot be created, "
-				"because the parent directory (%s) "
-				"does not exist"),
-				dataDirName.c_str(),
-				parent.GetFullPath().c_str());
-			ShowError(msg, BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
-			return false;
-		}
-
-		bool parentAccessible = true;
-		
-		if (!wxFile::Access(parent.GetFullPath(), wxFile::read))
-			parentAccessible = false;
-		
-		if (!wxFile::Access(parent.GetFullPath(), wxFile::write))
-			parentAccessible = false;
-		
-		{
-			struct stat st;
-			wxCharBuffer buf = parent.GetFullPath().mb_str(wxConvBoxi);
-
-			if (stat(buf.data(), &st) != 0 ||
-				(st.st_mode & 0700) != 0700)
-			{
-				parentAccessible = false;
-			}
-		}
-
-		if (!parentAccessible)
-		{
-			wxString msg;
-			msg.Printf(wxT("The specified data directory (%s) "
-				"does not exist, and cannot be created, "
-				"because you do not have permission to write "
-				"to the parent directory (%s)"),
-				dataDirName.c_str(),
-				parent.GetFullPath().c_str());
-			ShowError(msg, BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
-			return false;
-		}
-
-		{
-			struct stat st;
-			wxCharBuffer buf = dataDirName.mb_str();
-
-			if (stat(buf.data(), &st) != 0 ||
-				(st.st_mode & 0700) != 0700)
-			{
-				wxString err(strerror(errno), wxConvBoxi);
-				wxString msg;
-				msg.Printf(wxT("The specified data directory "
-					"(%s) is not accessible (%s)"), 
-					dataDirName.c_str(), err.c_str());
-				ShowError(msg, BM_SETUP_WIZARD_FILE_NOT_READABLE);
-				return false;
-			}
-	
-			if (st.st_mode & 0077)
-			{
-				wxString msg;
-				msg.Printf(wxT("The specified data directory (%s) "
-					"already exists, and is accessible to other "
-					"users. This is dangerous and not allowed.\n\n"
-					"Please remove all permissions for other users "
-					"to access the data directory, or choose a "
-					"different one"),
-					parent.GetFullPath().c_str());
-				ShowError(msg, BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
-				return false;
-			}
-		}
-		
-		{
-			wxLogNull disableLogging;
-			if (!wxMkdir(dataDir.GetFullPath(), 0700))
-			{
-				ShowError(wxT("The specified data directory "
-					"does not exist, and could not be created"),
-					BM_SETUP_WIZARD_DIR_CREATE_FAILED);
-				return false;
-			}
-		}
-		
-		return true;		
+bool DataDirectoryPage::CheckDataDirectory()
+{
+	wxString dataDirName;
+	if (!mpConfig->DataDirectory.GetInto(dataDirName))
+	{
+		ShowError(wxT("The data directory is not set"),
+			BM_SETUP_WIZARD_NO_FILE_NAME);
+		return false;
 	}
 	
-	virtual SetupWizardPage_id_t GetPageId() { return BWP_DATA_DIR; }
-};
+	if (wxFileName::FileExists(dataDirName))
+	{
+		ShowError(wxT("The specified data directory already "
+			"exists as a file"),
+			BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
+		return false;
+	}
+
+	if (wxFileName::DirExists(dataDirName) && 
+		! wxFile::Access(dataDirName, wxFile::read))
+	{
+		ShowError(wxT("The specified data directory already "
+			"exists and is not readable. Please make "
+			"it readable and writable, or choose another one."),
+			BM_SETUP_WIZARD_FILE_NOT_READABLE);
+		return false;
+	}
+
+	if (wxFileName::DirExists(dataDirName) && 
+		! wxFile::Access(dataDirName, wxFile::write))
+	{
+		ShowError(wxT("The specified data directory already "
+			"exists and is not writable. Please make "
+			"it writable, or choose another one."),
+			BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
+		return false;
+	}
+
+	wxFileName dataDir(dataDirName);
+	wxFileName parent(dataDir.GetPath());
+	
+	if (wxFileName::DirExists(dataDir.GetFullPath()))
+	{
+		#ifndef WIN32
+		struct stat st;
+		wxCharBuffer buf = dataDirName.mb_str();
+
+		if (stat(buf.data(), &st) != 0 ||
+			(st.st_mode & 0700) != 0700)
+		{
+			wxString err(strerror(errno), wxConvBoxi);
+			wxString msg;
+			msg.Printf(wxT("The specified data directory "
+				"(%s) is not accessible (%s)"), 
+				dataDirName.c_str(), err.c_str());
+			ShowError(msg, BM_SETUP_WIZARD_FILE_NOT_READABLE);
+			return false;
+		}
+
+		if (st.st_mode & 0077)
+		{
+			wxString msg;
+			msg.Printf(wxT("The specified data directory (%s) "
+				"already exists, and is accessible to other "
+				"users. This is dangerous and not allowed.\n\n"
+				"Please remove all permissions for other users "
+				"to access the data directory, or choose a "
+				"different one"),
+				dataDirName.c_str());
+			ShowError(msg, BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
+			return false;
+		}
+		#endif // !WIN32
+
+		// dir exists and has good permissions
+		return true;
+	}
+	
+	// dir does not exist, can we create it?
+
+	if (!wxFileName::DirExists(parent.GetFullPath()))
+	{
+		wxString msg;
+		msg.Printf(wxT("The specified data directory (%s) "
+			"does not exist, and cannot be created, "
+			"because the parent directory (%s) "
+			"does not exist"),
+			dataDirName.c_str(),
+			parent.GetFullPath().c_str());
+		ShowError(msg, BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
+		return false;
+	}
+
+	bool parentAccessible = true;
+	
+	if (!wxFile::Access(parent.GetFullPath(), wxFile::read))
+		parentAccessible = false;
+	
+	if (!wxFile::Access(parent.GetFullPath(), wxFile::write))
+		parentAccessible = false;
+	
+	{
+		struct stat st;
+		wxCharBuffer buf = parent.GetFullPath().mb_str(wxConvBoxi);
+
+		if (stat(buf.data(), &st) != 0 ||
+			(st.st_mode & 0700) != 0700)
+		{
+			parentAccessible = false;
+		}
+	}
+
+	if (!parentAccessible)
+	{
+		wxString msg;
+		msg.Printf(wxT("The specified data directory (%s) "
+			"does not exist, and cannot be created, "
+			"because you do not have permission to write "
+			"to the parent directory (%s)"),
+			dataDirName.c_str(),
+			parent.GetFullPath().c_str());
+		ShowError(msg, BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
+		return false;
+	}
+
+	{
+		struct stat st;
+		wxCharBuffer buf = dataDirName.mb_str();
+
+		if (stat(buf.data(), &st) != 0 ||
+			(st.st_mode & 0700) != 0700)
+		{
+			wxString err(strerror(errno), wxConvBoxi);
+			wxString msg;
+			msg.Printf(wxT("The specified data directory "
+				"(%s) is not accessible (%s)"), 
+				dataDirName.c_str(), err.c_str());
+			ShowError(msg, BM_SETUP_WIZARD_FILE_NOT_READABLE);
+			return false;
+		}
+
+		if (st.st_mode & 0077)
+		{
+			wxString msg;
+			msg.Printf(wxT("The specified data directory (%s) "
+				"already exists, and is accessible to other "
+				"users. This is dangerous and not allowed.\n\n"
+				"Please remove all permissions for other users "
+				"to access the data directory, or choose a "
+				"different one"),
+				parent.GetFullPath().c_str());
+			ShowError(msg, BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
+			return false;
+		}
+	}
+	
+	{
+		wxLogNull disableLogging;
+		if (!wxMkdir(dataDir.GetFullPath(), 0700))
+		{
+			ShowError(wxT("The specified data directory "
+				"does not exist, and could not be created"),
+				BM_SETUP_WIZARD_DIR_CREATE_FAILED);
+			return false;
+		}
+	}
+	
+	return true;		
+}
 
 SetupWizard::SetupWizard(ClientConfig *config, wxWindow* parent)
 : wxWizard(parent, ID_Setup_Wizard_Frame, wxT("Boxi Setup Wizard"), 
@@ -1684,8 +1694,6 @@ SetupWizard::SetupWizard(ClientConfig *config, wxWindow* parent)
 	ERR_load_crypto_strings();
 	SSL_load_error_strings();
 
-	GetPageAreaSizer()->SetMinSize(500, 400);
-	
 	mpIntroPage = new IntroPage(config, this);
 	
 	wxWizardPageSimple* pAccountPage = new AccountPage(config, this);
@@ -1715,6 +1723,8 @@ SetupWizard::SetupWizard(ClientConfig *config, wxWindow* parent)
 
 	wxWizardPageSimple* pDataDirPage = new DataDirectoryPage(config, this);
 	wxWizardPageSimple::Chain(pBackedUpPage, pDataDirPage);
+
+	GetPageAreaSizer()->SetMinSize(500, 400);
 }
 
 SetupWizardPage_id_t SetupWizard::GetCurrentPageId()
