@@ -118,7 +118,7 @@ class TestSetUpDecorator : public CppUnit::TestSetUp
 #define BOXI_ASSERT(condition) \
 { \
 	wxString msgOut = _("Assertion failed: " #condition "\n"); \
-	msgOut.Append(StackWalker::GetStackTrace()); \
+	if (!(condition)) msgOut.Append(StackWalker::GetStackTrace()); \
 	CPPUNIT_ASSERT_MESSAGE_WX(msgOut, condition); \
 }
 
@@ -126,7 +126,7 @@ class TestSetUpDecorator : public CppUnit::TestSetUp
 { \
 	wxString msgOut = _("Assertion failed: " #expected " == " \
 		#actual "\n"); \
-	msgOut.Append(StackWalker::GetStackTrace()); \
+	if ((expected) != (actual)) msgOut.Append(StackWalker::GetStackTrace()); \
 	CPPUNIT_ASSERT_EQUAL_MESSAGE(wxCharBuffer(msgOut.mb_str()).data(), \
 		expected, actual); \
 }
