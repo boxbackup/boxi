@@ -24,8 +24,20 @@ fi
   DIE=1
 }
 
+LIBTOOLIZE=libtoolize
+LIBTOOL=libtool
+
+if libtoolize --help >/dev/null 2>&1
+then
+  :
+elif glibtoolize --help >/dev/null 2>&1
+then
+  LIBTOOLIZE=glibtoolize
+  LIBTOOL=glibtool
+fi
+
 (grep "^AM_PROG_LIBTOOL" $srcdir/configure.in >/dev/null) && {
-  (libtool --version) < /dev/null > /dev/null 2>&1 || {
+  ($LIBTOOL --version) < /dev/null > /dev/null 2>&1 || {
     echo
     echo "**Error**: You must have \`libtool' installed."
     echo "Get ftp://ftp.gnu.org/pub/gnu/"
@@ -109,8 +121,8 @@ do
 	test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
       fi
       if grep "^AM_PROG_LIBTOOL" configure.in >/dev/null; then
-	echo "Running libtoolize..."
-	libtoolize --force --copy
+	echo "Running $LIBTOOLIZE..."
+	$LIBTOOLIZE --force --copy
       fi
       test -d m4 && aclocalinclude="$aclocalinclude -I m4"
       echo "Running aclocal $aclocalinclude ..."
