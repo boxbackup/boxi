@@ -62,11 +62,21 @@ class BoxiApp : public wxApp
 	
 	// event handlers
 	void OnIdle(wxIdleEvent& rEvent);
-	virtual void OnAssertFailure(const wxChar *file,
+
+	#if wxCHECK_VERSION(2,8,0)
+	virtual void OnAssertFailure(
+		const wxChar *file,
 		int line,
 		const wxChar *func,
 		const wxChar *cond,
 		const wxChar *msg);
+	#else
+	virtual void OnAssert(
+		const wxChar *file,
+		int line,
+		const wxChar *cond,
+		const wxChar *msg);
+	#endif
 	
 	// cppunit testing interface
 	void SetTestRunner(TestSetUpDecorator* pTestRunner)

@@ -343,10 +343,12 @@ void BoxiApp::OnAssert(const wxChar *file, int line,
 	}
 	else
 	{
-		#if wxCHECK_VERSION(2,8,0)
-		wxApp::OnAssertFailure(file, line, func, cond, msg);
-		#else
-		wxApp::OnAssert(file, line, cond, msg);
-		#endif
+		#ifdef __WXDEBUG__
+			#if wxCHECK_VERSION(2,8,0)
+			wxApp::OnAssertFailure(file, line, func, cond, msg);
+			#else
+			wxApp::OnAssert(file, line, cond, msg);
+			#endif
+		#endif // __WXDEBUG__
 	}
 }
