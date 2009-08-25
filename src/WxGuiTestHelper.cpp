@@ -81,27 +81,33 @@ int WxGuiTestHelper::FlushEventQueue ()
     s_useExitMainLoopOnIdle = true;
     s_doExitMainLoopOnIdle = true;
 
-    // Check if really all events under GTK do not send an explicit 
-    // additional idle event (instead of being lazy):
 #ifdef __WXGTK__
+    // We should check if all events under GTK send an explicit additional
+    // idle event, instead of being lazy and sending one ourselves:
     wxIdleEvent *idleEvt = new wxIdleEvent ();
-    ::wxPostEvent (wxTheApp->GetTopWindow ()->GetEventHandler (), *idleEvt);
-#endif
-
-#ifdef __WXGTK__
-    // if (wxTheApp->Pending ()) {
-#endif
+    wxWindow* pTopWindow = wxTheApp->GetTopWindow();
+    if (pTopWindow)
+    {
+        ::wxPostEvent (pTopWindow->GetEventHandler (), *idleEvt);
         retCode = wxTheApp->MainLoop ();
-#ifdef __WXGTK__
-    // }
+    }
+    else
+    {
+	// if we can't post an idle event, then the main loop will
+	// never terminate? could be bad for tests. above assumption
+	// seems to be justified, as I do see hangs.
+	retCode = 0;
+    }
+#else
+    retCode = wxTheApp->MainLoop ();
 #endif
 
     s_useExitMainLoopOnIdle = oldUseExitMainLoopOnIdle;
     s_doExitMainLoopOnIdle = oldDoExitMainLoopOnIdle;
 
     // If a failure has occured, throw exception:
-    if (!s_accTestFailures.IsEmpty ()) {
-
+    if (!s_accTestFailures.IsEmpty ())
+    {
         wxASSERT (s_warningAsserter != NULL);
         s_warningAsserter->FailAssert (s_fileOfFirstTestFailure,
                 s_lineNmbOfFirstTestFailure,
