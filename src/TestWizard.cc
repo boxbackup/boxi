@@ -71,7 +71,7 @@ static wxString MySslProgressCallbackMessage(int n)
 static void MySslProgressCallbackTest(int p, int n, void* cbinfo)
 {
 	wxProgressDialog* pProgress = (wxProgressDialog *)cbinfo;
-	pProgress->Update(0, MySslProgressCallbackMessage(++numCheckedTest));
+	pProgress->Pulse(MySslProgressCallbackMessage(++numCheckedTest));
 }
 
 X509* TestWizard::LoadCertificate
@@ -1168,7 +1168,8 @@ void TestWizard::TestDataDirPage()
 	wxFileName pidfile(mTempDir.GetFullPath(), wxT("bbackupd.pid"));
 	CPPUNIT_ASSERT(mpConfig->CommandSocket.Is(socket.GetFullPath()));
 	CPPUNIT_ASSERT(mpConfig->PidFile      .Is(pidfile.GetFullPath()));
-	
+
+	// last page, wizard should have closed
 	CPPUNIT_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
 	CPPUNIT_ASSERT(!FindWindow(ID_Setup_Wizard_Frame));		
 }
