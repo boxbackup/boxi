@@ -748,7 +748,7 @@ void GuiTestBase::CloseWindowWaitClosed(wxWindow* pWindow)
 	
 	while ( (pWindow = wxWindow::FindWindowById(id)) )
 	{
-		BOXI_ASSERT(WxGuiTestHelper::FlushEventQueue() == 0);
+		BOXI_ASSERT_EQUAL(0, WxGuiTestHelper::FlushEventQueue());
 	}
 	
 	BOXI_ASSERT(!pWindow);	
