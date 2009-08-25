@@ -144,6 +144,8 @@ done
 
 #conf_flags="--enable-maintainer-mode --enable-compile-warnings" #--enable-iso-c
 
+./update-main-h.sh
+
 if test x$NOCONFIGURE = x; then
   echo Running $srcdir/configure $conf_flags "$@" ...
   CXXFLAGS="-g -O0" $srcdir/configure $conf_flags "$@" \
