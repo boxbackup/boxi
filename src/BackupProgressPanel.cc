@@ -194,13 +194,20 @@ class BackupExclusionOracle : public ProgressPanel::ExclusionOracle
 	BackupExclusionOracle(BackupClientContext& rContext)
 	: mrContext(rContext)
 	{ }
+
+	// This appears to be the easiest place to do keepalives during
+	// file counting, as a context is available here, and not available
+	// during compare, which prevents us from making this generic
+	// to CountLocalFiles().
 	
 	virtual bool IsExcludedFile(const std::string& rFileName)
 	{
+		mrContext.DoKeepAlive();
 		return mrContext.ExcludeFile(rFileName);
 	}
 	virtual bool IsExcludedDir(const std::string& rDirName)
 	{
+		mrContext.DoKeepAlive();
 		return mrContext.ExcludeDir(rDirName);
 	}
 };
