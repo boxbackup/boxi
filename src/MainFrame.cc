@@ -327,14 +327,21 @@ void MainFrame::OnFileDir(wxCommandEvent& event) {
 		wxSetWorkingDirectory(d->GetPath());
 }
 
-void MainFrame::OnHelpAbout(wxCommandEvent& event) {
-	wxMessageBox(wxT("Boxi " BOXI_VERSION " by Chris Wilson\n"
+void MainFrame::OnHelpAbout(wxCommandEvent& event)
+{
+	wxString msg;
+	msg.Printf(wxT("Boxi " BOXI_VERSION " by Chris Wilson\n"
 		"A Graphical User Interface for Box Backup\n"
-		"Home Page: http://www.qwirx.com/boxi/\n"
+		"Home Page: http://boxi.sourceforge.net/\n"
 		"\n"
 		"Licensed under the GNU General Public License (GPL)\n"
-		"This product includes software developed by Ben Summers."),
-		wxT("About Boxi"), wxOK | wxICON_INFORMATION, this);
+		"This product includes software developed by Ben Summers.\n"
+		"\n"
+		"Boxi: %s\n"
+		"Box Backup: %s"),
+		wxT(BOXI_VERSION_ADVANCED),
+		wxString(GetBoxBackupVersion().c_str(), wxConvLibc).c_str());
+	wxMessageBox(msg, wxT("About Boxi"), wxOK | wxICON_INFORMATION, this);
 }
 
 void MainFrame::OnSize(wxSizeEvent& event) 

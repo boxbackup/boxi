@@ -28,7 +28,8 @@
 // #include <stdlib.h>
 // #include "dmalloc.h"
 
-#define BOXI_VERSION "0.1.1"
+#define BOXI_VERSION "0.1.1 SVN r657"
+#define BOXI_VERSION_ADVANCED "SVN r657:666M"
 
 #include "wx/defs.h" // for wxID_HIGHEST
 
