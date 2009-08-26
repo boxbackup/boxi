@@ -199,11 +199,7 @@ wxString ProgressPanel::FormatNumBytes(int64_t bytes)
 	}
 
 	wxString str;		
-	#ifdef WIN32
-	str.Printf(wxT("%I64d %s"), bytes, units.c_str());
-	#else
-	str.Printf(wxT("%lld %s"), bytes, units.c_str());
-	#endif
+	str.Printf(wxT("%" wxLongLongFmtSpec "d %s"), bytes, units.c_str());
 	return str;
 }
 
