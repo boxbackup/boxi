@@ -174,6 +174,10 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 		wxT("Maximum Diffing Time:"), pConfig->MaximumDiffingTime, 
 		"%d", wxID_ANY);
 
+	mpKeepAliveTimeCtrl = pAdvancedPanel->AddParam(
+		wxT("Keep-Alive Time:"), pConfig->KeepAliveTime, 
+		"%d", wxID_ANY);
+
 	mpNotifyScriptCtrl = pAdvancedPanel->AddParam(
 		wxT("Notify Script:"), pConfig->NotifyScript, 
 		wxID_ANY, TRUE, FALSE,
@@ -224,6 +228,7 @@ void ClientInfoPanel::Reload()
 	mpFileTrackingSizeThresholdCtrl ->Reload();
 	mpDiffingUploadSizeThresholdCtrl->Reload();
 	mpMaximumDiffingTimeCtrl        ->Reload();
+	mpKeepAliveTimeCtrl             ->Reload();
 	mpExtendedLoggingCtrl           ->Reload();
 	mpSyncAllowScriptCtrl           ->Reload();
 	mpCommandSocketCtrl             ->Reload();
