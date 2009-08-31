@@ -833,23 +833,11 @@ bool ClientConfig::Check(wxString& rMsg)
 
 bool ClientConfig::CheckAccountNumber(wxString* pMsgOut)
 {
-	int account;
+	unsigned int account;
 
-	if (! AccountNumber.GetInto(account))
+	if (! AccountNumber.GetInto((int&)account))
 	{
 		*pMsgOut = wxT("The account number is empty or not valid");
-		return false;
-	}
-	
-	if (account <= 0)
-	{
-		*pMsgOut = wxT("The account number is zero or negative");
-		return false;
-	}
-	
-	if (account > 0x7FFFFFFF)
-	{
-		*pMsgOut = wxT("The account number is too large");
 		return false;
 	}
 	
@@ -1257,7 +1245,7 @@ bool CheckCertSubject(const wxString& rPrivateKeyFileName, int accountNumber,
 	}
 
 	wxString commonNameExpected;
-	commonNameExpected.Printf(wxT("BACKUP-%d"), accountNumber);
+	commonNameExpected.Printf(wxT("BACKUP-%x"), accountNumber);
 
 	if (!commonNameExpected.IsSameAs(commonNameActual))
 	{

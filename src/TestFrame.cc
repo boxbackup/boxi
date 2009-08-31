@@ -790,6 +790,20 @@ void GuiTestBase::SetTextCtrlValue(wxTextCtrl* pTextCtrl, const wxString& rValue
 	pTextCtrl->SetValue(rValue);
 }
 
+void GuiTestBase::SetValueAndDefocus(wxTextCtrl* pTextCtrl, const wxString& rValue)
+{
+	SetTextCtrlValue(pTextCtrl, rValue);
+	wxFocusEvent focus(wxEVT_KILL_FOCUS);
+	focus.SetEventObject(pTextCtrl);
+	pTextCtrl->ProcessEvent(focus);
+}
+
+void GuiTestBase::SetValueDefocusCheck(wxTextCtrl* pTextCtrl, const wxString& rValue)
+{
+	SetValueAndDefocus(pTextCtrl, rValue);
+	BOXI_ASSERT_EQUAL(rValue, pTextCtrl->GetValue());
+}
+
 void GuiTestBase::SetSpinCtrlValue(wxSpinCtrl* pSpinCtrl, int newValue)
 {
 	BOXI_ASSERT(pSpinCtrl);

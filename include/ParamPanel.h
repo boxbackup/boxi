@@ -131,6 +131,7 @@ class BoundHexCtrl : public wxTextCtrl, public BoundCtrl {
 	private:
 	IntProperty& mrIntProp;
 	wxString mFormat;
+	bool mIsValid;
 	
 	public:
 	BoundHexCtrl(wxWindow* parent, 
@@ -139,7 +140,8 @@ class BoundHexCtrl : public wxTextCtrl, public BoundCtrl {
 	: wxTextCtrl(parent, id, wxT("")),
 	  BoundCtrl(rIntProp),
 	  mrIntProp(rIntProp),
-	  mFormat(pFormat, wxConvBoxi)
+	  mFormat(pFormat, wxConvBoxi),
+	  mIsValid(true)
 	{
 		Reload();
 	}
@@ -150,6 +152,7 @@ class BoundHexCtrl : public wxTextCtrl, public BoundCtrl {
 		event.Skip();
 	}
 	void OnTextChanged(wxCommandEvent& rEvent) { OnChange(); }
+	bool IsValid() { return mIsValid; }
 
 	DECLARE_EVENT_TABLE()
 };

@@ -765,7 +765,7 @@ class CertRequestPage : public FileSavingPage
 		}
 		
 		wxString commonNameExpected;
-		commonNameExpected.Printf(wxT("BACKUP-%d"), mAccountNumber);
+		commonNameExpected.Printf(wxT("BACKUP-%x"), mAccountNumber);
 		
 		if (!commonNameExpected.IsSameAs(commonNameActual))
 		{
@@ -913,7 +913,7 @@ class CertRequestPage : public FileSavingPage
 		}
 		
 		wxString certSubject;
-		certSubject.Printf(wxT("BACKUP-%d"), mAccountNumber);
+		certSubject.Printf(wxT("BACKUP-%x"), mAccountNumber);
 		
 		X509_NAME* pX509SubjectName = X509_REQ_get_subject_name(pRequest);
 

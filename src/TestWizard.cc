@@ -365,48 +365,67 @@ void TestWizard::TestAccountPage()
 	CPPUNIT_ASSERT(mpConfig);
 	CPPUNIT_ASSERT(!mpConfig->StoreHostname.IsConfigured());
 	
-	pStoreHost->SetValue(wxT("no-such-host"));
+	SetValueDefocusCheck(pStoreHost, wxT("no-such-host"));
 	// calling SetValue should configure the property by itself
 	CPPUNIT_ASSERT(mpConfig->StoreHostname.IsConfigured());
 	CheckForwardError(BM_SETUP_WIZARD_BAD_STORE_HOST);
 	CPPUNIT_ASSERT(mpConfig->StoreHostname.IsConfigured());
+	CPPUNIT_ASSERT_EQUAL(wxString(wxT("no-such-host")), 
+		pStoreHost->GetValue());
 	
-	pStoreHost->SetValue(wxT("localhost"));
+	SetValueDefocusCheck(pStoreHost, wxT("localhost"));
 	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
+	CPPUNIT_ASSERT_EQUAL(wxString(wxT("localhost")), 
+		pStoreHost->GetValue());
 	
-	pAccountNo->SetValue(wxT("localhost")); // invalid number
+	SetValueDefocusCheck(pAccountNo, wxT("localhost")); // invalid number
 	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
 	CPPUNIT_ASSERT(!mpConfig->AccountNumber.IsConfigured());
+	CPPUNIT_ASSERT_EQUAL(wxString(wxT("localhost")), 
+		pAccountNo->GetValue());
 	
-	pAccountNo->SetValue(wxT("-1"));
+	SetValueAndDefocus(pAccountNo, wxT("-1"));
 	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
-	CPPUNIT_ASSERT(mpConfig->AccountNumber.IsConfigured());
+	CPPUNIT_ASSERT(!mpConfig->AccountNumber.IsConfigured());
 
-	pAccountNo->SetValue(wxT("12ag"));
-	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
-	CPPUNIT_ASSERT(mpConfig->AccountNumber.IsConfigured());
-
-	pAccountNo->SetValue(wxT("12345678"));
+	SetValueDefocusCheck(pAccountNo, wxT("ffffffff"));
 	ClickForward();
 	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
+	unsigned int AccountNumber;
+	CPPUNIT_ASSERT(mpConfig->AccountNumber.GetInto((int&)AccountNumber));
+	CPPUNIT_ASSERT_EQUAL(0xffffffff, AccountNumber);
+	ClickBackward();
+	CPPUNIT_ASSERT_EQUAL(BWP_ACCOUNT, mpWizard->GetCurrentPageId());
 
-	int AccountNumber;
-	CPPUNIT_ASSERT(mpConfig->AccountNumber.GetInto(AccountNumber));
+	SetValueDefocusCheck(pAccountNo, wxT("12ag"));
+	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
+	CPPUNIT_ASSERT(!mpConfig->AccountNumber.IsConfigured());
+	CPPUNIT_ASSERT_EQUAL(wxString(wxT("12ag")), pAccountNo->GetValue());
+
+	SetValueDefocusCheck(pAccountNo, wxT("12345678"));
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
+	CPPUNIT_ASSERT(mpConfig->AccountNumber.GetInto((int&)AccountNumber));
 	CPPUNIT_ASSERT_EQUAL(0x12345678, AccountNumber);
+	CPPUNIT_ASSERT_EQUAL(wxString(wxT("12345678")), 
+		pAccountNo->GetValue());
 
 	ClickBackward();
 	CPPUNIT_ASSERT_EQUAL(BWP_ACCOUNT, mpWizard->GetCurrentPageId());
 	
-	pAccountNo->SetValue(wxT("12ab"));
+	SetValueDefocusCheck(pAccountNo, wxT("12ab"));
 	ClickForward();
 	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
 	
 	wxString StoredHostname;
 	CPPUNIT_ASSERT(mpConfig->StoreHostname.GetInto(StoredHostname));
 	CPPUNIT_ASSERT(StoredHostname.IsSameAs(wxT("localhost")));
+	CPPUNIT_ASSERT_EQUAL(wxString(wxT("localhost")), 
+		pStoreHost->GetValue());
 	
-	CPPUNIT_ASSERT(mpConfig->AccountNumber.GetInto(AccountNumber));
+	CPPUNIT_ASSERT(mpConfig->AccountNumber.GetInto((int&)AccountNumber));
 	CPPUNIT_ASSERT_EQUAL(0x12ab, AccountNumber);
+	CPPUNIT_ASSERT_EQUAL(wxString(wxT("12ab")), pAccountNo->GetValue());
 }
 
 void TestWizard::TestPrivateKeyPage()
@@ -440,7 +459,7 @@ void TestWizard::TestPrivateKeyPage()
 
 	wxFileName nonexistantfile(mTempDir.GetFullPath(), 
 		wxT("nonexistant"));
-	pFileName->SetValue(nonexistantfile.GetFullPath());
+	SetValueDefocusCheck(pFileName, nonexistantfile.GetFullPath());
 
 	// filename refers to a path that doesn't exist
 	// expect BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND
@@ -459,7 +478,7 @@ void TestWizard::TestPrivateKeyPage()
 	
 	// change the filename to refer to the directory
 	// expect BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY
-	pFileName->SetValue(mTempDir.GetFullPath());
+	SetValueDefocusCheck(pFileName, mTempDir.GetFullPath());
 	CPPUNIT_ASSERT(pFileName->GetValue().IsSameAs(mTempDir.GetFullPath()));
 	CheckForwardError(BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
 	
@@ -479,7 +498,7 @@ void TestWizard::TestPrivateKeyPage()
 	CPPUNIT_ASSERT(  wxFile::Access(existingpath, wxFile::read));
 	CPPUNIT_ASSERT(! wxFile::Access(existingpath, wxFile::write));
 	
-	pFileName->SetValue(existingpath);
+	SetValueDefocusCheck(pFileName, existingpath);
 	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
 
 	// make the file writable, expect BM_SETUP_WIZARD_FILE_OVERWRITE
@@ -526,14 +545,14 @@ void TestWizard::TestPrivateKeyPage()
 	
 	CPPUNIT_ASSERT(pFileName->GetValue().IsSameAs(existingpath));
 	
-	pFileName->SetValue(nonexistantfile.GetFullPath());
+	SetValueDefocusCheck(pFileName, nonexistantfile.GetFullPath());
 	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
 	
 	// set the path to a bogus path, 
 	// expect BM_SETUP_WIZARD_FILE_NOT_FOUND
 	wxString boguspath = nonexistantfile.GetFullPath();
 	boguspath.Append(wxT("/foo/bar"));
-	pFileName->SetValue(boguspath);
+	SetValueDefocusCheck(pFileName, boguspath);
 	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
 	
 	// create another file, make it unreadable,
@@ -543,7 +562,7 @@ void TestWizard::TestPrivateKeyPage()
 	wxFile anotherfile;
 	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, false, 0));
 	
-	pFileName->SetValue(anotherfilename);
+	SetValueDefocusCheck(pFileName, anotherfilename);
 	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_READABLE);
 	
 	// make it readable, but not a valid key,
@@ -559,7 +578,7 @@ void TestWizard::TestPrivateKeyPage()
 	CPPUNIT_ASSERT(::wxRemoveFile(anotherfilename));
 	CPPUNIT_ASSERT(::wxRenameFile(existingpath, 
 		mPrivateKeyFileName.GetFullPath()));
-	pFileName->SetValue(mPrivateKeyFileName.GetFullPath());
+	SetValueDefocusCheck(pFileName, mPrivateKeyFileName.GetFullPath());
 	ClickForward();
 
 	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
@@ -631,7 +650,7 @@ void TestWizard::TestCertRequestPage()
 	wxTextCtrl* pText = GetTextCtrl(mpWizard->GetCurrentPage(), 
 		ID_Setup_Wizard_File_Name_Text);
 	CPPUNIT_ASSERT(pText);
-	pText->SetValue(wxEmptyString);
+	SetValueDefocusCheck(pText, wxEmptyString);
 	CPPUNIT_ASSERT(!mpConfig->CertRequestFile.IsConfigured());
 	
 	// go back, forward again, check that the default 
@@ -1051,7 +1070,7 @@ void TestWizard::TestCryptoKeyPage()
 	wxTextCtrl* pText = GetTextCtrl(mpWizard->GetCurrentPage(), 
 		ID_Setup_Wizard_File_Name_Text);
 	CPPUNIT_ASSERT(pText);
-	pText->SetValue(wxEmptyString);
+	SetValueDefocusCheck(pText, wxEmptyString);
 	CPPUNIT_ASSERT(!mpConfig->KeysFile.IsConfigured());
 	
 	// go back, forward again, check that the default 

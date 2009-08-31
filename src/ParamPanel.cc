@@ -170,15 +170,24 @@ END_EVENT_TABLE()
 		
 void BoundHexCtrl::Reload()
 {
+	if (!mIsValid)
+	{
+		// don't replace displayed, invalid value with out-of-date
+		// value from underlying property
+		return;
+	}
+
 	const int* ValuePtr = mrIntProp.GetPointer();
+
 	if (ValuePtr)
 	{
 		wxString ValueString;
 		ValueString.Printf(wxString(mFormat.c_str(), wxConvBoxi), 
 			*ValuePtr);
-		int ValueInt = *ValuePtr;
 		SetValue(ValueString);
+
 		// work around Windows bug
+		int ValueInt = *ValuePtr;
 		mrIntProp.Set(ValueInt);
 	}
 	else
@@ -191,22 +200,36 @@ void BoundHexCtrl::Reload()
 void BoundHexCtrl::OnChange()
 {
 	wxString tempString = GetValue();
-	if (tempString.Length() == 0) {
+	if (tempString.Length() == 0)
+	{
 		mrIntProp.Clear();
+		mIsValid = true;
 		return;
 	}
-	
+
 	unsigned int tempValue;
 	char *endptr;
 
 	wxCharBuffer buf = tempString.mb_str(wxConvBoxi);
-	tempValue = strtol(buf.data(), &endptr, 16);
+
+	if (!isxdigit(buf.data()[0]))
+	{
+		mrIntProp.Clear();
+		mIsValid = false;
+		return;
+	}
+
+	tempValue = strtoul(buf.data(), &endptr, 16);
 	
-	if (*endptr != '\0') {
+	if (*endptr != '\0')
+	{
+		mrIntProp.Clear();
+		mIsValid = false;
 		return;
 	}
 
 	mrIntProp.Set(tempValue);
+	mIsValid = true;
 }
 
 BEGIN_EVENT_TABLE(BoundBoolCtrl, wxCheckBox)

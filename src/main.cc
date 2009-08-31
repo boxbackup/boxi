@@ -135,7 +135,6 @@ int main(int argc, char **argv)
 
 	if (result == -1)
 	{
-		cmdParser.Usage();
 		return 0; // help requested and given
 	}
 

@@ -250,6 +250,8 @@ class GuiTestBase : public CppUnit::TestCase
 	void ExpandTreeItemWaitEvent  (wxTreeCtrl* pTree, wxTreeItemId& rItem);
 	void CollapseTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem);
 	void SetTextCtrlValue(wxTextCtrl* pTextCtrl, const wxString& rValue);
+	void SetValueAndDefocus(wxTextCtrl* pTextCtrl, const wxString& rValue);
+	void SetValueDefocusCheck(wxTextCtrl* pTextCtrl, const wxString& rValue);
 	void SetSpinCtrlValue(wxSpinCtrl* pTextCtrl, int newValue);
 	void SetDatePickerValue(wxDatePickerCtrl* pPicker, 
 		const wxDateTime& rNewValue);
