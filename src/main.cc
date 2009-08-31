@@ -101,7 +101,7 @@ static wxCmdLineEntryDesc theCmdLineParams[] =
 		wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
 	{ wxCMD_LINE_OPTION, wxT("t"), wxT("test"), 
 		wxT("run the specified unit test, or ALL"),
-		wxCMD_LINE_VAL_STRING, wxCMD_LINE_OPTION_MANDATORY },
+		wxCMD_LINE_VAL_STRING, 0 },
 	{ wxCMD_LINE_SWITCH, wxT("h"), wxT("help"), 
 		wxT("displays this help text"),
 		wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
