@@ -127,7 +127,7 @@ class AccountPage : public SetupWizardPage
 {
 	private:
 	BoundStringCtrl* mpStoreHostnameCtrl;
-	BoundIntCtrl*    mpAccountNumberCtrl;
+	BoundHexCtrl*    mpAccountNumberCtrl;
 	
 	public:
 	AccountPage(ClientConfig *pConfig, wxWizard* pParent)
@@ -154,9 +154,9 @@ class AccountPage : public SetupWizardPage
 		pLabel = new wxStaticText(this, wxID_ANY, wxT("Account number:"));
 		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
 		
-		mpAccountNumberCtrl = new BoundIntCtrl(this, 
+		mpAccountNumberCtrl = new BoundHexCtrl(this, 
 			ID_Setup_Wizard_Account_Number_Ctrl, 
-			mpConfig->AccountNumber, "%d");
+			mpConfig->AccountNumber, "%x");
 		pLocationSizer->Add(mpAccountNumberCtrl, 1, 
 			wxALIGN_CENTER_VERTICAL | wxGROW, 8);
 		

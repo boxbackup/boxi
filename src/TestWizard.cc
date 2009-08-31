@@ -359,10 +359,7 @@ void TestWizard::TestAccountPage()
 	CPPUNIT_ASSERT(pStoreHost->GetValue().IsSameAs(wxEmptyString));
 	CPPUNIT_ASSERT(pAccountNo->GetValue().IsSameAs(wxEmptyString));
 	
-	MessageBoxSetResponse(BM_SETUP_WIZARD_BAD_STORE_HOST, wxOK);
-	ClickForward();
-	MessageBoxCheckFired();
-	CPPUNIT_ASSERT_EQUAL(BWP_ACCOUNT, mpWizard->GetCurrentPageId());
+	CheckForwardError(BM_SETUP_WIZARD_BAD_STORE_HOST);
 
 	mpConfig = mpMainFrame->GetConfig();
 	CPPUNIT_ASSERT(mpConfig);
@@ -385,18 +382,31 @@ void TestWizard::TestAccountPage()
 	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
 	CPPUNIT_ASSERT(mpConfig->AccountNumber.IsConfigured());
 
-	pAccountNo->SetValue(wxT("1"));
+	pAccountNo->SetValue(wxT("12ag"));
+	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
+	CPPUNIT_ASSERT(mpConfig->AccountNumber.IsConfigured());
+
+	pAccountNo->SetValue(wxT("12345678"));
 	ClickForward();
-	MessageBoxCheckFired();
+	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
+
+	int AccountNumber;
+	CPPUNIT_ASSERT(mpConfig->AccountNumber.GetInto(AccountNumber));
+	CPPUNIT_ASSERT_EQUAL(0x12345678, AccountNumber);
+
+	ClickBackward();
+	CPPUNIT_ASSERT_EQUAL(BWP_ACCOUNT, mpWizard->GetCurrentPageId());
+	
+	pAccountNo->SetValue(wxT("12ab"));
+	ClickForward();
 	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
 	
 	wxString StoredHostname;
 	CPPUNIT_ASSERT(mpConfig->StoreHostname.GetInto(StoredHostname));
 	CPPUNIT_ASSERT(StoredHostname.IsSameAs(wxT("localhost")));
 	
-	int AccountNumber;
 	CPPUNIT_ASSERT(mpConfig->AccountNumber.GetInto(AccountNumber));
-	CPPUNIT_ASSERT_EQUAL(1, AccountNumber);
+	CPPUNIT_ASSERT_EQUAL(0x12ab, AccountNumber);
 }
 
 void TestWizard::TestPrivateKeyPage()
@@ -412,7 +422,7 @@ void TestWizard::TestPrivateKeyPage()
 	CPPUNIT_ASSERT(wxRemoveFile(mTempDir.GetFullPath()));
 	
 	mPrivateKeyFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("1-key.pem"));
+		wxT("12ab-key.pem"));
 
 	wxRadioButton* pNewFileRadioButton = 
 		(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
@@ -580,7 +590,7 @@ void TestWizard::TestCertRequestPage()
 	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
 
 	mClientCsrFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("1-csr.pem"));
+		wxT("12ab-csr.pem"));
 
 	// ask for a new certificate request to be generated
 	wxRadioButton* pNewFileRadioButton = 
@@ -676,7 +686,7 @@ void TestWizard::SignCertificate()
 	// fake a server signing of this private keyfile
 
 	mClientCertFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("1-cert.pem"));
+		wxT("12ab-cert.pem"));
 	CPPUNIT_ASSERT(!mClientCertFileName.FileExists());
 	
 	mCaFileName = wxFileName(mConfigTestDir.GetFullPath(), 
@@ -684,11 +694,11 @@ void TestWizard::SignCertificate()
 	CPPUNIT_ASSERT(!mCaFileName.FileExists());
 	
 	mClientBadSigCertFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("1-cert-badsig.pem"));
+		wxT("12ab-cert-badsig.pem"));
 	CPPUNIT_ASSERT(!mClientBadSigCertFileName.FileExists());
 	
 	mClientSelfSigCertFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("1-cert-selfsig.pem"));
+		wxT("12ab-cert-selfsig.pem"));
 	CPPUNIT_ASSERT(!mClientSelfSigCertFileName.FileExists());
 	
 	// generate a private key for the fake client CA
@@ -999,7 +1009,7 @@ void TestWizard::TestCryptoKeyPage()
 	CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
 
 	mClientCryptoFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("1-FileEncKeys.raw"));
+		wxT("12ab-FileEncKeys.raw"));
 	CPPUNIT_ASSERT(!mClientCryptoFileName.FileExists());
 	
 	// ask for new crypto keys to be generated

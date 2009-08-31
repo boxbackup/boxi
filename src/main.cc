@@ -41,6 +41,7 @@
 
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/CompilerOutputter.h>
+#include <cppunit/TestCaller.h>
 #include <cppunit/TestResult.h>
 #include <cppunit/TestResultCollector.h>
 #include <cppunit/TestRunner.h>
@@ -53,6 +54,21 @@
 #include "TestFrame.h"
 #include "TestFileDialog.h"
 #include "WxGuiTestHelper.h"
+
+#define FOR_ALL_TESTS(x) \
+	x(TestWizard); \
+	x(TestBackupConfig); \
+	x(TestBackup); \
+	x(TestConfig); \
+	x(TestRestore); \
+	x(TestCompare);
+
+#include "TestWizard.h"
+#include "TestBackupConfig.h"
+#include "TestBackup.h"
+#include "TestConfig.h"
+#include "TestRestore.h"
+#include "TestCompare.h"
 
 #include "SSLLib.h"
 
@@ -83,9 +99,12 @@ static wxCmdLineEntryDesc theCmdLineParams[] =
 	{ wxCMD_LINE_PARAM, wxT(""), wxT(""), 
 		wxT("<bbackupd-config-file>"),
 		wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
-	{ wxCMD_LINE_SWITCH, wxT("t"), NULL, 
-		wxT("run the unit tests"),
-		wxCMD_LINE_VAL_NONE, 0 },
+	{ wxCMD_LINE_OPTION, wxT("t"), wxT("test"), 
+		wxT("run the specified unit test, or ALL"),
+		wxCMD_LINE_VAL_STRING, wxCMD_LINE_OPTION_MANDATORY },
+	{ wxCMD_LINE_SWITCH, wxT("h"), wxT("help"), 
+		wxT("displays this help text"),
+		wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
 	{ wxCMD_LINE_NONE },
 };
 
@@ -101,7 +120,32 @@ END_EVENT_TABLE()
 
 int main(int argc, char **argv)
 {
-	if (argc >= 2 && strcmp(argv[1], "-t") == 0)
+	// ensure that parser/usage messages at this stage get sent to stderr
+	wxMessageOutput* pNewMsg = new wxMessageOutputStderr();
+	wxMessageOutput* pOldMsg = wxMessageOutput::Set(pNewMsg);
+	if (pOldMsg != NULL)
+	{
+		delete pOldMsg;
+	}
+	// wxLogStderr logger;
+	// wxLog::SetActiveTarget(&logger); 
+
+	wxCmdLineParser cmdParser(theCmdLineParams, argc, argv);
+	int result = cmdParser.Parse();
+
+	if (result == -1)
+	{
+		cmdParser.Usage();
+		return 0; // help requested and given
+	}
+
+	if (result != 0)
+	{
+		return 2; // invalid command line
+	}
+
+	wxString testName;
+	if (cmdParser.Found(wxT("t"), &testName))
 	{
 		g_argc = argc;
 		g_argv = argv;
@@ -128,12 +172,40 @@ int main(int argc, char **argv)
 		
 		CppUnit::BriefTestProgressListener progress;
 		controller.addListener(&progress);
-		
-		CppUnit::Test *suite = CppUnit::TestFactoryRegistry
-			::getRegistry().makeTest();
+	
+		CppUnit::TestSuite *suite = new CppUnit::TestSuite("selected tests");
+
+		bool foundNamedTest = false;
+		wxString errorMsg;
+		errorMsg.Printf(wxT("Test not found: %s. Available "
+			"tests are: "), testName.c_str());
+
+		#define ADD_IF_SELECTED(TestClass) \
+		if (testName == wxT(#TestClass) || testName == wxT("all")) \
+		{ \
+			/* suite->addTest(new GuiStarter(new TestClass())); */ \
+			/* suite->addTest(new GuiStarter( */ \
+			suite->addTest(new CppUnit::TestCaller<TestClass> \
+				( \
+					#TestClass, \
+					&TestClass::RunTest \
+				)); \
+			foundNamedTest = true; \
+		} \
+		errorMsg.Append(wxT(#TestClass)); \
+		errorMsg.Append(wxT(", "));
+		FOR_ALL_TESTS(ADD_IF_SELECTED);
+		#undef ADD_IF_SELECTED
+
+		errorMsg.Append(wxT("all."));
+		if (!foundNamedTest)
+		{
+			wxLogFatalError(errorMsg);
+			return 2;
+		}
 		
 		CppUnit::TestRunner runner;
-		runner.addTest(suite);
+		runner.addTest(new GuiStarter(suite));
 		
 		/*
 		runner.setOutputter(new CppUnit::CompilerOutputter(
@@ -141,9 +213,7 @@ int main(int argc, char **argv)
 		*/
 		
 		CppUnit::CompilerOutputter outputter(&result, std::cerr);
-		
 		runner.run(controller, "");
-		
 		outputter.write();
 
 		#ifdef WIN32

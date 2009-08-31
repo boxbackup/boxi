@@ -90,6 +90,25 @@ class TestSetUpDecorator : public CppUnit::TestSetUp
 	virtual ~TestSetUpDecorator() { }
 };
 
+class GuiStarter : public TestSetUpDecorator
+{
+	public:
+	GuiStarter(CppUnit::Test *pTest) 
+	: TestSetUpDecorator (pTest), mpResult(NULL) { }
+	
+	virtual void run(CppUnit::TestResult *pResult);
+	
+	virtual void RunAsDecorator();
+	
+	protected:
+	virtual void setUp();
+	virtual void tearDown() { }
+
+	private:
+	// Store result sent to run() for latter call from WxGuiTestApp::OnRun():
+	CppUnit::TestResult *mpResult;
+};
+
 #define CPPUNIT_ASSERT_AT(condition, line) \
 	CppUnit::Asserter::failIf(!(condition), \
 		CppUnit::Message("assertion failed", "Expression: " #condition), \
@@ -213,6 +232,7 @@ class GuiTestBase : public CppUnit::TestCase
 	GuiTestBase();
 	virtual ~GuiTestBase() { }
 	virtual void RunTest() = 0;
+	virtual void runTest () { RunTest(); }
 		
 	protected:
 	void ClickButtonWaitIdle  (wxWindow* pWindow);

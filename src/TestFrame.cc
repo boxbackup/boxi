@@ -42,15 +42,18 @@
 
 #include "Box.h"
 #include "MainFrame.h"
+#include "TestFrame.h"
+
+/*
 #include "SetupWizard.h"
 #include "SslConfig.h"
-#include "TestFrame.h"
 #include "TestBackup.h"
 #include "TestBackupConfig.h"
 #include "TestCompare.h"
 #include "TestRestore.h"
 #include "TestConfig.h"
 #include "TestWizard.h"
+*/
 
 #undef TLS_CLASS_IMPLEMENTATION_CPP
 
@@ -555,67 +558,54 @@ void GuiTestBase::tearDown()
 	mapAsserter.reset();
 }	
 
-class GuiStarter : public TestSetUpDecorator
+void GuiStarter::run(CppUnit::TestResult *pResult)
 {
-	public:
-	GuiStarter(CppUnit::Test *pTest) 
-	: TestSetUpDecorator (pTest), mpResult(NULL) { }
+	// Store result for latter call (direct or indirect) from
+	// WxGuiTestApp::OnRun() allowing us to make up for call of
+	// TestDecorator::run(result):
+	mpResult = pResult;
 	
-	virtual void run(CppUnit::TestResult *pResult)
-	{
-		// Store result for latter call (direct or indirect) from
-		// WxGuiTestApp::OnRun() allowing us to make up for call of
-		// TestDecorator::run(result):
-		mpResult = pResult;
-		
-		this->setUp ();
-		// Do NOT call TestDecorator::run(), because flow of control
-		// must be diverted to the wxApp instance, by the setUp() 
-		// method, which returns when the test(s) are finished
-		// TestDecorator::run (result);
-		this->tearDown ();
-	}
-	
-	virtual void RunAsDecorator()
-	{
-		wxASSERT(mpResult != NULL);
-		TestDecorator::run(mpResult);
-	}
-	
-	protected:
-	virtual void setUp()
-	{
-		// at this point, we don't have a global wxApp instance,
-		// but we need one for wx tests.
-		BoxiApp *pBoxiApp = new BoxiApp();
-		
-		// This is not really necessary, as done automatically by 
-		// code from the macro expansion; but it improves understanding:
-		wxApp::SetInstance(pBoxiApp);
+	this->setUp ();
+	// Do NOT call TestDecorator::run(), because flow of control
+	// must be diverted to the wxApp instance, by the setUp() 
+	// method, which returns when the test(s) are finished
+	// TestDecorator::run (result);
+	this->tearDown ();
+}
 
-		// Store this instance for running tests from WxGuiTestApp::OnRun():
-		pBoxiApp->SetTestRunner(this);
+void GuiStarter::RunAsDecorator()
+{
+	wxASSERT(mpResult != NULL);
+	TestDecorator::run(mpResult);
+}
 
-		WxGuiTestHelper::SetShowModalDialogsNonModalFlag(true);
-		
-		#if defined (WIN32)
-			#if !defined (__BUILTIN__)
-				::wxEntry (GetModuleHandle (NULL), NULL, NULL, SW_SHOWNORMAL);
-			#else
-				::wxEntry (GetModuleHandle (NULL), NULL, NULL, SW_SHOW);
-			#endif
+void GuiStarter::setUp()
+{
+	// at this point, we don't have a global wxApp instance,
+	// but we need one for wx tests.
+	BoxiApp *pBoxiApp = new BoxiApp();
+	
+	// This is not really necessary, as done automatically by 
+	// code from the macro expansion; but it improves understanding:
+	wxApp::SetInstance(pBoxiApp);
+
+	// Store this instance for running tests from WxGuiTestApp::OnRun():
+	pBoxiApp->SetTestRunner(this);
+
+	WxGuiTestHelper::SetShowModalDialogsNonModalFlag(true);
+	
+	#if defined (WIN32)
+		#if !defined (__BUILTIN__)
+			::wxEntry (GetModuleHandle (NULL), NULL, NULL, SW_SHOWNORMAL);
 		#else
-			::wxEntry (g_argc, g_argv);
+			::wxEntry (GetModuleHandle (NULL), NULL, NULL, SW_SHOW);
 		#endif
-		
-		WxGuiTestHelper::SetShowModalDialogsNonModalFlag(false);
-	}	
-	virtual void tearDown() { }
-
-	private:
-	// Store result sent to run() for latter call from WxGuiTestApp::OnRun():
-	CppUnit::TestResult *mpResult;
-};
+	#else
+		::wxEntry (g_argc, g_argv);
+	#endif
+	
+	WxGuiTestHelper::SetShowModalDialogsNonModalFlag(false);
+}	
 
 class GuiTestSuite : public CppUnit::TestFixture
 {
@@ -641,13 +631,15 @@ class GuiTestSuite : public CppUnit::TestFixture
                        		&name::RunTest \
 			) \
 		)
-		
+	
+		/*	
 		ADD_TEST(TestWizard);
 		ADD_TEST(TestBackupConfig);
 		ADD_TEST(TestBackup);
 		ADD_TEST(TestConfig);
 		ADD_TEST(TestRestore);
 		ADD_TEST(TestCompare);
+		*/
 		
 		#undef ADD_TEST
 	

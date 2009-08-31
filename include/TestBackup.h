@@ -27,22 +27,17 @@
 
 #include <wx/filename.h>
 
-#include <openssl/ssl.h>
+class TLSContext;
+class Configuration;
+class BackupStoreDirectory;
 
-#include "ServerTLS.h"
-#include "Daemon.h"
-#include "BackupStoreContext.h"
-#include "Configuration.h"
-#include "TLSContext.h"
 #include "BackupQueries.h"
-#include "BoxPortsAndFiles.h"
-
 #include "TestWithServer.h"
 
 class TestBackup : public TestWithServer
 {
 	public:
-	virtual void RunTest();
+	void RunTest();
 	static CppUnit::Test *suite();
 	
 	private:

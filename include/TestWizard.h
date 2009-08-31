@@ -25,11 +25,15 @@
 #ifndef _TESTWIZARD_H
 #define _TESTWIZARD_H
 
-#include <openssl/x509.h>
-
 #include <wx/filename.h>
 
 #include "TestFrame.h"
+
+class SetupWizard;
+
+#ifndef HEADER_OPENSSL_TYPES_H
+struct X509;
+#endif
 
 class TestWizard : public TestWithConfig
 {

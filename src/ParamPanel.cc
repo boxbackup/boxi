@@ -123,8 +123,7 @@ void BoundIntCtrl::Reload()
 	if (ValuePtr)
 	{
 		wxString ValueString;
-		ValueString.Printf(
-			wxString(mFormat.c_str(), wxConvBoxi), 
+		ValueString.Printf(wxString(mFormat.c_str(), wxConvBoxi), 
 			*ValuePtr);
 		int ValueInt = *ValuePtr;
 		SetValue(ValueString);
@@ -156,6 +155,52 @@ void BoundIntCtrl::OnChange()
 	} else {
 		tempValue = strtol(buf.data(), &endptr, 10);
 	}
+	
+	if (*endptr != '\0') {
+		return;
+	}
+
+	mrIntProp.Set(tempValue);
+}
+
+BEGIN_EVENT_TABLE(BoundHexCtrl, wxTextCtrl)
+	EVT_KILL_FOCUS(BoundHexCtrl::OnFocusLost)
+	EVT_TEXT(wxID_ANY, BoundHexCtrl::OnTextChanged)
+END_EVENT_TABLE()
+		
+void BoundHexCtrl::Reload()
+{
+	const int* ValuePtr = mrIntProp.GetPointer();
+	if (ValuePtr)
+	{
+		wxString ValueString;
+		ValueString.Printf(wxString(mFormat.c_str(), wxConvBoxi), 
+			*ValuePtr);
+		int ValueInt = *ValuePtr;
+		SetValue(ValueString);
+		// work around Windows bug
+		mrIntProp.Set(ValueInt);
+	}
+	else
+	{
+		SetValue(wxT(""));
+		mrIntProp.Clear();
+	}
+}
+
+void BoundHexCtrl::OnChange()
+{
+	wxString tempString = GetValue();
+	if (tempString.Length() == 0) {
+		mrIntProp.Clear();
+		return;
+	}
+	
+	unsigned int tempValue;
+	char *endptr;
+
+	wxCharBuffer buf = tempString.mb_str(wxConvBoxi);
+	tempValue = strtol(buf.data(), &endptr, 16);
 	
 	if (*endptr != '\0') {
 		return;

@@ -29,10 +29,14 @@
 
 #include "BackupStoreAccounts.h"
 #include "BackupStoreAccountDatabase.h"
+#include "BackupStoreContext.h"
+#include "BoxPortsAndFiles.h"
+#include "Daemon.h"
 #include "RaidFileController.h"
+#include "ServerConnection.h"
+#include "ServerTLS.h"
 
 #include "TestFrame.h"
-#include "ServerConnection.h"
 
 class TestBackupStoreDaemon
 : public ServerTLS<BOX_PORT_BBSTORED, 1, false>,
@@ -43,6 +47,7 @@ class TestBackupStoreDaemon
 	: mStateKnownCondition(mConditionLock),
 	  mStateListening(false), mStateDead(false)
 	{ }
+	virtual ~TestBackupStoreDaemon() { }
 	
 	virtual void Run();
 	virtual void Setup();

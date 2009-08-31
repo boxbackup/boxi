@@ -127,6 +127,33 @@ class BoundIntCtrl : public wxTextCtrl, public BoundCtrl {
 	DECLARE_EVENT_TABLE()
 };
 
+class BoundHexCtrl : public wxTextCtrl, public BoundCtrl {
+	private:
+	IntProperty& mrIntProp;
+	wxString mFormat;
+	
+	public:
+	BoundHexCtrl(wxWindow* parent, 
+		wxWindowID id,
+		IntProperty& rIntProp, const char * pFormat)
+	: wxTextCtrl(parent, id, wxT("")),
+	  BoundCtrl(rIntProp),
+	  mrIntProp(rIntProp),
+	  mFormat(pFormat, wxConvBoxi)
+	{
+		Reload();
+	}
+	void Reload();
+	void OnChange();
+	void OnFocusLost(wxFocusEvent& event) {
+		Reload();
+		event.Skip();
+	}
+	void OnTextChanged(wxCommandEvent& rEvent) { OnChange(); }
+
+	DECLARE_EVENT_TABLE()
+};
+
 class BoundBoolCtrl : public wxCheckBox, public BoundCtrl {
 	private:
 	BoolProperty& mrBoolProp;
