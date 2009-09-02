@@ -332,6 +332,14 @@ int BoxiApp::ShowFileDialog(TestFileDialog& rDialog)
 	
 	wxASSERT(mExpectingFileDialog);
 	mExpectingFileDialog = false;
+
+	if (mExpectingFileDialogPattern)
+	{
+		BOXI_ASSERT_EQUAL(mExpectedFileDialogPattern,
+			rDialog.GetWildcard());
+		mExpectingFileDialogPattern = false;
+	}
+
 	rDialog.SetPath(mExpectedFileDialogResult);
 
 	wxFileName fn(mExpectedFileDialogResult);
@@ -348,6 +356,15 @@ void BoxiApp::ExpectFileDialog(const wxString& rPathToReturn)
 	wxASSERT(!mExpectingFileDialog);
 	mExpectingFileDialog = true;
 	mExpectedFileDialogResult = rPathToReturn;
+}
+
+void BoxiApp::ExpectFileDialog(const wxString& Pattern,
+                const wxString& PathToReturn)
+{
+	ExpectFileDialog(PathToReturn);
+	wxASSERT(!mExpectingFileDialogPattern);
+	mExpectingFileDialogPattern = true;
+	mExpectedFileDialogPattern = Pattern;
 }
 
 int BoxiApp::ShowMessageBox

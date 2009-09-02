@@ -87,6 +87,8 @@ class BoxiApp : public wxApp
 	
 	int  ShowFileDialog  (TestFileDialog& rDialog);
 	void ExpectFileDialog(const wxString& rPathToReturn);
+	void ExpectFileDialog(const wxString& Pattern,
+		const wxString& PathToReturn);
 	bool ShowedFileDialog() { return !mExpectingFileDialog; }
 	
 	int ShowMessageBox(message_t messageId, const wxString& message,
@@ -106,7 +108,9 @@ class BoxiApp : public wxApp
 	private:
 	TestSetUpDecorator* mpTestRunner;
 	wxString  mExpectedFileDialogResult;
+	wxString  mExpectedFileDialogPattern;
 	bool      mExpectingFileDialog;
+	bool      mExpectingFileDialogPattern;
 	bool      mTesting;
 	message_t mExpectedMessageId;
 	int       mExpectedMessageResponse;
