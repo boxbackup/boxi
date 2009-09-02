@@ -29,7 +29,7 @@
 // #include "dmalloc.h"
 
 #define BOXI_VERSION "0.1.1 SVN r657"
-#define BOXI_VERSION_ADVANCED "SVN r657:666M"
+#define BOXI_VERSION_ADVANCED "SVN r657:673M"
 
 #include "wx/defs.h" // for wxID_HIGHEST
 
@@ -113,6 +113,7 @@ enum {
 	ID_Setup_Wizard_Account_Number_Ctrl,
 	ID_Setup_Wizard_New_File_Radio,
 	ID_Setup_Wizard_Existing_File_Radio,
+	ID_Setup_Wizard_File_Selector_Button,
 	ID_Setup_Wizard_File_Name_Text,
 	ID_Setup_Wizard_Certificate_File_Name_Text,
 	ID_Setup_Wizard_CA_File_Name_Text,
