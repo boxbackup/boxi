@@ -327,9 +327,9 @@ FileSavingPage::FileSavingPage(ClientConfig *pConfig, wxWizard* pParent,
 	wxString openDialogTitle;
 	openDialogTitle.Printf(wxT("Open %s File"), rFileDesc.c_str());
 	
-	mpFileSelButton = new FileSelButton(this, wxID_ANY, 
-		mpBoundCtrl, fileSpec, rFileNamePattern, 
-		openDialogTitle);
+	mpFileSelButton = new FileSelButton(this,
+		ID_Setup_Wizard_File_Selector_Button, mpBoundCtrl, fileSpec,
+		rFileNamePattern, openDialogTitle);
 	pLocationSizer->Add(mpFileSelButton, 0, wxGROW | wxLEFT, 8);
 	
 	Connect(wxID_ANY, wxEVT_WIZARD_PAGE_CHANGING,
@@ -666,12 +666,18 @@ class CertRequestPage : public FileSavingPage
 		}
 		
 		wxString oldSuffix = wxT("-key.pem");
+		wxString oldSuffix2 = wxT(".pem");
 		wxString baseName = mKeyFileName;
 		
 		if (mKeyFileName.Right(oldSuffix.Length()).IsSameAs(oldSuffix))
 		{
 			baseName = mKeyFileName.Left(mKeyFileName.Length() - 
 				oldSuffix.Length());
+		}
+		else if (mKeyFileName.Right(oldSuffix2.Length()).IsSameAs(oldSuffix2))
+		{
+			baseName = mKeyFileName.Left(mKeyFileName.Length() - 
+				oldSuffix2.Length());
 		}
 		
 		wxString reqFileName;
