@@ -718,6 +718,16 @@ void GuiTestBase::ClickRadioWaitEvent(wxWindow* pWindow)
 	pWindow->ProcessEvent(click);
 }
 
+void GuiTestBase::ClickRadioWaitEvent(wxWindowID ButtonID)
+{
+	wxRadioButton* pButton = wxDynamicCast
+	(
+		wxWindow::FindWindowById(ButtonID), wxRadioButton
+	);
+	BOXI_ASSERT(pButton);
+	ClickRadioWaitEvent(pButton);
+}
+
 void GuiTestBase::CloseWindow(wxWindow* pWindow)
 {
 	BOXI_ASSERT(pWindow);

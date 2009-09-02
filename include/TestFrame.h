@@ -240,6 +240,7 @@ class GuiTestBase : public CppUnit::TestCase
 	void ClickButtonWaitEvent (wxWindowID ButtonID);
 	void ClickButtonWaitEvent (wxButton* pButton);
 	void ClickRadioWaitEvent  (wxWindow* pButton);
+	void ClickRadioWaitEvent  (wxWindowID ButtonID);
 	void CloseWindow          (wxWindow* pWindow);
 	void CloseWindowWaitClosed(wxWindow* pWindow);
 	void ClickMenuItem(int id, wxWindow *frame)
