@@ -107,7 +107,9 @@ void BoolProperty::Reset()
 bool BoolProperty::GetInto(bool& dest) 
 { 
 	if (mConfigured) 
+	{
 		dest = mValue; 
+	}
 	return mConfigured; 
 }
 
@@ -256,14 +258,20 @@ void IntProperty::Revert()
 
 bool IntProperty::GetInto(wxString& rDest) 
 { 
-	if (!mConfigured) return false;
+	if (!mConfigured)
+	{
+		return false;
+	}
 	rDest.Printf(wxT("%d"), mValue);
 	return true;
 }
 
 bool IntProperty::GetInto(std::string& rDest) 
 { 
-	if (!mConfigured) return false;
+	if (!mConfigured)
+	{
+		return false;
+	}
 	wxString formatted;
 	formatted.Printf(wxT("%d"), mValue);
 	wxCharBuffer buf = formatted.mb_str(wxConvBoxi);
@@ -273,9 +281,11 @@ bool IntProperty::GetInto(std::string& rDest)
 
 bool IntProperty::GetInto(int& dest) 
 { 
-	if (mConfigured) 
+	if (mConfigured)
+	{
 		dest = mValue; 
-	return mConfigured; 
+	}
+	return mConfigured;
 }
 
 void IntProperty::SetClean() 
@@ -412,15 +422,19 @@ void StringProperty::Revert()
 
 bool StringProperty::GetInto(std::string& rDest) 
 {
-	if (mConfigured) 
-		rDest = mValue; 
+	if (mConfigured)
+	{
+		rDest = mValue;
+	}
 	return mConfigured;
 }
 
 bool StringProperty::GetInto(wxString& rDest) 
 {
-	if (mConfigured) 
-		rDest = wxString(mValue.c_str(), wxConvBoxi); 
+	if (mConfigured)
+	{
+		rDest = wxString(mValue.c_str(), wxConvBoxi);
+	}
 	return mConfigured;
 }
 
