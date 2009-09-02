@@ -63,7 +63,11 @@ class BoundStringCtrl : public wxTextCtrl, public BoundCtrl {
 	}
 	void Reload();
 	void OnChange();
-	void OnTextChanged(wxCommandEvent& rEvent) { OnChange(); }
+	void OnTextChanged(wxCommandEvent& Event)
+	{
+		OnChange();
+		Event.Skip(); // propagate to parent for setup wizard
+	}
 
 	DECLARE_EVENT_TABLE()
 };
@@ -247,7 +251,8 @@ class ParamPanel : public wxPanel {
 	BoundStringCtrl* AddParam(const wxChar * pLabel, StringProperty& rProp, 
 		int ID,	bool FileSel, bool DirSel, 
 		const wxChar* pFileSpec = NULL,
-		const wxChar* pFileExtDefault = NULL);
+		const wxChar* pFileExtDefault = NULL,
+		wxWindowID SelectorButtonID = wxID_ANY);
 	BoundIntCtrl*    AddParam(const wxChar * pLabel, IntProperty&    rProp, 
 		const char *format, int ID);
 	BoundBoolCtrl*   AddParam(const wxChar * pLabel, BoolProperty&   rProp, 

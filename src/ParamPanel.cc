@@ -28,7 +28,9 @@
 #include <wx/filename.h>
 #include <wx/image.h>
 
+#include "BoxiApp.h"
 #include "ParamPanel.h"
+#include "TestFileDialog.h"
 #include "main.h"
 
 BEGIN_EVENT_TABLE(BoundStringCtrl, wxTextCtrl)
@@ -268,24 +270,28 @@ void FileSelButton::OnClick(wxCommandEvent& event)
 	
 	wxFileName dir(file.GetPath());
 	dir.MakeAbsolute();
+
+	wxString fileSpec = mFileSpec;
 	
 	int flags = 0;
 	if (mFileMustExist)
 	{
 		flags = wxOPEN | wxFILE_MUST_EXIST;
+		fileSpec.Append(wxT("|All Files|*"));
 	}
 	else
 	{
 		flags = wxSAVE | wxOVERWRITE_PROMPT;
 	}
 	
-	wxString path = wxFileSelector(mFileSelectDialogTitle, 
-		dir.GetFullPath(), file.GetFullName(), wxT(""),
-		mFileSpec, flags, this);
+	TestFileDialog selector(this, mFileSelectDialogTitle, 
+		dir.GetFullPath(), file.GetFullName(), fileSpec, flags);
+	if (!wxGetApp().ShowFileDialog(selector))
+	{
+		return;
+	}
 
-	if (path.empty()) return;
-
-	mpTextCtrl->SetValue(path);
+	mpTextCtrl->SetValue(selector.GetPath());
 }
 
 BEGIN_EVENT_TABLE(DirSelButton, wxBitmapButton)
@@ -328,7 +334,8 @@ ParamPanel::ParamPanel
 
 BoundStringCtrl* ParamPanel::AddParam(const wxChar * pLabel, 
 	StringProperty& rProp, int ID, bool FileSel, bool DirSel, 
-	const wxChar* pFileSpec, const wxChar* pFileExtDefault)
+	const wxChar* pFileSpec, const wxChar* pFileExtDefault,
+	wxWindowID SelectorButtonID)
 {
 	mpSizer->Add(
 		new wxStaticText(this, -1, wxString(pLabel, wxConvBoxi), 
@@ -346,13 +353,14 @@ BoundStringCtrl* ParamPanel::AddParam(const wxChar * pLabel,
 
 	if (FileSel) 
 	{
-		FileSelButton* pButton = new FileSelButton(this, -1, pCtrl, 
-			pFileSpec, pFileExtDefault);
+		FileSelButton* pButton = new FileSelButton(this,
+			SelectorButtonID, pCtrl, pFileSpec, pFileExtDefault);
 		pMiniSizer->Add(pButton, 0, wxGROW | wxLEFT, 4);
 	}
 	else if (DirSel)
 	{
-		DirSelButton* pButton = new DirSelButton(this, -1, pCtrl);
+		DirSelButton* pButton = new DirSelButton(this, SelectorButtonID,
+			pCtrl);
 		pMiniSizer->Add(pButton, 0, wxGROW | wxLEFT, 4);
 	}
 	
