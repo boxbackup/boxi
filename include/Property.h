@@ -174,6 +174,14 @@ class StringProperty : public Property
 	bool Is(const wxString& expectedValue)
 	{ return mConfigured && expectedValue.IsSameAs(wxString(mValue.c_str(), wxConvBoxi)); }
 	std::string GetString() { return *GetPointer(); }
+	wxString GetWxString()
+	{
+		wxString tmp;
+		bool result = GetInto(tmp);
+		wxASSERT(result);
+		(void)result;
+		return tmp;
+	}
 	
 	private:
 	std::string mValue, mOriginalValue, mDefaultValue;
