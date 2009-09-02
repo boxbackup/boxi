@@ -457,6 +457,18 @@ void TestWizard::TestPrivateKeyPage()
 	
 	CPPUNIT_ASSERT(pFileName->GetValue().IsSameAs(wxEmptyString));
 
+	wxGetApp().ExpectFileDialog(wxT("Private Key (*-key.pem)|*-key.pem"),
+		wxT(""));
+	ClickButtonWaitEvent(ID_Setup_Wizard_File_Selector_Button);
+	BOXI_ASSERT(wxGetApp().ShowedFileDialog());
+
+	ClickRadioWaitEvent(ID_Setup_Wizard_Existing_File_Radio);
+	wxGetApp().ExpectFileDialog(wxT("Private Key (*-key.pem)|*-key.pem|"
+		"All Files|*"), wxT(""));
+	ClickButtonWaitEvent(ID_Setup_Wizard_File_Selector_Button);
+	BOXI_ASSERT(wxGetApp().ShowedFileDialog());
+
+	ClickRadioWaitEvent(pNewFileRadioButton);
 	wxFileName nonexistantfile(mTempDir.GetFullPath(), 
 		wxT("nonexistant"));
 	SetValueDefocusCheck(pFileName, nonexistantfile.GetFullPath());
@@ -653,16 +665,42 @@ void TestWizard::TestCertRequestPage()
 	SetValueDefocusCheck(pText, wxEmptyString);
 	CPPUNIT_ASSERT(!mpConfig->CertRequestFile.IsConfigured());
 	
-	// go back, forward again, check that the default 
-	// value is inserted
+	// go back, forward again, check that the default value is inserted
 	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
 
+	// assign a non-standard private key file ending in .pem, check that
+	// the CSR filename is generated correctly.
+	wxString oldPrivateKeyFile = mpConfig->PrivateKeyFile.GetWxString();
+	mpConfig->PrivateKeyFile.Set(wxT("/foobar/29a.pem"));
 	ClickBackward();
 	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
-	
 	ClickForward();
 	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
-	
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
+	BOXI_ASSERT_EQUAL(wxString(wxT("/foobar/29a-csr.pem")), tmp);
+
+	// assign a custom value, check that going back and forward does not
+	// clear it
+	SetValueDefocusCheck(pText, wxT("/whee/xxx"));
+	ClickBackward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
+	ClickForward();
+	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
+	BOXI_ASSERT_EQUAL(wxString(wxT("/whee/xxx")),
+		mpConfig->CertRequestFile.GetWxString());
+	BOXI_ASSERT_EQUAL(wxString(wxT("/whee/xxx")), pText->GetValue());
+
+	// reset private key file, clear cert request file, check that
+	// going back and forward resets the cert request file path to
+	// the default value
+	mpConfig->PrivateKeyFile.Set(oldPrivateKeyFile);
+	mpConfig->CertRequestFile.Clear();
+	ClickBackward();
+	BOXI_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
+	ClickForward();
+	BOXI_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
 	CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
 	CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
 	CPPUNIT_ASSERT(tmp.IsSameAs(mClientCsrFileName.GetFullPath()));
