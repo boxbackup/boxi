@@ -246,7 +246,7 @@ void TestRestore::RunTest()
 		mpRestoreTree->GetItemText(mLocationId));
 	mpRestoreTree->Expand(mLocationId);
 	
-	wxChar* labels[] =
+	const wxChar* labels[] =
 	{
 		wxT("anotehr"),
 		wxT("dir23"),
@@ -266,7 +266,7 @@ void TestRestore::RunTest()
 		wxT("xx_not_this_dir_22"),
 		NULL
 	};
-	wxChar** pLabel = labels;
+	const wxChar** pLabel = labels;
 	
 	// select a single file to restore
 	for (wxTreeItemId entry = mpRestoreTree->GetFirstChild(mLocationId, cookie);
