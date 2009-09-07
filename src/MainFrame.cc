@@ -31,6 +31,8 @@
 #include "ServerConnection.h"
 #undef TLS_CLASS_IMPLEMENTATION_CPP
 
+#include "Utils.h" // box backup header for GetBoxVersion()
+
 #include "BoxiApp.h"
 #include "GeneralPanel.h"
 #include "MainFrame.h"
