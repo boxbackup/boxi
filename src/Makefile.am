@@ -73,6 +73,10 @@ boxi_SOURCES = \
 	CompareProgressPanel.cc \
 	ProgressPanel.cc
 
+if WINDOWS
+boxi_SOURCES += boxi.rc
+endif
+
 boxi_LDFLAGS = 
 
 boxi_LDADD = \
@@ -105,8 +109,8 @@ boxi_LDADD = \
 # override .c.o rule for prettier output.
 # adapted from /usr/share/automake-1.9/am/depend2.am
 
-HIDE_ECHO = $(if $(V),,@ echo $(1) $(2) &&)
-CXXLINK = $(LIBTOOL) $(if $(V),,--silent) --tag=CXX --mode=link $(CXXLD) \
+HIDE_ECHO = $(if $V,,@ echo $(1) $(2) &&)
+CXXLINK = $(LIBTOOL) $(if $V,,--silent) --tag=CXX --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 .cc.o:
@@ -114,6 +118,10 @@ CXXLINK = $(LIBTOOL) $(if $(V),,--silent) --tag=CXX --mode=link $(CXXLD) \
 	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
 	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Po"; \
 	else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+
+.rc.o:
+	$(call HIDE_ECHO,"  [WINDRES] ",$<) \
+	$(RC) $(WX_CXXFLAGS) -o $@ $<
 
 boxi$(EXEEXT): $(boxi_OBJECTS) $(boxi_DEPENDENCIES)
 	@rm -f boxi$(EXEEXT)

@@ -2,7 +2,7 @@
  *            main.h
  *
  *  Sun Feb 27 21:27:17 2005
- *  Copyright 2005-2008 Chris Wilson
+ *  Copyright 2005-2009 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -24,12 +24,6 @@
  
 #ifndef _MAIN_H
 #define _MAIN_H
-
-// #include <stdlib.h>
-// #include "dmalloc.h"
-
-#define BOXI_VERSION "0.1.1 SVN r657"
-#define BOXI_VERSION_ADVANCED "SVN r657:673M"
 
 #include "wx/defs.h" // for wxID_HIGHEST
 

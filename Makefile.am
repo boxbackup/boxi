@@ -3,7 +3,7 @@
 ## If you don't want it to overwrite it,
 ## 	Please disable it in the Anjuta project configuration
 
-SUBDIRS = boxbackup wxchart include src  wxchart
+SUBDIRS = boxbackup include src po intl
 
 boxidocdir = ${prefix}/doc/boxi
 boxidoc_DATA = \

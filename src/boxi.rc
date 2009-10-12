@@ -1,0 +1,28 @@
+boxi ICON boxi.ico
+
+#include "../include/version.h"
+
+1 VERSIONINFO
+FILEVERSION     BOXI_VERSION_COMMAS
+PRODUCTVERSION  BOXI_VERSION_COMMAS
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "CompanyName", "Qwirx"
+      VALUE "FileDescription", "Boxi"
+      VALUE "FileVersion", BOXI_VERSION
+      VALUE "InternalName", "Boxi"
+      VALUE "LegalCopyright", "2005-2009 Qwirx"
+      VALUE "OriginalFilename", "boxi.exe"
+      VALUE "ProductName", "Boxi"
+      VALUE "ProductVersion", BOXI_VERSION
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END
+

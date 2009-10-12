@@ -6,7 +6,7 @@ touch install-sh
 AC_CANONICAL_SYSTEM
 test -s install-sh || rm install-sh
 
-AM_INIT_AUTOMAKE(boxi, 0.1.0)
+AM_INIT_AUTOMAKE([-Wno-portability])
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
@@ -33,12 +33,21 @@ if test "x$GXX" = "xyes"; then
 
   # Use -rdynamic if we have gcc, but not mingw. This is needed for backtrace
   case $target_os in
-    mingw*) ;;
+    mingw*)
+	WINDOWS=true
+	;;
     *)
 	dnl AC_SUBST([LDADD_RDYNAMIC], ['-rdynamic'])
 	LDFLAGS="$LDFLAGS -rdynamic"
+	WINDOWS=false
 	;;
   esac
+fi
+
+AM_CONDITIONAL([WINDOWS], [test "$WINDOWS" = "true"])
+
+if test "$WINDOWS" = "true"; then
+	LT_PROG_RC
 fi
 
 dnl GETTEXT_PACKAGE=boxi

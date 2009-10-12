@@ -37,6 +37,7 @@
 #include "GeneralPanel.h"
 #include "MainFrame.h"
 #include "TestFileDialog.h"
+#include "version.h"
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_MENU(ID_File_New,     MainFrame::OnFileNew)
