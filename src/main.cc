@@ -54,6 +54,7 @@
 #include "TestFrame.h"
 #include "TestFileDialog.h"
 #include "WxGuiTestHelper.h"
+#include "boxi.xpm"
 
 #define FOR_ALL_TESTS(x) \
 	x(TestWizard); \
@@ -272,6 +273,9 @@ bool BoxiApp::OnInit()
 			wxString(argv[0]),
 			wxPoint(50, 50), wxSize(600, 500)
 		);
+		frame->SetIcon(wxIcon(boxi_xpm));
+//		Should work on resource file, but does not...
+//		frame->SetIcon(wxICON(WXICON_AAA));
 		frame->Show(TRUE);
 	}
 	
