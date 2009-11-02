@@ -2,7 +2,7 @@
  *            ComparePanel.cc
  *
  *  Tue Mar  1 00:24:16 2005
- *  Copyright 2005-2006 Chris Wilson
+ *  Copyright 2005-2009 Chris Wilson
  *  Email chris-boxisource@qwirx.com
  ****************************************************************************/
 
@@ -33,6 +33,7 @@
 
 #include "ComparePanel.h"
 #include "CompareProgressPanel.h"
+#include "CompareResultsPanel.h"
 #include "MainFrame.h"
 #include "ParamPanel.h"
 
@@ -65,6 +66,12 @@ ComparePanel::ComparePanel
 		mpMainFrame->GetConnection(), pParent);
 	mpProgressPanel->Hide();
 
+	/*
+	mpResultsPanel = new CompareResultsPanel(pConfig, 
+		mpMainFrame->GetConnection(), pParent);
+	mpResultsPanel->Hide();
+	*/
+	
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 
 	wxStaticBoxSizer* pSourceBox = new wxStaticBoxSizer(wxVERTICAL, this, 
@@ -224,6 +231,7 @@ void ComparePanel::AddToNotebook(wxNotebook* pNotebook)
 	pNotebook->AddPage(this, wxT("Compare"));
 	// pNotebook->AddPage(mpFilesPanel, wxT("Compare Files"));
 	pNotebook->AddPage(mpProgressPanel, wxT("Compare Progress"));
+	// pNotebook->AddPage(mpResultsPanel, wxT("Compare Results"));
 }
 
 /*

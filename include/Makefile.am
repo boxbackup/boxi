@@ -48,5 +48,6 @@ boxi_include_DATA = \
 	Common.h \
 	CompareFilesPanel.h \
 	Database.h \
-	CompareProgressPanel.h
+	CompareProgressPanel.h \
+	CompareResultsPanel.h 
 

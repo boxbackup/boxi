@@ -25,6 +25,12 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
+// #include <stdlib.h>
+// #include "dmalloc.h"
+
+#define BOXI_VERSION "0.1.1 SVN r682"
+#define BOXI_VERSION_ADVANCED "SVN r682M"
+
 #include "wx/defs.h" // for wxID_HIGHEST
 
 enum {

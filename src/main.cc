@@ -49,6 +49,10 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 
+#ifdef __WXMAC__
+#include <ApplicationServices/ApplicationServices.h>
+#endif
+
 #include "main.h"
 #include "MainFrame.h"
 #include "TestFrame.h"
@@ -238,6 +242,15 @@ bool BoxiApp::OnInit()
 {
 	// Initialise global SSL system configuration/state
 	SSLLib::Initialise();
+
+	#ifdef __WXMAC__
+	// This lets a stdio app become a GUI app. Otherwise, you won't get
+	// GUI events from the system and other things will fail to work.
+	// Putting the app in an application bundle does the same thing.
+	ProcessSerialNumber PSN;
+	GetCurrentProcess(&PSN);
+	TransformProcessType(&PSN,kProcessTransformToForegroundApplication);
+	#endif
 
 	wxInitAllImageHandlers();
 	

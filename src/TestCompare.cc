@@ -137,6 +137,7 @@ void TestCompare::AssertCompareOK(int files, const std::string& rBytes)
 	
 	ClickButtonWaitEvent(ID_Compare_Panel, ID_Function_Start_Button);
 	BOXI_ASSERT(mpProgressPanel->IsShown());
+	BOXI_ASSERT(mpMainFrame->IsTopPanel(mpProgressPanel));
 	
 	BOXI_ASSERT(mpErrorList->GetCount() >= 1);
 	BOXI_ASSERT_EQUAL(wxString(_("Compare Finished")),

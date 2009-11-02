@@ -71,7 +71,8 @@ boxi_SOURCES = \
 	TestBackupConfig2.cc \
 	CompareFilesPanel.cc \
 	CompareProgressPanel.cc \
-	ProgressPanel.cc
+	ProgressPanel.cc \
+	CompareResultsPanel.cc
 
 if WINDOWS
 boxi_SOURCES += boxi.rc
@@ -128,4 +129,15 @@ boxi$(EXEEXT): $(boxi_OBJECTS) $(boxi_DEPENDENCIES)
 	$(call HIDE_ECHO,"  [LINK]    ",$@) \
 	$(CXXLINK) $(boxi_LDFLAGS) $(boxi_OBJECTS) $(boxi_LDADD) $(LIBS)
 
-
+Boxi.app: ../contrib/osx/Info.plist ../contrib/osx/version.plist ../contrib/osx/InfoPlist.strings ../contrib/osx/BoxiMacIcons.icns boxi
+	-mkdir Boxi.app
+	-mkdir Boxi.app/Contents
+	-mkdir Boxi.app/Contents/MacOS
+	-mkdir Boxi.app/Contents/Resources
+	-mkdir Boxi.app/Contents/Resources/English.lproj
+	cp ../contrib/osx/Info.plist Boxi.app/Contents/
+	cp ../contrib/osx/version.plist Boxi.app/Contents/
+	cp ../contrib/osx/InfoPlist.strings Boxi.app/Contents/Resources/English.lproj/
+	cp ../contrib/osx/BoxiMacIcons.icns Boxi.app/Contents/Resources/
+	cp [bB]oxi Boxi.app/Contents/MacOS/Boxi
+	chmod +x Boxi.app/Contents/MacOS/Boxi

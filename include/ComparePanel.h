@@ -30,6 +30,7 @@
 #include "FunctionPanel.h"
 
 class CompareProgressPanel;
+class CompareResultsPanel;
 class ServerConnection;
 
 class wxChoice;
@@ -79,6 +80,7 @@ class ComparePanel : public wxPanel, public ConfigChangeListener
 	
 	/*CompareFilesPanel* mpFilesPanel;*/
 	CompareProgressPanel* mpProgressPanel;
+	CompareResultsPanel* mpResultsPanel;
 
 	void Update();
 	void OnClickStartButton(wxCommandEvent& rEvent);
