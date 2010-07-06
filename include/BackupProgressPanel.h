@@ -253,6 +253,19 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 		wxYield();
 	}
 
+	virtual void NotifyFileUploadingAttributes(
+		const BackupClientDirectoryRecord* pDirRecord,
+		const std::string& rLocalPath)
+	{
+		wxString msg;
+		msg.Printf(wxT("Backing up file '%s' (uploading new "
+			"attributes)"),
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
+		SetCurrentText(msg);
+		Layout();
+		wxYield();
+	}
+
 	virtual void NotifyFileUploaded(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
