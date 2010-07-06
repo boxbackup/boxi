@@ -105,7 +105,8 @@ boxi_LDADD = \
 	../boxbackup/release/lib/crypto/crypto.a \
 	../boxbackup/release/lib/compress/compress.a \
 	../boxbackup/release/lib/common/common.a \
-	../boxbackup/release/lib/win32/win32.a -lz
+	../boxbackup/release/lib/win32/win32.a \
+	../boxbackup/qdbm/libqdbm.a -lz
 
 # override .c.o rule for prettier output.
 # adapted from /usr/share/automake-1.9/am/depend2.am
