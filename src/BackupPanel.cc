@@ -99,7 +99,7 @@ void BackupPanel::Update()
 
 	int account;
 	if (mpConfig->AccountNumber.GetInto(account))
-		tmp.Printf(wxT("Account %d"), account);
+		tmp.Printf(wxT("Account 0x%08x"), account);
 	else
 		tmp = wxT("Unknown account number");
 	label.Append(tmp);
