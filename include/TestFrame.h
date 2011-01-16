@@ -136,9 +136,10 @@ class GuiStarter : public TestSetUpDecorator
 #if wxUSE_STACKWALKER
 #define BOXI_ASSERT(condition) \
 { \
+	bool _value = condition; \
 	wxString msgOut = _("Assertion failed: " #condition "\n"); \
-	if (!(condition)) msgOut.Append(StackWalker::GetStackTrace()); \
-	CPPUNIT_ASSERT_MESSAGE_WX(msgOut, condition); \
+	if (!_value) msgOut.Append(StackWalker::GetStackTrace()); \
+	CPPUNIT_ASSERT_MESSAGE_WX(msgOut, _value); \
 }
 
 #define BOXI_ASSERT_EQUAL(expected, actual) \
