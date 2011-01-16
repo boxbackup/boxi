@@ -214,6 +214,26 @@ class CompareProgressPanel : public ProgressPanel
 		// mUncheckedFiles ++;
 	}
 
+	virtual void NotifyLocalFileReadFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes,
+		std::exception& rException)
+	{
+		wxString msg;
+		msg.Printf(_("Failed to download remote file '%s': %s"),
+			wxString(rRemotePath.c_str(), wxConvBoxi).c_str(),
+			wxString(rException.what(), wxConvBoxi).c_str());
+		mpErrorList->Append(msg);
+	}
+
+	virtual void NotifyLocalFileReadFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes)
+	{
+		wxString msg;
+		msg.Printf(_("Failed to download remote file '%s'"),
+			wxString(rRemotePath.c_str(), wxConvBoxi).c_str());
+		mpErrorList->Append(msg);
+	}
+
 	virtual void NotifyExcludedFile(const std::string& rLocalPath,
 		const std::string& rRemotePath)
 	{

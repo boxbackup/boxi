@@ -136,6 +136,21 @@ class BoxiCompareParamsShim : public BoxBackupCompareParams,
 			NumBytes);
 	}
 
+	virtual void NotifyLocalFileReadFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes,
+		std::exception& rException)
+	{
+		mpProgress->NotifyLocalFileReadFailed(rLocalPath, rRemotePath,
+			NumBytes, rException);
+	}
+
+	virtual void NotifyLocalFileReadFailed(const std::string& rLocalPath,
+		const std::string& rRemotePath, int64_t NumBytes)
+	{
+		mpProgress->NotifyLocalFileReadFailed(rLocalPath, rRemotePath,
+			NumBytes);
+	}
+
 	virtual void NotifyExcludedFile(const std::string& rLocalPath,
 		const std::string& rRemotePath)
 	{ mpProgress->NotifyExcludedFile(rLocalPath, rRemotePath); }
