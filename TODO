@@ -8,10 +8,6 @@ is new.
 =over
 
 =item *
-Fix the account number encoding. In the certificate it is in hex,
-but without leading zeroes.
-
-=item *
 Implement the Compare function.
 
 Allows users to determine whether their files have been backed up,
@@ -23,11 +19,6 @@ Display properties of server objects
 When a file or directory on the server is selected, we should show
 everything we know about it, including last modification date, other versions,
 Box Backup flags, size in blocks and bytes, etc.
-
-=item *
-Show progress dialog while restoring files
-
-Show in a separate window, allow restore operations to be cancelled.
 
 =item *
 Prompt to save changes in configuration
