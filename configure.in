@@ -238,6 +238,5 @@ po/Makefile.in
 include/Makefile
 intl/Makefile
 src/Makefile
-wxchart/Makefile
 ])
 
