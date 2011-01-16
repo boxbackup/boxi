@@ -269,7 +269,7 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	virtual void NotifyFileUploaded(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
-		int64_t FileSize) 
+		int64_t FileSize, int64_t UploadedSize) 
 	{
 		/*
 		mNumFilesUploaded++;
