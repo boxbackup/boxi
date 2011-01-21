@@ -146,7 +146,7 @@ class GuiStarter : public TestSetUpDecorator
 { \
 	wxString msgOut = _("Assertion failed: " #expected " == " \
 		#actual "\n"); \
-	if ((expected) != (actual)) msgOut.Append(StackWalker::GetStackTrace()); \
+	msgOut.Append(StackWalker::GetStackTrace()); \
 	CPPUNIT_ASSERT_EQUAL_MESSAGE(wxCharBuffer(msgOut.mb_str()).data(), \
 		expected, actual); \
 }
