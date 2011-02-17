@@ -14,7 +14,7 @@ BEGIN
       VALUE "FileDescription", "Boxi"
       VALUE "FileVersion", BOXI_VERSION
       VALUE "InternalName", "Boxi"
-      VALUE "LegalCopyright", "2005-2009 Qwirx"
+      VALUE "LegalCopyright", "2005-2011 Qwirx"
       VALUE "OriginalFilename", "boxi.exe"
       VALUE "ProductName", "Boxi"
       VALUE "ProductVersion", BOXI_VERSION
