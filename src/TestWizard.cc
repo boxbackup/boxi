@@ -62,7 +62,7 @@ static int numCheckedTest = 0;
 static wxString MySslProgressCallbackMessage(int n)
 {
 	wxString msg;
-	msg.Printf(wxT("Generating a fake server private key (2048 bits).\n"
+	msg.Printf(_("Generating a fake server private key (2048 bits).\n"
 			"This may take a minute.\n\n"
 			"(%d potential primes checked)"), n);
 	return msg;
@@ -365,30 +365,30 @@ void TestWizard::TestAccountPage()
 	CPPUNIT_ASSERT(mpConfig);
 	CPPUNIT_ASSERT(!mpConfig->StoreHostname.IsConfigured());
 	
-	SetValueDefocusCheck(pStoreHost, wxT("no-such-host"));
+	SetValueDefocusCheck(pStoreHost, _("no-such-host"));
 	// calling SetValue should configure the property by itself
 	CPPUNIT_ASSERT(mpConfig->StoreHostname.IsConfigured());
 	CheckForwardError(BM_SETUP_WIZARD_BAD_STORE_HOST);
 	CPPUNIT_ASSERT(mpConfig->StoreHostname.IsConfigured());
-	CPPUNIT_ASSERT_EQUAL(wxString(wxT("no-such-host")), 
+	CPPUNIT_ASSERT_EQUAL(wxString(_("no-such-host")), 
 		pStoreHost->GetValue());
 	
-	SetValueDefocusCheck(pStoreHost, wxT("localhost"));
+	SetValueDefocusCheck(pStoreHost, _("localhost"));
 	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
-	CPPUNIT_ASSERT_EQUAL(wxString(wxT("localhost")), 
+	CPPUNIT_ASSERT_EQUAL(wxString(_("localhost")), 
 		pStoreHost->GetValue());
 	
-	SetValueDefocusCheck(pAccountNo, wxT("localhost")); // invalid number
+	SetValueDefocusCheck(pAccountNo, _("localhost")); // invalid number
 	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
 	CPPUNIT_ASSERT(!mpConfig->AccountNumber.IsConfigured());
-	CPPUNIT_ASSERT_EQUAL(wxString(wxT("localhost")), 
+	CPPUNIT_ASSERT_EQUAL(wxString(_("localhost")), 
 		pAccountNo->GetValue());
 	
-	SetValueAndDefocus(pAccountNo, wxT("-1"));
+	SetValueAndDefocus(pAccountNo, _("-1"));
 	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
 	CPPUNIT_ASSERT(!mpConfig->AccountNumber.IsConfigured());
 
-	SetValueDefocusCheck(pAccountNo, wxT("ffffffff"));
+	SetValueDefocusCheck(pAccountNo, _("ffffffff"));
 	ClickForward();
 	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
 	unsigned int AccountNumber;
@@ -397,51 +397,51 @@ void TestWizard::TestAccountPage()
 	ClickBackward();
 	CPPUNIT_ASSERT_EQUAL(BWP_ACCOUNT, mpWizard->GetCurrentPageId());
 
-	SetValueDefocusCheck(pAccountNo, wxT("12ag"));
+	SetValueDefocusCheck(pAccountNo, _("12ag"));
 	CheckForwardError(BM_SETUP_WIZARD_BAD_ACCOUNT_NO);
 	CPPUNIT_ASSERT(!mpConfig->AccountNumber.IsConfigured());
-	CPPUNIT_ASSERT_EQUAL(wxString(wxT("12ag")), pAccountNo->GetValue());
+	CPPUNIT_ASSERT_EQUAL(wxString(_("12ag")), pAccountNo->GetValue());
 
-	SetValueDefocusCheck(pAccountNo, wxT("12345678"));
+	SetValueDefocusCheck(pAccountNo, _("12345678"));
 	ClickForward();
 	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
 	CPPUNIT_ASSERT(mpConfig->AccountNumber.GetInto((int&)AccountNumber));
 	CPPUNIT_ASSERT_EQUAL(0x12345678, AccountNumber);
-	CPPUNIT_ASSERT_EQUAL(wxString(wxT("12345678")), 
+	CPPUNIT_ASSERT_EQUAL(wxString(_("12345678")), 
 		pAccountNo->GetValue());
 
 	ClickBackward();
 	CPPUNIT_ASSERT_EQUAL(BWP_ACCOUNT, mpWizard->GetCurrentPageId());
 	
-	SetValueDefocusCheck(pAccountNo, wxT("12ab"));
+	SetValueDefocusCheck(pAccountNo, _("12ab"));
 	ClickForward();
 	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
 	
 	wxString StoredHostname;
 	CPPUNIT_ASSERT(mpConfig->StoreHostname.GetInto(StoredHostname));
-	CPPUNIT_ASSERT(StoredHostname.IsSameAs(wxT("localhost")));
-	CPPUNIT_ASSERT_EQUAL(wxString(wxT("localhost")), 
+	CPPUNIT_ASSERT(StoredHostname.IsSameAs(_("localhost")));
+	CPPUNIT_ASSERT_EQUAL(wxString(_("localhost")), 
 		pStoreHost->GetValue());
 	
 	CPPUNIT_ASSERT(mpConfig->AccountNumber.GetInto((int&)AccountNumber));
 	CPPUNIT_ASSERT_EQUAL(0x12ab, AccountNumber);
-	CPPUNIT_ASSERT_EQUAL(wxString(wxT("12ab")), pAccountNo->GetValue());
+	CPPUNIT_ASSERT_EQUAL(wxString(_("12ab")), pAccountNo->GetValue());
 }
 
 void TestWizard::TestPrivateKeyPage()
 {
 	CPPUNIT_ASSERT_EQUAL(BWP_PRIVATE_KEY, mpWizard->GetCurrentPageId());
 
-	mConfigTestDir.AssignTempFileName(wxT("boxi-configTestDir-"));
+	mConfigTestDir.AssignTempFileName(_("boxi-configTestDir-"));
 	CPPUNIT_ASSERT(wxRemoveFile(mConfigTestDir.GetFullPath()));
-	mConfigTestDir = wxFileName(mConfigTestDir.GetFullPath(), _(""));
+	mConfigTestDir = wxFileName(mConfigTestDir.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mConfigTestDir.Mkdir(wxS_IRUSR | wxS_IWUSR | wxS_IXUSR));
 	
-	mTempDir.AssignTempFileName(wxT("boxi-tempdir-"));
+	mTempDir.AssignTempFileName(_("boxi-tempdir-"));
 	CPPUNIT_ASSERT(wxRemoveFile(mTempDir.GetFullPath()));
 	
 	mPrivateKeyFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("12ab-key.pem"));
+		_("12ab-key.pem"));
 
 	wxRadioButton* pNewFileRadioButton = 
 		(wxRadioButton*)mpWizard->GetCurrentPage()->FindWindow(
@@ -457,20 +457,20 @@ void TestWizard::TestPrivateKeyPage()
 	
 	CPPUNIT_ASSERT(pFileName->GetValue().IsSameAs(wxEmptyString));
 
-	wxGetApp().ExpectFileDialog(wxT("Private Key (*-key.pem)|*-key.pem"),
+	wxGetApp().ExpectFileDialog(_("Private Key (*-key.pem)|*-key.pem"),
 		wxT(""));
 	ClickButtonWaitEvent(ID_Setup_Wizard_File_Selector_Button);
 	BOXI_ASSERT(wxGetApp().ShowedFileDialog());
 
 	ClickRadioWaitEvent(ID_Setup_Wizard_Existing_File_Radio);
-	wxGetApp().ExpectFileDialog(wxT("Private Key (*-key.pem)|*-key.pem|"
+	wxGetApp().ExpectFileDialog(_("Private Key (*-key.pem)|*-key.pem|"
 		"All Files|*"), wxT(""));
 	ClickButtonWaitEvent(ID_Setup_Wizard_File_Selector_Button);
 	BOXI_ASSERT(wxGetApp().ShowedFileDialog());
 
 	ClickRadioWaitEvent(pNewFileRadioButton);
 	wxFileName nonexistantfile(mTempDir.GetFullPath(), 
-		wxT("nonexistant"));
+		_("nonexistant"));
 	SetValueDefocusCheck(pFileName, nonexistantfile.GetFullPath());
 
 	// filename refers to a path that doesn't exist
@@ -502,7 +502,7 @@ void TestWizard::TestPrivateKeyPage()
 	// create a new file in the directory, make it read only, 
 	// and change the filename to refer to it. 
 	// expect BM_SETUP_WIZARD_FILE_OVERWRITE
-	wxFileName existingfile(mTempDir.GetFullPath(), wxT("existing"));
+	wxFileName existingfile(mTempDir.GetFullPath(), _("existing"));
 	wxString   existingpath = existingfile.GetFullPath();
 	wxFile     existing;
 
@@ -563,14 +563,14 @@ void TestWizard::TestPrivateKeyPage()
 	// set the path to a bogus path, 
 	// expect BM_SETUP_WIZARD_FILE_NOT_FOUND
 	wxString boguspath = nonexistantfile.GetFullPath();
-	boguspath.Append(wxT("/foo/bar"));
+	boguspath.Append(_("/foo/bar"));
 	SetValueDefocusCheck(pFileName, boguspath);
 	CheckForwardError(BM_SETUP_WIZARD_FILE_NOT_FOUND);
 	
 	// create another file, make it unreadable,
 	// expect BM_SETUP_WIZARD_FILE_NOT_READABLE
 	wxString anotherfilename = existingpath;
-	anotherfilename.Append(wxT("2"));
+	anotherfilename.Append(_("2"));
 	wxFile anotherfile;
 	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, false, 0));
 	
@@ -621,7 +621,7 @@ void TestWizard::TestCertRequestPage()
 	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
 
 	mClientCsrFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("12ab-csr.pem"));
+		_("12ab-csr.pem"));
 
 	// ask for a new certificate request to be generated
 	wxRadioButton* pNewFileRadioButton = 
@@ -644,7 +644,7 @@ void TestWizard::TestCertRequestPage()
 	
 	// set the certificate file manually, 
 	// check that it is not overwritten.
-	wxFileName dummyName(mTempDir.GetFullPath(), wxT("nosuchfile"));
+	wxFileName dummyName(mTempDir.GetFullPath(), _("nosuchfile"));
 	mpConfig->CertRequestFile.Set(dummyName.GetFullPath());
 	
 	CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
@@ -671,26 +671,26 @@ void TestWizard::TestCertRequestPage()
 	// assign a non-standard private key file ending in .pem, check that
 	// the CSR filename is generated correctly.
 	wxString oldPrivateKeyFile = mpConfig->PrivateKeyFile.GetWxString();
-	mpConfig->PrivateKeyFile.Set(wxT("/foobar/29a.pem"));
+	mpConfig->PrivateKeyFile.Set(_("/foobar/29a.pem"));
 	ClickBackward();
 	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
 	ClickForward();
 	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
 	CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
 	CPPUNIT_ASSERT(mpConfig->CertRequestFile.GetInto(tmp));
-	BOXI_ASSERT_EQUAL(wxString(wxT("/foobar/29a-csr.pem")), tmp);
+	BOXI_ASSERT_EQUAL(wxString(_("/foobar/29a-csr.pem")), tmp);
 
 	// assign a custom value, check that going back and forward does not
 	// clear it
-	SetValueDefocusCheck(pText, wxT("/whee/xxx"));
+	SetValueDefocusCheck(pText, _("/whee/xxx"));
 	ClickBackward();
 	CPPUNIT_ASSERT_EQUAL(BWP_CERT_EXISTS, mpWizard->GetCurrentPageId());
 	ClickForward();
 	CPPUNIT_ASSERT_EQUAL(BWP_CERT_REQUEST, mpWizard->GetCurrentPageId());
 	CPPUNIT_ASSERT(mpConfig->CertRequestFile.IsConfigured());
-	BOXI_ASSERT_EQUAL(wxString(wxT("/whee/xxx")),
+	BOXI_ASSERT_EQUAL(wxString(_("/whee/xxx")),
 		mpConfig->CertRequestFile.GetWxString());
-	BOXI_ASSERT_EQUAL(wxString(wxT("/whee/xxx")), pText->GetValue());
+	BOXI_ASSERT_EQUAL(wxString(_("/whee/xxx")), pText->GetValue());
 
 	// reset private key file, clear cert request file, check that
 	// going back and forward resets the cert request file path to
@@ -743,25 +743,25 @@ void TestWizard::SignCertificate()
 	// fake a server signing of this private keyfile
 
 	mClientCertFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("12ab-cert.pem"));
+		_("12ab-cert.pem"));
 	CPPUNIT_ASSERT(!mClientCertFileName.FileExists());
 	
 	mCaFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("client-ca-cert.pem"));
+		_("client-ca-cert.pem"));
 	CPPUNIT_ASSERT(!mCaFileName.FileExists());
 	
 	mClientBadSigCertFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("12ab-cert-badsig.pem"));
+		_("12ab-cert-badsig.pem"));
 	CPPUNIT_ASSERT(!mClientBadSigCertFileName.FileExists());
 	
 	mClientSelfSigCertFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("12ab-cert-selfsig.pem"));
+		_("12ab-cert-selfsig.pem"));
 	CPPUNIT_ASSERT(!mClientSelfSigCertFileName.FileExists());
 	
 	// generate a private key for the fake client CA
 	
 	wxFileName clientCaKeyFileName(mConfigTestDir.GetFullPath(), 
-		wxT("client-ca-key.pem"));
+		_("client-ca-key.pem"));
 	CPPUNIT_ASSERT(!clientCaKeyFileName.FileExists());
 	
 	BIGNUM* pBigNum = BN_new();
@@ -785,7 +785,7 @@ void TestWizard::SignCertificate()
 	CPPUNIT_ASSERT_MESSAGE("Failed to set key type to RSA F4",
 		BN_set_word(pBigNum, RSA_F4));
 
-	wxProgressDialog progress(wxT("Boxi: Generating Server Key"),
+	wxProgressDialog progress(_("Boxi: Generating Server Key"),
 		MySslProgressCallbackMessage(0), 2, mpMainFrame, 
 		wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
 	numCheckedTest = 0;
@@ -811,7 +811,7 @@ void TestWizard::SignCertificate()
 	// the fake client CA, which we will sign ourselves
 
 	wxFileName clientCaCsrFileName(mConfigTestDir.GetFullPath(), 
-		wxT("client-ca-csr.pem"));
+		_("client-ca-csr.pem"));
 	CPPUNIT_ASSERT(!clientCaCsrFileName.FileExists());
 
 	wxString msg;
@@ -860,7 +860,7 @@ void TestWizard::SignCertificate()
 	CPPUNIT_ASSERT_MESSAGE("Failed to find node ID of "
 		"X.509 CommonName attribute", commonNameNid != NID_undef);
 	
-	wxString certSubject = wxT("Backup system client root");
+	wxString certSubject = _("Backup system client root");
 	X509_NAME* pX509SubjectName = X509_REQ_get_subject_name(pRequest);
 	CPPUNIT_ASSERT_MESSAGE("X.509 subject name was null", 
 		pX509SubjectName);
@@ -932,7 +932,7 @@ void TestWizard::SignCertificate()
 	// (self signed)
 
 	wxFileName clientCaCertFileName(mConfigTestDir.GetFullPath(), 
-		wxT("client-ca-cert.pem"));
+		_("client-ca-cert.pem"));
 	CPPUNIT_ASSERT(!clientCaCertFileName.FileExists());
 
 	{
@@ -986,7 +986,7 @@ void TestWizard::TestCertificatePage()
 	
 	// set the certificate file to a name that doesn't exist
 	wxFileName nonexistantfile(mTempDir.GetFullPath(), 
-		wxT("nonexistant"));
+		_("nonexistant"));
 	mpConfig->CertificateFile.Set(nonexistantfile.GetFullPath());
 	
 	// try to go forward, check that it fails
@@ -995,7 +995,7 @@ void TestWizard::TestCertificatePage()
 	// create another file, make it unreadable,
 	// expect BM_SETUP_WIZARD_FILE_NOT_READABLE
 	wxString anotherfilename = mClientCertFileName.GetFullPath();
-	anotherfilename.Append(wxT("2"));
+	anotherfilename.Append(_("2"));
 	wxFile anotherfile;
 	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, false, 0));
 	
@@ -1066,7 +1066,7 @@ void TestWizard::TestCryptoKeyPage()
 	CPPUNIT_ASSERT_EQUAL(BWP_CRYPTO_KEY, mpWizard->GetCurrentPageId());
 
 	mClientCryptoFileName = wxFileName(mConfigTestDir.GetFullPath(), 
-		wxT("12ab-FileEncKeys.raw"));
+		_("12ab-FileEncKeys.raw"));
 	CPPUNIT_ASSERT(!mClientCryptoFileName.FileExists());
 	
 	// ask for new crypto keys to be generated
@@ -1090,7 +1090,7 @@ void TestWizard::TestCryptoKeyPage()
 	
 	// set the crypto key file manually, 
 	// check that it is not overwritten.
-	wxFileName dummyName(mTempDir.GetFullPath(), wxT("nosuchfile"));
+	wxFileName dummyName(mTempDir.GetFullPath(), _("nosuchfile"));
 	mpConfig->KeysFile.Set(dummyName.GetFullPath());
 	
 	CPPUNIT_ASSERT(mpConfig->KeysFile.IsConfigured());
@@ -1148,7 +1148,7 @@ void TestWizard::TestCryptoKeyPage()
 	// specify a newly created empty file, 
 	// expect BM_SETUP_WIZARD_ENCRYPTION_KEY_FILE_NOT_VALID
 	wxString anotherfilename = mClientCryptoFileName.GetFullPath();
-	anotherfilename.Append(wxT(".invalid"));
+	anotherfilename.Append(_(".invalid"));
 	mpConfig->KeysFile.Set(anotherfilename);
 	wxFile anotherfile;
 	CPPUNIT_ASSERT(anotherfile.Create(anotherfilename, wxS_IRUSR));
@@ -1215,7 +1215,7 @@ void TestWizard::TestDataDirPage()
 	CheckForwardError(BM_SETUP_WIZARD_BAD_FILE_PERMISSIONS);
 	CPPUNIT_ASSERT(wxRmdir(mTempDir.GetFullPath()));
 
-	wxFileName tempdir2(mTempDir.GetFullPath(), wxT("foo"));
+	wxFileName tempdir2(mTempDir.GetFullPath(), _("foo"));
 	mpConfig->DataDirectory.Set(tempdir2.GetFullPath());
 	CheckForwardError(BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
 	
@@ -1231,8 +1231,8 @@ void TestWizard::TestDataDirPage()
 	mpConfig->DataDirectory.Set(mTempDir.GetFullPath());
 	ClickForward();
 	
-	wxFileName socket (mTempDir.GetFullPath(), wxT("bbackupd.sock"));
-	wxFileName pidfile(mTempDir.GetFullPath(), wxT("bbackupd.pid"));
+	wxFileName socket (mTempDir.GetFullPath(), _("bbackupd.sock"));
+	wxFileName pidfile(mTempDir.GetFullPath(), _("bbackupd.pid"));
 	CPPUNIT_ASSERT(mpConfig->CommandSocket.Is(socket.GetFullPath()));
 	CPPUNIT_ASSERT(mpConfig->PidFile      .Is(pidfile.GetFullPath()));
 
@@ -1245,7 +1245,7 @@ void TestWizard::TestConfigOptionalRequiredItems()
 {
 	CPPUNIT_ASSERT(mConfigTestDir.DirExists());
 	mConfigFileName = wxFileName(mConfigTestDir.GetFullPath(),
-		wxT("config.foo"));
+		_("config.foo"));
 	CPPUNIT_ASSERT(!mConfigFileName.FileExists());
 
 	// check that the configuration verifies OK
@@ -1263,7 +1263,7 @@ void TestWizard::TestConfigOptionalRequiredItems()
 		isOk = mpConfig->Check(msg); \
 		if (!isOk) { \
 		wxString assertMsg; \
-		assertMsg.Printf(wxT("Clearing " #name " caused " \
+		assertMsg.Printf(_("Clearing " #name " caused " \
 			"config check to fail: %s"), msg.c_str()); \
 		buf = assertMsg.mb_str(wxConvBoxi); \
 		CPPUNIT_ASSERT_MESSAGE(buf.data(), isOk); \

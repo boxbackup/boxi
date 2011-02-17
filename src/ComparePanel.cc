@@ -51,7 +51,7 @@ ComparePanel::ComparePanel
 	wxWindow*         pParent
 )
 : wxPanel(pParent, ID_Compare_Panel, wxDefaultPosition, wxDefaultSize, 
-	wxTAB_TRAVERSAL, wxT("Compare Panel")),
+	wxTAB_TRAVERSAL, _("Compare Panel")),
   mpServerConnection(pServerConnection),
   mpConfig(pConfig),
   mpMainFrame(pMainFrame)
@@ -190,7 +190,7 @@ void ComparePanel::Update()
 		BoxiLocation* pLoc = mpConfig->GetLocation(*cpLoc);
 
 		wxString locString;
-		locString.Printf(wxT("%s -> %s"), 
+		locString.Printf(_("%s -> %s"), 
 			pLoc->GetPath().c_str(), pLoc->GetName().c_str());
 
 		int newIndex = mpOneLocChoice->Append(locString, pLoc);
@@ -219,7 +219,7 @@ void ComparePanel::Update()
 	{
 		wxString path = pEntry->GetNode().GetFullPath();
 		wxString entry;
-		entry.Printf(wxT("%s %s"), (pEntry->IsInclude() ? wxT("+") : wxT("-")),
+		entry.Printf(_("%s %s"), (pEntry->IsInclude() ? _("+") : _("-")),
 			path.c_str());
 		mpSourceList->Append(entry);
 	}
@@ -228,10 +228,10 @@ void ComparePanel::Update()
 
 void ComparePanel::AddToNotebook(wxNotebook* pNotebook)
 {
-	pNotebook->AddPage(this, wxT("Compare"));
-	// pNotebook->AddPage(mpFilesPanel, wxT("Compare Files"));
-	pNotebook->AddPage(mpProgressPanel, wxT("Compare Progress"));
-	// pNotebook->AddPage(mpResultsPanel, wxT("Compare Results"));
+	pNotebook->AddPage(this, _("Compare"));
+	// pNotebook->AddPage(mpFilesPanel, _("Compare Files"));
+	pNotebook->AddPage(mpProgressPanel, _("Compare Progress"));
+	// pNotebook->AddPage(mpResultsPanel, _("Compare Results"));
 }
 
 /*

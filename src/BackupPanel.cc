@@ -46,7 +46,7 @@ BackupPanel::BackupPanel
 	MainFrame*       pMainFrame,
 	wxWindow*        pParent
 )
-:	FunctionPanel(wxT("Backup Panel"), pConfig, pClientConfigPanel, 
+:	FunctionPanel(_("Backup Panel"), pConfig, pClientConfigPanel, 
 		pMainFrame, pParent, ID_Backup_Panel)
 {
 	mpProgressPanel = new BackupProgressPanel(pConfig, 
@@ -57,8 +57,8 @@ BackupPanel::BackupPanel
 		mpMainFrame, this, ID_Backup_Files_Panel);
 	mpLocationsPanel->Hide();
 
-	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to back up"));
-	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Backup &Destination"));
+	mpSourceBox->GetStaticBox()->SetLabel(_("&Files to back up"));
+	mpDestBox  ->GetStaticBox()->SetLabel(_("Backup &Destination"));
 
 	mpDestLabel = new wxStaticText(this, wxID_ANY, wxT(""));
 	mpDestBox->Add(mpDestLabel, 0, wxGROW | wxALL, 8);
@@ -68,20 +68,20 @@ BackupPanel::BackupPanel
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	mpDestEditButton = new wxButton(this, ID_Function_Dest_Button, 
-		wxT("&Change Server"));
+		_("&Change Server"));
 	mpDestCtrlSizer->Add(mpDestEditButton, 0, wxGROW, 0);
 
-	mpSourceEditButton->SetLabel(wxT("&Edit List"));
-	mpStartButton     ->SetLabel(wxT("&Start Backup"));
+	mpSourceEditButton->SetLabel(_("&Edit List"));
+	mpStartButton     ->SetLabel(_("&Start Backup"));
 	
 	Update();
 }
 
 void BackupPanel::AddToNotebook(wxNotebook* pNotebook)
 {
-	pNotebook->AddPage(this, wxT("Backup"));
-	pNotebook->AddPage(mpLocationsPanel, wxT("Backup Files"));
-	pNotebook->AddPage(mpProgressPanel,  wxT("Backup Progress"));
+	pNotebook->AddPage(this, _("Backup"));
+	pNotebook->AddPage(mpLocationsPanel, _("Backup Files"));
+	pNotebook->AddPage(mpProgressPanel,  _("Backup Progress"));
 }
 
 void BackupPanel::Update()
@@ -99,19 +99,19 @@ void BackupPanel::Update()
 
 	int account;
 	if (mpConfig->AccountNumber.GetInto(account))
-		tmp.Printf(wxT("Account 0x%08x"), account);
+		tmp.Printf(_("Account 0x%08x"), account);
 	else
-		tmp = wxT("Unknown account number");
+		tmp = _("Unknown account number");
 	label.Append(tmp);
 	
-	label.append(wxT(" on "));
+	label.append(_(" on "));
 	
 	std::string server;
 	if (mpConfig->StoreHostname.GetInto(server))
-		tmp.Printf(wxT("server %s"), 
+		tmp.Printf(_("server %s"), 
 			wxString(server.c_str(), wxConvBoxi).c_str());
 	else
-		tmp = wxT("unknown server");
+		tmp = _("unknown server");
 	label.Append(tmp);
 
 	mpDestLabel->SetLabel(label);	

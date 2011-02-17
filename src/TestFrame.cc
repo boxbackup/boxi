@@ -271,7 +271,7 @@ BEGIN_EVENT_TABLE(TestFrame, wxFrame)
 END_EVENT_TABLE()
 
 TestFrame::TestFrame(const wxString PathToExecutable)
-:	wxFrame(NULL, wxID_ANY, wxT("Boxi (test mode)")),
+:	wxFrame(NULL, wxID_ANY, _("Boxi (test mode)")),
 	mPathToExecutable(PathToExecutable),
 	mTestThreadIsWaiting(false),
 	mMainThreadIsIdle(mMutex),
@@ -452,14 +452,14 @@ void StackWalker::OnStackFrame(const wxStackFrame& frame)
 		m_StackTrace << frame.GetLine();
 	}
 
-	if (frame.GetModule() != _(""))
+	if (frame.GetModule() != wxT(""))
 	{
 		m_StackTrace.Append(_("("));
 		m_StackTrace.Append(frame.GetModule());
 		m_StackTrace.Append(_(")"));
 	}
 	
-	m_StackTrace.Append(_(" "));
+	m_StackTrace.Append(wxT(" "));
 	m_StackTrace.Append(frame.GetName());
 	m_StackTrace.Append(_("\n"));
 }

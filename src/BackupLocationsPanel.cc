@@ -129,12 +129,12 @@ int BackupTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 	if (mpLocation && !(GetFullPath().StartsWith(mpLocation->GetPath())))
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_PATH_MISMATCH,
-			wxT("Full path does not start with location path!"),
-			wxT("Boxi Error"), wxOK | wxICON_ERROR, NULL);
+			_("Full path does not start with location path!"),
+			_("Boxi Error"), wxOK | wxICON_ERROR, NULL);
 	}
 	
 	/*	
-	wxLogDebug(wxT("Checking %s against exclude list for %s"),
+	wxLogDebug(_("Checking %s against exclude list for %s"),
 		mFullPath.c_str(), mpLocation->GetPath().c_str());
 	*/
 		
@@ -308,15 +308,15 @@ EditorPanel::EditorPanel(wxWindow* pParent, ClientConfig *pConfig, wxWindowID id
 	mpDetailsBoxSizer->Add(pButtonSizer, 0, 
 		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	mpAddButton = new wxButton(this, ID_Backup_LocationsAddButton, wxT("Add"));
+	mpAddButton = new wxButton(this, ID_Backup_LocationsAddButton, _("Add"));
 	pButtonSizer->Add(mpAddButton, 1, wxGROW, 0);
 	mpAddButton->Disable();
 	
-	mpEditButton = new wxButton(this, ID_Backup_LocationsEditButton, wxT("Edit"));
+	mpEditButton = new wxButton(this, ID_Backup_LocationsEditButton, _("Edit"));
 	pButtonSizer->Add(mpEditButton, 1, wxGROW, 0);
 	mpEditButton->Disable();
 	
-	mpRemoveButton = new wxButton(this, ID_Backup_LocationsDelButton, wxT("Remove"));
+	mpRemoveButton = new wxButton(this, ID_Backup_LocationsDelButton, _("Remove"));
 	pButtonSizer->Add(mpRemoveButton, 1, wxGROW, 0);
 	mpRemoveButton->Disable();
 }
@@ -347,14 +347,14 @@ void EditorPanel::PopulateLocationList(wxControlWithItems* pTargetList)
 		const BoxiExcludeList& rExclude = pLoc->GetExcludeList();
 		
 		wxString locString;
-		locString.Printf(wxT("%s -> %s"), 
+		locString.Printf(_("%s -> %s"), 
 			pLoc->GetPath().c_str(), pLoc->GetName().c_str());
 		
 		const BoxiExcludeEntry::List& rExcludes = rExclude.GetEntries();
 		
 		if (rExcludes.size() > 0)
 		{
-			locString.Append(wxT(" ("));
+			locString.Append(_(" ("));
 
 			int size = rExcludes.size();
 			for (BoxiExcludeEntry::ConstIterator pExclude = rExcludes.begin();
@@ -365,11 +365,11 @@ void EditorPanel::PopulateLocationList(wxControlWithItems* pTargetList)
 				
 				if (--size)
 				{
-					locString.Append(wxT(", "));
+					locString.Append(_(", "));
 				}
 			}
 
-			locString.Append(wxT(")"));
+			locString.Append(_(")"));
 		}
 			
 		int newIndex = pTargetList->Append(locString);
@@ -426,14 +426,14 @@ class LocationsPanel : public EditorPanel
 LocationsPanel::LocationsPanel(wxWindow* pParent, ClientConfig *pConfig)
 : EditorPanel(pParent, pConfig, ID_BackupLoc_List_Panel)
 {
-	mpListBoxSizer   ->GetStaticBox()->SetLabel(wxT("&Locations"));
-	mpDetailsBoxSizer->GetStaticBox()->SetLabel(wxT("&Selected or New Location"));
+	mpListBoxSizer   ->GetStaticBox()->SetLabel(_("&Locations"));
+	mpDetailsBoxSizer->GetStaticBox()->SetLabel(_("&Selected or New Location"));
 
 	mpNameText = new wxTextCtrl(this, ID_Backup_LocationNameCtrl, wxT(""));
-	AddParam(this, wxT("Location &Name:"), mpNameText, true, mpDetailsParamSizer);
+	AddParam(this, _("Location &Name:"), mpNameText, true, mpDetailsParamSizer);
 		
 	mpPathText = new wxTextCtrl(this, ID_Backup_LocationPathCtrl, wxT(""));
-	AddParam(this, wxT("Location &Path:"), mpPathText, true, mpDetailsParamSizer);
+	AddParam(this, _("Location &Path:"), mpPathText, true, mpDetailsParamSizer);
 
 	NotifyChange();
 }
@@ -560,7 +560,7 @@ void LocationsPanel::OnClickButtonEdit(wxCommandEvent &event)
 	if (!pLocation)
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_LOCATION_DOES_NOT_EXIST,
-			wxT("Editing nonexistant location!"), wxT("Boxi Error"), 
+			_("Editing nonexistant location!"), _("Boxi Error"), 
 			wxICON_ERROR | wxOK, this);
 		return;
 	}
@@ -575,7 +575,7 @@ void LocationsPanel::OnClickButtonRemove(wxCommandEvent &event)
 	if (!pLocation)
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_LOCATION_DOES_NOT_EXIST,
-			wxT("Removing nonexistant location!"), wxT("Boxi Error"), 
+			_("Removing nonexistant location!"), _("Boxi Error"), 
 			wxICON_ERROR | wxOK, this);
 		return;
 	}
@@ -630,15 +630,15 @@ ExclusionsPanel::ExclusionsPanel(wxWindow* pParent, ClientConfig *pConfig)
 : EditorPanel(pParent, pConfig, ID_BackupLoc_Excludes_Panel)
 {
 	wxStaticBoxSizer* pLocationListBox = new wxStaticBoxSizer(wxVERTICAL, 
-		this, wxT("&Locations"));
+		this, _("&Locations"));
 	mpTopSizer->Insert(0, pLocationListBox, 0, 
 		wxGROW | wxTOP | wxLEFT | wxRIGHT, 8);
 	
 	mpLocationList = new wxChoice(this, ID_BackupLoc_ExcludeLocList);
 	pLocationListBox->Add(mpLocationList, 0, wxGROW | wxALL, 8);
 	
-	mpListBoxSizer   ->GetStaticBox()->SetLabel(wxT("&Exclusions"));
-	mpDetailsBoxSizer->GetStaticBox()->SetLabel(wxT("&Selected or New Exclusion"));
+	mpListBoxSizer   ->GetStaticBox()->SetLabel(_("&Exclusions"));
+	mpDetailsBoxSizer->GetStaticBox()->SetLabel(_("&Selected or New Exclusion"));
 
 	wxString excludeTypes[numExcludeTypes];
 	
@@ -657,12 +657,12 @@ ExclusionsPanel::ExclusionsPanel(wxWindow* pParent, ClientConfig *pConfig)
 		mpTypeList->SetClientData(i, &(theExcludeTypes[i]));
 	}
 	
-	AddParam(this, wxT("Exclude Type:"), mpTypeList, true, 
+	AddParam(this, _("Exclude Type:"), mpTypeList, true, 
 		mpDetailsParamSizer);
 	mpTypeList->SetSelection(0);
 		
 	mpValueText = new wxTextCtrl(this, ID_BackupLoc_ExcludePathCtrl, wxT(""));
-	AddParam(this, wxT("Exclude Path:"), mpValueText, true, 
+	AddParam(this, _("Exclude Path:"), mpValueText, true, 
 		mpDetailsParamSizer);
 
 	NotifyChange();
@@ -868,7 +868,7 @@ void ExclusionsPanel::OnClickButtonAdd(wxCommandEvent &event)
 	if (mpTypeList->GetSelection() == wxNOT_FOUND)
 	{
 		wxGetApp().ShowMessageBox(BM_EXCLUDE_NO_TYPE_SELECTED,
-			wxT("No type selected!"), wxT("Boxi Error"), 
+			_("No type selected!"), _("Boxi Error"), 
 			wxICON_ERROR | wxOK, this);
 		return;
 	}
@@ -889,7 +889,7 @@ void ExclusionsPanel::OnClickButtonEdit(wxCommandEvent &event)
 	if (selected == wxNOT_FOUND)
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_LOCATION_DOES_NOT_EXIST,
-			wxT("Editing nonexistant location!"), wxT("Boxi Error"), 
+			_("Editing nonexistant location!"), _("Boxi Error"), 
 			wxICON_ERROR | wxOK, this);
 		return;
 	}
@@ -898,7 +898,7 @@ void ExclusionsPanel::OnClickButtonEdit(wxCommandEvent &event)
 	if (!pOldEntry)
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_EXCLUDE_ENTRY_NOT_SELECTED,
-			wxT("No exclude entry selected!"), wxT("Boxi Error"), 
+			_("No exclude entry selected!"), _("Boxi Error"), 
 			wxICON_ERROR | wxOK, this);
 		return;
 	}
@@ -906,7 +906,7 @@ void ExclusionsPanel::OnClickButtonEdit(wxCommandEvent &event)
 	if (mpTypeList->GetSelection() == wxNOT_FOUND)
 	{
 		wxGetApp().ShowMessageBox(BM_EXCLUDE_NO_TYPE_SELECTED,
-			wxT("No type selected!"), wxT("Boxi Error"), 
+			_("No type selected!"), _("Boxi Error"), 
 			wxICON_ERROR | wxOK, this);
 		return;
 	}
@@ -926,7 +926,7 @@ void ExclusionsPanel::OnClickButtonRemove(wxCommandEvent &event)
 	if (!pOldEntry)
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_LOCATION_DOES_NOT_EXIST,
-			wxT("Removing nonexistant location!"), wxT("Boxi Error"), 
+			_("Removing nonexistant location!"), _("Boxi Error"), 
 			wxICON_ERROR | wxOK, this);
 		return;
 	}
@@ -983,17 +983,17 @@ BackupLocationsPanel::BackupLocationsPanel
 	pTopSizer->Add(pNotebook, 1, wxGROW | wxALL, 8);
 	
 	wxPanel* pBasicPanel = new wxPanel(pNotebook);
-	pNotebook->AddPage(pBasicPanel, wxT("Basic"));
+	pNotebook->AddPage(pBasicPanel, _("Basic"));
 	
 	wxBoxSizer* pBasicPanelSizer = new wxBoxSizer(wxVERTICAL);
 	pBasicPanel->SetSizer(pBasicPanelSizer);
 
 #ifdef WIN32
 	mpRootNode = new BackupTreeNode(pConfig, wxEmptyString);
-	wxString rootLabel = wxT("My Computer");
+	wxString rootLabel = _("My Computer");
 #else
-	mpRootNode = new BackupTreeNode(pConfig, wxT("/"));
-	wxString rootLabel = wxT("/ (local root)");
+	mpRootNode = new BackupTreeNode(pConfig, _("/"));
+	wxString rootLabel = _("/ (local root)");
 #endif
 	
 	mpTree = new LocalFileTree(pBasicPanel, ID_Backup_Locations_Tree, 
@@ -1001,16 +1001,16 @@ BackupLocationsPanel::BackupLocationsPanel
 	pBasicPanelSizer->Add(mpTree, 1, wxGROW | wxALL, 8);
 	
 	LocationsPanel* pLocationsPanel = new LocationsPanel(pNotebook, mpConfig);
-	pNotebook->AddPage(pLocationsPanel, wxT("Locations"));
+	pNotebook->AddPage(pLocationsPanel, _("Locations"));
 
 	ExclusionsPanel* pExclusionsPanel = new ExclusionsPanel(pNotebook, mpConfig);
-	pNotebook->AddPage(pExclusionsPanel, wxT("Exclusions"));
+	pNotebook->AddPage(pExclusionsPanel, _("Exclusions"));
 
 	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
 	pTopSizer->Add(pActionCtrlSizer, 0, 
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	wxButton* pCloseButton = new wxButton(this, wxID_CANCEL, wxT("Close"));
+	wxButton* pCloseButton = new wxButton(this, wxID_CANCEL, _("Close"));
 	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
 }
 
@@ -1096,9 +1096,9 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				// AlwaysInclude tree code below.
 				// If so, delete them both.
 
-				wxString regex(wxT("^"));
+				wxString regex(_("^"));
 				regex.Append(pTreeNode->GetFullPath());
-				regex.Append(wxT("/"));
+				regex.Append(_("/"));
 				
 				BoxiExcludeEntry excludeFiles(
 					ET_EXCLUDE_FILES_REGEX, regex);
@@ -1120,7 +1120,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 				wxConvBoxi);
 			
 			wxString msg;
-			msg.Printf(wxT(
+			msg.Printf(_(
 				"To exclude this item, you will have to "
 				"exclude all of %s. Do you really want to "
 				"do this?"),
@@ -1129,7 +1129,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			int result = wxGetApp().ShowMessageBox
 			(
 				BM_EXCLUDE_MUST_REMOVE_ALWAYSINCLUDE,
-				msg, wxT("Boxi Warning"), 
+				msg, _("Boxi Warning"), 
 				wxYES_NO | wxICON_EXCLAMATION, NULL
 			);
 
@@ -1208,9 +1208,9 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			}
 			else if (pExclude->IsDirectory())
 			{
-				wxString path(wxT("^"));
+				wxString path(_("^"));
 				path.Append(pExclude->GetFullPath());
-				path.Append(wxT("/"));
+				path.Append(_("/"));
 				pList->InsertEntry(pos, BoxiExcludeEntry(
 					ET_EXCLUDE_FILES_REGEX, path));
 				pList->InsertEntry(pos, BoxiExcludeEntry(
@@ -1219,9 +1219,9 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			
 			if (pTreeNode->IsDirectory())
 			{
-				wxString path(wxT("^"));
+				wxString path(_("^"));
 				path.Append(pTreeNode->GetFullPath());
-				path.Append(wxT("/"));
+				path.Append(_("/"));
 				pList->AddEntry(BoxiExcludeEntry(
 					ET_ALWAYS_INCLUDE_DIRS_REGEX, path));
 				pList->AddEntry(BoxiExcludeEntry(
@@ -1249,7 +1249,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 		if (fn.SameAs(pTreeNode->GetFullPath()))
 		{
 			wxString msg;
-			msg.Printf(wxT(
+			msg.Printf(_(
 				"Are you sure you want to delete "
 				"the location %s from the server, "
 				"and remove its configuration?"),
@@ -1257,7 +1257,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 
 			int result = wxGetApp().ShowMessageBox(
 				BM_BACKUP_FILES_DELETE_LOCATION_QUESTION, msg, 
-				wxT("Boxi Warning"), 
+				_("Boxi Warning"), 
 				wxYES_NO | wxICON_EXCLAMATION, this);
 
 			if (result == wxYES)
@@ -1313,7 +1313,7 @@ void BackupLocationsPanel::OnTreeNodeActivate(wxTreeEvent& event)
 			if (foundUnique) break;
 				
 			// generate a new filename, and try again
-			newLocName.Printf(wxT("%s_%d"), 
+			newLocName.Printf(_("%s_%d"), 
 				path.GetName().c_str(), counter++);
 		}
 		

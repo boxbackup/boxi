@@ -79,7 +79,7 @@ FunctionPanel::FunctionPanel(
 	pActionCtrlSizer->Add(mpStartButton, 0, wxGROW, 0);
 
 	wxButton* pCloseButton = new wxButton(this, 
-		wxID_CANCEL, wxT("Close"));
+		wxID_CANCEL, _("Close"));
 	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
 
 	SetSizer( mpMainSizer );

@@ -642,15 +642,15 @@ void TestBackup::RunTest()
 		wxSleep(1);
 
 		// Unpack some more files
-		wxFileName spaceTestZipFile(wxT("../test/data/spacetest2.zip"));
+		wxFileName spaceTestZipFile(_("../test/data/spacetest2.zip"));
 		CPPUNIT_ASSERT(spaceTestZipFile.FileExists());
 		Unzip(spaceTestZipFile, mTestDataDir);
 
 		// Delete a file and a directory
 		BOXI_ASSERT(wxRemoveFile(MakeAbsolutePath(mTestDataDir,
-			wxT("spacetest/d1/f3")).GetFullPath()));
+			_("spacetest/d1/f3")).GetFullPath()));
 		DeleteRecursive(MakeAbsolutePath(mTestDataDir, 
-			wxT("spacetest/d3/d4/")));
+			_("spacetest/d3/d4/")));
 	}
 	
 	// check the number of differences before backup
@@ -1210,7 +1210,7 @@ void TestBackup::TestRestore()
 	BOXI_ASSERT(testId);
 
 	wxFileName remStoreDir(mBaseDir);
-	remStoreDir.AppendDir(wxT("restore"));
+	remStoreDir.AppendDir(_("restore"));
 	BOXI_ASSERT(!remStoreDir.DirExists());
 	// BOXI_ASSERT(wxMkdir(remStoreDir.GetFullPath()));
 	
@@ -1221,7 +1221,7 @@ void TestBackup::TestRestore()
 	mapConn->Disconnect();
 	
 	CompareExpectNoDifferences(mpConfig->GetBoxConfig(), mTlsContext, 
-		wxT("testdata"), remStoreDir);
+		_("testdata"), remStoreDir);
 		
 	DeleteRecursive(remStoreDir);
 }

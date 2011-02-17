@@ -247,7 +247,7 @@ void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 		}
 
 		SetSummaryText(_("Counting Files to Compare"));
-		SetCurrentText(_(""));
+		SetCurrentText(wxT(""));
 			
 		BackupQueries queries(*pClient,	BoxConfig, false);
 		
@@ -312,7 +312,7 @@ void CompareProgressPanel::StartCompare(const BoxiCompareParams& rParams)
 	{
 		SetSummaryText(_("Compare Failed"));
 		ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR,
-			wxT("Error: failed to finish compare: unknown error"));
+			_("Error: failed to finish compare: unknown error"));
 	}	
 	
 	SetSummaryText(_("Idle (nothing to do)"));

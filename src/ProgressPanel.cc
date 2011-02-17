@@ -51,14 +51,14 @@ ProgressPanel::ProgressPanel
 	wxSizer* pMainSizer = new wxBoxSizer(wxVERTICAL);
 
 	wxStaticBoxSizer* pSummaryBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Summary"));
+		this, _("Summary"));
 	pMainSizer->Add(pSummaryBox, 0, wxGROW | wxALL, 8);
 	
 	wxSizer* pSummarySizer = new wxGridSizer(1, 2, 0, 4);
 	pSummaryBox->Add(pSummarySizer, 0, wxGROW | wxALL, 4);
 	
 	mpSummaryText = new wxStaticText(this, wxID_ANY, 
-		wxT("Restore not started yet"));
+		_("Restore not started yet"));
 	pSummarySizer->Add(mpSummaryText, 0, wxALIGN_CENTER_VERTICAL, 0);
 	
 	mpProgressGauge = new wxGauge(this, wxID_ANY, 100);
@@ -67,16 +67,16 @@ ProgressPanel::ProgressPanel
 	mpProgressGauge->Hide();
 	
 	wxStaticBoxSizer* pCurrentBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Current Action"));
+		this, _("Current Action"));
 	pMainSizer->Add(pCurrentBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	mpCurrentText = new wxStaticText(this, wxID_ANY, 
-		wxT("Idle (nothing to do)"), wxDefaultPosition, wxDefaultSize,
+		_("Idle (nothing to do)"), wxDefaultPosition, wxDefaultSize,
 		wxST_NO_AUTORESIZE);
 	pCurrentBox->Add(mpCurrentText, 0, wxGROW | wxALL, 4);
 	
 	wxStaticBoxSizer* pErrorsBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Errors"));
+		this, _("Errors"));
 	pMainSizer->Add(pErrorsBox, 1, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	mpErrorList = new wxListBox(this, ID_BackupProgress_ErrorList,
@@ -84,7 +84,7 @@ ProgressPanel::ProgressPanel
 	pErrorsBox->Add(mpErrorList, 1, wxGROW | wxALL, 4);
 
 	wxStaticBoxSizer* pStatsBox = new wxStaticBoxSizer(wxVERTICAL,
-		this, wxT("Statistics"));
+		this, _("Statistics"));
 	pMainSizer->Add(pStatsBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	wxFlexGridSizer* pStatsGrid = new wxFlexGridSizer(4, 4, 4);
@@ -96,11 +96,11 @@ ProgressPanel::ProgressPanel
 	pStatsGrid->AddGrowableCol(3);
 
 	pStatsGrid->AddSpacer(1);
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Elapsed")));
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Remaining")));
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Total")));
+	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, _("Elapsed")));
+	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, _("Remaining")));
+	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, _("Total")));
 
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Files")));
+	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, _("Files")));
 
 	mpNumFilesDone = new wxTextCtrl(this, wxID_ANY, wxT(""), 
 		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
@@ -114,7 +114,7 @@ ProgressPanel::ProgressPanel
 		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 	pStatsGrid->Add(mpNumFilesTotal, 1, wxGROW, 0);
 
-	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, wxT("Bytes")));
+	pStatsGrid->Add(new wxStaticText(this, wxID_ANY, _("Bytes")));
 
 	mpNumBytesDone = new wxTextCtrl(this, wxID_ANY, wxT(""), 
 		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
@@ -132,7 +132,7 @@ ProgressPanel::ProgressPanel
 	pMainSizer->Add(pButtonSizer, 0, 
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	mpStopCloseButton = new wxButton(this, wxID_CANCEL, wxT("Close"));
+	mpStopCloseButton = new wxButton(this, wxID_CANCEL, _("Close"));
 	pButtonSizer->Add(mpStopCloseButton, 0, wxGROW, 0);
 
 	mNumFilesCounted = 0;
@@ -148,7 +148,7 @@ void ProgressPanel::NotifyMoreFilesCounted(size_t numAdditionalFiles,
 	mNumBytesCounted += numAdditionalBytes;
 
 	wxString str;
-	str.Printf(wxT("%d"), mNumFilesCounted);
+	str.Printf(_("%d"), mNumFilesCounted);
 	mpNumFilesTotal->SetValue(str);
 	mpNumBytesTotal->SetValue(FormatNumBytes(mNumBytesCounted));
 	wxYield();
@@ -161,14 +161,14 @@ void ProgressPanel::NotifyMoreFilesDone(size_t numAdditionalFiles,
 	mNumBytesDone += numAdditionalBytes;
 
 	wxString str;
-	str.Printf(wxT("%" wxLongLongFmtSpec "d"), (int64_t)mNumFilesDone);
+	str.Printf(_("%" wxLongLongFmtSpec "d"), (int64_t)mNumFilesDone);
 	mpNumFilesDone->SetValue(str);
 	mpNumBytesDone->SetValue(FormatNumBytes(mNumBytesDone));
 	
 	int64_t numFilesRemaining = mNumFilesCounted - mNumFilesDone;
 	int64_t numBytesRemaining = mNumBytesCounted - mNumBytesDone;
 
-	str.Printf(wxT("%" wxLongLongFmtSpec "d"), numFilesRemaining);
+	str.Printf(_("%" wxLongLongFmtSpec "d"), numFilesRemaining);
 	mpNumFilesRemaining->SetValue(str);
 	mpNumBytesRemaining->SetValue(FormatNumBytes(numBytesRemaining));
 	
@@ -178,34 +178,34 @@ void ProgressPanel::NotifyMoreFilesDone(size_t numAdditionalFiles,
 
 wxString ProgressPanel::FormatNumBytes(int64_t bytes)
 {
-	wxString units = wxT("B");
+	wxString units = _("B");
 	
 	if (bytes > 1024)
 	{
 		bytes >>= 10;
-		units = wxT("kB");
+		units = _("kB");
 	}
 	
 	if (bytes > 1024)
 	{
 		bytes >>= 10;
-		units = wxT("MB");
+		units = _("MB");
 	}
 
 	if (bytes > 1024)
 	{
 		bytes >>= 10;
-		units = wxT("GB");
+		units = _("GB");
 	}
 
 	wxString str;		
-	str.Printf(wxT("%" wxLongLongFmtSpec "d %s"), bytes, units.c_str());
+	str.Printf(_("%" wxLongLongFmtSpec "d %s"), bytes, units.c_str());
 	return str;
 }
 
 void ProgressPanel::ReportFatalError(message_t messageId, wxString msg)
 {
-	wxGetApp().ShowMessageBox(messageId, msg, wxT("Boxi Error"), 
+	wxGetApp().ShowMessageBox(messageId, msg, _("Boxi Error"), 
 		wxOK | wxICON_ERROR, this);
 	mpErrorList->Append(msg);
 }
@@ -368,7 +368,7 @@ void ProgressPanel::CountLocalFiles(ExclusionOracle& rExclusionOracle,
 				THROW_EXCEPTION(CommonException, OSFileError)
 				*/
 				wxString msg;
-				msg.Printf(wxT("Error counting files in '%s': %s"),
+				msg.Printf(_("Error counting files in '%s': %s"),
 					wxString(filename.c_str(), wxConvBoxi).c_str(),
 					wxString(strerror(errno),  wxConvBoxi).c_str());
 				mpErrorList->Append(msg);

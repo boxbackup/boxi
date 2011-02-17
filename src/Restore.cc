@@ -278,7 +278,7 @@ void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Directory
 				{
 					THROW_EXCEPTION(CommonException, OSFileError);
 				}
-				wxLogDebug(wxT(
+				wxLogDebug(_(
 					"In restore, directory name "
 					"collision with file %s"), 
 					rLocalDirectoryName.c_str());

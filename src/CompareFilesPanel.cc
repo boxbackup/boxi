@@ -114,8 +114,8 @@ int CompareTreeNode::UpdateState(FileImageList& rImageList, bool updateParents)
 	if (mpLocation && !(GetFullPath().StartsWith(mpLocation->GetPath())))
 	{
 		wxGetApp().ShowMessageBox(BM_INTERNAL_PATH_MISMATCH,
-			wxT("Full path does not start with location path!"),
-			wxT("Boxi Error"), wxOK | wxICON_ERROR, NULL);
+			_("Full path does not start with location path!"),
+			_("Boxi Error"), wxOK | wxICON_ERROR, NULL);
 	}
 	
 	bool matchedRule = false;
@@ -257,7 +257,7 @@ CompareFilesPanel::CompareFilesPanel
 	/* wxPanel*          pPanelToShowOnClose */
 )
 :	wxPanel(pParent, ID_Compare_Files_Panel, wxDefaultPosition, 
-		wxDefaultSize, wxTAB_TRAVERSAL, wxT("CompareFilesPanel")) /*,
+		wxDefaultSize, wxTAB_TRAVERSAL, _("CompareFilesPanel")) /*,
 	mCache(pServerConnection),
 	mpMainFrame(pMainFrame),
 	mpPanelToShowOnClose(pPanelToShowOnClose),
@@ -282,7 +282,7 @@ CompareFilesPanel::CompareFilesPanel
 	topSizer->Add(pActionCtrlSizer, 0, 
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	wxButton* pCloseButton = new wxButton(this, wxID_CANCEL, wxT("Close"));
+	wxButton* pCloseButton = new wxButton(this, wxID_CANCEL, _("Close"));
 	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
 	
 	mServerSettings.mViewOldFiles     = FALSE;

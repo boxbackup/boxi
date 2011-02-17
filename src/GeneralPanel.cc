@@ -58,7 +58,7 @@ GeneralPanel::GeneralPanel
 	wxWindow* pParent
 )
 :	wxPanel(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 
-		wxTAB_TRAVERSAL, wxT("General Panel")),
+		wxTAB_TRAVERSAL, _("General Panel")),
 	mpMainFrame(pMainFrame),
 	mpConfig(pConfig),
 	mpWizard(NULL)
@@ -77,20 +77,20 @@ GeneralPanel::GeneralPanel
 	mpConfigPanel->Hide();
 
 	wxStaticBoxSizer* pSetupBox = new wxStaticBoxSizer(wxHORIZONTAL,
-		this, wxT("Setup"));
+		this, _("Setup"));
 	pMainSizer->Add(pSetupBox, 0, wxGROW | wxALL, 8);
 	
 	wxStaticText* pSetupText = new wxStaticText(this, wxID_ANY, 
-		wxT("Configure Boxi for a backup store provider"));
+		_("Configure Boxi for a backup store provider"));
 	pSetupBox->Add(pSetupText, 1, wxALIGN_CENTER_VERTICAL | wxALL, 8);
 	
 	wxButton* pWizardButton = new wxButton(this, 
-		ID_General_Setup_Wizard_Button, wxT("&Wizard..."));
+		ID_General_Setup_Wizard_Button, _("&Wizard..."));
 	pSetupBox->Add(pWizardButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
 
 	wxButton* pAdvancedButton = new wxButton(this, 
-		ID_General_Setup_Advanced_Button, wxT("&Advanced..."));
+		ID_General_Setup_Advanced_Button, _("&Advanced..."));
 	pSetupBox->Add(pAdvancedButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
 
@@ -107,15 +107,15 @@ GeneralPanel::GeneralPanel
 	mpBackupPanel->Hide();
 
 	wxStaticBoxSizer* pBackupBox = new wxStaticBoxSizer(wxHORIZONTAL,
-		this, wxT("Backup"));
+		this, _("Backup"));
 	pMainSizer->Add(pBackupBox, 0, wxGROW | wxALL, 8);
 	
 	wxStaticText* pBackupText = new wxStaticText(this, wxID_ANY, 
-		wxT("Copy files from this computer to the backup server"));
+		_("Copy files from this computer to the backup server"));
 	pBackupBox->Add(pBackupText, 1, wxALIGN_CENTER_VERTICAL | wxALL, 8);
 	
 	wxButton* pBackupButton = new wxButton(this, 
-		ID_General_Backup_Button, wxT("&Backup"));
+		ID_General_Backup_Button, _("&Backup"));
 	pBackupBox->Add(pBackupButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
 
@@ -132,15 +132,15 @@ GeneralPanel::GeneralPanel
 	mpRestorePanel->Hide();
 
 	wxStaticBoxSizer* pRestoreBox = new wxStaticBoxSizer(wxHORIZONTAL,
-		this, wxT("Restore"));
+		this, _("Restore"));
 	pMainSizer->Add(pRestoreBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	wxStaticText* pRestoreText = new wxStaticText(this, wxID_ANY, 
-		wxT("Copy files from the backup server to this computer"));
+		_("Copy files from the backup server to this computer"));
 	pRestoreBox->Add(pRestoreText, 1, wxALIGN_CENTER_VERTICAL | wxALL, 8);
 	
 	wxButton* pRestoreButton = new wxButton(this, 
-		ID_General_Restore_Button, wxT("&Restore"));
+		ID_General_Restore_Button, _("&Restore"));
 	pRestoreBox->Add(pRestoreButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
 
@@ -156,22 +156,22 @@ GeneralPanel::GeneralPanel
 	mpComparePanel->Hide();
 
 	wxStaticBoxSizer* pCompareBox = new wxStaticBoxSizer(wxHORIZONTAL,
-		this, wxT("Compare"));
+		this, _("Compare"));
 	pMainSizer->Add(pCompareBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	wxStaticText* pCompareText = new wxStaticText(this, wxID_ANY, 
-		wxT("Compare files on the backup server with this computer"));
+		_("Compare files on the backup server with this computer"));
 	pCompareBox->Add(pCompareText, 1, wxALIGN_CENTER_VERTICAL | wxALL, 8);
 	
 	wxButton* pCompareButton = new wxButton(this, 
-		ID_General_Compare_Button, wxT("&Compare"));
+		ID_General_Compare_Button, _("&Compare"));
 	pCompareBox->Add(pCompareButton, 0, 
 		wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxRIGHT, 8);
 }
 
 void GeneralPanel::AddToNotebook(wxNotebook* pNotebook)
 {
-	pNotebook->AddPage(this,           wxT("General"));
+	pNotebook->AddPage(this,           _("General"));
 	mpConfigPanel ->AddToNotebook(pNotebook);
 	mpBackupPanel ->AddToNotebook(pNotebook);
 	mpRestorePanel->AddToNotebook(pNotebook);

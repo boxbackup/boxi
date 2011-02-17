@@ -66,19 +66,19 @@ RestorePanel::RestorePanel
 	ServerConnection*     pServerConnection,
 	wxWindow*             pParent
 )
-:	FunctionPanel(wxT("Restore Panel"), pConfig, pClientConfigPanel, 
+:	FunctionPanel(_("Restore Panel"), pConfig, pClientConfigPanel, 
 		pMainFrame, pParent, ID_Restore_Panel)
 {
 	mpProgressPanel = new RestoreProgressPanel(pConfig, pServerConnection,
 		pParent);
 	mpProgressPanel->Hide();
 	
-	mpSourceBox->GetStaticBox()->SetLabel(wxT("&Files to restore"));
-	mpDestBox  ->GetStaticBox()->SetLabel(wxT("Restore &destination"));
+	mpSourceBox->GetStaticBox()->SetLabel(_("&Files to restore"));
+	mpDestBox  ->GetStaticBox()->SetLabel(_("Restore &destination"));
 
 	/*
 	mpOldLocRadio = new wxRadioButton(this, wxID_ANY, 
-		wxT("&Original Locations"),	wxDefaultPosition, wxDefaultSize, 
+		_("&Original Locations"),	wxDefaultPosition, wxDefaultSize, 
 		wxRB_GROUP);
 	mpDestBox->Add(mpOldLocRadio, 0, wxGROW | wxALL, 8);
 	*/
@@ -127,16 +127,16 @@ RestorePanel::RestorePanel
 
 	/*
 	mpRestoreDirsCheck = new wxCheckBox(this, wxID_ANY, 
-		wxT("Restore d&irectory structure"));
+		_("Restore d&irectory structure"));
 	mpDestBox->Add(mpRestoreDirsCheck, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	mpOverwriteCheck = new wxCheckBox(this, wxID_ANY, 
-		wxT("O&verwrite existing files"));
+		_("O&verwrite existing files"));
 	mpDestBox->Add(mpOverwriteCheck, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	*/
 	
-	mpSourceEditButton->SetLabel(wxT("&Select Files"));
-	mpStartButton     ->SetLabel(wxT("Start &Restore"));
+	mpSourceEditButton->SetLabel(_("&Select Files"));
+	mpStartButton     ->SetLabel(_("Start &Restore"));
 	
 	mpFilesPanel = new RestoreFilesPanel(pConfig, 
 		pServerConnection, pMainFrame, pParent, this, this);
@@ -165,7 +165,7 @@ void RestorePanel::Update()
 	{
 		wxString path = pEntry->GetNode().GetFullPath();
 		wxString entry;
-		entry.Printf(wxT("%s %s"), (pEntry->IsInclude() ? wxT("+") : wxT("-")),
+		entry.Printf(_("%s %s"), (pEntry->IsInclude() ? _("+") : _("-")),
 			path.c_str());
 		mpSourceList->Append(entry);
 	}
@@ -173,9 +173,9 @@ void RestorePanel::Update()
 
 void RestorePanel::AddToNotebook(wxNotebook* pNotebook)
 {
-	pNotebook->AddPage(this, wxT("Restore"));
-	pNotebook->AddPage(mpFilesPanel, wxT("Restore Files"));
-	pNotebook->AddPage(mpProgressPanel, wxT("Restore Progress"));
+	pNotebook->AddPage(this, _("Restore"));
+	pNotebook->AddPage(mpFilesPanel, _("Restore Files"));
+	pNotebook->AddPage(mpProgressPanel, _("Restore Progress"));
 	
 }
 
@@ -196,7 +196,7 @@ void RestorePanel::OnClickStartButton(wxCommandEvent& rEvent)
 		return;
 	}
 
-	if (wxFileName(dest.GetFullPath(), _("")).DirExists() || dest.FileExists())
+	if (wxFileName(dest.GetFullPath(), wxT("")).DirExists() || dest.FileExists())
 	{
 		wxGetApp().ShowMessageBox(BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS,
 			_("Cannot start restore: the destination path already exists"),

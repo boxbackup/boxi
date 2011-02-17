@@ -222,7 +222,7 @@ bool IntProperty::SetFromString(const wxString& rSource)
 
 	wxCharBuffer buf = rSource.mb_str(wxConvBoxi);
 	
-	if (rSource.StartsWith(wxT("0x"))) {
+	if (rSource.StartsWith(_("0x"))) {
 		tempValue = strtol(buf.data() + 2, &endptr, 16);
 	} else {
 		tempValue = strtol(buf.data(), &endptr, 10);
@@ -262,7 +262,7 @@ bool IntProperty::GetInto(wxString& rDest)
 	{
 		return false;
 	}
-	rDest.Printf(wxT("%d"), mValue);
+	rDest.Printf(_("%d"), mValue);
 	return true;
 }
 
@@ -273,7 +273,7 @@ bool IntProperty::GetInto(std::string& rDest)
 		return false;
 	}
 	wxString formatted;
-	formatted.Printf(wxT("%d"), mValue);
+	formatted.Printf(_("%d"), mValue);
 	wxCharBuffer buf = formatted.mb_str(wxConvBoxi);
 	rDest = buf.data();
 	return true;

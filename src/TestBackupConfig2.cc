@@ -56,28 +56,28 @@ void TestBackupConfig::TestAddAlwaysIncludeInTree()
 	CPPUNIT_ASSERT_EQUAL(0,  mpExcludeListBox    ->GetSelection());
 	
 	wxString expectedTitle = mTestDataDir.GetPath();
-	expectedTitle.Append(wxT(" -> testdata ("));
-	expectedTitle.Append(wxT("ExcludeDir = "));
+	expectedTitle.Append(_(" -> testdata ("));
+	expectedTitle.Append(_("ExcludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", ExcludeDirsRegex = ^"));
+	expectedTitle.Append(_(", ExcludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT("/, ExcludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, ExcludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeDir = "));
+	expectedTitle.Append(_("/, AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth3Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth5Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDir3.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDirsRegex = ^"));
+	expectedTitle.Append(_(", AlwaysIncludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDir3.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, AlwaysIncludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDir3.GetPath());
-	expectedTitle.Append(wxT("/)"));
+	expectedTitle.Append(_("/)"));
 	
 	CPPUNIT_ASSERT_EQUAL(expectedTitle, 
 		mpLocationsListBox  ->GetString(0));
@@ -143,26 +143,26 @@ void TestBackupConfig::TestExcludeUnderAlwaysIncludePromptsToRemove()
 	CPPUNIT_ASSERT_EQUAL(9, mpExcludeListBox->GetCount());
 
 	wxString expectedTitle = mTestDataDir.GetPath();
-	expectedTitle.Append(wxT(" -> testdata ("));
-	expectedTitle.Append(wxT("ExcludeDir = "));
+	expectedTitle.Append(_(" -> testdata ("));
+	expectedTitle.Append(_("ExcludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", ExcludeDirsRegex = ^"));
+	expectedTitle.Append(_(", ExcludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT("/, ExcludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, ExcludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeDir = "));
+	expectedTitle.Append(_("/, AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth3Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth5Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDir3.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeFilesRegex = ^"));
+	expectedTitle.Append(_(", AlwaysIncludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDir3.GetPath());
-	expectedTitle.Append(wxT("/)"));
+	expectedTitle.Append(_("/)"));
 	
 	CPPUNIT_ASSERT_EQUAL(expectedTitle, 
 		mpLocationsListBox  ->GetString(0));
@@ -197,10 +197,10 @@ void TestBackupConfig::TestRemoveMultipleAlwaysIncludesInTree()
 	ActivateTreeItemWaitEvent(mpTree, mDepth2);
 
 	wxString expectedTitle = mTestDataDir.GetPath();
-	expectedTitle.Append(wxT(" -> testdata ("));
-	expectedTitle.Append(wxT("ExcludeDir = "));
+	expectedTitle.Append(_(" -> testdata ("));
+	expectedTitle.Append(_("ExcludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(")"));
+	expectedTitle.Append(_(")"));
 	
 	CPPUNIT_ASSERT_EQUAL(expectedTitle, 
 		mpLocationsListBox  ->GetString(0));
@@ -227,19 +227,19 @@ void TestBackupConfig::TestAlwaysIncludeDirWithSubdirsDeepInTree()
 	wxString expectedTitle = mTestDataDir.GetPath();
 	expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", ExcludeDirsRegex = ^"));
+	expectedTitle.Append(_(", ExcludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT("/, ExcludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, ExcludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeDir = "));
+	expectedTitle.Append(_("/, AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth3Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDirsRegex = ^"));
+	expectedTitle.Append(_(", AlwaysIncludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, AlwaysIncludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
 	expectedTitle.Append(_("/)"));
 
@@ -268,13 +268,13 @@ void TestBackupConfig::TestRemoveExcludeInTree()
 	wxString expectedTitle = mTestDataDir.GetPath();
 	expectedTitle.Append(_(" -> testdata (ExcludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth3Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDirsRegex = ^"));
+	expectedTitle.Append(_(", AlwaysIncludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, AlwaysIncludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
 	expectedTitle.Append(_("/)"));
 
@@ -291,11 +291,11 @@ void TestBackupConfig::TestRemoveExcludeInTree()
 	expectedTitle = mTestDataDir.GetPath();
 	expectedTitle.Append(_(" -> testdata (AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth3Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDirsRegex = ^"));
+	expectedTitle.Append(_(", AlwaysIncludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, AlwaysIncludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
 	expectedTitle.Append(_("/)"));
 
@@ -325,9 +325,9 @@ void TestBackupConfig::TestRemoveAlwaysIncludeInTree()
 	wxString expectedTitle = mTestDataDir.GetPath();
 	expectedTitle.Append(_(" -> testdata (AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth3Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDirsRegex = ^"));
+	expectedTitle.Append(_(", AlwaysIncludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, AlwaysIncludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
 	expectedTitle.Append(_("/)"));
 
@@ -357,11 +357,11 @@ void TestBackupConfig::TestAddExcludeInIncludedNode()
 	wxString expectedTitle = mTestDataDir.GetPath();
 	expectedTitle.Append(_(" -> testdata (AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth3Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDirsRegex = ^"));
+	expectedTitle.Append(_(", AlwaysIncludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, AlwaysIncludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT("/, ExcludeDir = "));
+	expectedTitle.Append(_("/, ExcludeDir = "));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
 	expectedTitle.Append(_(")"));
 	
@@ -388,11 +388,11 @@ void TestBackupConfig::TestAddHigherExcludeInTree()
 	wxString expectedTitle = mTestDataDir.GetPath();
 	expectedTitle.Append(_(" -> testdata (AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth3Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDirsRegex = ^"));
+	expectedTitle.Append(_(", AlwaysIncludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, AlwaysIncludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT("/, ExcludeDir = "));
+	expectedTitle.Append(_("/, ExcludeDir = "));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
 	expectedTitle.Append(_(", ExcludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
@@ -923,7 +923,7 @@ void TestBackupConfig::TestComplexExcludes()
 		{ wxFile f; CPPUNIT_ASSERT(f.Create(dir ## _ ## name.GetFullPath())); }
 		
 		#define CREATE_DIR(dir, name) \
-		wxFileName dir ## _ ## name(dir.GetFullPath(), _("")); \
+		wxFileName dir ## _ ## name(dir.GetFullPath(), wxT("")); \
 		dir ## _ ## name.AppendDir(_(#name)); \
 		CPPUNIT_ASSERT(dir ## _ ## name.Mkdir(0700));
 		

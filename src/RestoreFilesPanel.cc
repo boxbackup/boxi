@@ -335,7 +335,7 @@ class RestoreTreeCtrl : public FileTree
 		wxWindowID id,
 		RestoreTreeNode* pRootNode
 	)
-	:	FileTree(pParent, id, pRootNode, wxT("/ (server root)"))
+	:	FileTree(pParent, id, pRootNode, _("/ (server root)"))
 	{ }
 
 	private:
@@ -396,7 +396,7 @@ RestoreFilesPanel::RestoreFilesPanel
 	wxPanel*          pPanelToShowOnClose
 )
 :	wxPanel(pParent, ID_Restore_Files_Panel, wxDefaultPosition, 
-		wxDefaultSize, wxTAB_TRAVERSAL, wxT("RestoreFilesPanel")),
+		wxDefaultSize, wxTAB_TRAVERSAL, _("RestoreFilesPanel")),
 	mCache(pServerConnection),
 	mpMainFrame(pMainFrame),
 	mpPanelToShowOnClose(pPanelToShowOnClose),
@@ -430,7 +430,7 @@ RestoreFilesPanel::RestoreFilesPanel
 	wxBoxSizer *theRightPanelSizer = new wxBoxSizer( wxVERTICAL );
 	
 	wxStaticBox* pRestoreSelBox = new wxStaticBox(theRightPanel, wxID_ANY, 
-		wxT("Selected to Restore"));
+		_("Selected to Restore"));
 
 	wxStaticBoxSizer* pStaticBoxSizer = new wxStaticBoxSizer(
 		pRestoreSelBox, wxVERTICAL);
@@ -440,28 +440,28 @@ RestoreFilesPanel::RestoreFilesPanel
 	pStaticBoxSizer->Add(theRightParamSizer, 0, wxGROW | wxALL, 4);
 	
 	mpCountFilesBox = new wxTextCtrl(theRightPanel, wxID_ANY, wxT(""));
-	AddParam(theRightPanel, wxT("Files"), mpCountFilesBox, TRUE, 
+	AddParam(theRightPanel, _("Files"), mpCountFilesBox, TRUE, 
 			theRightParamSizer);
 
 	mpCountBytesBox = new wxTextCtrl(theRightPanel, wxID_ANY, wxT(""));
-	AddParam(theRightPanel, wxT("Bytes"), mpCountBytesBox, TRUE, 
+	AddParam(theRightPanel, _("Bytes"), mpCountBytesBox, TRUE, 
 			theRightParamSizer);
 
 	wxBoxSizer *theRightButtonSizer = new wxBoxSizer( wxHORIZONTAL );
 	theRightPanelSizer->Add(theRightButtonSizer, 0, wxGROW | wxALL, 4);
 
 	wxButton *theRestoreButton = new wxButton(theRightPanel, 
-		ID_Server_File_RestoreButton, wxT("Restore"), 
+		ID_Server_File_RestoreButton, _("Restore"), 
 		wxDefaultPosition);
 	theRightButtonSizer->Add(theRestoreButton, 1, wxALL, 4);
 
 	wxButton *theCompareButton = new wxButton(theRightPanel, 
-		ID_Server_File_CompareButton, wxT("Compare"), 
+		ID_Server_File_CompareButton, _("Compare"), 
 		wxDefaultPosition);
 	theRightButtonSizer->Add(theCompareButton, 1, wxALL, 4);
 
 	mpDeleteButton = new wxButton(theRightPanel, 
-		ID_Server_File_DeleteButton, wxT("Delete"), 
+		ID_Server_File_DeleteButton, _("Delete"), 
 		wxDefaultPosition);
 	theRightButtonSizer->Add(mpDeleteButton, 1, wxALL, 4);
 	
@@ -476,7 +476,7 @@ RestoreFilesPanel::RestoreFilesPanel
 	topSizer->Add(pActionCtrlSizer, 0, 
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	wxButton* pCloseButton = new wxButton(this, wxID_CANCEL, wxT("Close"));
+	wxButton* pCloseButton = new wxButton(this, wxID_CANCEL, _("Close"));
 	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
 	
 	mServerSettings.mViewOldFiles     = FALSE;
@@ -516,7 +516,7 @@ void RestoreFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 	
 	wxPoint lClickPosition = event.GetPoint();
 	wxString msg;
-	msg.Printf(wxT("Click at %d,%d"), lClickPosition.x, lClickPosition.y);
+	msg.Printf(_("Click at %d,%d"), lClickPosition.x, lClickPosition.y);
 	wxLogDebug(msg);
 	
 	int flags;
@@ -525,14 +525,14 @@ void RestoreFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 
 	if (flags & wxTREE_HITTEST_ONITEMICON)
 	{
-		wxLogDebug(wxT("Icon clicked"));
+		wxLogDebug(_("Icon clicked"));
 		event.Veto();
 		return;
 	}
 	else
 	{
 		wxString msg;
-		msg.Printf(wxT("Flags are: %d"), flags);
+		msg.Printf(_("Flags are: %d"), flags);
 		wxLogDebug(msg);
 	}
 	
@@ -545,9 +545,9 @@ void RestoreFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 	{
 		mpDeleteButton->Enable(TRUE);
 		if (node->IsDeleted()) {
-			mpDeleteButton->SetLabel(wxT("Undelete"));
+			mpDeleteButton->SetLabel(_("Undelete"));
 		} else {
-			mpDeleteButton->SetLabel(wxT("Delete"));
+			mpDeleteButton->SetLabel(_("Delete"));
 		}
 	}
 
@@ -619,7 +619,7 @@ void RestoreFilesPanel::RestoreProgress(RestoreState State,
 {
 	mRestoreCounter++;
 	wxString msg;
-	msg.Printf(wxT("Restoring %s (completed %d files)"),
+	msg.Printf(_("Restoring %s (completed %d files)"),
 		rFileName.c_str(), mRestoreCounter);
 	mpStatusBar->SetStatusText(msg);
 	wxSafeYield();
@@ -633,9 +633,9 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 	
 	if (node->GetCacheNode()->IsRoot()) {
 		wxMessageBox(
-			wxT("You cannot restore the whole server. "
+			_("You cannot restore the whole server. "
 			"Try restoring individual locations"), 
-			wxT("Nice Try"), 
+			_("Nice Try"), 
 			wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -645,11 +645,11 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 	// int64_t boxId = pVersion->GetBoxFileId();
 	
 	wxFileDialog *restoreToDialog = new wxFileDialog(
-		this, wxT("Restore To"), wxT(""), wxT(""), wxT(""), 
+		this, _("Restore To"), wxT(""), wxT(""), wxT(""), 
 		wxSAVE, wxDefaultPosition);
 
 	if (restoreToDialog->ShowModal() != wxID_OK) {
-		wxMessageBox(wxT("Restore cancelled."), wxT("Boxi Error"), 
+		wxMessageBox(_("Restore cancelled."), _("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -659,7 +659,7 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 		wxString msg("The selected destination file or directory "
 			"already exists: ", wxConvBoxi);
 		msg.Append(destFile.GetFullPath());
-		wxMessageBox(msg, wxT("Boxi Error"), 
+		wxMessageBox(msg, _("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -670,7 +670,7 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 		wxString msg("The selected destination directory "
 			"is actually a file: ", wxConvBoxi);
 		msg.Append(destParentDir.GetFullPath());
-		wxMessageBox(msg, wxT("Boxi Error"), 
+		wxMessageBox(msg, _("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -679,7 +679,7 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 		wxString msg("The selected destination directory "
 			"does not exist: ", wxConvBoxi);
 		msg.Append(destParentDir.GetFullPath());
-		wxMessageBox(msg, wxT("Boxi Error"), 
+		wxMessageBox(msg, _("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -727,7 +727,7 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 			msg.Append(wxString(e.what(), wxConvBoxi));
 		}
 
-		wxMessageBox(msg, wxT("Boxi Error"), 
+		wxMessageBox(msg, _("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
 		
 		return;
@@ -735,26 +735,26 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 	
 	switch (result) {
 	case Restore_Complete:
-		wxMessageBox(wxT("Restore complete."), wxT("Boxi Message"), 
+		wxMessageBox(_("Restore complete."), _("Boxi Message"), 
 			wxOK | wxICON_INFORMATION, this);
 		break;
 	
 	case Restore_ResumePossible:
-		wxMessageBox(wxT("Resume possible?"), wxT("Boxi Error"), 
+		wxMessageBox(_("Resume possible?"), _("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
 		break;
 	
 	case Restore_TargetExists:
 		wxMessageBox(
-			wxT("The target directory exists. "
+			_("The target directory exists. "
 			"You cannot restore over an existing directory."),
-			wxT("Boxi Error"), 
+			_("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
 		break;
 		
 	default:
-		wxMessageBox(wxT("ERROR: Unknown restore result."), 
-			wxT("Boxi Error"), 
+		wxMessageBox(_("ERROR: Unknown restore result."), 
+			_("Boxi Error"), 
 			wxOK | wxICON_ERROR, this);
 		break;
 	}
@@ -763,7 +763,7 @@ void RestoreFilesPanel::OnFileRestore(wxCommandEvent& event)
 void RestoreFilesPanel::OnFileDelete(wxCommandEvent& event)
 {
 	wxMessageBox(
-		wxT("Not supported yet"), wxT("Boxi Error"), 
+		_("Not supported yet"), _("Boxi Error"), 
 		wxOK | wxICON_ERROR, this);
 	return;
 	
@@ -974,11 +974,11 @@ void RestoreFilesPanel::UpdateFileCount()
 {
 	wxString str;
 	
-	str.Printf(wxT("%lld"), mCountedFiles);
+	str.Printf(_("%lld"), mCountedFiles);
 	if (str.CompareTo(mpCountFilesBox->GetValue()) != 0)
 		mpCountFilesBox->SetValue(str);
 	
-	str.Printf(wxT("%lld"), mCountedBytes);
+	str.Printf(_("%lld"), mCountedBytes);
 	if (str.CompareTo(mpCountBytesBox->GetValue()) != 0)
 		mpCountBytesBox->SetValue(str);
 }

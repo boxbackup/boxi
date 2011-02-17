@@ -81,7 +81,7 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 	mpConfigStateBitmap = new TickCrossIcon(this);
 	pStateSizer->Add(mpConfigStateBitmap, 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
 
-	mpConfigStateLabel = new WrappingLabel(this, -1, wxT("Unknown state"));
+	mpConfigStateLabel = new WrappingLabel(this, -1, _("Unknown state"));
 	pStateSizer->Add(mpConfigStateLabel, 1, wxALIGN_CENTER_VERTICAL | wxALL, 4);
 	
 	wxScrolledWindow *pVisibleArea = new wxScrolledWindow(this, wxID_ANY,
@@ -97,109 +97,109 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	ParamPanel *pBasicPanel = new ParamPanel(pClientPropsNotebook);
-	pClientPropsNotebook->AddPage(pBasicPanel, wxT("Basic"));
+	pClientPropsNotebook->AddPage(pBasicPanel, _("Basic"));
 	
 	ParamPanel *pAdvancedPanel = new ParamPanel(pClientPropsNotebook);
-	pClientPropsNotebook->AddPage(pAdvancedPanel, wxT("Advanced"));
+	pClientPropsNotebook->AddPage(pAdvancedPanel, _("Advanced"));
 
 	mpStoreHostnameCtrl = pBasicPanel->AddParam(
-		wxT("Store Host:"), pConfig->StoreHostname, 
+		_("Store Host:"), pConfig->StoreHostname, 
 		wxID_ANY, FALSE, FALSE);
 
 	mpAccountNumberCtrl = pBasicPanel->AddParam(
-		wxT("Account Number:"), pConfig->AccountNumber, 
+		_("Account Number:"), pConfig->AccountNumber, 
 		"0x%x", wxID_ANY);
 		
 	mpKeysFileCtrl = pBasicPanel->AddParam(
-		wxT("Keys File:"), pConfig->KeysFile, 
+		_("Keys File:"), pConfig->KeysFile, 
 		wxID_ANY, TRUE, FALSE, 
-		wxT("Encryption key files (*-FileEncKeys.raw)|"
-			"*-FileEncKeys.raw"), wxT("-FileEncKeys.raw"));
+		_("Encryption key files (*-FileEncKeys.raw)|"
+			"*-FileEncKeys.raw"), _("-FileEncKeys.raw"));
 		
 	mpCertificateFileCtrl = pBasicPanel->AddParam(
-		wxT("Certificate File:"), pConfig->CertificateFile, 
+		_("Certificate File:"), pConfig->CertificateFile, 
 		wxID_ANY, TRUE, FALSE,
-		wxT("Certificate files (*-cert.pem)|*-cert.pem"),
-		wxT("-cert.pem"));
+		_("Certificate files (*-cert.pem)|*-cert.pem"),
+		_("-cert.pem"));
 
 	mpPrivateKeyFileCtrl = pBasicPanel->AddParam(
-		wxT("Private Key File:"), pConfig->PrivateKeyFile, 
+		_("Private Key File:"), pConfig->PrivateKeyFile, 
 		wxID_ANY, TRUE, FALSE,
-		wxT("Private key files (*-key.pem)|*-key.pem"),
-		wxT("-key.pem"));
+		_("Private key files (*-key.pem)|*-key.pem"),
+		_("-key.pem"));
 
 	mpTrustedCAsFileCtrl = pBasicPanel->AddParam(
-		wxT("Trusted CAs File:"), pConfig->TrustedCAsFile, 
+		_("Trusted CAs File:"), pConfig->TrustedCAsFile, 
 		wxID_ANY, TRUE, FALSE,
-		wxT("Server CA certificate (serverCA.pem)|serverCA.pem"),
-		wxT("serverCA.pem"));
+		_("Server CA certificate (serverCA.pem)|serverCA.pem"),
+		_("serverCA.pem"));
 
 	mpDataDirectoryCtrl = pBasicPanel->AddParam(
-		wxT("Data Directory:"), pConfig->DataDirectory, 
+		_("Data Directory:"), pConfig->DataDirectory, 
 		wxID_ANY, FALSE, TRUE);
 
 	mpCommandSocketCtrl = pBasicPanel->AddParam(
-		wxT("Command Socket:"), pConfig->CommandSocket, 
+		_("Command Socket:"), pConfig->CommandSocket, 
 		wxID_ANY, TRUE, FALSE, 
-		wxT("Command socket (bbackupd.sock)|bbackupd.sock"),
-		wxT("bbackupd.sock"));
+		_("Command socket (bbackupd.sock)|bbackupd.sock"),
+		_("bbackupd.sock"));
 
 	mpExtendedLoggingCtrl = pBasicPanel->AddParam(
-		wxT("Extended Logging:"), pConfig->ExtendedLogging, 
+		_("Extended Logging:"), pConfig->ExtendedLogging, 
 		wxID_ANY);
 
 	mpUpdateStoreIntervalCtrl = pAdvancedPanel->AddParam(
-		wxT("Update Store Interval:"), pConfig->UpdateStoreInterval, 
+		_("Update Store Interval:"), pConfig->UpdateStoreInterval, 
 		"%d", wxID_ANY);
 		
 	mpMinimumFileAgeCtrl = pAdvancedPanel->AddParam(
-		wxT("Minimum File Age:"), pConfig->MinimumFileAge, 
+		_("Minimum File Age:"), pConfig->MinimumFileAge, 
 		"%d", wxID_ANY);
 
 	mpMaxUploadWaitCtrl = pAdvancedPanel->AddParam(
-		wxT("Maximum Upload Wait:"), 
+		_("Maximum Upload Wait:"), 
 		pConfig->MaxUploadWait, "%d", wxID_ANY);
 
 	mpFileTrackingSizeThresholdCtrl = pAdvancedPanel->AddParam(
-		wxT("File Tracking Size Threshold:"), 
+		_("File Tracking Size Threshold:"), 
 		pConfig->FileTrackingSizeThreshold, 
 		"%d", wxID_ANY);
 		
 	mpDiffingUploadSizeThresholdCtrl = pAdvancedPanel->AddParam(
-		wxT("Diffing Upload Size Threshold:"), 
+		_("Diffing Upload Size Threshold:"), 
 		pConfig->DiffingUploadSizeThreshold, 
 		"%d", wxID_ANY);
 
 	mpMaximumDiffingTimeCtrl = pAdvancedPanel->AddParam(
-		wxT("Maximum Diffing Time:"), pConfig->MaximumDiffingTime, 
+		_("Maximum Diffing Time:"), pConfig->MaximumDiffingTime, 
 		"%d", wxID_ANY);
 
 	mpKeepAliveTimeCtrl = pAdvancedPanel->AddParam(
-		wxT("Keep-Alive Time:"), pConfig->KeepAliveTime, 
+		_("Keep-Alive Time:"), pConfig->KeepAliveTime, 
 		"%d", wxID_ANY);
 
 	mpNotifyScriptCtrl = pAdvancedPanel->AddParam(
-		wxT("Notify Script:"), pConfig->NotifyScript, 
+		_("Notify Script:"), pConfig->NotifyScript, 
 		wxID_ANY, TRUE, FALSE,
-		wxT("Default script (NotifySysadmin.sh)|NotifySysadmin.sh|"
+		_("Default script (NotifySysadmin.sh)|NotifySysadmin.sh|"
 			"All files (*)|*"));
 	
 	mpSyncAllowScriptCtrl = pAdvancedPanel->AddParam(
-		wxT("Sync Allow Script:"), pConfig->SyncAllowScript, 
+		_("Sync Allow Script:"), pConfig->SyncAllowScript, 
 		wxID_ANY, TRUE, FALSE,
-		wxT("All files (*)|*"));
+		_("All files (*)|*"));
 
-	mpPidFileCtrl = pAdvancedPanel->AddParam(wxT("Process ID File:"), 
+	mpPidFileCtrl = pAdvancedPanel->AddParam(_("Process ID File:"), 
 		pConfig->PidFile, wxID_ANY, TRUE, FALSE,
-		wxT("Client PID files (bbackupd.pid)|bbackupd.pid"),
-		wxT("bbackupd.pid"));
+		_("Client PID files (bbackupd.pid)|bbackupd.pid"),
+		_("bbackupd.pid"));
 	
 	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
 	pTabSizer->Add(pActionCtrlSizer, 0, 
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	wxButton* pCloseButton = new wxButton(this, 
-		wxID_CANCEL, wxT("Close"));
+		wxID_CANCEL, _("Close"));
 	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
 
 	// pScrollablePanelSizer->SetSizeHints(this);
@@ -246,7 +246,7 @@ void ClientInfoPanel::UpdateConfigState()
 	if (mpConfig->Check(msg))
 	{
 		mpConfigStateBitmap->SetTicked(TRUE);
-		msg = wxT("Configuration looks OK");
+		msg = _("Configuration looks OK");
 	}
 	else 
 	{

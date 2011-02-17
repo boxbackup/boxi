@@ -214,7 +214,7 @@ void TestCompare::RunTest()
 	CPPUNIT_ASSERT_EQUAL(0, pCompareOneLocChoice->GetSelection());
 	
 	wxString testLabel;
-	testLabel.Printf(wxT("%s -> %s"), mpTestDataLocation->GetName().c_str(),
+	testLabel.Printf(_("%s -> %s"), mpTestDataLocation->GetName().c_str(),
 		mpTestDataLocation->GetPath().c_str());
 
 	wxRadioButton* pCompareDirRadio = wxDynamicCast
@@ -392,22 +392,22 @@ void TestCompare::RunTest()
 	
 	wxChar* labels[] =
 	{
-		wxT("anotehr"),
-		wxT("dir23"),
-		wxT("spacetest"),
-		wxT("sub23"),
-		wxT("x1"),
-		wxT("xx_not_this_dir_ALWAYSINCLUDE"),
-		wxT("apropos"),
-		wxT("chsh"),
-		wxT("df324"),
-		wxT("df9834.dsf"),
-		wxT("dont.excludethis"),
-		wxT("f1.dat"),
-		wxT("f45.df"),
-		wxT("symlink1"),
-		wxT("symlink3"),
-		wxT("xx_not_this_dir_22"),
+		_("anotehr"),
+		_("dir23"),
+		_("spacetest"),
+		_("sub23"),
+		_("x1"),
+		_("xx_not_this_dir_ALWAYSINCLUDE"),
+		_("apropos"),
+		_("chsh"),
+		_("df324"),
+		_("df9834.dsf"),
+		_("dont.excludethis"),
+		_("f1.dat"),
+		_("f45.df"),
+		_("symlink1"),
+		_("symlink3"),
+		_("xx_not_this_dir_22"),
 		NULL
 	};
 	wxChar** pLabel = labels;

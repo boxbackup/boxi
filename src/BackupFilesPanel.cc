@@ -225,7 +225,7 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 		mpLocation    = NULL;
 		mpExcludedBy  = NULL;
 		mpIncludedBy  = NULL;
-		mLocationString = wxT("(none)");
+		mLocationString = _("(none)");
 		mExcludedByString = wxT("");
 		mIncludedByString = wxT("");
 		mExcluded = TRUE;
@@ -263,17 +263,17 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 		
 		mExcluded = FALSE;
 		mLocationString = mpLocation->GetName();
-		mLocationString.Append(wxT(" ("));
+		mLocationString.Append(_(" ("));
 		mLocationString.Append(mpLocation->GetPath());
-		mLocationString.Append(wxT(")"));
+		mLocationString.Append(_(")"));
 	}
 	
 	if (!(mFullPath.StartsWith(mpLocation->GetPath().c_str(), 
 			&mLocationPath))) 
 	{
 		wxMessageBox(
-			wxT("Full path does not start with location path!"),
-			wxT("Boxi Error"), wxOK | wxICON_ERROR, NULL);
+			_("Full path does not start with location path!"),
+			_("Boxi Error"), wxOK | wxICON_ERROR, NULL);
 	}
 		
 	// std::cout << "Checking " << mFullPath << " against exclude list for " 
@@ -342,7 +342,7 @@ void LocalFileTreeNode::UpdateExcludedState(bool updateParents)
 				if (::regcomp(apr.get(), value.c_str(),
 					REG_EXTENDED | REG_NOSUB) != 0) 
 				{
-					wxLogError(wxT("Regular expression "
+					wxLogError(_("Regular expression "
 						"compile failed (%s)"),
 						value2.c_str());
 				}
@@ -515,37 +515,37 @@ BackupFilesPanel::BackupFilesPanel(
 	mpBottomInfoSizer = new wxGridSizer(2, 4, 4);
 
 	mpFullPathLabel = new wxStaticText(this, -1, wxT(""));
-	AddParam(this, wxT("Full Path:"), mpFullPathLabel, false, 
+	AddParam(this, _("Full Path:"), mpFullPathLabel, false, 
 		mpBottomInfoSizer);
 
 	mpLocationLabel = new wxStaticText(this, -1, wxT(""));
-	AddParam(this, wxT("Location:"), mpLocationLabel, false, 
+	AddParam(this, _("Location:"), mpLocationLabel, false, 
 		mpBottomInfoSizer);
 
 	mpExcludedByLabel = new wxStaticText(this, -1, wxT(""));
-	AddParam(this, wxT("Excluded By:"), mpExcludedByLabel, false, 
+	AddParam(this, _("Excluded By:"), mpExcludedByLabel, false, 
 		mpBottomInfoSizer);
 
 	mpIncludedByLabel = new wxStaticText(this, -1, wxT(""));
-	AddParam(this, wxT("Included By:"), mpIncludedByLabel, false, 
+	AddParam(this, _("Included By:"), mpIncludedByLabel, false, 
 		mpBottomInfoSizer);
 
 	mpExcludeResultLabel = new wxStaticText(this, -1, wxT(""));
-	AddParam(this, wxT("Result:"), mpExcludeResultLabel, false, 
+	AddParam(this, _("Result:"), mpExcludeResultLabel, false, 
 		mpBottomInfoSizer);
 		
 	mpLocalVersionLabel = new wxStaticText(this, -1, wxT(""));
-	AddParam(this, wxT("Local Version:"), mpLocalVersionLabel, 
+	AddParam(this, _("Local Version:"), mpLocalVersionLabel, 
 		false, mpBottomInfoSizer);
 
 	mpRemoteVersionLabel = new wxStaticText(this, -1, wxT(""));
-	AddParam(this, wxT("Remote Version:"), mpRemoteVersionLabel, 
+	AddParam(this, _("Remote Version:"), mpRemoteVersionLabel, 
 		false, mpBottomInfoSizer);
 
 	mpServerConnectCheckbox = new wxCheckBox(
 		this, ID_Local_ServerConnectCheckbox, 
-		wxT("Connect to Server"));
-	AddParam(this, wxT("Status on Server:"), mpServerConnectCheckbox, 
+		_("Connect to Server"));
+	AddParam(this, _("Status on Server:"), mpServerConnectCheckbox, 
 		false, mpBottomInfoSizer);
 
 	mpServerStatus = new wxStaticText(this, -1, wxT(""));
@@ -566,16 +566,16 @@ BackupFilesPanel::BackupFilesPanel(
 	rootNode->mpRootNode		= rootNode;
 	rootNode->mpParentNode		= NULL;
 	#ifdef __CYGWIN__
-	rootNode->mFullPath		= wxT("c:\\");
+	rootNode->mFullPath		= _("c:\\");
 	#else
-	rootNode->mFullPath		= wxT("/");
+	rootNode->mFullPath		= _("/");
 	#endif
 	rootNode->mpServerSettings  = mpServerSettings;
 	rootNode->mpServerConnection = mpServerConnection;
 	rootNode->mBoxFileId = LocalFileTreeNode::ID_UNKNOWN;
 
 	wxString rootName;
-	rootName.Printf(wxT("%s (local root)"), 
+	rootName.Printf(_("%s (local root)"), 
 			rootNode->mFullPath.c_str());
 
 	theTreeRootItem = theBackupFileTree->AddRoot(
@@ -646,7 +646,7 @@ void BackupFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 	mpExcludedByLabel->SetLabel(node->mExcludedByString);
 	mpIncludedByLabel->SetLabel(node->mIncludedByString);
 	mpExcludeResultLabel->SetLabel(
-		node->mExcluded ? wxT("Excluded") : wxT("Included"));
+		node->mExcluded ? _("Excluded") : _("Included"));
 	
 	{
 		wxString TimeString;
@@ -659,8 +659,8 @@ void BackupFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 	if (! (mpServerConnection->IsConnected()) &&
 		! (mpServerSettings->mConnectOnDemand))
 	{
-		mpRemoteVersionLabel->SetLabel(wxT("Not connected"));
-		mpServerStatus->SetLabel(wxT("Not connected"));
+		mpRemoteVersionLabel->SetLabel(_("Not connected"));
+		mpServerStatus->SetLabel(_("Not connected"));
 		return;
 	}
 	
@@ -680,17 +680,17 @@ void BackupFilesPanel::OnTreeNodeSelect(wxTreeEvent& event)
 	
 	if (node->mLocalFileLastModified.IsEqualTo(node->mBoxFileLastModified))
 	{
-		mpServerStatus->SetLabel(wxT("Backed up OK!"));
+		mpServerStatus->SetLabel(_("Backed up OK!"));
 	}
 	else 
 	{
 		wxString msg;
 		msg.Printf(
-			wxT("Version on server is out of date (file %lld)"),
+			_("Version on server is out of date (file %lld)"),
 			node->mBoxFileId);
 		mpServerStatus->SetLabel(msg);
 		wxString ServerPath = node->mLocationString 
-			+ wxT("/") + node->mLocationPath;
+			+ _("/") + node->mLocationPath;
 	}
 	
 	UpdateExcludedState(node->mTreeId);
@@ -741,10 +741,10 @@ void BackupFilesPanel::UpdateExcludedStatePrivate(wxTreeItemId &rNodeId)
 		else 
 		{
 			wxString msg;
-			msg.Printf(wxT("Error getting information about "
+			msg.Printf(_("Error getting information about "
 					"local file %s:\n\n%s"),
 				pNode->mFullPath.c_str(), strerror(errno));
-			wxMessageBox(msg, wxT("Boxi Error"), 
+			wxMessageBox(msg, _("Boxi Error"), 
 				wxOK | wxICON_ERROR, NULL);
 		}
 	}

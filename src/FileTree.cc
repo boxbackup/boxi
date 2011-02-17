@@ -77,7 +77,7 @@ FileTree::FileTree
 )
 :	wxTreeCtrl(pParent, id, wxDefaultPosition, wxDefaultSize, 
 		wxTR_DEFAULT_STYLE | wxTR_HAS_BUTTONS | wxSUNKEN_BORDER, 
-		wxDefaultValidator, wxT("FileTree"))
+		wxDefaultValidator, _("FileTree"))
 {
 	SetImageList(&mImages);
 
@@ -146,7 +146,7 @@ LocalFileNode::LocalFileNode(LocalFileNode* pParent, const wxString& path)
   mIsRoot      (false),
   mIsDirectory (wxFileName::DirExists(mFullPath))
 { 
-	if (path.Length() == 3 && path.Mid(1, 2).IsSameAs(wxT(":\\")))
+	if (path.Length() == 3 && path.Mid(1, 2).IsSameAs(_(":\\")))
 	{
 		mIsDirectory = true;
 	}

@@ -63,22 +63,22 @@ BackupDaemonPanel::BackupDaemonPanel(
 	wxSizer* pParamSizer = new wxGridSizer(2, 4, 4);
 	
 	wxTextCtrl* pBoxLocationCtrl = new wxTextCtrl(this, -1);
-	AddParam(this, wxT("Client Location:"), pBoxLocationCtrl, TRUE,
+	AddParam(this, _("Client Location:"), pBoxLocationCtrl, TRUE,
 		pParamSizer);
 	
 	mpClientConnStatus = new wxTextCtrl(this, -1, wxT(""), 
 		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	AddParam(this, wxT("Connection to Client:"), mpClientConnStatus, TRUE,
+	AddParam(this, _("Connection to Client:"), mpClientConnStatus, TRUE,
 		pParamSizer);
 
 	mpClientError = new wxTextCtrl(this, -1, wxT(""), 
 		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	AddParam(this, wxT("Connection Error:"), mpClientError , TRUE,
+	AddParam(this, _("Connection Error:"), mpClientError , TRUE,
 		pParamSizer);
 
 	mpClientState = new wxTextCtrl(this, -1, wxT(""), 
 		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	AddParam(this, wxT("Client State:"), mpClientState, TRUE,
+	AddParam(this, _("Client State:"), mpClientState, TRUE,
 		pParamSizer);
 
 	pMainSizer->Add(pParamSizer, 0, wxGROW | wxALL, 8);
@@ -95,22 +95,22 @@ BackupDaemonPanel::BackupDaemonPanel(
 	pMainSizer->Add(pStartText, 0, wxGROW, 0);
 	*/
 
-	mpStartButton = new wxButton(this, ID_Daemon_Start, wxT("Start"));
+	mpStartButton = new wxButton(this, ID_Daemon_Start, _("Start"));
 	pButtonSizer->Add(mpStartButton, 0, wxGROW, 0);
 	
-	mpStopButton = new wxButton(this, ID_Daemon_Stop, wxT("Stop"));
+	mpStopButton = new wxButton(this, ID_Daemon_Stop, _("Stop"));
 	pButtonSizer->Add(mpStopButton, 0, wxGROW);
 	
-	mpRestartButton = new wxButton(this, ID_Daemon_Restart, wxT("Restart"));
+	mpRestartButton = new wxButton(this, ID_Daemon_Restart, _("Restart"));
 	pButtonSizer->Add(mpRestartButton, 0, wxGROW);
 
-	mpKillButton = new wxButton(this, ID_Daemon_Kill, wxT("Kill"));
+	mpKillButton = new wxButton(this, ID_Daemon_Kill, _("Kill"));
 	pButtonSizer->Add(mpKillButton, 0, wxGROW);
 
-	mpSyncButton = new wxButton(this, ID_Daemon_Sync, wxT("Sync"));
+	mpSyncButton = new wxButton(this, ID_Daemon_Sync, _("Sync"));
 	pButtonSizer->Add(mpSyncButton, 0, wxGROW);
 
-	mpReloadButton = new wxButton(this, ID_Daemon_Reload, wxT("Reload"));
+	mpReloadButton = new wxButton(this, ID_Daemon_Reload, _("Reload"));
 	pButtonSizer->Add(mpReloadButton, 0, wxGROW);
 
 	pMainSizer->Add(pButtonSizer, 0, wxGROW | wxALL, 8);
@@ -135,7 +135,7 @@ void BackupDaemonPanel::HandleClientEvent() {
 	mpClientError->SetValue(mClientConn.GetLastErrorMsg());
 
 	wxString ClientState;
-	ClientState.Printf(wxT("%s (pid %ld)"), 
+	ClientState.Printf(_("%s (pid %ld)"), 
 		mClientConn.GetClientStateString(),
 		mClientConn.GetClientPidFast());
 	mpClientState->SetValue(ClientState);

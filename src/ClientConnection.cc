@@ -66,7 +66,7 @@ void* ClientConnection::Entry() { return NULL; }
 /*
 void* ClientConnection::Entry()
 {
-	wxLogDebug(wxT("Client worker thread starting"));
+	wxLogDebug(_("Client worker thread starting"));
 
 	// unlocked use of mCurrentState, might possibly be dangerous?
 	while (mCurrentState != BST_SHUTDOWN)
@@ -105,12 +105,12 @@ void* ClientConnection::Entry()
 					break;
 				default:
 					wxLogError(
-						wxT("Unknown client worker "
+						_("Unknown client worker "
 							"state %d"), 
 						PrevWorkerState);
 			}
 		} catch (...) {
-			wxLogError(wxT("Caught exception"));
+			wxLogError(_("Caught exception"));
 		}
 
 		{
@@ -140,7 +140,7 @@ void* ClientConnection::Entry()
 		{
 			if (mCurrentState != PrevWorkerState) {
 				mpListener->NotifyStateChange();
-				wxLogDebug(wxT(
+				wxLogDebug(_(
 					"Worker state change: '%s' to '%s'"),
 					GetStateStr(PrevWorkerState),
 					GetStateStr(mCurrentState));
@@ -150,7 +150,7 @@ void* ClientConnection::Entry()
 			}
 			mpListener->NotifyError();
 			if (mLastError != ERR_NONE) {
-				wxLogDebug(wxT("Worker error: '%s'"),
+				wxLogDebug(_("Worker error: '%s'"),
 					GetLastErrorMsg());
 			}
 		}
@@ -162,7 +162,7 @@ void* ClientConnection::Entry()
 		}
 	}
 	
-	wxLogDebug(wxT("Client worker thread shutdown"));
+	wxLogDebug(_("Client worker thread shutdown"));
 	return NULL;
 }
 */
@@ -197,7 +197,7 @@ ClientConnection::Error ClientConnection::_GetClientPidSlow(long& rPid)
 	wxFileName DaemonPidFile(wxString(PidFilePath.c_str(), wxConvBoxi));
 	if (!wxFileName::FileExists(DaemonPidFile.GetFullPath()))
 	{
-		wxLogDebug(wxT("PID file not found (%s)"), 
+		wxLogDebug(_("PID file not found (%s)"), 
 			DaemonPidFile.GetFullPath().c_str());
 		return ERR_FILENOTFOUND;
 	}
@@ -205,7 +205,7 @@ ClientConnection::Error ClientConnection::_GetClientPidSlow(long& rPid)
 	wxFile PidFile(PidFilePath);
 	if (!PidFile.IsOpened())
 	{
-		wxLogDebug(wxT("Unable to read PID file (%s)"), 
+		wxLogDebug(_("Unable to read PID file (%s)"), 
 			PidFilePath.c_str());
 		return ERR_ACCESSDENIED;
 	}
@@ -214,7 +214,7 @@ ClientConnection::Error ClientConnection::_GetClientPidSlow(long& rPid)
 	char *buffer = new char [length + 1];
 	if (!buffer)
 	{
-		wxLogDebug(wxT("Out of memory reading PID file (%s)"), 
+		wxLogDebug(_("Out of memory reading PID file (%s)"), 
 			PidFilePath.c_str());
 		return ERR_RESOURCES;
 	}
@@ -223,7 +223,7 @@ ClientConnection::Error ClientConnection::_GetClientPidSlow(long& rPid)
 	int BytesRead = PidFile.Read(buffer, length);
 	if (BytesRead != length)
 	{
-		wxLogDebug(wxT("Short read on PID file (%s)"), 
+		wxLogDebug(_("Short read on PID file (%s)"), 
 			PidFilePath.c_str());
 		delete[] buffer;
 		return ERR_PIDFORMAT;
@@ -233,7 +233,7 @@ ClientConnection::Error ClientConnection::_GetClientPidSlow(long& rPid)
 	long ProcessID = ::strtol(buffer, &endptr, 10);
 	if (ProcessID <= 0)
 	{
-		wxLogDebug(wxT("Invalid character code %d in PID file (%s)"),
+		wxLogDebug(_("Invalid character code %d in PID file (%s)"),
 			*endptr, PidFilePath.c_str());
 		delete[] buffer;
 		return ERR_PIDFORMAT;
@@ -250,7 +250,7 @@ ClientConnection::Error ClientConnection::_GetClientPidSlow(long& rPid)
 			return ERR_NONE;
 
 		case wxKILL_BAD_SIGNAL: // no such signal
-			wxLogDebug(wxT("No such signal wxSIGTERM?"));
+			wxLogDebug(_("No such signal wxSIGTERM?"));
 			return ERR_INTERNAL;
 
 		case wxKILL_ACCESS_DENIED: // permission denied
@@ -259,13 +259,13 @@ ClientConnection::Error ClientConnection::_GetClientPidSlow(long& rPid)
 			return ERR_ACCESSDENIED;
 
 		case wxKILL_NO_PROCESS: // no such process
-			// wxLogDebug(wxT("Failed to kill process: 
+			// wxLogDebug(_("Failed to kill process: 
 			// no such process %ld"), ProcessID);
 			return ERR_PROCESSNOTFOUND;
 		
 		case wxKILL_ERROR: // another, unspecified error
 		default:
-			wxLogDebug(wxT("Failed to kill process %ld: "
+			wxLogDebug(_("Failed to kill process %ld: "
 				"unspecified error"), ProcessID);
 			return ERR_UNKNOWN;
 	}			
@@ -290,7 +290,7 @@ void ClientConnection::OnConnect() {
 	{
 		wxMutexLocker lock(mMutex);
 		if (mCurrentState != BST_CONNECTING) {
-			wxLogDebug(wxT("Client connect interrupted"));
+			wxLogDebug(_("Client connect interrupted"));
 			return;
 		}
 		if (result == ERR_NONE)
@@ -333,7 +333,7 @@ ClientConnection::Error ClientConnection::DoConnect()
 	{
 		wxMutexLocker lock(mMutex);
 		if (mCurrentState != BST_CONNECTING) {
-			wxLogDebug(wxT("DoConnect interrupted"));
+			wxLogDebug(_("DoConnect interrupted"));
 			return ERR_INTERRUPTED;
 		}
 	}
@@ -346,18 +346,18 @@ ClientConnection::Error ClientConnection::DoConnect()
 	
 	try {
 		if (!mapReader->GetLine(ConfigSummary)) {
-			wxLogDebug(wxT("Failed to read status from client"));
+			wxLogDebug(_("Failed to read status from client"));
 			return ERR_NORESPONSE;
 		}
 	} catch (...) {
-		wxLogDebug(wxT("Exception while reading status from client"));
+		wxLogDebug(_("Exception while reading status from client"));
 		return ERR_NORESPONSE;
 	}
 
 	{
 		wxMutexLocker lock(mMutex);
 		if (mCurrentState != BST_CONNECTING) {
-			wxLogDebug(wxT("GetLine interrupted"));
+			wxLogDebug(_("GetLine interrupted"));
 			return ERR_INTERRUPTED;
 		}
 	}
@@ -394,7 +394,7 @@ ClientConnection::Error ClientConnection::DoReadLine()
 	
 	wxString line2(Line.c_str(), wxConvBoxi);
 	wxString rest;
-	if (line2.StartsWith(wxT("state "), &rest)) 
+	if (line2.StartsWith(_("state "), &rest)) 
 	{
 		long value;
 		if (!rest.ToLong(&value))
@@ -410,7 +410,7 @@ ClientConnection::Error ClientConnection::DoReadLine()
 		}
 	}
 
-	wxLogDebug(wxT("read from daemon: '%s'"), line2.c_str());
+	wxLogDebug(_("read from daemon: '%s'"), line2.c_str());
 	return ERR_NONE;
 }
 
@@ -424,25 +424,25 @@ bool ClientConnection::GetClientBinaryPath(wxString& rDestPath)
 	NativeBoxSourcePath.MakeAbsolute();
 
 	const wxArrayString& dirs = NativeBoxSourcePath.GetDirs();
-	if (dirs.Last().IsSameAs(wxT(".libs")))
+	if (dirs.Last().IsSameAs(_(".libs")))
 		NativeBoxSourcePath.RemoveDir(
 			NativeBoxSourcePath.GetDirCount() - 1);
 
 	// dirs = NativeBoxSourcePath.GetDirs();	
-	if (dirs.Last().IsSameAs(wxT("src")))
+	if (dirs.Last().IsSameAs(_("src")))
 		NativeBoxSourcePath.RemoveDir(
 			NativeBoxSourcePath.GetDirCount() - 1);
 
-	NativeBoxSourcePath.AppendDir(wxT("boxbackup"));
-	NativeBoxSourcePath.AppendDir(wxT("release"));
-	NativeBoxSourcePath.AppendDir(wxT("bin"));
-	NativeBoxSourcePath.AppendDir(wxT("bbackupd"));
+	NativeBoxSourcePath.AppendDir(_("boxbackup"));
+	NativeBoxSourcePath.AppendDir(_("release"));
+	NativeBoxSourcePath.AppendDir(_("bin"));
+	NativeBoxSourcePath.AppendDir(_("bbackupd"));
 	NativeBoxSourcePath.SetName(wxT(""));
 	NativeBoxSourcePath.SetExt(wxT(""));
 	pl.Add(NativeBoxSourcePath.GetFullPath());
-	pl.AddEnvList(wxT("PATH"));
+	pl.AddEnvList(_("PATH"));
 	
-	wxLogDebug(wxT("Searching for boxbackup in:"));
+	wxLogDebug(_("Searching for boxbackup in:"));
     for ( wxStringListNode *node = pl.GetFirst(); node; node = node->GetNext() )
     {
 		wxString string(node->GetData());
@@ -451,9 +451,9 @@ bool ClientConnection::GetClientBinaryPath(wxString& rDestPath)
 	
 	wxString BBackupdPath = 
 #ifdef __CYGWIN__
-		pl.FindValidPath(wxT("bbackupd.exe"));
+		pl.FindValidPath(_("bbackupd.exe"));
 #else
-		pl.FindValidPath(wxT("bbackupd"));
+		pl.FindValidPath(_("bbackupd"));
 #endif
 	
 	if (BBackupdPath.Length() == 0) {
@@ -536,7 +536,7 @@ ClientConnection::Error ClientConnection::DoStartClient() {
 	wxChar * argv[] = { path, config, NULL };
 
 	{
-		wxLogDebug(wxT("Start client: creating new process object"));
+		wxLogDebug(_("Start client: creating new process object"));
 		wxMutexLocker lock(mMutex);
 		// the old object will delete itself 
 		// when the process terminates
@@ -657,10 +657,10 @@ void ClientConnection::OnClientTerminate(wxProcess *pProcess,
 	// the ClientProcess object is about to delete itself
 	// (in wxProcess::OnTerminate)
 	if (mapBackupClientProcess.get() == pProcess) {
-		wxLogDebug(wxT("Client terminated, releasing process"));
+		wxLogDebug(_("Client terminated, releasing process"));
 		mapBackupClientProcess.release();
 	} else {
-		wxLogDebug(wxT("Client terminated but "
+		wxLogDebug(_("Client terminated but "
 			"process already released!"));
 	}
 	
@@ -668,7 +668,7 @@ void ClientConnection::OnClientTerminate(wxProcess *pProcess,
 	    mCurrentState != BST_CONNECTING &&
 	    mCurrentState != BST_RESTARTING) 
 	{
-		wxLogDebug(wxT("Unexpected start notification "
+		wxLogDebug(_("Unexpected start notification "
 			"while in state %s"),
 			mStateStrings[mCurrentState]);
 		return;
@@ -685,7 +685,7 @@ void ClientConnection::OnClientTerminate(wxProcess *pProcess,
 	}
 	else
 	{
-		wxLogError(wxT("Failed to start client process: "
+		wxLogError(_("Failed to start client process: "
 			"exit code %d"), status);
 		mLastError = ERR_STARTFAILED;
 	}
@@ -697,7 +697,7 @@ bool ClientConnection::SetWorkerState(WorkerState oldState,
 	wxMutexLocker lock(mMutex);
 	
 	if (mCurrentState != oldState) {
-		wxLogDebug(wxT(
+		wxLogDebug(_(
 			"Wrong state for %s: "
 			"should be '%s' (%d) but currently '%s' (%d)"),
 			cmd,
@@ -735,7 +735,7 @@ bool ClientConnection::KillClient() {
 	long pid = GetClientPidFast();
 
 	if (pid == -1) {
-		wxLogDebug(wxT("Failed to get client PID"));
+		wxLogDebug(_("Failed to get client PID"));
 		mLastError = ERR_PROCESSNOTFOUND;
 		return FALSE;
 	}
@@ -747,26 +747,26 @@ bool ClientConnection::KillClient() {
 	switch (error)
 	{
 		case wxKILL_BAD_SIGNAL: // no such signal
-			wxLogDebug(wxT("No such signal wxSIGTERM?"));
+			wxLogDebug(_("No such signal wxSIGTERM?"));
 			mLastError = ERR_INTERNAL;
 			break;
 		case wxKILL_ACCESS_DENIED: // permission denied
-			wxLogDebug(wxT("Failed to kill process: "
+			wxLogDebug(_("Failed to kill process: "
 				"permission denied"));
 			mLastError = ERR_ACCESSDENIED;
 			break;
 		case wxKILL_NO_PROCESS: // no such process
-			wxLogDebug(wxT("Failed to kill process: "
+			wxLogDebug(_("Failed to kill process: "
 				"no such process %ld"), pid);
 			mLastError = ERR_PROCESSNOTFOUND;
 			break;
 		case wxKILL_ERROR: // another, unspecified error
-			wxLogDebug(wxT("Failed to kill process: "
+			wxLogDebug(_("Failed to kill process: "
 				"unspecified error"));
 			mLastError = ERR_UNKNOWN;
 			break;
 		default:
-			wxLogError(wxT("Unknown error while "
+			wxLogError(_("Unknown error while "
 				"trying to kill process"));
 			mLastError = ERR_UNKNOWN;
 	}

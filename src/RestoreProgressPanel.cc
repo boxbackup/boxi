@@ -157,7 +157,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 	if (!mpConnection->InitTlsContext(mTlsContext, errorMsg))
 	{
 		wxString msg;
-		msg.Printf(wxT("Error: cannot start restore: %s"), errorMsg.c_str());
+		msg.Printf(_("Error: cannot start restore: %s"), errorMsg.c_str());
 		ReportFatalError(BM_RESTORE_FAILED_CANNOT_INIT_ENCRYPTION, msg);
 		return;
 	}
@@ -168,7 +168,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 	if (storeHost.length() == 0) 
 	{
 		ReportFatalError(BM_RESTORE_FAILED_NO_STORE_HOSTNAME,
-			wxT("Error: cannot start restore: "
+			_("Error: cannot start restore: "
 			"You have not configured the Store Hostname!"));
 		return;
 	}
@@ -179,7 +179,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 	if (keysFile.length() == 0) 
 	{
 		ReportFatalError(BM_RESTORE_FAILED_NO_KEYS_FILE,
-			wxT("Error: cannot start restore: "
+			_("Error: cannot start restore: "
 			"you have not configured the Keys File"));
 		return;
 	}
@@ -188,7 +188,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 	if (!mpConfig->AccountNumber.GetInto(acctNo))
 	{
 		ReportFatalError(BM_RESTORE_FAILED_NO_ACCOUNT_NUMBER,
-			wxT("Error: cannot start restore: "
+			_("Error: cannot start restore: "
 			"you have not configured the Account Number"));
 		return;
 	}
@@ -199,7 +199,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 		if (!wxMkdir(rDest.GetFullPath()))
 		{
 			ReportFatalError(BM_RESTORE_FAILED_TO_CREATE_OBJECT,
-				wxT("Error: cannot start restore: "
+				_("Error: cannot start restore: "
 				"cannot create the destination directory"));
 			return;
 		}
@@ -236,7 +236,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 		}
 		
 		SetSummaryText(_("Counting Files to Restore"));
-		SetCurrentText(_(""));
+		SetCurrentText(wxT(""));
 
 		RestoreSpecEntry::Vector entries = spec.GetEntries();
 		for (RestoreSpecEntry::ConstIterator i = entries.begin();
@@ -331,7 +331,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 		{
 			SetSummaryText(_("Restore Interrupted"));
 			ReportFatalError(BM_BACKUP_FAILED_INTERRUPTED,
-				wxT("Restore interrupted by user"));
+				_("Restore interrupted by user"));
 		}
 		else if (!succeeded)
 		{
@@ -367,7 +367,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 	{
 		SetSummaryText(_("Restore Failed"));
 		ReportFatalError(BM_BACKUP_FAILED_UNKNOWN_ERROR,
-			wxT("Error: failed to finish restore: unknown error"));
+			_("Error: failed to finish restore: unknown error"));
 	}	
 
 	SetSummaryText(_("Restore Finished"));

@@ -51,7 +51,7 @@ class SetupWizardPage : public wxWizardPageSimple
 	
 	public:
 	SetupWizardPage(ClientConfig *pConfig, wxWizard* pParent = NULL,
-		const wxString& rText = wxT("No page text defined"))
+		const wxString& rText = _("No page text defined"))
  	: wxWizardPageSimple(pParent)
 	{
 		mpConfig = pConfig;
@@ -83,7 +83,7 @@ class SetupWizardPage : public wxWizardPageSimple
 void SetupWizardPage::ShowError(const wxString& rErrorMsg, message_t MessageId)
 {
 	wxGetApp().ShowMessageBox(MessageId, rErrorMsg, 
-		wxT("Boxi Error"), wxICON_ERROR | wxOK, this);
+		_("Boxi Error"), wxICON_ERROR | wxOK, this);
 }
 
 void SetupWizardPage::ShowSslError(const wxString& rMsgBase, 
@@ -97,11 +97,11 @@ void SetupWizardPage::ShowSslError(const wxString& rMsgBase,
 	const char* reason = ERR_reason_error_string(err);
 	if (reason != NULL)
 	{
-		msg.Append(wxT(": "));
+		msg.Append(_(": "));
 		msg.Append(wxString(reason, wxConvBoxi));
 	}
 	
-	msg.Append(wxT("\n\nThe full error code is: "));
+	msg.Append(_("\n\nThe full error code is: "));
 	msg.Append(wxString(ERR_error_string(err, NULL), wxConvBoxi));
 	
 	ShowError(msg, MessageId);
@@ -111,7 +111,7 @@ class IntroPage : public SetupWizardPage
 {
 	public:
 	IntroPage(ClientConfig *pConfig, wxWizard* pParent)
- 	: SetupWizardPage(pConfig, pParent, wxT(
+ 	: SetupWizardPage(pConfig, pParent, _(
 		"<html><body><h1>Boxi Setup Wizard</h1>"
 		"<p>This wizard can help you configure Boxi for a new server, "
 		"or change your settings, as simply as possible.</p>"
@@ -131,7 +131,7 @@ class AccountPage : public SetupWizardPage
 	
 	public:
 	AccountPage(ClientConfig *pConfig, wxWizard* pParent)
- 	: SetupWizardPage(pConfig, pParent, wxT(
+ 	: SetupWizardPage(pConfig, pParent, _(
 		"<html><body><h1>Account Details</h1>"
 		"<p>To use a particular server, you must contact the server's operator "
 		"and ask them for an account. If they accept, they will give you a "
@@ -142,7 +142,7 @@ class AccountPage : public SetupWizardPage
 		mpSizer->Add(pLocationSizer, 0, wxGROW | wxTOP, 8);
 
 		wxStaticText* pLabel = new wxStaticText(this, wxID_ANY,
-			wxT("Store hostname:"));
+			_("Store hostname:"));
 		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
 		
 		mpStoreHostnameCtrl = new BoundStringCtrl(this, 
@@ -151,7 +151,7 @@ class AccountPage : public SetupWizardPage
 		pLocationSizer->Add(mpStoreHostnameCtrl, 1, 
 			wxALIGN_CENTER_VERTICAL | wxGROW, 8);
 		
-		pLabel = new wxStaticText(this, wxID_ANY, wxT("Account number:"));
+		pLabel = new wxStaticText(this, wxID_ANY, _("Account number:"));
 		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
 		
 		mpAccountNumberCtrl = new BoundHexCtrl(this, 
@@ -205,7 +205,7 @@ static int numChecked = 0;
 static wxString MySslProgressCallbackMessage(int n)
 {
 	wxString msg;
-	msg.Printf(wxT("Generating your new private key (2048 bits).\n"
+	msg.Printf(_("Generating your new private key (2048 bits).\n"
 			"This may take a minute.\n\n"
 			"(%d potential primes checked)"), n);
 	return msg;
@@ -296,13 +296,13 @@ FileSavingPage::FileSavingPage(ClientConfig *pConfig, wxWizard* pParent,
   mTextValueIsDirty(false)
 {
 	wxString label;
-	label.Printf(wxT("Existing %s"), rFileDesc.c_str());
+	label.Printf(_("Existing %s"), rFileDesc.c_str());
 	mpExistingRadio = new wxRadioButton(this, 
 		ID_Setup_Wizard_Existing_File_Radio, label,
 		wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
 	mpSizer->Add(mpExistingRadio, 0, wxGROW | wxTOP, 8);
 
-	label.Printf(wxT("New %s"), rFileDesc.c_str());
+	label.Printf(_("New %s"), rFileDesc.c_str());
 	mpNewRadio = new wxRadioButton(this, 
 		ID_Setup_Wizard_New_File_Radio, label, 
 		wxDefaultPosition, wxDefaultSize);
@@ -311,7 +311,7 @@ FileSavingPage::FileSavingPage(ClientConfig *pConfig, wxWizard* pParent,
 	wxSizer* pLocationSizer = new wxBoxSizer(wxHORIZONTAL);
 	mpSizer->Add(pLocationSizer, 0, wxGROW | wxTOP, 8);
 	
-	label.Printf(wxT("%s file location:"), rFileDesc.c_str());
+	label.Printf(_("%s file location:"), rFileDesc.c_str());
 	wxStaticText* pLabel = new wxStaticText(this, wxID_ANY, label);
 	pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
 	
@@ -321,11 +321,11 @@ FileSavingPage::FileSavingPage(ClientConfig *pConfig, wxWizard* pParent,
 		wxALIGN_CENTER_VERTICAL | wxLEFT, 8);
 	
 	wxString fileSpec;
-	fileSpec.Printf(wxT("%s (%s)|%s"), rFileDesc.c_str(), 
+	fileSpec.Printf(_("%s (%s)|%s"), rFileDesc.c_str(), 
 		rFileNamePattern.c_str(), rFileNamePattern.c_str());
 		
 	wxString openDialogTitle;
-	openDialogTitle.Printf(wxT("Open %s File"), rFileDesc.c_str());
+	openDialogTitle.Printf(_("Open %s File"), rFileDesc.c_str());
 	
 	mpFileSelButton = new FileSelButton(this,
 		ID_Setup_Wizard_File_Selector_Button, mpBoundCtrl, fileSpec,
@@ -359,12 +359,12 @@ void FileSavingPage::OnWizardPageChanging(wxWizardEvent& event)
 	
 	if (!mrProperty.GetInto(mFileNameString))
 	{
-		ShowError(wxT("You must specify a location for the file!"),
+		ShowError(_("You must specify a location for the file!"),
 			BM_SETUP_WIZARD_NO_FILE_NAME);
 	}
 	else if (wxFileName::DirExists(mFileNameString))
 	{
-		ShowError(wxT("The specified file is a directory."),
+		ShowError(_("The specified file is a directory."),
 			BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
 	}
 	else
@@ -391,14 +391,14 @@ bool FileSavingPage::CheckExistingFile()
 {	
 	if (!wxFileName::FileExists(mFileNameString))
 	{
-		ShowError(wxT("The specified file was not found."),
+		ShowError(_("The specified file was not found."),
 			BM_SETUP_WIZARD_FILE_NOT_FOUND);
 		return FALSE;
 	}
 
 	if (!wxFile::Access(mFileNameString, wxFile::read))
 	{
-		ShowError(wxT("The specified file is not readable."),
+		ShowError(_("The specified file is not readable."),
 			BM_SETUP_WIZARD_FILE_NOT_READABLE);
 		return FALSE;
 	}
@@ -410,7 +410,7 @@ bool FileSavingPage::CreateNewFile()
 {	
 	if (!wxFileName::DirExists(mFileName.GetPath()))
 	{
-		ShowError(wxT("The directory where you want to create the "
+		ShowError(_("The directory where you want to create the "
 			"file does not exist, so the file cannot be created."),
 			BM_SETUP_WIZARD_FILE_DIR_NOT_FOUND);
 		return FALSE;
@@ -420,14 +420,14 @@ bool FileSavingPage::CreateNewFile()
 	{
 		if (! wxFile::Access(mFileNameString, wxFile::write))
 		{
-			ShowError(wxT("The specified file is not writable."),
+			ShowError(_("The specified file is not writable."),
 				BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
 			return FALSE;
 		}
 
 		int result = wxGetApp().ShowMessageBox(
 			BM_SETUP_WIZARD_FILE_OVERWRITE,
-			wxT(
+			_(
 			"The specified file already exists!\n"
 			"\n"
 			"If you overwrite an important file, "
@@ -435,7 +435,7 @@ bool FileSavingPage::CreateNewFile()
 			"Are you REALLY SURE you want to overwrite it?\n"
 			"\n"
 			"This operation CANNOT be undone!"), 
-			wxT("Boxi Warning"), wxICON_WARNING | wxYES_NO, this);
+			_("Boxi Warning"), wxICON_WARNING | wxYES_NO, this);
 		
 		if (result != wxYES)
 		{
@@ -446,7 +446,7 @@ bool FileSavingPage::CreateNewFile()
 	{
 		if (! wxFile::Access(mFileName.GetPath(), wxFile::write))
 		{
-			ShowError(wxT("The directory where you want to create the "
+			ShowError(_("The directory where you want to create the "
 				"file is read-only, so the file cannot be created."),
 				BM_SETUP_WIZARD_FILE_DIR_NOT_WRITABLE);
 			return FALSE;
@@ -460,7 +460,7 @@ class PrivateKeyPage : public FileSavingPage
 {
 	public:
 	PrivateKeyPage(ClientConfig *pConfig, wxWizard* pParent)
- 	: FileSavingPage(pConfig, pParent, wxT(
+ 	: FileSavingPage(pConfig, pParent, _(
 		"<html><body><h1>Private Key</h1>"
 		"<p>You need a private key to prove your identity to the server. "
 		"The private key is stored in a file on your hard disk.</p>"
@@ -473,7 +473,7 @@ class PrivateKeyPage : public FileSavingPage
 		"<p>Otherwise, select the <b>New Private Key</b> option, and tell Boxi "
 		"where the new key file should be stored.</p>"
 		"</body></html>"),
-		wxT("Private Key"), wxT("*-key.pem"), pConfig->PrivateKeyFile)
+		_("Private Key"), _("*-key.pem"), pConfig->PrivateKeyFile)
 	{ }
 	
 	bool CheckExistingFileImpl()
@@ -493,7 +493,7 @@ class PrivateKeyPage : public FileSavingPage
 		BIGNUM* pBigNum = BN_new();
 		if (!pBigNum)
 		{
-			ShowSslError(wxT("Failed to create an OpenSSL BN object"),
+			ShowSslError(_("Failed to create an OpenSSL BN object"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
@@ -501,7 +501,7 @@ class PrivateKeyPage : public FileSavingPage
 		RSA* pRSA = RSA_new();
 		if (!pRSA)
 		{
-			ShowSslError(wxT("Failed to create an OpenSSL RSA object"),
+			ShowSslError(_("Failed to create an OpenSSL RSA object"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			BN_free(pBigNum);
 			return FALSE;
@@ -530,7 +530,7 @@ class PrivateKeyPage : public FileSavingPage
 		BIO* pKeyOutBio = BIO_new(BIO_s_file());
 		if (!pKeyOutBio)
 		{
-			ShowSslError(wxT("Failed to create an OpenSSL BIO object "
+			ShowSslError(_("Failed to create an OpenSSL BIO object "
 				"for key output"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
@@ -550,7 +550,7 @@ class PrivateKeyPage : public FileSavingPage
 		
 		if (result <= 0)
 		{
-			ShowSslError(wxT("Failed to open key file using an "
+			ShowSslError(_("Failed to open key file using an "
 				"OpenSSL BIO"), BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
@@ -559,11 +559,11 @@ class PrivateKeyPage : public FileSavingPage
 		{
 			int result = wxGetApp().ShowMessageBox(
 				BM_SETUP_WIZARD_RANDOM_WARNING,
-				wxT("Your system is not configured with a "
+				_("Your system is not configured with a "
 				"random number generator. It may be possible "
 				"for an attacker to guess your keys and gain "
 				"access to your data. Do you want to continue "
-				"anyway?"), wxT("Boxi Warning"), 
+				"anyway?"), _("Boxi Warning"), 
 				wxICON_WARNING | wxYES_NO, this);
 			
 			if (result != wxYES)
@@ -572,12 +572,12 @@ class PrivateKeyPage : public FileSavingPage
 		
 		if (!BN_set_word(pBigNum, RSA_F4))
 		{
-			ShowSslError(wxT("Failed to set key type to RSA F4"),
+			ShowSslError(_("Failed to set key type to RSA F4"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
 
-		wxProgressDialog progress(wxT("Boxi: Generating Private Key"),
+		wxProgressDialog progress(_("Boxi: Generating Private Key"),
 			MySslProgressCallbackMessage(0), 2, this, 
 			wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
 		numChecked = 0;
@@ -587,7 +587,7 @@ class PrivateKeyPage : public FileSavingPage
 		
 		if (!pRSA2)
 		{
-			ShowSslError(wxT("Failed to generate an RSA key"),
+			ShowSslError(_("Failed to generate an RSA key"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
@@ -597,7 +597,7 @@ class PrivateKeyPage : public FileSavingPage
 		if (!PEM_write_bio_RSAPrivateKey(pKeyOutBio, pRSA2, NULL, 
 			NULL, 0, NULL, NULL))
 		{
-			ShowSslError(wxT("Failed to write the key "
+			ShowSslError(_("Failed to write the key "
 				"to the specified file"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
@@ -617,7 +617,7 @@ class CertRequestPage : public FileSavingPage
 	
 	public:
 	CertRequestPage(ClientConfig *pConfig, wxWizard* pParent)
- 	: FileSavingPage(pConfig, pParent, wxT(
+ 	: FileSavingPage(pConfig, pParent, _(
 		"<html><body><h1>Certificate Request</h1>"
 		"<p>You must send a certificate request to the server operator.</p>"
 		"<p>If you already have a certificate request, you can continue to "
@@ -629,7 +629,7 @@ class CertRequestPage : public FileSavingPage
 		"<p>Otherwise, select the <b>New Certificate Request</b> option, "
 		"and tell Boxi where the new file should be stored.</p>"
 		"</body></html>"),
-		wxT("Certificate Request"), wxT("*-csr.pem"), pConfig->CertRequestFile)
+		_("Certificate Request"), _("*-csr.pem"), pConfig->CertRequestFile)
 	{ }
 	
 	~CertRequestPage() { }
@@ -645,7 +645,7 @@ class CertRequestPage : public FileSavingPage
 	{
 		if (!mpConfig->AccountNumber.GetInto(mAccountNumber))
 		{
-			ShowError(wxT("The account number "
+			ShowError(_("The account number "
 				"is not set, but it should be!"),
 				BM_SETUP_WIZARD_ACCOUNT_NUMBER_NOT_SET);
 			return;
@@ -659,14 +659,14 @@ class CertRequestPage : public FileSavingPage
 		
 		if (!mpConfig->PrivateKeyFile.GetInto(mKeyFileName))
 		{
-			ShowError(wxT("The private key filename "
+			ShowError(_("The private key filename "
 				"is not set, but it should be!"),
 				BM_SETUP_WIZARD_PRIVATE_KEY_FILE_NOT_SET);
 			return;
 		}
 		
-		wxString oldSuffix = wxT("-key.pem");
-		wxString oldSuffix2 = wxT(".pem");
+		wxString oldSuffix = _("-key.pem");
+		wxString oldSuffix2 = _(".pem");
 		wxString baseName = mKeyFileName;
 		
 		if (mKeyFileName.Right(oldSuffix.Length()).IsSameAs(oldSuffix))
@@ -681,7 +681,7 @@ class CertRequestPage : public FileSavingPage
 		}
 		
 		wxString reqFileName;
-		reqFileName.Printf(wxT("%s-csr.pem"), baseName.c_str());
+		reqFileName.Printf(_("%s-csr.pem"), baseName.c_str());
 		
 		SetFileName(reqFileName);
 	}
@@ -691,7 +691,7 @@ class CertRequestPage : public FileSavingPage
 		BIO* pRequestBio = BIO_new(BIO_s_file());
 		if (!pRequestBio)
 		{
-			ShowSslError(wxT("Failed to create an OpenSSL BIO "
+			ShowSslError(_("Failed to create an OpenSSL BIO "
 				"to read the certificate request"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
@@ -710,7 +710,7 @@ class CertRequestPage : public FileSavingPage
 		
 		if (BIO_read_filename(pRequestBio, buf.data()) <= 0)
 		{
-			ShowSslError(wxT("Failed to set the BIO filename to the "
+			ShowSslError(_("Failed to set the BIO filename to the "
 				"certificate request file"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;			
@@ -719,7 +719,7 @@ class CertRequestPage : public FileSavingPage
 		X509_REQ* pRequest = PEM_read_bio_X509_REQ(pRequestBio, NULL, NULL, NULL);
 		if (!pRequest)
 		{
-			ShowSslError(wxT("Failed to read the certificate "
+			ShowSslError(_("Failed to read the certificate "
 				"request file"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;			
@@ -737,7 +737,7 @@ class CertRequestPage : public FileSavingPage
 		wxString keyFileName;
 		if (!mpConfig->PrivateKeyFile.GetInto(keyFileName))
 		{
-			ShowError(wxT("The private key filename is not set, "
+			ShowError(_("The private key filename is not set, "
 				"but it should be"),
 				BM_SETUP_WIZARD_PRIVATE_KEY_FILE_NOT_SET);
 			return FALSE;
@@ -771,12 +771,12 @@ class CertRequestPage : public FileSavingPage
 		}
 		
 		wxString commonNameExpected;
-		commonNameExpected.Printf(wxT("BACKUP-%x"), mAccountNumber);
+		commonNameExpected.Printf(_("BACKUP-%x"), mAccountNumber);
 		
 		if (!commonNameExpected.IsSameAs(commonNameActual))
 		{
 			wxString msg;
-			msg.Printf(wxT("The certificate request does not match your "
+			msg.Printf(_("The certificate request does not match your "
 				"account number. The common name of the certificate request "
 				"should be '%s', but is actually '%s'."),
 				commonNameExpected.c_str(), commonNameActual.c_str());
@@ -791,7 +791,7 @@ class CertRequestPage : public FileSavingPage
 		
 		if (!X509_REQ_verify(pRequest, pKey))
 		{
-			ShowSslError(wxT("Failed to verify signature on "
+			ShowSslError(_("Failed to verify signature on "
 				"certificate request. Perhaps the private key does not match "
 				"the certificate request?"),
 				BM_SETUP_WIZARD_FAILED_VERIFY_SIGNATURE);
@@ -826,7 +826,7 @@ class CertRequestPage : public FileSavingPage
 				NULL)) 
 			{
 				wxString msg;
-				msg.Printf(wxT("Error in OpenSSL configuration: "
+				msg.Printf(_("Error in OpenSSL configuration: "
 					"Failed to load certificate extensions "
 					"section (%s) specified in OpenSSL "
 					"configuration file (%s)"), 
@@ -846,7 +846,7 @@ class CertRequestPage : public FileSavingPage
 		
 		if(!ASN1_STRING_set_default_mask_asc("nombstr")) 
 		{
-			ShowSslError(wxT("Failed to set the OpenSSL string mask to "
+			ShowSslError(_("Failed to set the OpenSSL string mask to "
 				"'nombstr'"), 
 				BM_SETUP_WIZARD_ERROR_SETTING_STRING_MASK);
 			return FALSE;
@@ -863,7 +863,7 @@ class CertRequestPage : public FileSavingPage
 		BIO* pRequestBio = BIO_new(BIO_s_file());
 		if (!pRequestBio)
 		{
-			ShowError(wxT("Failed to create an OpenSSL BIO"),
+			ShowError(_("Failed to create an OpenSSL BIO"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			FreeKey(pKey);
 			return FALSE;
@@ -884,7 +884,7 @@ class CertRequestPage : public FileSavingPage
 		X509_REQ* pRequest = X509_REQ_new();
 		if (!pRequest)
 		{
-			ShowSslError(wxT("Failed to create a new "
+			ShowSslError(_("Failed to create a new "
 				"OpenSSL request object"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
@@ -903,7 +903,7 @@ class CertRequestPage : public FileSavingPage
 	{
 		if (!X509_REQ_set_version(pRequest,0L))
 		{
-			ShowSslError(wxT("Failed to set version in "
+			ShowSslError(_("Failed to set version in "
 				"OpenSSL request object"), 
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
@@ -912,14 +912,14 @@ class CertRequestPage : public FileSavingPage
 		int commonNameNid = OBJ_txt2nid("commonName");
 		if (commonNameNid == NID_undef)
 		{
-			ShowSslError(wxT("Failed to find node ID of "
+			ShowSslError(_("Failed to find node ID of "
 				"X.509 CommonName attribute"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
 		
 		wxString certSubject;
-		certSubject.Printf(wxT("BACKUP-%x"), mAccountNumber);
+		certSubject.Printf(_("BACKUP-%x"), mAccountNumber);
 		
 		X509_NAME* pX509SubjectName = X509_REQ_get_subject_name(pRequest);
 
@@ -932,7 +932,7 @@ class CertRequestPage : public FileSavingPage
 		
 		if (!result)
 		{
-			ShowSslError(wxT("Failed to add common name to "
+			ShowSslError(_("Failed to add common name to "
 				"certificate request"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
@@ -940,7 +940,7 @@ class CertRequestPage : public FileSavingPage
 		
 		if (!X509_REQ_set_pubkey(pRequest, pKey))
 		{
-			ShowSslError(wxT("Failed to set public key of "
+			ShowSslError(_("Failed to set public key of "
 				"certificate request"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
@@ -963,7 +963,7 @@ class CertRequestPage : public FileSavingPage
 				pReqExtensions, pRequest)) 
 			{
 				wxString msg;
-				msg.Printf(wxT("Failed to load request extensions "
+				msg.Printf(_("Failed to load request extensions "
 					"section (%s) specified in OpenSSL configuration file "
 					"(%s)"), pReqExtensions, rapConfig->GetFileName().c_str());
 				ShowSslError(msg,
@@ -980,21 +980,21 @@ class CertRequestPage : public FileSavingPage
 		const EVP_MD* pDigestAlgo = EVP_get_digestbyname("sha1");
 		if (!pDigestAlgo)
 		{
-			ShowSslError(wxT("Failed to find OpenSSL digest "
+			ShowSslError(_("Failed to find OpenSSL digest "
 				"algorithm SHA1"), BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
 		
 		if (!X509_REQ_sign(pRequest, pKey, pDigestAlgo))
 		{
-			ShowSslError(wxT("Failed to sign certificate request"),
+			ShowSslError(_("Failed to sign certificate request"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
 		
 		if (!X509_REQ_verify(pRequest, pKey))
 		{
-			ShowSslError(wxT("Failed to verify signature on "
+			ShowSslError(_("Failed to verify signature on "
 				"certificate request"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
@@ -1005,14 +1005,14 @@ class CertRequestPage : public FileSavingPage
 		
 		if (result <= 0)
 		{
-			ShowSslError(wxT("Failed to set certificate request "
+			ShowSslError(_("Failed to set certificate request "
 				"output filename"), BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
 		
 		if (!PEM_write_bio_X509_REQ(pRequestBio, pRequest))
 		{
-			ShowSslError(wxT("Failed to write certificate request file"),
+			ShowSslError(_("Failed to write certificate request file"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
 		}
@@ -1039,7 +1039,7 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 		mpSizer->Add(pLocationSizer, 0, wxGROW | wxTOP, 8);
 
 		wxStaticText* pLabel = new wxStaticText(this, wxID_ANY,
-			wxT("Certificate file:"));
+			_("Certificate file:"));
 		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
 		
 		mpCertFileCtrl = new BoundStringCtrl(this, wxID_ANY, 
@@ -1049,11 +1049,11 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 			
 		FileSelButton* pFileSel = new FileSelButton(this, wxID_ANY, 
 			mpCertFileCtrl, 
-			wxT("Certificate files (*-cert.pem)|*-cert.pem"),
-			wxT("-cert.pem"));
+			_("Certificate files (*-cert.pem)|*-cert.pem"),
+			_("-cert.pem"));
 		pLocationSizer->Add(pFileSel, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
 				
-		pLabel = new wxStaticText(this, wxID_ANY, wxT("CA file:"));
+		pLabel = new wxStaticText(this, wxID_ANY, _("CA file:"));
 		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
 		
 		mpCAFileCtrl = new BoundStringCtrl(this, wxID_ANY, 
@@ -1062,8 +1062,8 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 			wxALIGN_CENTER_VERTICAL | wxGROW, 0);
 		
 		pFileSel = new FileSelButton(this, wxID_ANY, mpCAFileCtrl, 
-			wxT("CA files (serverCA.pem)|serverCA.pem"),
-			wxT("serverCA.pem"));
+			_("CA files (serverCA.pem)|serverCA.pem"),
+			_("serverCA.pem"));
 		pLocationSizer->Add(pFileSel, 0, wxALIGN_CENTER_VERTICAL | wxGROW, 0);
 
 		Connect(wxID_ANY,wxEVT_WIZARD_PAGE_CHANGING,
@@ -1089,7 +1089,7 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 		wxFileName keyPathName(keyPath);
 		
 		wxString text;
-		text.Printf(wxT(
+		text.Printf(_(
 			"<html><body><h1>Certificate File</h1>"
 			"<p>You need a certificate to connect to the server. "
 			"The certificate will be supplied by the server operator.</p>"
@@ -1124,21 +1124,21 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 		wxString certFile;
 		if (!mpConfig->CertificateFile.GetInto(certFile))
 		{
-			ShowError(wxT("The certificate file is not set"),
+			ShowError(_("The certificate file is not set"),
 				BM_SETUP_WIZARD_NO_FILE_NAME);
 			return FALSE;
 		}
 		
 		if (!wxFileName::FileExists(certFile))
 		{
-			ShowError(wxT("The certificate file does not exist"),
+			ShowError(_("The certificate file does not exist"),
 				BM_SETUP_WIZARD_FILE_NOT_FOUND);
 			return FALSE;
 		}
 		
 		if (!wxFile::Access(certFile, wxFile::read))
 		{
-			ShowError(wxT("The certificate file is not readable"),
+			ShowError(_("The certificate file is not readable"),
 				BM_SETUP_WIZARD_FILE_NOT_READABLE);
 			return FALSE;
 		}
@@ -1153,21 +1153,21 @@ class CertificatePage : public SetupWizardPage, ConfigChangeListener
 		wxString caFile;
 		if (!mpConfig->TrustedCAsFile.GetInto(caFile))
 		{
-			ShowError(wxT("The CA file is not set"),
+			ShowError(_("The CA file is not set"),
 				BM_SETUP_WIZARD_NO_FILE_NAME);
 			return FALSE;
 		}
 		
 		if (!wxFileName::FileExists(caFile))
 		{
-			ShowError(wxT("The CA file does not exist"),
+			ShowError(_("The CA file does not exist"),
 				BM_SETUP_WIZARD_FILE_NOT_FOUND);
 			return FALSE;
 		}
 		
 		if (!wxFile::Access(caFile, wxFile::read))
 		{
-			ShowError(wxT("The CA file is not readable"),
+			ShowError(_("The CA file is not readable"),
 				BM_SETUP_WIZARD_FILE_NOT_READABLE);
 			return FALSE;
 		}
@@ -1199,7 +1199,7 @@ class CertExistsPage : public SetupWizardPage
 		CertRequestPage* pCertRequestPage, 
 		CertificatePage* pCertFilePage
 	)
- 	: SetupWizardPage(pConfig, pParent, wxT(
+ 	: SetupWizardPage(pConfig, pParent, _(
 		"<html><body><h1>Certificate</h1>"
 		"<p>You must have a certificate to tell the server operator who you "
 		"are. The certificate contains your account number and the "
@@ -1222,13 +1222,13 @@ class CertExistsPage : public SetupWizardPage
 	{
 		mpExistingRadio = new wxRadioButton(this, 
 			ID_Setup_Wizard_Existing_File_Radio, 
-			wxT("Existing Certificate"),
+			_("Existing Certificate"),
 			wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
 		mpSizer->Add(mpExistingRadio, 0, wxGROW | wxTOP, 8);
 
 		mpNewRadio = new wxRadioButton(this, 
 			ID_Setup_Wizard_New_File_Radio, 
-			wxT("New Certificate Request"),
+			_("New Certificate Request"),
 			wxDefaultPosition, wxDefaultSize);
 		mpSizer->Add(mpNewRadio, 0, wxGROW | wxTOP, 8);
 	}
@@ -1256,7 +1256,7 @@ class CryptoKeyPage : public FileSavingPage
 {
 	public:
 	CryptoKeyPage(ClientConfig *pConfig, wxWizard* pParent)
- 	: FileSavingPage(pConfig, pParent, wxT(
+ 	: FileSavingPage(pConfig, pParent, _(
 		"<html><body><h1>Encryption Key</h1>"
 		"<p>You need an encryption key to protect your backups. "
 		"The encryption key is stored in a file on your hard disk.</p>"
@@ -1272,7 +1272,7 @@ class CryptoKeyPage : public FileSavingPage
 		"<p>Otherwise, select the <b>New Encryption Key</b> option, "
 		"and tell Boxi where the new key file should be stored.</p>"
 		"</body></html>"),
-		wxT("Encryption Key"), wxT("*-FileEncKeys.raw"), 
+		_("Encryption Key"), _("*-FileEncKeys.raw"), 
 		pConfig->KeysFile)
 	{ }
 	
@@ -1297,7 +1297,7 @@ class CryptoKeyPage : public FileSavingPage
 			return;
 		}
 		
-		wxString oldSuffix = wxT("-key.pem");
+		wxString oldSuffix = _("-key.pem");
 		wxString baseName = privateKeyFileName;
 		
 		if (privateKeyFileName.Right(oldSuffix.Length()).IsSameAs(oldSuffix))
@@ -1307,7 +1307,7 @@ class CryptoKeyPage : public FileSavingPage
 		}
 		
 		wxString encFileName;
-		encFileName.Printf(wxT("%s-FileEncKeys.raw"), baseName.c_str());
+		encFileName.Printf(_("%s-FileEncKeys.raw"), baseName.c_str());
 		SetFileName(encFileName);
 	}
 
@@ -1330,7 +1330,7 @@ class CryptoKeyPage : public FileSavingPage
 		BIO* pKeyOutBio = BIO_new(BIO_s_file());
 		if (!pKeyOutBio)
 		{
-			ShowSslError(wxT("Failed to create an OpenSSL BIO "
+			ShowSslError(_("Failed to create an OpenSSL BIO "
 				"to write the new encryption key"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			return FALSE;
@@ -1341,7 +1341,7 @@ class CryptoKeyPage : public FileSavingPage
 		
 		if (!result)
 		{
-			ShowSslError(wxT("Failed to set the filename of the "
+			ShowSslError(_("Failed to set the filename of the "
 				"OpenSSL BIO to write the new encryption key"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			BIO_free(pKeyOutBio);
@@ -1351,7 +1351,7 @@ class CryptoKeyPage : public FileSavingPage
 		unsigned char bytes[1024];
 		if (RAND_bytes(bytes, sizeof(bytes)) <= 0)
 		{
-			ShowSslError(wxT("Failed to generate random data "
+			ShowSslError(_("Failed to generate random data "
 				"for the new encryption key"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			BIO_free(pKeyOutBio);
@@ -1360,7 +1360,7 @@ class CryptoKeyPage : public FileSavingPage
 		
 		if (BIO_write(pKeyOutBio, bytes, sizeof(bytes)) != sizeof(bytes))
 		{
-			ShowSslError(wxT("Failed to write random data to the "
+			ShowSslError(_("Failed to write random data to the "
 				"new encryption key file"),
 				BM_SETUP_WIZARD_OPENSSL_ERROR);
 			BIO_free(pKeyOutBio);
@@ -1383,7 +1383,7 @@ class BackedUpPage : public SetupWizardPage, ConfigChangeListener
 	
 	public:
 	BackedUpPage(ClientConfig *pConfig, wxWizard* pParent)
- 	: SetupWizardPage(pConfig, pParent, wxT(
+ 	: SetupWizardPage(pConfig, pParent, _(
 		"<html><body><h1>Back Up Your Keys</h1>"
 		"<p>Your backups will be protected by "
 		"<strong>strong encryption</strong>. "
@@ -1401,7 +1401,7 @@ class BackedUpPage : public SetupWizardPage, ConfigChangeListener
 	{
 		mpBackedUp = new wxCheckBox(this, 
 			ID_Setup_Wizard_Backed_Up_Checkbox, 
-			wxT("I have backed up my keys in two locations."));
+			_("I have backed up my keys in two locations."));
 		mpSizer->Add(mpBackedUp, 0, wxGROW | wxTOP, 8);
 
 		Connect(wxID_ANY,wxEVT_WIZARD_PAGE_CHANGING,
@@ -1418,7 +1418,7 @@ class BackedUpPage : public SetupWizardPage, ConfigChangeListener
 
 		if (!mpBackedUp->GetValue())
 		{
-			ShowError(wxT("You must check the box to say that you "
+			ShowError(_("You must check the box to say that you "
 				"have backed up your keys before proceeding"),
 				BM_SETUP_WIZARD_MUST_CHECK_THE_BOX_KEYS_BACKED_UP);
 			event.Veto();
@@ -1439,7 +1439,7 @@ class DataDirectoryPage : public SetupWizardPage
 		ClientConfig *pConfig,
 		wxWizard* pParent = NULL
 	)
- 	: SetupWizardPage(pConfig, pParent, wxT(
+ 	: SetupWizardPage(pConfig, pParent, _(
 		"<html><body><h1>Data Directory</h1>"
 		"<p>You must choose a directory where Box Backup and Boxi "
 		"can keep temporary files with information about their state, "
@@ -1457,7 +1457,7 @@ class DataDirectoryPage : public SetupWizardPage
 		mpSizer->Add(pLocationSizer, 0, wxGROW | wxTOP, 8);
 
 		wxStaticText* pLabel = new wxStaticText(this, wxID_ANY,
-			wxT("Data directory:"));
+			_("Data directory:"));
 		pLocationSizer->Add(pLabel, 0, wxALIGN_CENTER_VERTICAL, 0);
 		
 		mpDataDirCtrl = new BoundStringCtrl(this, wxID_ANY, 
@@ -1500,15 +1500,15 @@ void DataDirectoryPage::OnWizardPageChanging(wxWizardEvent& event)
 		isOk &= mpConfig->DataDirectory.GetInto(dataDirName);
 		if (!isOk)
 		{
-			ShowError(wxT("The data directory is not set"),
+			ShowError(_("The data directory is not set"),
 				BM_SETUP_WIZARD_NO_FILE_NAME);
 		}
 	}
 
 	if (isOk)
 	{
-		wxFileName socket (dataDirName, wxT("bbackupd.sock"));
-		wxFileName pidfile(dataDirName, wxT("bbackupd.pid"));
+		wxFileName socket (dataDirName, _("bbackupd.sock"));
+		wxFileName pidfile(dataDirName, _("bbackupd.pid"));
 		mpConfig->CommandSocket.Set(socket.GetFullPath());
 		mpConfig->PidFile      .Set(pidfile.GetFullPath());
 	}
@@ -1523,14 +1523,14 @@ bool DataDirectoryPage::CheckDataDirectory()
 	wxString dataDirName;
 	if (!mpConfig->DataDirectory.GetInto(dataDirName))
 	{
-		ShowError(wxT("The data directory is not set"),
+		ShowError(_("The data directory is not set"),
 			BM_SETUP_WIZARD_NO_FILE_NAME);
 		return false;
 	}
 	
 	if (wxFileName::FileExists(dataDirName))
 	{
-		ShowError(wxT("The specified data directory already "
+		ShowError(_("The specified data directory already "
 			"exists as a file"),
 			BM_SETUP_WIZARD_FILE_IS_A_DIRECTORY);
 		return false;
@@ -1539,7 +1539,7 @@ bool DataDirectoryPage::CheckDataDirectory()
 	if (wxFileName::DirExists(dataDirName) && 
 		! wxFile::Access(dataDirName, wxFile::read))
 	{
-		ShowError(wxT("The specified data directory already "
+		ShowError(_("The specified data directory already "
 			"exists and is not readable. Please make "
 			"it readable and writable, or choose another one."),
 			BM_SETUP_WIZARD_FILE_NOT_READABLE);
@@ -1549,7 +1549,7 @@ bool DataDirectoryPage::CheckDataDirectory()
 	if (wxFileName::DirExists(dataDirName) && 
 		! wxFile::Access(dataDirName, wxFile::write))
 	{
-		ShowError(wxT("The specified data directory already "
+		ShowError(_("The specified data directory already "
 			"exists and is not writable. Please make "
 			"it writable, or choose another one."),
 			BM_SETUP_WIZARD_FILE_NOT_WRITABLE);
@@ -1570,7 +1570,7 @@ bool DataDirectoryPage::CheckDataDirectory()
 		{
 			wxString err(strerror(errno), wxConvBoxi);
 			wxString msg;
-			msg.Printf(wxT("The specified data directory "
+			msg.Printf(_("The specified data directory "
 				"(%s) is not accessible (%s)"), 
 				dataDirName.c_str(), err.c_str());
 			ShowError(msg, BM_SETUP_WIZARD_FILE_NOT_READABLE);
@@ -1580,7 +1580,7 @@ bool DataDirectoryPage::CheckDataDirectory()
 		if (st.st_mode & 0077)
 		{
 			wxString msg;
-			msg.Printf(wxT("The specified data directory (%s) "
+			msg.Printf(_("The specified data directory (%s) "
 				"already exists, and is accessible to other "
 				"users. This is dangerous and not allowed.\n\n"
 				"Please remove all permissions for other users "
@@ -1601,7 +1601,7 @@ bool DataDirectoryPage::CheckDataDirectory()
 	if (!wxFileName::DirExists(parent.GetFullPath()))
 	{
 		wxString msg;
-		msg.Printf(wxT("The specified data directory (%s) "
+		msg.Printf(_("The specified data directory (%s) "
 			"does not exist, and cannot be created, "
 			"because the parent directory (%s) "
 			"does not exist"),
@@ -1633,7 +1633,7 @@ bool DataDirectoryPage::CheckDataDirectory()
 	if (!parentAccessible)
 	{
 		wxString msg;
-		msg.Printf(wxT("The specified data directory (%s) "
+		msg.Printf(_("The specified data directory (%s) "
 			"does not exist, and cannot be created, "
 			"because you do not have permission to write "
 			"to the parent directory (%s)"),
@@ -1652,7 +1652,7 @@ bool DataDirectoryPage::CheckDataDirectory()
 		{
 			wxString err(strerror(errno), wxConvBoxi);
 			wxString msg;
-			msg.Printf(wxT("The specified data directory "
+			msg.Printf(_("The specified data directory "
 				"(%s) is not accessible (%s)"), 
 				dataDirName.c_str(), err.c_str());
 			ShowError(msg, BM_SETUP_WIZARD_FILE_NOT_READABLE);
@@ -1662,7 +1662,7 @@ bool DataDirectoryPage::CheckDataDirectory()
 		if (st.st_mode & 0077)
 		{
 			wxString msg;
-			msg.Printf(wxT("The specified data directory (%s) "
+			msg.Printf(_("The specified data directory (%s) "
 				"already exists, and is accessible to other "
 				"users. This is dangerous and not allowed.\n\n"
 				"Please remove all permissions for other users "
@@ -1678,7 +1678,7 @@ bool DataDirectoryPage::CheckDataDirectory()
 		wxLogNull disableLogging;
 		if (!wxMkdir(dataDir.GetFullPath(), 0700))
 		{
-			ShowError(wxT("The specified data directory "
+			ShowError(_("The specified data directory "
 				"does not exist, and could not be created"),
 				BM_SETUP_WIZARD_DIR_CREATE_FAILED);
 			return false;
@@ -1689,7 +1689,7 @@ bool DataDirectoryPage::CheckDataDirectory()
 }
 
 SetupWizard::SetupWizard(ClientConfig *config, wxWindow* parent)
-: wxWizard(parent, ID_Setup_Wizard_Frame, wxT("Boxi Setup Wizard"), 
+: wxWizard(parent, ID_Setup_Wizard_Frame, _("Boxi Setup Wizard"), 
 	wxNullBitmap, wxDefaultPosition, 
 	wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {

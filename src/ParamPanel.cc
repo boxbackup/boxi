@@ -97,7 +97,7 @@ void IntCtrl::OnChange()
 
 	wxCharBuffer buf = tempString.mb_str(wxConvBoxi);
 	
-	if (tempString.StartsWith(wxT("0x"))) 
+	if (tempString.StartsWith(_("0x"))) 
 	{
 		tempValue = strtol(buf.data() + 2, &endptr, 16);
 	} 
@@ -152,7 +152,7 @@ void BoundIntCtrl::OnChange()
 
 	wxCharBuffer buf = tempString.mb_str(wxConvBoxi);
 	
-	if (tempString.StartsWith(wxT("0x"))) {
+	if (tempString.StartsWith(_("0x"))) {
 		tempValue = strtol(buf.data() + 2, &endptr, 16);
 	} else {
 		tempValue = strtol(buf.data(), &endptr, 10);
@@ -277,7 +277,7 @@ void FileSelButton::OnClick(wxCommandEvent& event)
 	if (mFileMustExist)
 	{
 		flags = wxOPEN | wxFILE_MUST_EXIST;
-		fileSpec.Append(wxT("|All Files|*"));
+		fileSpec.Append(_("|All Files|*"));
 	}
 	else
 	{
@@ -305,7 +305,7 @@ void DirSelButton::OnClick(wxCommandEvent& event)
 	dir.MakeAbsolute();
 	
 	wxString newDir = wxDirSelector(
-		wxT("Set Property"), dir.GetFullPath(), 0, 
+		_("Set Property"), dir.GetFullPath(), 0, 
 		wxDefaultPosition, this);
 	
 	if (newDir.empty()) return;

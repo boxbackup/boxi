@@ -134,7 +134,7 @@ void TestBackupConfig::RunTest()
 	wxLogNull logSuppress();
 
 	// create a working directory
-	mTempDir.AssignTempFileName(wxT("boxi-tempdir-"));
+	mTempDir.AssignTempFileName(_("boxi-tempdir-"));
 
 	// On Windows, the temporary file name may use short names, 
 	// which breaks access via the tree control. So fix it now.
@@ -339,7 +339,7 @@ void TestBackupConfig::RunTest()
 	#endif
 
 	mTestDataDir = wxFileName(mTempDir.GetFullPath(), _("testdata"));
-	mTestDataDir = wxFileName(mTestDataDir.GetFullPath(), _(""));
+	mTestDataDir = wxFileName(mTestDataDir.GetFullPath(), wxT(""));
 	wxCharBuffer buf = mTestDataDir.GetFullPath().mb_str();
 	CPPUNIT_ASSERT_MESSAGE(buf.data(), mTestDataDir.Mkdir(0700));
 	
@@ -347,66 +347,66 @@ void TestBackupConfig::RunTest()
 	mTestDataDirItem = rootId;
 
 	mTestDepth1Dir = wxFileName(mTestDataDir.GetFullPath(),	_("depth1"));
-	mTestDepth1Dir = wxFileName(mTestDepth1Dir.GetFullPath(), _(""));
+	mTestDepth1Dir = wxFileName(mTestDepth1Dir.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDepth1Dir.Mkdir(0700));
 	
 	mTestAnotherDir = wxFileName(mTestDataDir.GetFullPath(), _("another"));
-	mTestAnotherDir = wxFileName(mTestAnotherDir.GetFullPath(), _(""));
+	mTestAnotherDir = wxFileName(mTestAnotherDir.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestAnotherDir.Mkdir(0700));
 
 	mTestFile1 = wxFileName(mTestDepth1Dir.GetFullPath(), _("file1"));
 	CPPUNIT_ASSERT(wxFile().Create(mTestFile1.GetFullPath()));
 	
 	mTestDir1 = wxFileName(mTestDepth1Dir.GetFullPath(), _("dir1"));
-	mTestDir1 = wxFileName(mTestDir1.GetFullPath(), _(""));
+	mTestDir1 = wxFileName(mTestDir1.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDir1.Mkdir(0700));
 	
 	mTestDepth2Dir = wxFileName(mTestDepth1Dir.GetFullPath(), _("depth2"));
-	mTestDepth2Dir = wxFileName(mTestDepth2Dir.GetFullPath(), _(""));
+	mTestDepth2Dir = wxFileName(mTestDepth2Dir.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDepth2Dir.Mkdir(0700));
 
 	mTestFile2 = wxFileName(mTestDepth2Dir.GetFullPath(), _("file2"));
 	CPPUNIT_ASSERT(wxFile().Create(mTestFile2.GetFullPath()));
 	mTestDir2 = wxFileName(mTestDepth2Dir.GetFullPath(), _("dir2"));
-	mTestDir2 = wxFileName(mTestDir2.GetFullPath(), _(""));
+	mTestDir2 = wxFileName(mTestDir2.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDir2.Mkdir(0700));
 	mTestDepth3Dir = wxFileName(mTestDepth2Dir.GetFullPath(), _("depth3"));
-	mTestDepth3Dir = wxFileName(mTestDepth3Dir.GetFullPath(), _(""));
+	mTestDepth3Dir = wxFileName(mTestDepth3Dir.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDepth3Dir.Mkdir(0700));
 
 	mTestDepth4Dir = wxFileName(mTestDepth3Dir.GetFullPath(), _("depth4"));
-	mTestDepth4Dir = wxFileName(mTestDepth4Dir.GetFullPath(), _(""));
+	mTestDepth4Dir = wxFileName(mTestDepth4Dir.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDepth4Dir.Mkdir(0700));
 
 	mTestDepth5Dir = wxFileName(mTestDepth4Dir.GetFullPath(), _("depth5"));
-	mTestDepth5Dir = wxFileName(mTestDepth5Dir.GetFullPath(), _(""));
+	mTestDepth5Dir = wxFileName(mTestDepth5Dir.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDepth5Dir.Mkdir(0700));
 
 	mTestFile3 = wxFileName(mTestDepth5Dir.GetFullPath(), _("file3"));
 	CPPUNIT_ASSERT(wxFile().Create(mTestFile3.GetFullPath()));
 	mTestDir3 = wxFileName(mTestDepth5Dir.GetFullPath(), _("dir3"));
-	mTestDir3 = wxFileName(mTestDir3.GetFullPath(), _(""));
+	mTestDir3 = wxFileName(mTestDir3.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDir3.Mkdir(0700));
 	mTestDepth6Dir = wxFileName(mTestDepth5Dir.GetFullPath(), _("depth6"));
-	mTestDepth6Dir = wxFileName(mTestDepth6Dir.GetFullPath(), _(""));
+	mTestDepth6Dir = wxFileName(mTestDepth6Dir.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDepth6Dir.Mkdir(0700));
 
 	mTestFile4 = wxFileName(mTestDepth6Dir.GetFullPath(), _("file4"));
 	CPPUNIT_ASSERT(wxFile().Create(mTestFile4.GetFullPath()));
 	mTestDir4 = wxFileName(mTestDepth6Dir.GetFullPath(), _("dir4"));
-	mTestDir4 = wxFileName(mTestDir4.GetFullPath(), _(""));
+	mTestDir4 = wxFileName(mTestDir4.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDir4.Mkdir(0700));
 
 	mTestFile5 = wxFileName(mTestDir4.GetFullPath(), _("file5"));
 	CPPUNIT_ASSERT(wxFile().Create(mTestFile5.GetFullPath()));
 	mTestDir5 = wxFileName(mTestDir4.GetFullPath(), _("dir5"));
-	mTestDir5 = wxFileName(mTestDir5.GetFullPath(), _(""));
+	mTestDir5 = wxFileName(mTestDir5.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDir5.Mkdir(0700));
 
 	mTestFile6 = wxFileName(mTestDir3.GetFullPath(), _("file6"));
 	CPPUNIT_ASSERT(wxFile().Create(mTestFile6.GetFullPath()));
 	mTestDir6 = wxFileName(mTestDir3.GetFullPath(), _("dir6"));
-	mTestDir6 = wxFileName(mTestDir6.GetFullPath(), _(""));
+	mTestDir6 = wxFileName(mTestDir6.GetFullPath(), wxT(""));
 	CPPUNIT_ASSERT(mTestDir6.Mkdir(0700));
 
 	wxArrayString testDataDirPathDirs = mTestDataDir.GetDirs();
@@ -727,9 +727,9 @@ void TestBackupConfig::TestAddAndRemoveSimpleLocationInTree()
 	// by regex. Make sure that its children are still
 	// excluded by the Exclude* = .* directives.
 
-	wxString path = wxT("^");
+	wxString path = _("^");
 	path.Append(mTestDepth1Dir.GetPath());
-	path.Append(wxT("/de...2$"));
+	path.Append(_("/de...2$"));
 	
 	rExcludeList.AddEntry
 	(
@@ -925,15 +925,15 @@ void TestBackupConfig::TestDeepIncludePattern()
 	rExcludeList.RemoveEntry(t0);
 
 	BoxiExcludeEntry t1(ET_EXCLUDE_DIRS_REGEX,
-		wxString(wxT("^"))
+		wxString(_("^"))
 		.Append(mTestDepth2Dir.GetPath())
-		.Append(wxT("/")));
+		.Append(_("/")));
 	rExcludeList.AddEntry(t1);
 
 	BoxiExcludeEntry t2(ET_EXCLUDE_FILES_REGEX,
-		wxString(wxT("^"))
+		wxString(_("^"))
 		.Append(mTestDepth2Dir.GetPath())
-		.Append(wxT("/")));
+		.Append(_("/")));
 	rExcludeList.AddEntry(t2);
 
 	BoxiExcludeEntry t3(ET_ALWAYS_INCLUDE_DIR,
@@ -953,15 +953,15 @@ void TestBackupConfig::TestDeepIncludePattern()
 	rExcludeList.AddEntry(t6);
 
 	BoxiExcludeEntry t7(ET_ALWAYS_INCLUDE_DIRS_REGEX,
-		wxString(wxT("^"))
+		wxString(_("^"))
 		.Append(mTestDepth6Dir.GetPath())
-		.Append(wxT("/")));
+		.Append(_("/")));
 	rExcludeList.AddEntry(t7);
 
 	BoxiExcludeEntry t8(ET_ALWAYS_INCLUDE_FILES_REGEX,
-		wxString(wxT("^"))
+		wxString(_("^"))
 		.Append(mTestDepth6Dir.GetPath())
-		.Append(wxT("/")));
+		.Append(_("/")));
 	rExcludeList.AddEntry(t8);
 
 	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(), 
@@ -1032,24 +1032,24 @@ void TestBackupConfig::TestAlwaysIncludeFileDeepInTree()
 	CPPUNIT_ASSERT_EQUAL(0, mpExcludeListBox->GetSelection());
 	
 	wxString expectedTitle = mTestDataDir.GetPath();
-	expectedTitle.Append(wxT(" -> testdata ("));
-	expectedTitle.Append(wxT("ExcludeDir = "));
+	expectedTitle.Append(_(" -> testdata ("));
+	expectedTitle.Append(_("ExcludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", ExcludeDirsRegex = ^"));
+	expectedTitle.Append(_(", ExcludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT("/, ExcludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, ExcludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeDir = "));
+	expectedTitle.Append(_("/, AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth3Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth5Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeFile = "));
+	expectedTitle.Append(_(", AlwaysIncludeFile = "));
 	expectedTitle.Append(mTestFile3.GetFullPath());
-	expectedTitle.Append(wxT(")"));
+	expectedTitle.Append(_(")"));
 	
 	CPPUNIT_ASSERT_EQUAL(expectedTitle, 
 		mpLocationsListBox  ->GetString(0));			
@@ -1090,22 +1090,22 @@ void TestBackupConfig::TestAlwaysIncludeFileDeepInTree()
 	ActivateTreeItemWaitEvent(mpTree, mFile3);
 	
 	expectedTitle = mTestDataDir.GetPath();
-	expectedTitle.Append(wxT(" -> testdata ("));
-	expectedTitle.Append(wxT("ExcludeDir = "));
+	expectedTitle.Append(_(" -> testdata ("));
+	expectedTitle.Append(_("ExcludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", ExcludeDirsRegex = ^"));
+	expectedTitle.Append(_(", ExcludeDirsRegex = ^"));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT("/, ExcludeFilesRegex = ^"));
+	expectedTitle.Append(_("/, ExcludeFilesRegex = ^"));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT("/, AlwaysIncludeDir = "));
+	expectedTitle.Append(_("/, AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth2Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth3Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth4Dir.GetPath());
-	expectedTitle.Append(wxT(", AlwaysIncludeDir = "));
+	expectedTitle.Append(_(", AlwaysIncludeDir = "));
 	expectedTitle.Append(mTestDepth5Dir.GetPath());
-	expectedTitle.Append(wxT(")"));
+	expectedTitle.Append(_(")"));
 	
 	CPPUNIT_ASSERT_EQUAL(expectedTitle, 
 		mpLocationsListBox  ->GetString(0));			

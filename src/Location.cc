@@ -204,7 +204,7 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 	bool mIsDirectory, const BoxiExcludeEntry** ppExcludedBy, 
 	const BoxiExcludeEntry** ppIncludedBy, bool* pMatched)
 {
-	//wxLogDebug(wxT(" checking whether %s is excluded..."), 
+	//wxLogDebug(_(" checking whether %s is excluded..."), 
 	//	rLocalFileName.c_str());
 	
 	const std::list<BoxiExcludeEntry>& rExcludeList =
@@ -242,7 +242,7 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 	
 	for (int pass = 1; pass <= 2; pass++) 
 	{
-		// wxLogDebug(wxT(" pass %d"), pass);
+		// wxLogDebug(_(" pass %d"), pass);
 
 		for (BoxiExcludeEntry::ConstIterator 
 			pEntry  = rExcludeList.begin();
@@ -256,7 +256,7 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 			{
 				std::string name = pEntry->ToString();
 				wxString name2(name.c_str(), wxConvBoxi);
-				//wxLogDebug(wxT("  checking against %s"),
+				//wxLogDebug(_("  checking against %s"),
 				//	name2.c_str());
 			}
 
@@ -264,13 +264,13 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 			
 			if (pass == 1 && sense != ES_EXCLUDE) 
 			{
-				//wxLogDebug(wxT("   not an Exclude entry"));
+				//wxLogDebug(_("   not an Exclude entry"));
 				continue;
 			}
 			
 			if (pass == 2 && sense != ES_ALWAYSINCLUDE) 
 			{
-				//wxLogDebug(wxT("   not an AlwaysInclude entry"));
+				//wxLogDebug(_("   not an AlwaysInclude entry"));
 				continue;
 			}
 			
@@ -278,13 +278,13 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 			
 			if (fileOrDir == EFD_FILE && mIsDirectory) 
 			{
-				//wxLogDebug(wxT("   doesn't match directories"));
+				//wxLogDebug(_("   doesn't match directories"));
 				continue;
 			}
 			
 			if (fileOrDir == EFD_DIR && !mIsDirectory) 
 			{
-				//wxLogDebug(wxT("   doesn't match files"));
+				//wxLogDebug(_("   doesn't match files"));
 				continue;
 			}
 			
@@ -292,7 +292,7 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 			{
 				if (rLocalFileName == value2) 
 				{
-					//wxLogDebug(wxT("    exact match"));
+					//wxLogDebug(_("    exact match"));
 					matched = true;
 				}
 			} 
@@ -303,7 +303,7 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 				if (::regcomp(apr.get(), value.c_str(),
 					REG_EXTENDED | REG_NOSUB) != 0) 
 				{
-					wxLogError(wxT("Regular expression compile failed (%s)"),
+					wxLogError(_("Regular expression compile failed (%s)"),
 						value2.c_str());
 				}
 				else
@@ -316,7 +316,7 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 
 			if (!matched) 
 			{
-				//wxLogDebug(wxT("   no match."));
+				//wxLogDebug(_("   no match."));
 				continue;
 			}
 
@@ -325,7 +325,7 @@ ExcludedState BoxiLocation::GetExcludedState(const wxString& rLocalFileName,
 				*pMatched = true;
 			}
 
-			//wxLogDebug(wxT("   matched!"));
+			//wxLogDebug(_("   matched!"));
 			
 			if (sense == ES_EXCLUDE)
 			{

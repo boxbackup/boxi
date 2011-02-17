@@ -97,18 +97,18 @@ void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor,
 
 static wxCmdLineEntryDesc theCmdLineParams[] = 
 {
-	{ wxCMD_LINE_SWITCH, wxT("c"), NULL, 
-		wxT("ignored for compatibility with "
+	{ wxCMD_LINE_SWITCH, _("c"), NULL, 
+		_("ignored for compatibility with "
 		    "boxbackup command-line tools"),
 		wxCMD_LINE_VAL_NONE, 0 },
 	{ wxCMD_LINE_PARAM, wxT(""), wxT(""), 
-		wxT("<bbackupd-config-file>"),
+		_("<bbackupd-config-file>"),
 		wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
-	{ wxCMD_LINE_OPTION, wxT("t"), wxT("test"), 
-		wxT("run the specified unit test, or ALL"),
+	{ wxCMD_LINE_OPTION, _("t"), _("test"), 
+		_("run the specified unit test, or ALL"),
 		wxCMD_LINE_VAL_STRING, 0 },
-	{ wxCMD_LINE_SWITCH, wxT("h"), wxT("help"), 
-		wxT("displays this help text"),
+	{ wxCMD_LINE_SWITCH, _("h"), _("help"), 
+		_("displays this help text"),
 		wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
 	{ wxCMD_LINE_NONE },
 };
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 	}
 
 	wxString testName;
-	if (cmdParser.Found(wxT("t"), &testName))
+	if (cmdParser.Found(_("t"), &testName))
 	{
 		g_argc = argc;
 		g_argv = argv;
@@ -181,11 +181,11 @@ int main(int argc, char **argv)
 
 		bool foundNamedTest = false;
 		wxString errorMsg;
-		errorMsg.Printf(wxT("Test not found: %s. Available "
+		errorMsg.Printf(_("Test not found: %s. Available "
 			"tests are: "), testName.c_str());
 
 		#define ADD_IF_SELECTED(TestClass) \
-		if (testName == wxT(#TestClass) || testName == wxT("all")) \
+		if (testName == _(#TestClass) || testName == _("all")) \
 		{ \
 			/* suite->addTest(new GuiStarter(new TestClass())); */ \
 			/* suite->addTest(new GuiStarter( */ \
@@ -196,12 +196,12 @@ int main(int argc, char **argv)
 				)); \
 			foundNamedTest = true; \
 		} \
-		errorMsg.Append(wxT(#TestClass)); \
-		errorMsg.Append(wxT(", "));
+		errorMsg.Append(_(#TestClass)); \
+		errorMsg.Append(_(", "));
 		FOR_ALL_TESTS(ADD_IF_SELECTED);
 		#undef ADD_IF_SELECTED
 
-		errorMsg.Append(wxT("all."));
+		errorMsg.Append(_("all."));
 		if (!foundNamedTest)
 		{
 			wxLogFatalError(errorMsg);
@@ -274,7 +274,7 @@ bool BoxiApp::OnInit()
 	signal(SIGPIPE, sigpipe_handler);	
 	#endif
 
-	if (cmdParser.Found(wxT("t")))
+	if (cmdParser.Found(_("t")))
 	{
 		mTesting = true;
 	}

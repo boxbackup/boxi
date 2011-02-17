@@ -53,7 +53,7 @@ void TestConfig::RunTest()
 	// check that wxFileDialog behaves itself
 
 	wxFileName configTestDir;
-	configTestDir.AssignTempFileName(wxT("boxi-configTestDir-"));
+	configTestDir.AssignTempFileName(_("boxi-configTestDir-"));
 	CPPUNIT_ASSERT(wxRemoveFile(configTestDir.GetFullPath()));
 	CPPUNIT_ASSERT(!configTestDir.FileExists());
 	
@@ -62,13 +62,13 @@ void TestConfig::RunTest()
 	CPPUNIT_ASSERT(configTestDir.DirExists());
 	
 	mConfigFileName = wxFileName(configTestDir.GetFullPath(),
-		wxT("config.foo"));
+		_("config.foo"));
 	CPPUNIT_ASSERT(!mConfigFileName.FileExists());
 
 	// check that the wxFileDialog test hooks work OK
 	{
 		TestFileDialog dialog(
-			NULL, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
+			NULL, _("Save file"), wxT(""), _("bbackupd.conf"), 
 			_("Box Backup client configuration file|bbackupd.conf"), 
 			wxSAVE | wxOVERWRITE_PROMPT);
 		wxString in = mConfigFileName.GetFullPath();
@@ -85,7 +85,7 @@ void TestConfig::RunTest()
 	/*
 	{
 		wxFileDialog dialog(
-			NULL, wxT("Save file"), wxT(""), wxT("bbackupd.conf"), 
+			NULL, _("Save file"), wxT(""), _("bbackupd.conf"), 
 			_("Box Backup client configuration file|bbackupd.conf"), 
 			wxSAVE | wxOVERWRITE_PROMPT, wxDefaultPosition);
 		wxString in = mConfigFileName.GetFullPath();
@@ -116,7 +116,7 @@ void TestConfig::RunTest()
 
 	{
 		wxFileDialog dialog(
-			NULL, wxT("Open file"), wxT(""), wxT("bbackupd.conf"),  	
+			NULL, _("Open file"), wxT(""), _("bbackupd.conf"),  	
 			_("Box Backup client configuration file|bbackupd.conf"), 
 			wxOPEN | wxFILE_MUST_EXIST, wxDefaultPosition);
 		wxString in = mConfigFileName.GetFullPath();
@@ -137,20 +137,20 @@ void TestConfig::RunTest()
 	AssertClean();
 
 	// set them to something wacky
-	mpConfig->CertRequestFile.Set(wxT("/foo/req.foo"));
+	mpConfig->CertRequestFile.Set(_("/foo/req.foo"));
 	CPPUNIT_ASSERT(mpConfig->IsClean());
-	mpConfig->CertificateFile.Set(wxT("/foo/cert.foo"));
+	mpConfig->CertificateFile.Set(_("/foo/cert.foo"));
 	CPPUNIT_ASSERT(!mpConfig->IsClean());
-	mpConfig->PrivateKeyFile.Set (wxT("/foo/privatekey.foo"));
-	mpConfig->DataDirectory.Set  (wxT("/var/bbackupd/foo"));
-	mpConfig->NotifyScript.Set   (wxT("/foo/foo.sh"));
-	mpConfig->TrustedCAsFile.Set (wxT("/foo/serverCA.foo"));
-	mpConfig->KeysFile.Set       (wxT("/foo/keysfile.foo"));
-	mpConfig->StoreHostname.Set  (wxT("host.foo.bar"));
-	mpConfig->SyncAllowScript.Set(wxT("/foo/sync.sh"));
-	mpConfig->CommandSocket.Set  (wxT("/foo/socket.foo"));
-	mpConfig->PidFile.Set        (wxT("/foo/pid.foo"));
-	mpConfig->StoreObjectInfoFile.Set(wxT("/foo/cache.foo"));
+	mpConfig->PrivateKeyFile.Set (_("/foo/privatekey.foo"));
+	mpConfig->DataDirectory.Set  (_("/var/bbackupd/foo"));
+	mpConfig->NotifyScript.Set   (_("/foo/foo.sh"));
+	mpConfig->TrustedCAsFile.Set (_("/foo/serverCA.foo"));
+	mpConfig->KeysFile.Set       (_("/foo/keysfile.foo"));
+	mpConfig->StoreHostname.Set  (_("host.foo.bar"));
+	mpConfig->SyncAllowScript.Set(_("/foo/sync.sh"));
+	mpConfig->CommandSocket.Set  (_("/foo/socket.foo"));
+	mpConfig->PidFile.Set        (_("/foo/pid.foo"));
+	mpConfig->StoreObjectInfoFile.Set(_("/foo/cache.foo"));
 	mpConfig->AccountNumber.Set(12345);
 	mpConfig->UpdateStoreInterval.Set(1);
 	mpConfig->MinimumFileAge.Set(2);
@@ -166,7 +166,7 @@ void TestConfig::RunTest()
 	BoxiLocation loc(_("hello"), _("test\u00e6\u00f8\u00e5test"), NULL);
 	mpConfig->AddLocation(loc);
 
-	CPPUNIT_ASSERT(mpConfig->CertRequestFile.Is(wxT("/foo/req.foo")));
+	CPPUNIT_ASSERT(mpConfig->CertRequestFile.Is(_("/foo/req.foo")));
 	AssertConfigAsExpected();
 	AssertDirty();
 	
@@ -333,17 +333,17 @@ void TestConfig::AssertConfigAsExpected()
 	#undef STR_PROP_SUBCONF
 	#undef PROP
 
-	CPPUNIT_ASSERT(mpConfig->CertificateFile.Is(wxT("/foo/cert.foo")));
-	CPPUNIT_ASSERT(mpConfig->PrivateKeyFile.Is (wxT("/foo/privatekey.foo")));
-	CPPUNIT_ASSERT(mpConfig->DataDirectory.Is  (wxT("/var/bbackupd/foo")));
-	CPPUNIT_ASSERT(mpConfig->NotifyScript.Is   (wxT("/foo/foo.sh")));
-	CPPUNIT_ASSERT(mpConfig->TrustedCAsFile.Is (wxT("/foo/serverCA.foo")));
-	CPPUNIT_ASSERT(mpConfig->KeysFile.Is       (wxT("/foo/keysfile.foo")));
-	CPPUNIT_ASSERT(mpConfig->StoreHostname.Is  (wxT("host.foo.bar")));
-	CPPUNIT_ASSERT(mpConfig->SyncAllowScript.Is(wxT("/foo/sync.sh")));
-	CPPUNIT_ASSERT(mpConfig->CommandSocket.Is  (wxT("/foo/socket.foo")));
-	CPPUNIT_ASSERT(mpConfig->PidFile.Is        (wxT("/foo/pid.foo")));
-	CPPUNIT_ASSERT(mpConfig->StoreObjectInfoFile.Is(wxT("/foo/cache.foo")));
+	CPPUNIT_ASSERT(mpConfig->CertificateFile.Is(_("/foo/cert.foo")));
+	CPPUNIT_ASSERT(mpConfig->PrivateKeyFile.Is (_("/foo/privatekey.foo")));
+	CPPUNIT_ASSERT(mpConfig->DataDirectory.Is  (_("/var/bbackupd/foo")));
+	CPPUNIT_ASSERT(mpConfig->NotifyScript.Is   (_("/foo/foo.sh")));
+	CPPUNIT_ASSERT(mpConfig->TrustedCAsFile.Is (_("/foo/serverCA.foo")));
+	CPPUNIT_ASSERT(mpConfig->KeysFile.Is       (_("/foo/keysfile.foo")));
+	CPPUNIT_ASSERT(mpConfig->StoreHostname.Is  (_("host.foo.bar")));
+	CPPUNIT_ASSERT(mpConfig->SyncAllowScript.Is(_("/foo/sync.sh")));
+	CPPUNIT_ASSERT(mpConfig->CommandSocket.Is  (_("/foo/socket.foo")));
+	CPPUNIT_ASSERT(mpConfig->PidFile.Is        (_("/foo/pid.foo")));
+	CPPUNIT_ASSERT(mpConfig->StoreObjectInfoFile.Is(_("/foo/cache.foo")));
 	CPPUNIT_ASSERT(mpConfig->AccountNumber.Is(12345));
 	CPPUNIT_ASSERT(mpConfig->UpdateStoreInterval.Is(1));
 	CPPUNIT_ASSERT(mpConfig->MinimumFileAge.Is(2));
