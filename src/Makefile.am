@@ -82,22 +82,22 @@ boxi_LDFLAGS =
 
 boxi_LDADD = \
 	$(WX_LIBS) \
+	../boxbackup/release/bin/bbackupd/autogen_ClientException.o \
 	../boxbackup/release/bin/bbackupd/BackupClientContext.o \
 	../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o \
 	../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o \
 	../boxbackup/release/bin/bbackupd/BackupClientInodeToIDMap.o \
-	../boxbackup/release/bin/bbackupd/autogen_ClientException.o \
 	../boxbackup/release/bin/bbackupd/BackupDaemon.o \
 	../boxbackup/release/bin/bbackupd/Win32BackupService.o \
 	../boxbackup/release/bin/bbackupd/Win32ServiceFunctions.o \
+	../boxbackup/release/bin/bbstored/BackupStoreDaemon.o \
 	../boxbackup/release/bin/bbstored/BBStoreDHousekeeping.o \
 	../boxbackup/release/bin/bbstored/HousekeepStoreAccount.o \
-	../boxbackup/release/bin/bbstored/BackupStoreContext.o \
-	../boxbackup/release/bin/bbstored/BackupCommands.o \
-	../boxbackup/release/bin/bbstored/autogen_BackupProtocolServer.o \
-	../boxbackup/release/bin/bbstored/BackupStoreDaemon.o \
-	../boxbackup/release/bin/bbackupquery/BackupQueries.o \
 	../boxbackup/release/bin/bbackupquery/autogen_Documentation.o \
+	../boxbackup/release/bin/bbackupquery/BackupQueries.o \
+	../boxbackup/release/lib/backupstore/BackupStoreContext.o \
+	../boxbackup/release/lib/backupstore/BackupCommands.o \
+	../boxbackup/release/lib/backupstore/autogen_BackupProtocol.o \
 	../boxbackup/release/lib/backupstore/backupstore.a \
 	../boxbackup/release/lib/raidfile/raidfile.a \
 	../boxbackup/release/lib/backupclient/backupclient.a \

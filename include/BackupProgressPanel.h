@@ -26,6 +26,7 @@
 #define _BACKUP_PROGRESS_PANEL_H
 
 #include "TLSContext.h"
+#include "BackupDaemon.h"
 #include "BackupDaemonInterface.h"
 #include "RunStatusProvider.h"
 #include "ProgressPanel.h"
@@ -285,6 +286,9 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 		NotifyMoreFilesDone(1, FileSize);
 	}
 
+	virtual void NotifyDirectoryCreated(int64_t ObjectID,
+		const std::string& rLocalPath,
+		const std::string& rRemotePath) { }
 	virtual void NotifyMountPointSkipped(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath) { }

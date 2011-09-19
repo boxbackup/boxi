@@ -221,7 +221,7 @@ void RestoreProgressPanel::StartRestore(const RestoreSpec& rSpec,
 		mpConnection->Connect(false);
 
 		SetSummaryText(_("Checking account details"));
-		std::auto_ptr<BackupProtocolClientAccountUsage> accountInfo = 
+		std::auto_ptr<BackupProtocolAccountUsage> accountInfo = 
 			mpConnection->GetAccountUsage();
 		int blockSize = 0;
 		if (accountInfo.get())

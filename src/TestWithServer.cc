@@ -53,7 +53,7 @@
 #include "BackupStoreConfigVerify.h"
 #include "BackupStoreConstants.h"
 #include "BackupStoreException.h"
-#include "autogen_BackupProtocolServer.h"
+#include "autogen_BackupProtocol.h"
 
 #include "main.h"
 #include "BoxiApp.h"
@@ -426,8 +426,8 @@ void TestWithServer::setUp()
 	BackupStoreDirectory dir;
 
 	CPPUNIT_ASSERT(mapConn->ListDirectory(
-		BackupProtocolClientListDirectory::RootDirectory,
-		BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING,
+		BackupProtocolListDirectory::RootDirectory,
+		BackupProtocolListDirectory::Flags_EXCLUDE_NOTHING,
 		dir));
 	
 	mapConn->Disconnect();

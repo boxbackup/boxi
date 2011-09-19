@@ -34,7 +34,7 @@
 #include "Socket.h"
 #include "SocketStreamTLS.h"
 #include "TLSContext.h"
-#include "autogen_BackupProtocolClient.h"
+#include "autogen_BackupProtocol.h"
 #include "BackupStoreDirectory.h"
 
 #include "ClientConfig.h"
@@ -77,7 +77,7 @@ class ServerConnection {
 	bool UndeleteDirectory(int64_t theDirectoryId);
 	bool DeleteDirectory  (int64_t theDirectoryId);
 	
-	std::auto_ptr<BackupProtocolClientAccountUsage> GetAccountUsage();
+	std::auto_ptr<BackupProtocolAccountUsage> GetAccountUsage();
 	
 	bool ListDirectory(int64_t theDirectoryId, int16_t excludeFlags, 
 		BackupStoreDirectory& rDirectoryObject);

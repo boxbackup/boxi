@@ -84,7 +84,7 @@ class ServerFileVersion
 	public:
 	ServerFileVersion() 
 	{
-		mBoxFileId    = BackupProtocolClientListDirectory::RootDirectory;
+		mBoxFileId    = BackupProtocolListDirectory::RootDirectory;
 		mIsDirectory  = true;
 		mIsDeleted    = false;
 		mFlags        = 0;
@@ -350,7 +350,7 @@ class RestoreFilesPanel : public wxPanel
 	RestoreTreeNode*    mpGlobalSelection;
 	ServerSettings      mServerSettings;
 	ServerConnection*   mpServerConnection;
-	BackupProtocolClientAccountUsage* mpUsage;
+	BackupProtocolAccountUsage* mpUsage;
 	ServerCache         mCache;
 	RestoreSpec         mRestoreSpec;
 	MainFrame*          mpMainFrame;

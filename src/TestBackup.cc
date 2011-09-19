@@ -48,7 +48,7 @@
 #include "RaidFileController.h"
 #include "BackupStoreAccountDatabase.h"
 #include "BackupStoreAccounts.h"
-#include "autogen_BackupProtocolServer.h"
+#include "autogen_BackupProtocol.h"
 #include "BackupStoreConfigVerify.h"
 #include "BackupQueries.h"
 #include "BackupDaemonConfigVerify.h"
@@ -339,7 +339,7 @@ void CompareBackup(const Configuration& rClientConfig, TLSContext& rTlsContext,
 	
 	// Check the version of the server
 	{
-		std::auto_ptr<BackupProtocolClientVersion> serverVersion
+		std::auto_ptr<BackupProtocolVersion> serverVersion
 		(
 			connection.QueryVersion(BACKUP_STORE_SERVER_VERSION)
 		);
@@ -351,7 +351,7 @@ void CompareBackup(const Configuration& rClientConfig, TLSContext& rTlsContext,
 	connection.QueryLogin
 	(
 		rClientConfig.GetKeyValueInt("AccountNumber"),
-		BackupProtocolClientLogin::Flags_ReadOnly
+		BackupProtocolLogin::Flags_ReadOnly
 	);
 
 	// Set up a context for our work
@@ -489,7 +489,7 @@ int64_t SearchDir(BackupStoreDirectory& rDir, const std::string& rChildName)
 	if (en == 0) return 0;
 	int64_t id = en->GetObjectID();
 	BOXI_ASSERT(id > 0);
-	BOXI_ASSERT(id != BackupProtocolClientListDirectory::RootDirectory);
+	BOXI_ASSERT(id != BackupProtocolListDirectory::RootDirectory);
 	return id;
 }
 
@@ -909,7 +909,7 @@ void TestBackup::TestExclusions()
 		mpConfig->StoreHostname.GetString(), BOX_PORT_BBSTORED);
 	BackupProtocolClient connection(socket);
 	connection.Handshake();
-	std::auto_ptr<BackupProtocolClientVersion> 
+	std::auto_ptr<BackupProtocolVersion> 
 		serverVersion(connection.QueryVersion(
 			BACKUP_STORE_SERVER_VERSION));
 	if(serverVersion->GetVersion() != 
@@ -920,11 +920,10 @@ void TestBackup::TestExclusions()
 	}
 	connection.QueryLogin(
 		mpConfig->AccountNumber.GetInt(),
-		BackupProtocolClientLogin::Flags_ReadOnly);
+		BackupProtocolLogin::Flags_ReadOnly);
 	
-	int64_t rootDirId = BackupProtocolClientListDirectory
-		::RootDirectory;
-	std::auto_ptr<BackupProtocolClientSuccess> dirreply(
+	int64_t rootDirId = BackupProtocolListDirectory::RootDirectory;
+	std::auto_ptr<BackupProtocolSuccess> dirreply(
 		connection.QueryListDirectory(
 			rootDirId, false, 0, false));
 	std::auto_ptr<IOStream> dirstream(
@@ -1203,8 +1202,8 @@ void TestBackup::TestRestore()
 	BackupStoreDirectory dir;
 
 	BOXI_ASSERT(mapConn->ListDirectory(
-		BackupProtocolClientListDirectory::RootDirectory,
-		BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING,
+		BackupProtocolListDirectory::RootDirectory,
+		BackupProtocolListDirectory::Flags_EXCLUDE_NOTHING,
 		dir));
 	int64_t testId = SearchDir(dir, "testdata");
 	BOXI_ASSERT(testId);

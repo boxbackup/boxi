@@ -221,7 +221,7 @@ void BackupProgressPanel::NotifyIDMapsSetup(BackupClientContext& rContext)
 		i  = rLocs.begin();
 		i != rLocs.end(); i++)
 	{
-		BackupDaemon::Location* pLocation = *i;
+		Location* pLocation = *i;
 		BackupExclusionOracle oracle(rContext);
 		CountLocalFiles(oracle,	pLocation->mPath);
 	}

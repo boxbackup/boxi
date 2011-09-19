@@ -835,7 +835,7 @@ ServerCacheNode::SafeVector* ServerCacheNode::GetChildren()
 	
 	BackupStoreDirectory dir;
 	int16_t lExcludeFlags = 
-		BackupProtocolClientListDirectory::Flags_EXCLUDE_NOTHING;
+		BackupProtocolListDirectory::Flags_EXCLUDE_NOTHING;
 	
 	if (!(mpServerConnection->ListDirectory(
 		pMostRecent->GetBoxFileId(), lExcludeFlags, dir))) 

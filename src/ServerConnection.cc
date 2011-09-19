@@ -193,7 +193,7 @@ bool ServerConnection::Connect2(bool Writable)
 	
 	// Check the version of the server
 	{
-		std::auto_ptr<BackupProtocolClientVersion> serverVersion(
+		std::auto_ptr<BackupProtocolVersion> serverVersion(
 			mpConnection->QueryVersion(BACKUP_STORE_SERVER_VERSION));
 		
 		if (serverVersion->GetVersion() != BACKUP_STORE_SERVER_VERSION)
@@ -213,7 +213,7 @@ bool ServerConnection::Connect2(bool Writable)
 		return FALSE;
 	
 	mpConnection->QueryLogin(acctNo, 
-		Writable ? 0 : BackupProtocolClientLogin::Flags_ReadOnly);
+		Writable ? 0 : BackupProtocolLogin::Flags_ReadOnly);
 
 	return TRUE;
 }
@@ -282,7 +282,7 @@ bool ServerConnection::ListDirectory(
 		mpConnection->QueryListDirectory(
 			theDirectoryId,
 			// both files and directories:
-			BackupProtocolClientListDirectory::Flags_INCLUDE_EVERYTHING,
+			BackupProtocolListDirectory::Flags_INCLUDE_EVERYTHING,
 			excludeFlags,
 			// want attributes:
 			true);
@@ -302,9 +302,9 @@ bool ServerConnection::ListDirectory(
 	}
 }
 
-std::auto_ptr<BackupProtocolClientAccountUsage> ServerConnection::GetAccountUsage() 
+std::auto_ptr<BackupProtocolAccountUsage> ServerConnection::GetAccountUsage() 
 {
-	std::auto_ptr<BackupProtocolClientAccountUsage> apUsage;
+	std::auto_ptr<BackupProtocolAccountUsage> apUsage;
 	
 	if (!Connect(FALSE)) return apUsage;
 
@@ -362,33 +362,33 @@ const char * ServerConnection::ErrorString(int type, int subtype)
 	{
 		switch (subtype) 
 		{
-		case BackupProtocolClientError::Err_WrongVersion:
+		case BackupProtocolError::Err_WrongVersion:
 			return "Wrong version";
-		case BackupProtocolClientError::Err_NotInRightProtocolPhase:	
+		case BackupProtocolError::Err_NotInRightProtocolPhase:	
 			return "Wrong protocol phase";
-		case BackupProtocolClientError::Err_BadLogin:					
+		case BackupProtocolError::Err_BadLogin:					
 			return "Bad login";
-		case BackupProtocolClientError::Err_CannotLockStoreForWriting:	
+		case BackupProtocolError::Err_CannotLockStoreForWriting:	
 			return "Cannot lock store for writing";
-		case BackupProtocolClientError::Err_SessionReadOnly:			
+		case BackupProtocolError::Err_SessionReadOnly:			
 			return "Session is read-only";
-		case BackupProtocolClientError::Err_FileDoesNotVerify:			
+		case BackupProtocolError::Err_FileDoesNotVerify:			
 			return "File verification failed";
-		case BackupProtocolClientError::Err_DoesNotExist:				
+		case BackupProtocolError::Err_DoesNotExist:				
 			return "Object does not exist";
-		case BackupProtocolClientError::Err_DirectoryAlreadyExists:	
+		case BackupProtocolError::Err_DirectoryAlreadyExists:	
 			return "Directory already exists";
-		case BackupProtocolClientError::Err_CannotDeleteRoot:			
+		case BackupProtocolError::Err_CannotDeleteRoot:			
 			return "Cannot delete root directory";
-		case BackupProtocolClientError::Err_TargetNameExists:			
+		case BackupProtocolError::Err_TargetNameExists:			
 			return "Target name exists";
-		case BackupProtocolClientError::Err_StorageLimitExceeded:		
+		case BackupProtocolError::Err_StorageLimitExceeded:		
 			return "Storage limit exceeded";
-		case BackupProtocolClientError::Err_DiffFromFileDoesNotExist:	
+		case BackupProtocolError::Err_DiffFromFileDoesNotExist:	
 			return "Diff From File does not exist";
-		case BackupProtocolClientError::Err_DoesNotExistInDirectory:	
+		case BackupProtocolError::Err_DoesNotExistInDirectory:	
 			return "Does not exist in directory";
-		case BackupProtocolClientError::Err_PatchConsistencyError:		
+		case BackupProtocolError::Err_PatchConsistencyError:		
 			return "Patch consistency error";
 		default:
 			mErrorMessage.Printf(

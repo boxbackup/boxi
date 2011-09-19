@@ -62,7 +62,7 @@
 
 #include "Box.h"
 #include "BackupClientRestore.h"
-#include "autogen_BackupProtocolClient.h"
+#include "autogen_BackupProtocol.h"
 #include "CommonException.h"
 #include "BackupClientFileAttributes.h"
 #include "IOStream.h"
@@ -299,11 +299,11 @@ void BackupClientRestoreDir(BackupProtocolClient &rConnection, int64_t Directory
 	rConnection.QueryListDirectory(
 			DirectoryID,
 			rParams.mRestoreDeleted
-			?(BackupProtocolClientListDirectory::Flags_Deleted)
-			:(BackupProtocolClientListDirectory::Flags_INCLUDE_EVERYTHING),
-			BackupProtocolClientListDirectory::Flags_OldVersion |
+			?(BackupProtocolListDirectory::Flags_Deleted)
+			:(BackupProtocolListDirectory::Flags_INCLUDE_EVERYTHING),
+			BackupProtocolListDirectory::Flags_OldVersion |
 			( rParams.mRestoreDeleted
-			  ? 0 : BackupProtocolClientListDirectory::Flags_Deleted ),
+			  ? 0 : BackupProtocolListDirectory::Flags_Deleted ),
 			true /* want attributes */);
 
 	// Retrieve the directory from the stream following
