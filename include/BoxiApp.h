@@ -27,6 +27,7 @@
 
 #include <wx/app.h>
 #include <wx/filedlg.h>
+#include <wx/intl.h>
 
 // #include <cppunit/SourceLine.h>
 

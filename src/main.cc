@@ -4,8 +4,7 @@
  *  Main source code file for Boxi, a graphical user interface for
  *  Box Backup (software developed by Ben Summers).
  *
- *  Copyright 2005-2008 Chris Wilson
- *  chris-boxisource@qwirx.com
+ *  Copyright 2005-2011 Chris Wilson <chris-boxisource@qwirx.com>
  ****************************************************************************/
 
 /*
@@ -38,6 +37,8 @@
 #include <wx/cmdline.h>
 #include <wx/filename.h>
 #include <wx/image.h>
+#include <wx/intl.h>
+#include <wx/log.h>
 
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/CompilerOutputter.h>
@@ -107,6 +108,9 @@ static wxCmdLineEntryDesc theCmdLineParams[] =
 	{ wxCMD_LINE_OPTION, _("t"), _("test"), 
 		_("run the specified unit test, or ALL"),
 		wxCMD_LINE_VAL_STRING, 0 },
+	{ wxCMD_LINE_OPTION, _("l"), _("lang"), 
+		_("load the specified language or translation"),
+		wxCMD_LINE_VAL_STRING, 0 },
 	{ wxCMD_LINE_SWITCH, _("h"), _("help"), 
 		_("displays this help text"),
 		wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
@@ -148,6 +152,52 @@ int main(int argc, char **argv)
 		return 2; // invalid command line
 	}
 
+	// Copied from wxWidgets internat sample by Vadim Zeitlin/Julian Smart 
+	wxLanguage lang = wxLANGUAGE_DEFAULT;
+	wxString langName;
+	const wxLanguageInfo * pLangInfo = NULL;
+
+	if (cmdParser.Found(_("l"), &langName))
+	{
+		pLangInfo = wxLocale::FindLanguageInfo(langName);
+
+		if (!pLangInfo)
+		{
+			wxLogFatalError(_("Locale \"%s\" is unknown."),
+				langName.c_str());
+			return 2; // invalid command line
+		}
+	
+		lang = static_cast<wxLanguage>(pLangInfo->Language);
+	}
+
+	wxLocale locale;
+
+	if (!locale.Init(lang, wxLOCALE_CONV_ENCODING))
+	{
+		wxLogWarning(_("Language is not supported by the system: "
+			"%s (%d)"), langName.c_str(), lang);
+		// continue nevertheless
+	}
+
+	// normally this wouldn't be necessary as the catalog files would be found
+	// in the default locations, but when the program is not installed the
+	// catalogs are in the build directory where we wouldn't find them by
+	// default
+	wxLocale::AddCatalogLookupPathPrefix(wxT("../po")); 
+
+	// Initialize the catalogs we'll be using
+	if (!locale.AddCatalog(locale.GetCanonicalName()))
+	{
+		wxLogError(_("Couldn't find/load the catalog for locale '%s'."),
+			pLangInfo ? pLangInfo->CanonicalName.c_str() : _("unknown"));
+	} 
+
+	// Now try to add wxstd.mo so that loading nonexistent files will
+	// produce a localized error message:
+	locale.AddCatalog(wxT("wxstd"));
+	// NOTE: it's not an error if we couldn't find it! 
+	
 	wxString testName;
 	if (cmdParser.Found(_("t"), &testName))
 	{
