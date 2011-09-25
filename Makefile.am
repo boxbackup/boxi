@@ -3,7 +3,7 @@
 ## If you don't want it to overwrite it,
 ## 	Please disable it in the Anjuta project configuration
 
-SUBDIRS = boxbackup include src po intl
+SUBDIRS = intl boxbackup include src po
 
 boxidocdir = ${prefix}/doc/boxi
 boxidoc_DATA = \
@@ -15,7 +15,7 @@ boxidoc_DATA = \
 	NEWS\
 	TODO
 
-EXTRA_DIST = $(boxidoc_DATA)
+EXTRA_DIST = config.rpath  $(boxidoc_DATA)
 
 # Copy all the spec files. Of cource, only one is actually used.
 dist-hook:
@@ -25,3 +25,4 @@ dist-hook:
 		fi \
 	done
 
+ACLOCAL_AMFLAGS = -I m4

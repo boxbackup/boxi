@@ -113,6 +113,10 @@ do
 	  test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
         fi
       fi
+      if grep "^(AC)|(IT)_PROG_INTLTOOL" configure.in >/dev/null; then
+        echo "Running intltoolize..."
+        intltoolize --copy --force --automake
+      fi
       if grep "^AM_GNOME_GETTEXT" configure.in >/dev/null; then
 	echo "Creating $dr/aclocal.m4 ..."
 	test -r $dr/aclocal.m4 || touch $dr/aclocal.m4
