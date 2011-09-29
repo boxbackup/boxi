@@ -65,11 +65,17 @@ AM_GNU_GETTEXT
 dnl AM_GNU_GETTEXT([external])
 dnl AM_GLIB_GNU_GETTEXT
 dnl IT_PROG_INTLTOOL([0.35.0])
-
-
 AM_PROG_LIBTOOL
 
+dnl Custom macros begin here
+
 m4_include([boxbackup/infrastructure/m4/boxbackup_tests.m4])
+
+AM_CONDITIONAL([WINDOWS], [test "$WINDOWS" = "true"])
+
+if test "$WINDOWS" = "true"; then
+        LT_PROG_RC
+fi
 
 # extract boxbackup in release build
 if ! (
@@ -99,6 +105,8 @@ if ! (
 	echo "Failed to configure wxChart, aborting!"
 	exit 1
 fi
+
+dnl Custom macros end here
 
 PKG_CHECK_MODULES(All, cppunit)
 AC_OUTPUT([ intl/Makefile
