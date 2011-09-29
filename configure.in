@@ -69,6 +69,8 @@ AM_PROG_LIBTOOL
 
 dnl Custom macros begin here
 
+AM_CONFIG_HEADER
+
 m4_include([boxbackup/infrastructure/m4/boxbackup_tests.m4])
 
 AM_CONDITIONAL([WINDOWS], [test "$WINDOWS" = "true"])
