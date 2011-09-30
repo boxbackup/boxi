@@ -61,15 +61,14 @@ dnl ***************************************************************************
 GETTEXT_PACKAGE=boxi
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [GETTEXT package name])
-AM_GNU_GETTEXT
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.17])
 dnl AM_GNU_GETTEXT([external])
 dnl AM_GLIB_GNU_GETTEXT
 dnl IT_PROG_INTLTOOL([0.35.0])
 AM_PROG_LIBTOOL
 
 dnl Custom macros begin here
-
-AM_CONFIG_HEADER
 
 m4_include([boxbackup/infrastructure/m4/boxbackup_tests.m4])
 
@@ -111,7 +110,7 @@ fi
 dnl Custom macros end here
 
 PKG_CHECK_MODULES(All, cppunit)
-AC_OUTPUT([ intl/Makefile
+AC_OUTPUT([
 Makefile
 src/Makefile
 po/Makefile.in
