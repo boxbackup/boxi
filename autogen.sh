@@ -147,6 +147,8 @@ do
   fi
 done
 
+./make-image-headers.pl
+
 #conf_flags="--enable-maintainer-mode --enable-compile-warnings" #--enable-iso-c
 
 ./update-main-h.sh
