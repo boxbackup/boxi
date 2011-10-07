@@ -10,7 +10,7 @@ DIE=0
 mkdir -p boxbackup
 touch boxbackup/Makefile.in
 
-ACLOCAL_FLAGS="-I $srcdir/boxbackup/infrastructure/m4"
+ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $srcdir/boxbackup/infrastructure/m4"
 
 HOSTDIR=$HOME/`hostname`/share/aclocal
 if [ -d "$HOSTDIR" ]; then
