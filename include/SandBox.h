@@ -37,9 +37,9 @@
 // Must define __MSVCRT_VERSION__ before including anything from wx,
 // and to a sufficiently high version that it works with Box Backup
 // before including Box.h, otherwise these two are mutually incompatible.
-#ifndef __MSVCRT_VERSION__
-	#define __MSVCRT_VERSION__ 0x0601
-#endif
+//
+// It seems that the best way to do that is just to include emu.h here.
+#include "emu.h"
 
 // We always build against Box Backup release objects, which were compiled
 // with NDEBUG defined, so we must do the same
