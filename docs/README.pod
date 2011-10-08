@@ -169,6 +169,9 @@ libtool (version 1.5.6 or higher)
 =item *
 gettext-devel
 
+=item *
+pkg-config
+
 =back
 
 To compile on Windows, you must satisfy the requirements of Box Backup.
