@@ -10,14 +10,13 @@ if [ ! -x "configure" ]; then
 	fi
 fi
 
-if ! ./configure --target=i686-pc-mingw32 \
-	CC="gcc -mno-cygwin" \
-	CPP="gcc -mno-cygwin -E" \
-	CXX="g++ -mno-cygwin" \
-	LD="g++ -mno-cygwin" \
-	CFLAGS="-mthreads" \
-	CXXFLAGS="-mthreads" \
-	LDFLAGS="-mthreads -L/usr/i686-pc-mingw32/lib" \
+export PKG_CONFIG_PATH=/usr/i686-pc-mingw32/lib/pkgconfig
+
+if ! ./configure "$@" --target=i686-pc-mingw32 \
+	CFLAGS="-mno-cygwin -mthreads" \
+	CPPFLAGS="-mno-cygwin" \
+	CXXFLAGS="-mno-cygwin -mthreads" \
+	LDFLAGS="-mno-cygwin -mthreads -L/usr/i686-pc-mingw32/lib" \
 	LIBS="-lcrypto -lws2_32 -lgdi32" \
 	--with-wx-config=/usr/i686-pc-mingw32/bin/wx-config \
 	--with-cppunit-prefix=/usr/i686-pc-mingw32
