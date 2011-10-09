@@ -4,7 +4,7 @@ DEP_PATH=/usr/i686-pc-mingw32
 
 if [ ! -x "configure" ]; then
 	if ! NOCONFIGURE=1 \
-		ACLOCAL_FLAGS="-I '${DEP_PATH}/share/aclocal'" \
+		ACLOCAL_FLAGS="-I ${DEP_PATH}/share/aclocal" \
 		./autogen.sh
 	then
 		echo "Error: bootstrap failed, aborting." >&2
