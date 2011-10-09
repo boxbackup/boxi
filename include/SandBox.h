@@ -38,8 +38,8 @@
 // and to a sufficiently high version that it works with Box Backup
 // before including Box.h, otherwise these two are mutually incompatible.
 //
-// It seems that the best way to do that is just to include emu.h here.
-#include "emu.h"
+// It seems that the best way to do that is just to include emu_winver.h here.
+#include "emu_winver.h"
 
 // We always build against Box Backup release objects, which were compiled
 // with NDEBUG defined, so we must do the same
