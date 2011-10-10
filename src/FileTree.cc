@@ -24,6 +24,10 @@
 
 #include "SandBox.h"
 
+#if wxUSE_FSVOLUME != 1
+#	error Please enable wxUSE_FSVOLUME in wxWidgets setup.h.in and recompile it
+#endif
+
 #include <wx/dir.h>
 #include <wx/filename.h>
 #include <wx/intl.h>
