@@ -180,16 +180,7 @@ You may find the this document helpful:
 L<http://www.boxbackup.org/svn/box/trunk/docs/api-notes/win32_build_on_cygwin_using_mingw.txt>.
 
 In addition, you will also need to compile and install CppUnit and wxMSW.
-You can download their source code, extract them, and configure and install
-each of them using the following commands:
-
-	./configure \
-		CFLAGS="-mno-cygwin -mthreads" \
-		CXXFLAGS="-mno-cygwin -mthreads" \
-		LDFLAGS="-mno-cygwin -mthreads" \
-		--prefix=/usr/i686-pc-mingw32
-	make
-	make install
+Please see the document L<cygwin-mingw-build.txt> for instructions.
 
 If you downloaded a release version, just extract the contents of the
 archive, and change into the directory it creates (e.g. boxi-0.1.0).

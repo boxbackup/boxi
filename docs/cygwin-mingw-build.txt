@@ -2,10 +2,11 @@ Building for Windows Native using Cygwin
 ========================================
 
 Install Cygwin, Zlib, OpenSSL and PCRE as described in 
-boxbackup/docs/backup/win32_build_on_cygwin_using_mingw.txt
+boxbackup/docs/api-notes/win32_build_on_cygwin_using_mingw.txt
 
 Additionally install the following Cygwin packages:
 
+ * Devel/gettext-devel
  * Devel/pkg-config
  * Devel/libtool
 
@@ -20,11 +21,12 @@ to:
 
 Configure as follows:
 
-	./configure --enable-unicode --enable-debug --enable-shared \
-		--disable-static --enable-debug_gdb --with-msw \
-		--without-expat --target=i686-pc-mingw32 \
-		CC="gcc -mno-cygwin -mthreads" \
-		CXX="g++ -mno-cygwin -mthreads"
+	./configure --enable-unicode --enable-debug --disable-shared \
+		--enable-debug_gdb --without-expat --target=i686-pc-mingw32 \
+		CFLAGS="-mno-cygwin -mthreads" \
+		CXXFLAGS="-mno-cygwin -mthreads" \
+		LDFLAGS="-mno-cygwin -mthreads" \
+		--prefix=/usr/i686-pc-mingw32
 	make
 	make install
 
