@@ -152,52 +152,6 @@ int main(int argc, char **argv)
 		return 2; // invalid command line
 	}
 
-	// Copied from wxWidgets internat sample by Vadim Zeitlin/Julian Smart 
-	wxLanguage lang = wxLANGUAGE_DEFAULT;
-	wxString langName;
-	const wxLanguageInfo * pLangInfo = NULL;
-
-	if (cmdParser.Found(_("l"), &langName))
-	{
-		pLangInfo = wxLocale::FindLanguageInfo(langName);
-
-		if (!pLangInfo)
-		{
-			wxLogFatalError(_("Locale \"%s\" is unknown."),
-				langName.c_str());
-			return 2; // invalid command line
-		}
-	
-		lang = static_cast<wxLanguage>(pLangInfo->Language);
-	}
-
-	wxLocale locale;
-
-	if (!locale.Init(lang, wxLOCALE_CONV_ENCODING))
-	{
-		wxLogWarning(_("Language is not supported by the system: "
-			"%s (%d)"), langName.c_str(), lang);
-		// continue nevertheless
-	}
-
-	// normally this wouldn't be necessary as the catalog files would be found
-	// in the default locations, but when the program is not installed the
-	// catalogs are in the build directory where we wouldn't find them by
-	// default
-	wxLocale::AddCatalogLookupPathPrefix(wxT("../po")); 
-
-	// Initialize the catalogs we'll be using
-	if (!locale.AddCatalog(locale.GetCanonicalName()))
-	{
-		wxLogError(_("Couldn't find/load the catalog for locale '%s'."),
-			pLangInfo ? pLangInfo->CanonicalName.c_str() : _("unknown"));
-	} 
-
-	// Now try to add wxstd.mo so that loading nonexistent files will
-	// produce a localized error message:
-	locale.AddCatalog(wxT("wxstd"));
-	// NOTE: it's not an error if we couldn't find it! 
-	
 	wxString testName;
 	if (cmdParser.Found(_("t"), &testName))
 	{
@@ -311,6 +265,53 @@ bool BoxiApp::OnInit()
 	{
 		return false;
 	}
+	
+	// Copied from wxWidgets internat sample by Vadim Zeitlin/Julian Smart 
+	wxLanguage lang = wxLANGUAGE_DEFAULT;
+	wxString langName;
+	const wxLanguageInfo * pLangInfo = NULL;
+
+	if (cmdParser.Found(_("l"), &langName))
+	{
+		pLangInfo = wxLocale::FindLanguageInfo(langName);
+
+		if (!pLangInfo)
+		{
+			wxLogFatalError(_("Locale \"%s\" is unknown."),
+				langName.c_str());
+			return 2; // invalid command line
+		}
+	
+		lang = static_cast<wxLanguage>(pLangInfo->Language);
+	}
+
+	wxLocale locale;
+
+	if (!locale.Init(lang, wxLOCALE_CONV_ENCODING))
+	{
+		wxLogWarning(_("Language is not supported by the system: "
+			"%s (%d)"), langName.c_str(), lang);
+		// continue nevertheless
+	}
+
+	// normally this wouldn't be necessary as the catalog files would be
+	// found in the default locations, but when the program is not
+	// installed, the catalogs are in the build directory where we
+	// wouldn't find them by default.
+	wxLocale::AddCatalogLookupPathPrefix(wxT("../po")); 
+
+	// Initialize the catalogs we'll be using
+	if (!locale.AddCatalog(locale.GetCanonicalName()))
+	{
+		wxLogError(_("Couldn't find/load the catalog for locale '%s'."),
+			pLangInfo ? pLangInfo->CanonicalName.c_str()
+			: _("unknown"));
+	} 
+
+	// Now try to add wxstd.mo so that loading nonexistent files will
+	// produce a localized error message:
+	locale.AddCatalog(wxT("wxstd"));
+	// NOTE: it's not an error if we couldn't find it! 
 	
 	mHaveConfigFile = false;
 	
