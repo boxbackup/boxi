@@ -112,6 +112,18 @@ class CompareProgressPanel : public ProgressPanel
 		mpErrorList->Append(msg);
 		// mDifferences ++;
 	}
+
+	virtual wxString GetNativeErrorMessage()
+	{
+#ifdef WIN32
+		return wxString(GetErrorMessage(GetLastError()).c_str(),
+			wxConvBoxi);
+#else
+		std::ostringstream _box_log_line;
+		_box_log_line << std::strerror(errno) << " (" << errno << ")";
+		return wxString(_box_log_line.str().c_str(), wxConvBoxi);
+#endif
+	}
 	
 	virtual void NotifyLocalDirAccessFailed(const std::string& rLocalPath,
 		const std::string& rRemotePath)
@@ -119,8 +131,7 @@ class CompareProgressPanel : public ProgressPanel
 		wxString msg;
 		msg.Printf(_("Failed to access local directory '%s': %s"),
 			wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
-			wxString(GetNativeErrorMessage().c_str(),
-				wxConvBoxi).c_str());
+			GetNativeErrorMessage().c_str());
 		mpErrorList->Append(msg);
 		// mUncheckedFiles ++;
 	}

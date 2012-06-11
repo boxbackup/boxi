@@ -214,12 +214,12 @@ class BackupExclusionOracle : public ProgressPanel::ExclusionOracle
 
 void BackupProgressPanel::NotifyIDMapsSetup(BackupClientContext& rContext)
 {
-	BackupDaemon::Locations& rLocs(mapDaemon->GetLocations());
+	BackupDaemon::Locations locs(mapDaemon->GetLocations());
 
 	// Go through the records, counting files and bytes
 	for (BackupDaemon::Locations::const_iterator
-		i  = rLocs.begin();
-		i != rLocs.end(); i++)
+		i  = locs.begin();
+		i != locs.end(); i++)
 	{
 		Location* pLocation = *i;
 		BackupExclusionOracle oracle(rContext);

@@ -24,10 +24,6 @@
 
 #include "SandBox.h"
 
-#if wxUSE_FSVOLUME != 1
-#	error Please enable wxUSE_FSVOLUME in wxWidgets setup.h.in and recompile it
-#endif
-
 #include <wx/dir.h>
 #include <wx/filename.h>
 #include <wx/intl.h>
@@ -178,6 +174,10 @@ bool LocalFileNode::_AddChildrenSlow(LocalFileTree* pTreeCtrl, bool recursive)
 	FileNameArray entries;
 
 #ifdef WIN32
+#	if wxUSE_FSVOLUME != 1
+#		error Please enable wxUSE_FSVOLUME in wxWidgets setup.h.in and recompile it
+#	endif
+
 	// root node is My Computer, contains a list of drives
 	if (GetParentNode() == NULL && mFullPath.IsSameAs(wxEmptyString))
 	{

@@ -136,7 +136,7 @@ void TestBackupStoreDaemon::Connection(SocketStreamTLS &rStream)
 	// SetProcessTitle("client %08x", id);
 
 	// Create a context, using this ID
-	BackupStoreContext context(id, *this);
+	BackupStoreContext context(id, *this, "TestWithServer");
 	
 	// See if the client has an account?
 	if(mapAccounts->AccountExists(id))
