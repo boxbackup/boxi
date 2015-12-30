@@ -203,12 +203,15 @@ more familiar with the Box Backup command-line tools.
 =head2 Documentation
 This Readme.md markdown page was generated from the docs/README.pod file
 through the command:
+
     perl -MPod::Markdown -e 'Pod::Markdown->new->filter(@ARGV)' docs/README.pod > Readme.md
 
 A text version of this document can be generated with the command:
+
     pod2text docs/README.pod > README.txt
 
 Or an HTML version can be generated with the command:
+
     pod2html docs/README.pod -t "Boxi README" --noindex > README.html
 
 
