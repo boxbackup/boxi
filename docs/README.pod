@@ -9,7 +9,7 @@ system by Ben Summers.
 
 Boxi is a graphical user interface to configure, manage, and administer
 the Internet backup software called Box Backup by Ben Summers, available from
-L<http://www.fluffy.co.uk/boxbackup>.
+L<https://www.boxbackup.org/>.
 
 Box Backup is "an open source, completely automatic on-line backup system
 for UNIX" with the following advantages:
@@ -20,7 +20,7 @@ for UNIX" with the following advantages:
 File Based
 
 All backed up data is stored on the server in files on a filesystem
--- no tape or archive devices are used 
+-- no tape or archive devices are used
 
 =item *
 Untrusted Servers
@@ -32,23 +32,23 @@ required -- all data is encrypted on the client
 Automatic Backups
 
 A backup daemon runs on systems to be backed up, and copies
-encrypted data to the server when it notices changes 
+encrypted data to the server when it notices changes
 
 =item *
 Bandwidth Efficient
 
-Only changes within files are sent to the server, just like rsync 
+Only changes within files are sent to the server, just like rsync
 
 =item *
 Storage Efficient
 
 Old versions of files on the server are stored as changes from
-the current version 
+the current version
 
 =item *
 File Versioning
 
-Behaves like tape -- old versions and deleted files are available 
+Behaves like tape -- old versions and deleted files are available
 
 =item *
 Low Cost and Portable
@@ -86,7 +86,7 @@ Cygwin on Windows XP (development platform)
 
 =back
 
-Feedback about and patches for compatibility with other systems are 
+Feedback about and patches for compatibility with other systems are
 most welcome.
 
 
@@ -105,22 +105,23 @@ L<http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz?download>
 
 L<http://prdownloads.sourceforge.net/boxi/boxi-0_0_7.zip?download>
 
-=item Latest source code from Subversion
+=item Latest source code from Github
 
-The latest source code is experimental, a work in progress, and not guaranteed
-to compile or run on any system. Your mileage may vary. You can get it from
-Sourceforge's Subversion server:
+You can get it from gitub in the usual way:
 
- svn co https://svn.sourceforge.net/svnroot/boxi/trunk/boxi
+    git clone git@github.com:boxbackup/boxi.git
 
-See L<http://sourceforge.net/svn/?group_id=135105> for more details about
-Subversion, or to browse the repository online.
+Because boxi is dependent on boxbackup you need to download the boxbackup source
+code into the subdirectory boxbackup:
+
+    cd boxi
+    git clone git@github.com:boxbackup/boxbackup.git
 
 =back
 
 =head2 Compiling
 
-Boxi is distributed as source code, and binaries for Windows/Cygwin. 
+Boxi is distributed as source code, and binaries for Windows/Cygwin.
 Source code must be compiled before use.
 
 The following programs and libraries are required to compile Boxi:
@@ -143,7 +144,7 @@ libncurses-devel (version 5, for boxbackup)
 gcc, g++ and libstdc++-devel
 
 =item *
-wxWindows (version 2.6.x or later, with development libraries)
+wxWidgets (version 2.6.x or later, with development libraries)
 
 =item *
 CppUnit (version 1.10.2 or later, with development libraries)
@@ -184,6 +185,8 @@ Please see the document L<cygwin-mingw-build.txt> for instructions.
 
 If you downloaded a release version, just extract the contents of the
 archive, and change into the directory it creates (e.g. boxi-0.1.0).
+
+
 CVS users must run these commands in the downloaded Boxi source directory
 to configure Boxi:
 
@@ -195,11 +198,24 @@ For all users, it should be enough to then run the following commands:
 	make
 
 Don't even think about installing it yet! There really isn't any point.
-Run "src/boxi [-c] [<config-file>]" to start the GUI. 
+Run "src/boxi [-c] [<config-file>]" to start the GUI.
 
 The "-c" option is ignored if present, and provided to comfort those
 more familiar with the Box Backup command-line tools.
 
+=head2 Documentation
+This Readme.md markdown page was generated from the docs/README.pod file
+through the command:
+
+    perl -MPod::Markdown -e 'Pod::Markdown->new->filter(@ARGV)' docs/README.pod > Readme.md
+
+A text version of this document can be generated with the command:
+
+    pod2text docs/README.pod > README.txt
+
+Or an HTML version can be generated with the command:
+
+    pod2html docs/README.pod -t "Boxi README" --noindex > README.html
 
 
 =head2 Screenshots
@@ -236,7 +252,7 @@ one day).
 L<http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz?download>
 
 Commemorates the release of public CVS, and interest of other developers
-in joining in the project, with a minor version number increase. 
+in joining in the project, with a minor version number increase.
 
 Fixed compilation on wxWindows 2.6.0 (at least on Cygwin, hopefully Linux
 too).
@@ -265,7 +281,7 @@ First binary release for Windows (Cygwin).
 
 L<http://www.qwirx.com/boxi/boxi-0.0.6.tar.gz> (released 2005-05-08)
 
-Server Files panel: hide deleted files and old versions of files on the 
+Server Files panel: hide deleted files and old versions of files on the
 server (see the new "View" menu). Disable Delete/Undelete buttons when
 a file is selected (need a protocol change to make this work for files).
 
@@ -304,7 +320,7 @@ screen space.
 Allow navigating into directories by double-clicking files in the server
 file list (similar to Windows Explorer behaviour).
 
-Allow sorting the file list by filename, size or date, in forward or 
+Allow sorting the file list by filename, size or date, in forward or
 reverse order. Replaced the "Flags" column by "Last Modified" date, which
 is more useful.
 
@@ -314,12 +330,12 @@ status bar (current file and number of files restored).
 Changed most error message dialogs to have more politically-correct titles
 (Boxi Error and Boxi Message).
 
-Added the "-c" command-line option, which is ignored, and renamed README.txt 
+Added the "-c" command-line option, which is ignored, and renamed README.txt
 back to README, to stop Make from complaining.
 
 Many thanks to Richard Eigenmann for these suggestions.
 
-=item Version 0.0.4 
+=item Version 0.0.4
 
 L<http://www.qwirx.com/boxi/boxi-0.0.4.tar.gz> (released 2005-03-14)
 
@@ -358,7 +374,7 @@ with extreme caution! PLEASE back up your configuration file first!
 
 I<"There are no bugs, just undocumented features" (unknown)>
 
-See the TODO file for a list of bugs to fix and features which are planned 
+See the TODO file for a list of bugs to fix and features which are planned
 for future releases. Feel free to contribute patches or suggestions for new
 features :-)
 
@@ -379,7 +395,7 @@ version 2 or later (L<http://www.gnu.org/licenses/gpl.html>).
 
 Contains a copy of Box Backup by Ben Summers, which is separately licensed
 under a license very similar to the BSD license, which can be seen at
-L<http://www.fluffy.co.uk/boxbackup/license.html>. This component is NOT
+L<https://github.com/boxbackup/boxbackup/blob/master/LICENSE-DUAL.txt>. This component is NOT
 covered by the GPL.
 
 The file boxbackup.patch contains a number of changes to Box Backup which
@@ -387,12 +403,12 @@ are useful for Boxi. That file is under the same license as Box Backup,
 i.e. a BSD-like license, and copyright assigned to Ben Summers.
 
 Portions of Boxi are copied, based on or inspired by Box Backup
-itself, and it is not possible to compile Boxi without linking to 
+itself, and it is not possible to compile Boxi without linking to
 the Box Backup code. Therefore, the Boxi code contains the attribution
 required by the Box Backup license, that it contains code by Ben Summers.
 This attribution B<must not> be removed from the code!
 
-Generously hosted by SourceForge:
+Previously hosted by SourceForge:
 
 =for html <p><A href="http://sourceforge.net"> <IMG src="http://sourceforge.net/sflogo.php?group_id=135105&amp;type=5" width="210" height="62" border="0" alt="SourceForge.net Logo" /></A></p>
 
