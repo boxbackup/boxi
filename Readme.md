@@ -83,7 +83,7 @@ Download the source code in the usual way and then downlowd the dependent boxbac
 ```shell
 git clone git@github.com:boxbackup/boxi.git
 cd boxi
-git submodule inti
+git submodule init
 git submodule update
 ```
 
