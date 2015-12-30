@@ -298,7 +298,7 @@ To request a new feature, please use the Sourceforge RFE tracker at
 
 ## License
 
-This software is copyright (C) Chris Wilson &lt;boxi\_README@qwirx.com>, 2004-05.
+This software is copyright (C) Chris Wilson &lt;boxiREADME@qwirx.com>, 2004-05.
 Licensed for public distribution under the GNU General Public License (GPL),
 version 2 or later ([http://www.gnu.org/licenses/gpl.html](http://www.gnu.org/licenses/gpl.html)).
 
