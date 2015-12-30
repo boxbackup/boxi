@@ -1,11 +1,11 @@
-This software is copyright (C) Chris Wilson <boxi_main.cc@qwirx.com>, 2004-05.
+This software is copyright (C) Chris Wilson, 2004-05.
 Licensed for public distribution under the GNU General Public License (GPL),
 version 2 or later.
 
 Contains a copy of Box Backup by Ben Summers, which is separately licensed
 under a license very similar to the BSD license, which can be seen at
-L<http://www.fluffy.co.uk/boxbackup/license.html>. This component is NOT
-covered by the GPL.
+https://github.com/boxbackup/boxbackup/blob/master/LICENSE-DUAL.txt
+This component is NOT covered by the GPL.
 
 ------------------------------------------------------------------------------
 
