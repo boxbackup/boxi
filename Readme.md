@@ -7,7 +7,7 @@ system by Ben Summers.
 
 Boxi is a graphical user interface to configure, manage, and administer
 the Internet backup software called Box Backup by Ben Summers, available from
-[http://www.fluffy.co.uk/boxbackup](http://www.fluffy.co.uk/boxbackup).
+[https://www.boxbackup.org/](https://www.boxbackup.org/).
 
 Box Backup is "an open source, completely automatic on-line backup system
 for UNIX" with the following advantages:
@@ -75,16 +75,11 @@ The latest stable version of Boxi is 0.1.0.
 
     [http://prdownloads.sourceforge.net/boxi/boxi-0\_0\_7.zip?download](http://prdownloads.sourceforge.net/boxi/boxi-0_0_7.zip?download)
 
-- Latest source code from Subversion
+- Latest source code from Github
 
-    The latest source code is experimental, a work in progress, and not guaranteed
-    to compile or run on any system. Your mileage may vary. You can get it from
-    Sourceforge's Subversion server:
+    You can get it from gitub in the usual way:
 
-        svn co https://svn.sourceforge.net/svnroot/boxi/trunk/boxi
-
-    See [http://sourceforge.net/svn/?group\_id=135105](http://sourceforge.net/svn/?group_id=135105) for more details about
-    Subversion, or to browse the repository online.
+        git clone git@github.com:boxbackup/boxi.git
 
 ## Compiling
 
@@ -309,7 +304,7 @@ version 2 or later ([http://www.gnu.org/licenses/gpl.html](http://www.gnu.org/li
 
 Contains a copy of Box Backup by Ben Summers, which is separately licensed
 under a license very similar to the BSD license, which can be seen at
-[http://www.fluffy.co.uk/boxbackup/license.html](http://www.fluffy.co.uk/boxbackup/license.html). This component is NOT
+[https://github.com/boxbackup/boxbackup/blob/master/LICENSE-DUAL.txt](https://github.com/boxbackup/boxbackup/blob/master/LICENSE-DUAL.txt). This component is NOT
 covered by the GPL.
 
 The file boxbackup.patch contains a number of changes to Box Backup which
@@ -322,7 +317,7 @@ the Box Backup code. Therefore, the Boxi code contains the attribution
 required by the Box Backup license, that it contains code by Ben Summers.
 This attribution **must not** be removed from the code!
 
-Generously hosted by SourceForge:
+Previously hosted by SourceForge:
 
 <div>
     <p><A href="http://sourceforge.net"> <IMG src="http://sourceforge.net/sflogo.php?group_id=135105&amp;type=5" width="210" height="62" border="0" alt="SourceForge.net Logo" /></A></p>
