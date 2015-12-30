@@ -1,0 +1,3 @@
+[submodule "boxbackup"]
+	path = boxbackup
+	url = https://github.com/boxbackup/boxbackup.git
