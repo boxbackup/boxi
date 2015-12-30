@@ -1,6 +1,5 @@
 ABOUT-NLS
 aclocal.m4
-boxbackup/
 config.rpath
 config.guess
 config.h.in

@@ -65,7 +65,7 @@ most welcome.
 
 ## Download
 
-The latest stable version of Boxi is 0.1.0.
+<!--- The latest stable version of Boxi is 0.1.0.
 
 - Source code for all platforms (version 0.1.0)
 
@@ -76,16 +76,16 @@ The latest stable version of Boxi is 0.1.0.
     [http://prdownloads.sourceforge.net/boxi/boxi-0\_0\_7.zip?download](http://prdownloads.sourceforge.net/boxi/boxi-0_0_7.zip?download)
 
 - Latest source code from Github
+-->
 
-    You can get it from gitub in the usual way:
+Download the source code in the usual way and then downlowd the dependent boxbackup source code as a submodule
 
-        git clone git@github.com:boxbackup/boxi.git
-
-    Because boxi is dependent on boxbackup you need to download the boxbackup source
-    code into the subdirectory boxbackup:
-
-        cd boxi
-        git clone git@github.com:boxbackup/boxbackup.git
+```shell
+git clone git@github.com:boxbackup/boxi.git
+cd boxi
+git submodule init
+git submodule update
+```
 
 ## Compiling
 
@@ -119,18 +119,16 @@ You may find the this document helpful:
 In addition, you will also need to compile and install CppUnit and wxMSW.
 Please see the document [cygwin-mingw-build.txt](https://metacpan.org/pod/cygwin-mingw-build.txt) for instructions.
 
-If you downloaded a release version, just extract the contents of the
-archive, and change into the directory it creates (e.g. boxi-0.1.0).
+<!--- If you downloaded a release version, just extract the contents of the
+archive, and change into the directory it creates (e.g. boxi-0.1.0). -->
 
-CVS users must run these commands in the downloaded Boxi source directory
-to configure Boxi:
+To compile, run the following commands in the downloaded boxi source directory:
 
-        ./autogen.sh
-
-For all users, it should be enough to then run the following commands:
-
-        ./configure
-        make
+```shell
+./autogen.sh
+./configure
+make
+```
 
 Don't even think about installing it yet! There really isn't any point.
 Run "src/boxi \[-c\] \[&lt;config-file>\]" to start the GUI.
@@ -138,7 +136,7 @@ Run "src/boxi \[-c\] \[&lt;config-file>\]" to start the GUI.
 The "-c" option is ignored if present, and provided to comfort those
 more familiar with the Box Backup command-line tools.
 
-## Documentation
+<!--- ## Documentation
 This Readme.md markdown page was generated from the docs/README.pod file
 through the command:
 
@@ -151,17 +149,26 @@ A text version of this document can be generated with the command:
 Or an HTML version can be generated with the command:
 
     pod2html docs/README.pod -t "Boxi README" --noindex > README.html
+-->
 
 ## Screenshots
 
-No project would be complete without a gratuitous display of the author's
-skill at creating **truly, incredibly awful** user interfaces:
+![Backup Process](http://boxi.sourceforge.net/daemonctrl.png "Backup Process")
+
+![Configuration](http://boxi.sourceforge.net/config.png "Configuration")
+
+![Locations](http://boxi.sourceforge.net/locations.png "Locations")
+
+![File List](http://boxi.sourceforge.net/filelist.png "File List")
+
+
 
 ## Changes
 
 This software is currently experimental. I hope that you will try it and
-find it useful, but it doesn't come with any warranty, not even that
-it won't give your dog hiccups. If it breaks, you get to keep both pieces.
+find it useful, but it doesn't come with any warranty.
+If it breaks, you get to keep both pieces.
+
 
 ### A note about versions
 
@@ -305,7 +312,7 @@ To request a new feature, please use the Sourceforge RFE tracker at
 
 ## License
 
-This software is copyright (C) Chris Wilson &lt;boxi\_README@qwirx.com>, 2004-05.
+This software is copyright (C) Chris Wilson, 2004-05.
 Licensed for public distribution under the GNU General Public License (GPL),
 version 2 or later ([http://www.gnu.org/licenses/gpl.html](http://www.gnu.org/licenses/gpl.html)).
 
