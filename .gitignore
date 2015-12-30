@@ -9,8 +9,6 @@ config.status
 config.sub
 configure
 ltmain.sh
-m4
-po
 autom4te.cache
 src/alien16.png.c
 src/cross16.png.c
