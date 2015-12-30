@@ -381,7 +381,7 @@ L<http://sourceforge.net/tracker/?group_id=135105&atid=731485>.
 
 =head2 License
 
-This software is copyright (C) Chris Wilson <boxi_README@qwirx.com>, 2004-05.
+This software is copyright (C) Chris Wilson <boxi\_README@qwirx.com>, 2004-05.
 Licensed for public distribution under the GNU General Public License (GPL),
 version 2 or later (L<http://www.gnu.org/licenses/gpl.html>).
 
