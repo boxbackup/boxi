@@ -111,6 +111,12 @@ You can get it from gitub in the usual way:
 
     git clone git@github.com:boxbackup/boxi.git
 
+Because boxi is dependent on boxbackup you need to download the boxbackup source
+code into the subdirectory boxbackup:
+
+    cd boxi
+    git clone git@github.com:boxbackup/boxbackup.git
+
 =back
 
 =head2 Compiling
@@ -138,7 +144,7 @@ libncurses-devel (version 5, for boxbackup)
 gcc, g++ and libstdc++-devel
 
 =item *
-wxWindows (version 2.6.x or later, with development libraries)
+wxWidgets (version 2.6.x or later, with development libraries)
 
 =item *
 CppUnit (version 1.10.2 or later, with development libraries)
@@ -179,6 +185,8 @@ Please see the document L<cygwin-mingw-build.txt> for instructions.
 
 If you downloaded a release version, just extract the contents of the
 archive, and change into the directory it creates (e.g. boxi-0.1.0).
+
+
 CVS users must run these commands in the downloaded Boxi source directory
 to configure Boxi:
 

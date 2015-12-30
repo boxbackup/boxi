@@ -81,6 +81,12 @@ The latest stable version of Boxi is 0.1.0.
 
         git clone git@github.com:boxbackup/boxi.git
 
+    Because boxi is dependent on boxbackup you need to download the boxbackup source
+    code into the subdirectory boxbackup:
+
+        cd boxi
+        git clone git@github.com:boxbackup/boxbackup.git
+
 ## Compiling
 
 Boxi is distributed as source code, and binaries for Windows/Cygwin.
@@ -93,7 +99,7 @@ The following programs and libraries are required to compile Boxi:
 - openssl (version 0.9.7a or higher, with development libraries)
 - libncurses-devel (version 5, for boxbackup)
 - gcc, g++ and libstdc++-devel
-- wxWindows (version 2.6.x or later, with development libraries)
+- wxWidgets (version 2.6.x or later, with development libraries)
 - CppUnit (version 1.10.2 or later, with development libraries)
 
 If you are working from a CVS checkout, you will also need:
@@ -115,6 +121,7 @@ Please see the document [cygwin-mingw-build.txt](https://metacpan.org/pod/cygwin
 
 If you downloaded a release version, just extract the contents of the
 archive, and change into the directory it creates (e.g. boxi-0.1.0).
+
 CVS users must run these commands in the downloaded Boxi source directory
 to configure Boxi:
 
