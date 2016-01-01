@@ -66,6 +66,13 @@ test -n "$NO_AUTOMAKE" || (aclocal --version) < /dev/null > /dev/null 2>&1 || {
   DIE=1
 }
 
+autopoint --version < /dev/null > /dev/null 2>&1 || {
+  echo
+  echo "**Error**: Missing \`autopoint'.  Please install autopoint unless you want "
+  echo "to go through a painful forced manual run of gettextize."
+  DIE=1
+}
+
 if test "$DIE" -eq 1; then
   exit 1
 fi
