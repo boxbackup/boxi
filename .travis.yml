@@ -13,6 +13,7 @@ sudo: false
 addons:
   apt:
     packages:
+      - autopoint
       - libdb-dev
       - libreadline-dev
       - libssl-dev
