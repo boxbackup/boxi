@@ -3,7 +3,10 @@
 ## If you don't want it to overwrite it,
 ## 	Please disable it in the Anjuta project configuration
 
-SUBDIRS = intl boxbackup src po
+# We are using *external* gettext, via AM_GNU_GETTEXT([external]), so there
+# should be NO intl directory and we should NOT try to compile in it, and
+# intl should NOT appear in the list of SUBDIRS below:
+SUBDIRS = boxbackup src po
 
 boxidocdir = ${prefix}/doc/boxi
 boxidoc_DATA = \

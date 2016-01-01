@@ -96,8 +96,11 @@ AC_CONFIG_SUBDIRS(wxchart)
 dnl Custom macros end here
 
 PKG_CHECK_MODULES(All, cppunit)
+
+# We are using *external* gettext, via AM_GNU_GETTEXT([external]), so there
+# should be NO intl directory and we should NOT try to compile in it, and no
+# intl/* files should appear in the AC_OUTPUT list below:
 AC_OUTPUT([
-	intl/Makefile
 	po/Makefile.in
 	Makefile
 	src/Makefile
