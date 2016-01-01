@@ -17,7 +17,7 @@ boxidoc_DATA = \
 
 # DO NOT commit gettextize's change to add config.rpath to EXTRA_DIST below.
 # Silly gettextize.
-EXTRA_DIST = $(boxidoc_DATA)
+EXTRA_DIST = infrastructure/automake/config.rpath infrastructure/m4/ChangeLog $(boxidoc_DATA)
 
 # Copy all the spec files. Of cource, only one is actually used.
 dist-hook:
