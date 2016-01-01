@@ -25,8 +25,8 @@
 #ifndef _VERSION_H
 #define _VERSION_H
 
-#define BOXI_VERSION "0.1.1 SVN r684"
-#define BOXI_VERSION_ADVANCED "SVN r684M"
+#define BOXI_VERSION "0.1.1.0e35b37"
+#define BOXI_VERSION_ADVANCED "0e35b37"
 #define BOXI_VERSION_COMMAS 0,1,1,684
 
 #endif /* _VERSION_H */

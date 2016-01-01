@@ -1,19 +1,17 @@
 #!/bin/bash
 echo "Updating version in include/version.h"
 
-if [ -d .svn ]; then
-	svn_revision_advanced="SVN r`svnversion -n`"
-	svn_revision_number="`svnversion -n | cut -d: -f1 | cut -dM -f1 | cut -dS -f1`"
-	svn_revision=" SVN r$svn_revision_number"
+if [ -d .git ]; then
+	git_revision=`git rev-parse --short HEAD`
+	git_revision_number=".$git_revision"
 else
-	svn_revision_advanced="Not SVN"
-	svn_revision_number="0"
-	svn_revision=""
+	git_revision_number=""
+	git_revision="Not Git"
 fi
 
 sed -i \
-	-e "s/\(BOXI_VERSION \"[0-9.]*\).*\(\"\)/\1$svn_revision\2/g" \
-	-e "s/\(BOXI_VERSION_ADVANCED\) .*/\1 \"$svn_revision_advanced\"/g" \
-	-e "s/\(BOXI_VERSION_COMMAS \d+,\d+,\d+\),.*/\1,$svn_revision_number\"/g" \
+	-e "s/\(BOXI_VERSION \"[0-9.]*\).*\(\"\)/\1$git_revision_number\2/g" \
+	-e "s/\(BOXI_VERSION_ADVANCED\) .*/\1 \"$git_revision\"/g" \
+	-e "s/\(BOXI_VERSION_COMMAS \d+,\d+,\d+\),.*/\1,$git_revision_number\"/g" \
 	include/version.h
 
