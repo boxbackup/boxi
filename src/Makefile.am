@@ -6,7 +6,7 @@
 
 INCLUDES = \
 	$(WX_CXXFLAGS)\
-	 -I../boxbackup/lib/common -I../boxbackup/lib/backupclient -I../boxbackup/lib/server -I../include -I../boxbackup/bin/bbackupd -I../boxbackup/lib/crypto -I../boxbackup/lib/win32 -I../boxbackup/bin/bbstored -I../boxbackup/lib/backupstore -I../boxbackup/lib/raidfile -I../boxbackup/bin/bbackupquery
+	 -I../boxbackup/lib/common -I../boxbackup/lib/backupclient -I../boxbackup/lib/server -I../include -I../boxbackup/bin/bbackupd -I../boxbackup/lib/crypto -I../boxbackup/lib/win32 -I../boxbackup/bin/bbstored -I../boxbackup/lib/httpserver -I../boxbackup/lib/backupstore -I../boxbackup/lib/raidfile -I../boxbackup/bin/bbackupquery
 
 AM_CXXFLAGS =\
 	 -DBOXI\
