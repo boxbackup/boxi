@@ -1,11 +1,9 @@
 ABOUT-NLS
 aclocal.m4
 config.rpath
-config.guess
 config.h.in
 config.log
 config.status
-config.sub
 configure
 ltmain.sh
 autom4te.cache
@@ -29,3 +27,4 @@ src/tick16.png.c
 src/tick16a.png.c
 src/tickgrey16.png.c
 src/unknown16.png.c
+*~
