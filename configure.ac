@@ -6,10 +6,10 @@ m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 AC_CANONICAL_SYSTEM
 
-AM_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([infrastructure/m4])
 AC_CONFIG_AUX_DIR([infrastructure/automake])
 
+AM_CONFIG_HEADER([include/BoxiConfig.h])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 

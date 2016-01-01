@@ -153,11 +153,11 @@ for coin in configure.ac boxbackup/configure.ac; do
   fi
 done
 
-./make-image-headers.pl
+./infrastructure/make-image-headers.pl
 
 #conf_flags="--enable-maintainer-mode --enable-compile-warnings" #--enable-iso-c
 
-./update-main-h.sh
+./infrastructure/update-main-h.sh
 
 if test x$NOCONFIGURE = x; then
   echo Running $srcdir/configure $conf_flags "$@" ...
