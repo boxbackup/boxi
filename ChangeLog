@@ -1,13 +1,13 @@
+2016-01-01  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* m4: Upgrade to gettext-0.18.3.
+	* configure.in (AC_OUTPUT): Add intl/Makefile, po/Makefile.in.
+	(EXTRA_DIST): Add config.rpath.
+	(AM_GNU_GETTEXT_VERSION): Bump to 0.18.3.
+
 2011-09-30  gettextize  <bug-gnu-gettext@gnu.org>
 
-	* m4/gettext.m4: New file, from gettext-0.17.
-	* m4/iconv.m4: New file, from gettext-0.17.
-	* m4/lib-ld.m4: New file, from gettext-0.17.
-	* m4/lib-link.m4: New file, from gettext-0.17.
-	* m4/lib-prefix.m4: New file, from gettext-0.17.
-	* m4/nls.m4: New file, from gettext-0.17.
-	* m4/po.m4: New file, from gettext-0.17.
-	* m4/progtest.m4: New file, from gettext-0.17.
+	* m4: Upgrade to gettext-0.17.
 	* Makefile.am (EXTRA_DIST): Add config.rpath.
 	* configure.in (AC_OUTPUT): Add po/Makefile.in.
 
