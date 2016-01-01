@@ -10,12 +10,11 @@ SUBDIRS = boxbackup src po
 
 boxidocdir = ${prefix}/doc/boxi
 boxidoc_DATA = \
-	README\
+	README.md\
 	COPYING\
 	AUTHORS\
 	ChangeLog\
 	INSTALL\
-	NEWS\
 	TODO
 
 # DO NOT commit gettextize's change to add config.rpath to EXTRA_DIST below.
