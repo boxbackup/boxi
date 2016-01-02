@@ -82,7 +82,7 @@ boxi_LDFLAGS =
 
 boxi_LDADD = \
 	$(WX_LIBS) \
-	../boxbackup/release/bin/bbackupd/autogen_ClientException.o \
+	../boxbackup/release/lib/backupclient/autogen_ClientException.o \
 	../boxbackup/release/bin/bbackupd/BackupClientContext.o \
 	../boxbackup/release/bin/bbackupd/BackupClientDeleteList.o \
 	../boxbackup/release/bin/bbackupd/BackupClientDirectoryRecord.o \
@@ -92,7 +92,7 @@ boxi_LDADD = \
 	../boxbackup/release/bin/bbackupd/Win32ServiceFunctions.o \
 	../boxbackup/release/bin/bbstored/BackupStoreDaemon.o \
 	../boxbackup/release/bin/bbstored/BBStoreDHousekeeping.o \
-	../boxbackup/release/bin/bbstored/HousekeepStoreAccount.o \
+	../boxbackup/release/lib/backupstore/HousekeepStoreAccount.o \
 	../boxbackup/release/bin/bbackupquery/autogen_Documentation.o \
 	../boxbackup/release/bin/bbackupquery/BackupQueries.o \
 	../boxbackup/release/lib/backupstore/BackupStoreContext.o \
@@ -101,6 +101,7 @@ boxi_LDADD = \
 	../boxbackup/release/lib/backupstore/backupstore.a \
 	../boxbackup/release/lib/raidfile/raidfile.a \
 	../boxbackup/release/lib/backupclient/backupclient.a \
+	../boxbackup/release/lib/httpserver/httpserver.a \
 	../boxbackup/release/lib/server/server.a \
 	../boxbackup/release/lib/crypto/crypto.a \
 	../boxbackup/release/lib/compress/compress.a \
