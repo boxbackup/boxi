@@ -244,11 +244,13 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 
 	virtual void NotifyFileUploadingPatch(
 		const BackupClientDirectoryRecord* pDirRecord,
-		const std::string& rLocalPath)
+		const std::string& rLocalPath,
+		int64_t EstimatedBytesToUpload)
 	{
 		wxString msg;
-		msg.Printf(wxT("Backing up file '%s' (sending patch)"), 
-			wxString(rLocalPath.c_str(), wxConvBoxi).c_str());
+		msg.Printf(wxT("Backing up file '%s' (sending patch, estimated size %d)"),
+			wxString(rLocalPath.c_str(), wxConvBoxi).c_str(),
+			EstimatedBytesToUpload);
 		SetCurrentText(msg);
 		Layout();
 		wxYield();
@@ -270,7 +272,7 @@ class BackupProgressPanel : public ProgressPanel, RunStatusProvider,
 	virtual void NotifyFileUploaded(
 		const BackupClientDirectoryRecord* pDirRecord,
 		const std::string& rLocalPath,
-		int64_t FileSize, int64_t UploadedSize) 
+		int64_t FileSize, int64_t UploadedSize, int64_t ObjectID)
 	{
 		/*
 		mNumFilesUploaded++;

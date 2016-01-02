@@ -138,7 +138,7 @@ void TestBackupStoreDaemon::Connection(std::auto_ptr<SocketStreamTLS> apStream)
 	// SetProcessTitle("client %08x", id);
 
 	// Create a context, using this ID
-	BackupStoreContext context(id, *this, "TestWithServer");
+	BackupStoreContext context(id, this, "TestWithServer");
 	
 	// See if the client has an account?
 	if(mapAccounts->AccountExists(id))
@@ -150,7 +150,7 @@ void TestBackupStoreDaemon::Connection(std::auto_ptr<SocketStreamTLS> apStream)
 	}
 
 	// Handle a connection with the backup protocol
-	BackupProtocolServer server(*apStream);
+	BackupProtocolServer server(static_cast<std::auto_ptr<SocketStream> >(apStream));
 	server.SetLogToSysLog(false);
 	server.SetTimeout(BACKUP_STORE_TIMEOUT);
 	server.DoServer(context);

@@ -97,13 +97,13 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 	wxFileInputStream zipFis(rZipFile.GetFullPath());
 	BOXI_ASSERT(zipFis.Ok());
 	wxZipInputStream zipInput(zipFis);
-	
+
 	std::vector<wxZipEntry*> entries;
-	
+
 	for (wxZipEntry* pEntry = zipInput.GetNextEntry();
 		pEntry != NULL; pEntry = zipInput.GetNextEntry())
 	{
-		wxFileName outName = MakeAbsolutePath(rDestDir, 
+		wxFileName outName = MakeAbsolutePath(rDestDir,
 			pEntry->GetInternalName());
 
 		if (pEntry->IsDir())
@@ -120,7 +120,7 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 		{
 			wxString outNameString(outName.GetFullPath());
 			BOXI_ASSERT(!wxFileName(outNameString, wxT("")).DirExists());
-			
+
 			wxFFileOutputStream outFos(outNameString);
 			BOXI_ASSERT(outFos.Ok());
 
@@ -128,24 +128,24 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 			outFos.Close();
 
 			BOXI_ASSERT(outName.FileExists());
-			
+
 			wxFile outFile(outNameString);
 			wxCharBuffer buf = outNameString.mb_str();
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(), 
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(),
 				pEntry->GetSize(), outFile.Length());
 		}
-		
+
 		if (restoreTimes)
 		{
 			entries.push_back(pEntry);
 		}
 	}
-	
+
 	for (std::vector<wxZipEntry*>::reverse_iterator ipEntry = entries.rbegin();
 		ipEntry != entries.rend(); ipEntry++)
-	{	
+	{
 		wxZipEntry* pEntry = *ipEntry;
-		
+
 		wxDateTime time = pEntry->GetDateTime();
 		struct timeval tvs[2];
 		tvs[0].tv_sec  = time.GetTicks();
@@ -153,27 +153,27 @@ void Unzip(const wxFileName& rZipFile, const wxFileName& rDestDir,
 		tvs[1].tv_sec  = time.GetTicks();
 		tvs[1].tv_usec = 0;
 
-		wxFileName outName = MakeAbsolutePath(rDestDir, 
+		wxFileName outName = MakeAbsolutePath(rDestDir,
 			pEntry->GetInternalName());
 		wxCharBuffer buf = outName.GetFullPath().mb_str();
 		BOXI_ASSERT(::utimes(buf.data(), tvs) == 0);
-		
+
 		delete pEntry;
 	}
 }
 
-std::auto_ptr<wxZipEntry> FindZipEntry(const wxFileName& rZipFile, 
+std::auto_ptr<wxZipEntry> FindZipEntry(const wxFileName& rZipFile,
 	const wxString& rFileName)
 {
 	BOXI_ASSERT(rZipFile.FileExists());
 	wxFileInputStream zipFis(rZipFile.GetFullPath());
 	BOXI_ASSERT(zipFis.Ok());
 	wxZipInputStream zipInput(zipFis);
-	
+
 	std::auto_ptr<wxZipEntry> apEntry;
-	
+
 	for (apEntry.reset(zipInput.GetNextEntry());
-		apEntry.get() != NULL; 
+		apEntry.get() != NULL;
 		apEntry.reset(zipInput.GetNextEntry()))
 	{
 		if (apEntry->GetInternalName().IsSameAs(rFileName))
@@ -181,7 +181,7 @@ std::auto_ptr<wxZipEntry> FindZipEntry(const wxFileName& rZipFile,
 			break;
 		}
 	}
-	
+
 	return apEntry;
 }
 
@@ -194,7 +194,7 @@ int BlockSizeOfDiscSet(int DiscSet)
 		printf("Disc set %d does not exist\n", DiscSet);
 		exit(1);
 	}
-	
+
 	// Return block size
 	return controller.GetDiscSet(DiscSet).GetBlockSize();
 }
@@ -204,7 +204,7 @@ static int64_t SizeStringToBlocks(const char *string, int DiscSet)
 {
 	// Find block size
 	int blockSize = BlockSizeOfDiscSet(DiscSet);
-	
+
 	// Get number
 	char *endptr = (char*)string;
 	int64_t number = strtol(string, &endptr, 0);
@@ -213,7 +213,7 @@ static int64_t SizeStringToBlocks(const char *string, int DiscSet)
 		printf("%s is an invalid number\n", string);
 		exit(1);
 	}
-	
+
 	// Check units
 	switch(*endptr)
 	{
@@ -222,24 +222,24 @@ static int64_t SizeStringToBlocks(const char *string, int DiscSet)
 		// Units: Mb
 		return (number * 1024*1024) / blockSize;
 		break;
-		
+
 	case 'G':
 	case 'g':
 		// Units: Gb
 		return (number * 1024*1024*1024) / blockSize;
 		break;
-		
+
 	case 'B':
 	case 'b':
 		// Units: Blocks
 		// Easy! Just return the number specified.
 		return number;
 		break;
-	
+
 	default:
 		printf("%s has an invalid units specifier\nUse B for blocks, M for Mb, G for Gb, eg 2Gb\n", string);
 		exit(1);
-		break;		
+		break;
 	}
 }
 
@@ -253,7 +253,7 @@ bool GetWriteLockOnAccount(NamedLock &rLock, const std::string rRootDir, int Dis
 	do
 	{
 		gotLock = rLock.TryAndGetLock(writeLockFilename.c_str(), 0600 /* restrictive file permissions */);
-		
+
 		if(!gotLock)
 		{
 			--triesLeft;
@@ -267,23 +267,23 @@ bool GetWriteLockOnAccount(NamedLock &rLock, const std::string rRootDir, int Dis
 }
 
 // copied from bbstoreaccounts.o
-static void SetLimit(const Configuration &rConfig, int32_t ID, 
+static void SetLimit(const Configuration &rConfig, int32_t ID,
 	const char *SoftLimitStr, const char *HardLimitStr)
 {
-	// Load in the account database 
+	// Load in the account database
 	std::auto_ptr<BackupStoreAccountDatabase> db(
 		BackupStoreAccountDatabase::Read(
 			rConfig.GetKeyValue("AccountDatabase").c_str()));
-	
+
 	// Already exists?
 	BOXI_ASSERT(db->EntryExists(ID));
-	
+
 	// Load it in
 	BackupStoreAccounts acc(*db);
 	std::string rootDir;
 	int discSet;
 	acc.GetAccountRoot(ID, rootDir, discSet);
-	
+
 	// Attempt to lock
 	NamedLock writeLock;
 	BOXI_ASSERT(GetWriteLockOnAccount(writeLock, rootDir, discSet));
@@ -297,7 +297,7 @@ static void SetLimit(const Configuration &rConfig, int32_t ID,
 	int64_t hardlimit = SizeStringToBlocks(HardLimitStr, discSet);
 	// CheckSoftHardLimits(softlimit, hardlimit);
 	info->ChangeLimits(softlimit, hardlimit);
-	
+
 	// Save
 	info->Save();
 }
@@ -306,14 +306,14 @@ box_time_t GetLatestFileUploadTime(const Configuration& rClientConfig)
 {
 	// Try and work out the time before which all files should be on the server
 	std::string syncTimeFilename =
-		rClientConfig.GetKeyValue("DataDirectory") + 
+		rClientConfig.GetKeyValue("DataDirectory") +
 		DIRECTORY_SEPARATOR + "last_sync_start";
 
 	// Stat it to get file time
 	EMU_STRUCT_STAT st;
 	if(EMU_STAT(syncTimeFilename.c_str(), &st) == 0)
 	{
-		// Files modified after this time shouldn't be on the 
+		// Files modified after this time shouldn't be on the
 		// server, so report errors slightly differently
 		return FileModificationTime(st)
 			- SecondsToBoxTime(rClientConfig.GetKeyValueInt(
@@ -328,15 +328,16 @@ void CompareBackup(const Configuration& rClientConfig, TLSContext& rTlsContext,
 	const wxFileName& rLocalPath)
 {
 	// Connect to server
-	SocketStreamTLS socket;
-	socket.Open(rTlsContext, Socket::TypeINET, 
-		rClientConfig.GetKeyValue("StoreHostname").c_str(), 
+	SocketStreamTLS* pSocket;
+	pSocket->Open(rTlsContext, Socket::TypeINET,
+		rClientConfig.GetKeyValue("StoreHostname").c_str(),
 		BOX_PORT_BBSTORED);
-	
+
 	// Make a protocol, and handshake
-	BackupProtocolClient connection(socket);
+	std::auto_ptr<SocketStream> apSocket(pSocket);
+	BackupProtocolClient connection(apSocket);
 	connection.Handshake();
-	
+
 	// Check the version of the server
 	{
 		std::auto_ptr<BackupProtocolVersion> serverVersion
@@ -364,8 +365,8 @@ void CompareBackup(const Configuration& rClientConfig, TLSContext& rTlsContext,
 	connection.QueryFinished();
 }
 
-void CompareExpectNoDifferences(const Configuration& rClientConfig, 
-	TLSContext& rTlsContext, const wxString& rRemoteDir, 
+void CompareExpectNoDifferences(const Configuration& rClientConfig,
+	TLSContext& rTlsContext, const wxString& rRemoteDir,
 	const wxFileName& rLocalPath)
 {
 	BackupQueries::CompareParams params(false, // QuickCompare
@@ -382,8 +383,8 @@ void CompareExpectNoDifferences(const Configuration& rClientConfig,
 	BOXI_ASSERT_EQUAL(0, params.mExcludedFiles);
 }
 
-void CompareExpectDifferences(const Configuration& rClientConfig, 
-	TLSContext& rTlsContext, const wxString& rRemoteDir, 
+void CompareExpectDifferences(const Configuration& rClientConfig,
+	TLSContext& rTlsContext, const wxString& rRemoteDir,
 	const wxFileName& rLocalPath, int numDiffs, int numDiffsModTime)
 {
 	BackupQueries::CompareParams params(false, // QuickCompare
@@ -395,7 +396,7 @@ void CompareExpectDifferences(const Configuration& rClientConfig,
 		rLocalPath);
 
 	BOXI_ASSERT_EQUAL(numDiffs, params.mDifferences);
-	BOXI_ASSERT_EQUAL(numDiffsModTime, 
+	BOXI_ASSERT_EQUAL(numDiffsModTime,
 		params.mDifferencesExplainedByModTime);
 	BOXI_ASSERT_EQUAL(0, params.mExcludedDirs);
 	BOXI_ASSERT_EQUAL(0, params.mExcludedFiles);
@@ -403,7 +404,7 @@ void CompareExpectDifferences(const Configuration& rClientConfig,
 
 static std::auto_ptr<BackupStoreInfo> GetAccountInfo(const Configuration& rConfig)
 {
-	// Load in the account database 
+	// Load in the account database
 	std::auto_ptr<BackupStoreAccountDatabase> db(BackupStoreAccountDatabase::Read(rConfig.GetKeyValue("AccountDatabase").c_str()));
 
 	// Account exists?
@@ -419,31 +420,31 @@ static std::auto_ptr<BackupStoreInfo> GetAccountInfo(const Configuration& rConfi
 	return info;
 }
 
-void CompareLocation(const Configuration& rConfig, 
+void CompareLocation(const Configuration& rConfig,
 	TLSContext& rTlsContext,
-	const std::string& rLocationName, 
+	const std::string& rLocationName,
 	BackupQueries::CompareParams& rParams)
 {
 	// Find the location's sub configuration
 	const Configuration &locations(rConfig.GetSubConfiguration("BackupLocations"));
 	BOXI_ASSERT(locations.SubConfigurationExists(rLocationName.c_str()));
 	const Configuration &loc(locations.GetSubConfiguration(rLocationName.c_str()));
-	
+
 	// Generate the exclude lists
 	if(!rParams.IgnoreExcludes())
 	{
 		rParams.LoadExcludeLists(loc);
 	}
-			
+
 	// Then get it compared
 	std::string localPathString = std::string("/") + rLocationName;
 	wxString remotePath(localPathString.c_str(), wxConvBoxi);
 	wxString localPath(loc.GetKeyValue("Path").c_str(), wxConvBoxi);
-	CompareBackup(rConfig, rTlsContext, rParams, 
+	CompareBackup(rConfig, rTlsContext, rParams,
 		remotePath, localPath);
 }
 
-void CompareLocationExpectNoDifferences(const Configuration& rClientConfig, 
+void CompareLocationExpectNoDifferences(const Configuration& rClientConfig,
 	TLSContext& rTlsContext, const std::string& rLocationName,
 	int excludedDirs, int excludedFiles)
 {
@@ -461,8 +462,8 @@ void CompareLocationExpectNoDifferences(const Configuration& rClientConfig,
 	BOXI_ASSERT_EQUAL(excludedFiles, params.mExcludedFiles);
 }
 
-void CompareLocationExpectDifferences(const Configuration& rClientConfig, 
-	TLSContext& rTlsContext, const std::string& rLocationName, 
+void CompareLocationExpectDifferences(const Configuration& rClientConfig,
+	TLSContext& rTlsContext, const std::string& rLocationName,
 	int numDiffs, int numDiffsModTime, int numUnchecked, int excludedDirs,
 	int excludedFiles)
 {
@@ -474,7 +475,7 @@ void CompareLocationExpectDifferences(const Configuration& rClientConfig,
 	CompareLocation(rClientConfig, rTlsContext, rLocationName, params);
 
 	BOXI_ASSERT_EQUAL(numDiffs, params.mDifferences);
-	BOXI_ASSERT_EQUAL(numDiffsModTime, 
+	BOXI_ASSERT_EQUAL(numDiffsModTime,
 		params.mDifferencesExplainedByModTime);
 	BOXI_ASSERT_EQUAL(numUnchecked,  params.mUncheckedFiles);
 	BOXI_ASSERT_EQUAL(excludedDirs,  params.mExcludedDirs);
@@ -494,7 +495,7 @@ int64_t SearchDir(BackupStoreDirectory& rDir, const std::string& rChildName)
 }
 
 #ifdef WIN32
-void SetFileTime(const char* filename, FILETIME creationTime, 
+void SetFileTime(const char* filename, FILETIME creationTime,
 	FILETIME lastModTime, FILETIME lastAccessTime)
 {
 	HANDLE handle = openfile(filename, O_RDWR, 0);
@@ -504,7 +505,7 @@ void SetFileTime(const char* filename, FILETIME creationTime,
 	BOXI_ASSERT(CloseHandle(handle));
 }
 #else
-void SetFileTime(const char* filename, time_t creationTime /* not used */, 
+void SetFileTime(const char* filename, time_t creationTime /* not used */,
 	time_t lastModTime, time_t lastAccessTime)
 {
 	struct utimbuf ut;
@@ -523,7 +524,7 @@ void TestBackup::TestConfigChecks()
 	#define CHECK_UNSET_PROPERTY(property) \
 	mpConfig->property.Clear(); \
 	CHECK_PROPERTY(property)
-	
+
 	CHECK_UNSET_PROPERTY(StoreHostname);
 	CHECK_UNSET_PROPERTY(KeysFile);
 	CHECK_UNSET_PROPERTY(AccountNumber);
@@ -531,7 +532,7 @@ void TestBackup::TestConfigChecks()
 	CHECK_UNSET_PROPERTY(MaxUploadWait);
 	CHECK_UNSET_PROPERTY(FileTrackingSizeThreshold);
 	CHECK_UNSET_PROPERTY(DiffingUploadSizeThreshold);
-	
+
 	// TODO: test BM_BACKUP_FAILED_INVALID_SYNC_PERIOD
 	/*
 	mpConfig->MinimumFileAge.Set(GetCurrentBoxTime() + 1000000);
@@ -553,7 +554,7 @@ void TestBackup::TestConfigChecks()
 }
 
 void TestBackup::RunTest()
-{	
+{
 	{
 		wxFileName spaceTestZipFile(_("../test/data/spacetest1.zip"));
 		BOXI_ASSERT(spaceTestZipFile.FileExists());
@@ -561,9 +562,9 @@ void TestBackup::RunTest()
 	}
 
 	// TODO: test BM_BACKUP_FAILED_CANNOT_INIT_ENCRYPTION
-	
+
 	TestConfigChecks();
-	
+
 	// before the first backup, there should be differences
 	CHECK_COMPARE_LOC_FAILS(1, 0, 0, 0, 0);
 
@@ -573,7 +574,7 @@ void TestBackup::RunTest()
 	const BoxiExcludeEntry::List& rEntries = rExcludeList.GetEntries();
 	BOXI_ASSERT_EQUAL((size_t)9, rEntries.size());
 	for (BoxiExcludeEntry::ConstIterator i = rEntries.begin();
-		rEntries.size() > 0; 
+		rEntries.size() > 0;
 		i = rEntries.begin())
 	{
 		rExcludeList.RemoveEntry(*i);
@@ -583,7 +584,7 @@ void TestBackup::RunTest()
 	(
 		BoxiExcludeEntry
 		(
-			theExcludeTypes[ETI_EXCLUDE_FILES_REGEX], 
+			theExcludeTypes[ETI_EXCLUDE_FILES_REGEX],
 			wxString(_(".*"))
 		)
 	);
@@ -591,7 +592,7 @@ void TestBackup::RunTest()
 	(
 		BoxiExcludeEntry
 		(
-			theExcludeTypes[ETI_EXCLUDE_DIRS_REGEX], 
+			theExcludeTypes[ETI_EXCLUDE_DIRS_REGEX],
 			wxString(_(".*"))
 		)
 	);
@@ -600,13 +601,13 @@ void TestBackup::RunTest()
 		BoxiExcludeEntry
 		(
 			theExcludeTypes[ETI_ALWAYS_INCLUDE_DIR],
-			MakeAbsolutePath(mTestDataDir, 
+			MakeAbsolutePath(mTestDataDir,
 				_("spacetest")).GetFullPath()
 		)
 	);
 	BOXI_ASSERT_EQUAL((size_t)3, rEntries.size());
 	mpConfig->Save(mClientConfigFile.GetFullPath());
-		
+
 	// before the first backup, there should be differences
 	CHECK_COMPARE_LOC_FAILS(1, 0, 0, 0, 0);
 
@@ -615,7 +616,7 @@ void TestBackup::RunTest()
 	// and afterwards, there should be no differences any more,
 	// but 5 dirs and 2 files inside /testdata/spacetest are excluded
 	CHECK_COMPARE_LOC_OK(5, 2);
-	
+
 	// restore the default settings
 	RemoveDefaultLocation();
 	SetupDefaultLocation();
@@ -627,17 +628,17 @@ void TestBackup::RunTest()
 
 	// and after another backup, there should be no differences any more
 	CHECK_COMPARE_LOC_OK(0, 0);
-	
+
 	// Set limit to something very small
 	{
 		// About 28 blocks will be used at this point (14 files in RAID)
-		BOXI_ASSERT_EQUAL((int64_t)28, 
+		BOXI_ASSERT_EQUAL((int64_t)28,
 			GetAccountInfo(mapServer->GetConfiguration())->GetBlocksUsed());
 
 		// Backup will fail if the size used is greater than the
 		// hard limit.
 		SetLimit(mapServer->GetConfiguration(), 2, "10B", "29B");
-		
+
 		// ensure that newly modified files have a different timestamp
 		wxSleep(1);
 
@@ -649,23 +650,23 @@ void TestBackup::RunTest()
 		// Delete a file and a directory
 		BOXI_ASSERT(wxRemoveFile(MakeAbsolutePath(mTestDataDir,
 			_("spacetest/d1/f3")).GetFullPath()));
-		DeleteRecursive(MakeAbsolutePath(mTestDataDir, 
+		DeleteRecursive(MakeAbsolutePath(mTestDataDir,
 			_("spacetest/d3/d4/")));
 	}
-	
+
 	// check the number of differences before backup
 	// 1 file and 1 dir added (dir d8 contains one file, f7, not counted)
 	// and 1 file and 1 dir removed (mod times not checked)
 	CHECK_COMPARE_LOC_FAILS(4, 2, 0, 0, 0);
-	
+
 	// fixme: should return an error
 	mpConfig->ExtendedLogging.Set(true);
 	CHECK_BACKUP_ERROR(BM_BACKUP_FAILED_STORE_FULL);
-	
+
 	// backup should not complete, so there should still be differences
 	// the deleted file and directory should have been deleted on the store,
 	// but the locally changed files should not have been uploaded
-	BOXI_ASSERT_EQUAL((int64_t)28, 
+	BOXI_ASSERT_EQUAL((int64_t)28,
 			GetAccountInfo(mapServer->GetConfiguration())->GetBlocksUsed());
 	CHECK_COMPARE_LOC_FAILS(2, 0, 0, 0, 0);
 
@@ -673,7 +674,7 @@ void TestBackup::RunTest()
 
 	// set the limits back
 	SetLimit(mapServer->GetConfiguration(), 2, "1000B", "2000B");
-	
+
 	// unpack some more test files
 	{
 		wxFileName baseFilesZipFile(MakeAbsolutePath(
@@ -681,17 +682,17 @@ void TestBackup::RunTest()
 		BOXI_ASSERT(baseFilesZipFile.FileExists());
 		Unzip(baseFilesZipFile, mTestDataDir);
 	}
-	
+
 	// run a backup
 	CHECK_BACKUP_OK();
-	
+
 	// check that it worked
 	CHECK_COMPARE_LOC_OK(0, 0);
-	
+
 	// Delete a file
-	BOXI_ASSERT(wxRemoveFile(MakeAbsolutePath(mTestDataDir, 
+	BOXI_ASSERT(wxRemoveFile(MakeAbsolutePath(mTestDataDir,
 		_("x1/dsfdsfs98.fd")).GetFullPath()));
-	
+
 	#ifndef WIN32
 	{
 		// New symlink
@@ -699,16 +700,16 @@ void TestBackup::RunTest()
 			_("symlink-to-dir")).GetFullPath().mb_str(wxConvBoxi);
 		BOXI_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
 	}
-	#endif		
+	#endif
 
 	// Update a file (will be uploaded as a diff)
 	{
-		// Check that the file is over the diffing threshold in the 
+		// Check that the file is over the diffing threshold in the
 		// bbackupd.conf file
 		wxFileName bigFileName(MakeAbsolutePath(mTestDataDir, _("f45.df")));
 		wxFile bigFile(bigFileName.GetFullPath(), wxFile::read_write);
 		BOXI_ASSERT(bigFile.Length() > 1024);
-		
+
 		// Add a bit to the end
 		BOXI_ASSERT(bigFile.IsOpened());
 		BOXI_ASSERT(bigFile.SeekEnd() != wxInvalidOffset);
@@ -729,16 +730,16 @@ void TestBackup::RunTest()
 		BOXI_ASSERT(::unlink(buf.data()) == 0);
 	}
 	#endif
-	
-	BOXI_ASSERT(wxMkdir(MakeAbsolutePath(mTestDataDir, 
+
+	BOXI_ASSERT(wxMkdir(MakeAbsolutePath(mTestDataDir,
 		_("symlink-to-dir")).GetFullPath(), 0755));
-	wxFileName dirTestDirName(MakeAbsolutePath(mTestDataDir, 
+	wxFileName dirTestDirName(MakeAbsolutePath(mTestDataDir,
 		_("x1/dir-to-file")));
 	BOXI_ASSERT(wxMkdir(dirTestDirName.GetFullPath(), 0755));
-	// NOTE: create a file within the directory to avoid deletion by the 
+	// NOTE: create a file within the directory to avoid deletion by the
 	// housekeeping process later
 	wxFileName placeHolderName(dirTestDirName.GetFullPath(), _("contents"));
-	
+
 	#ifdef WIN32
 	{
 		wxFile f;
@@ -758,7 +759,7 @@ void TestBackup::RunTest()
 	// And the inverse, replace a directory with a file/symlink
 	BOXI_ASSERT(wxRemoveFile(placeHolderName.GetFullPath()));
 	BOXI_ASSERT(wxRmdir(dirTestDirName.GetFullPath()));
-	
+
 	#ifdef WIN32
 	{
 		wxFile f;
@@ -770,7 +771,7 @@ void TestBackup::RunTest()
 		BOXI_ASSERT(::symlink("does-not-exist", buf.data()) == 0);
 	}
 	#endif
-	
+
 	// Run another backup and check that it works
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
@@ -794,13 +795,13 @@ void TestBackup::RunTest()
 	// Run another backup and check that it works
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(0, 0);
-	
-	// And finally, put it back to how it was before it was put back to 
-	// how it was before. This gets lots of nasty things in the store with 
+
+	// And finally, put it back to how it was before it was put back to
+	// how it was before. This gets lots of nasty things in the store with
 	// directories over other old directories.
 	BOXI_ASSERT(wxRemoveFile(placeHolderName2.GetFullPath()));
 	BOXI_ASSERT(wxRmdir(dirTestDirName.GetFullPath()));
-	
+
 	#ifdef WIN32
 	{
 		wxFile f;
@@ -819,13 +820,13 @@ void TestBackup::RunTest()
 
 	TestRenameTrackedOverDeleted();
 	TestVeryOldFiles();
-	TestModifyExisting();	
+	TestModifyExisting();
 	TestExclusions();
 	TestReadErrors();
 	TestMinimumFileAge();
 	TestBackupOfAttributes();
 	TestAddMoreFiles();
-	TestRenameDir();	
+	TestRenameDir();
 	TestRestore();
 	CleanUp();
 }
@@ -835,12 +836,12 @@ void TestBackup::TestRenameTrackedOverDeleted()
 	// case which went wrong: rename a tracked file over a deleted file
 	wxString source = MakeAbsolutePath(mTestDataDir,
 		_("df9834.dsf")).GetFullPath();
-	wxString target = MakeAbsolutePath(mTestDataDir, 
+	wxString target = MakeAbsolutePath(mTestDataDir,
 		_("x1/dsfdsfs98.fd")).GetFullPath();
 
 	BOXI_ASSERT(wxFileExists(source));
 	BOXI_ASSERT(!wxFileExists(target));
-	
+
 	BOXI_ASSERT(wxRenameFile(source, target));
 
 	// Run another backup and check that it works
@@ -874,7 +875,7 @@ void TestBackup::TestModifyExisting()
 	BOXI_ASSERT(f.SeekEnd() != wxInvalidOffset);
 	BOXI_ASSERT(f.Write(_("MODIFIED!\n")));
 	f.Close();
-	
+
 	// and then move the time backwards!
 	struct timeval times[2];
 	BoxTimeToTimeval(SecondsToBoxTime((time_t)(365*24*60*60)), times[1]);
@@ -894,34 +895,36 @@ void TestBackup::TestExclusions()
 	// Add some files and directories which are marked as excluded
 	wxFileName zipExcludeTest(MakeAbsolutePath(_("../test/data/testexclude.zip")));
 	Unzip(zipExcludeTest, mTestDataDir, true);
-	
+
 	// backup should still work
 	CHECK_BACKUP_OK();
-	
+
 	// compare location (with exclude lists) should pass
 	CHECK_COMPARE_LOC_OK(3, 4);
-	
+
 	// compare directly (without exclude lists) should fail
 	CHECK_COMPARE_FAILS(7, 0);
 
-	SocketStreamTLS socket;
-	socket.Open(mTlsContext, Socket::TypeINET,
+	SocketStreamTLS* pSocket;
+	pSocket->Open(mTlsContext, Socket::TypeINET,
 		mpConfig->StoreHostname.GetString(), BOX_PORT_BBSTORED);
-	BackupProtocolClient connection(socket);
+
+	std::auto_ptr<SocketStream> apSocket(pSocket);
+	BackupProtocolClient connection(apSocket);
 	connection.Handshake();
-	std::auto_ptr<BackupProtocolVersion> 
+	std::auto_ptr<BackupProtocolVersion>
 		serverVersion(connection.QueryVersion(
 			BACKUP_STORE_SERVER_VERSION));
-	if(serverVersion->GetVersion() != 
+	if(serverVersion->GetVersion() !=
 		BACKUP_STORE_SERVER_VERSION)
 	{
-		THROW_EXCEPTION(BackupStoreException, 
+		THROW_EXCEPTION(BackupStoreException,
 			WrongServerVersion);
 	}
 	connection.QueryLogin(
 		mpConfig->AccountNumber.GetInt(),
 		BackupProtocolLogin::Flags_ReadOnly);
-	
+
 	int64_t rootDirId = BackupProtocolListDirectory::RootDirectory;
 	std::auto_ptr<BackupProtocolSuccess> dirreply(
 		connection.QueryListDirectory(
@@ -936,7 +939,7 @@ void TestBackup::TestExclusions()
 	dirreply = connection.QueryListDirectory(testDirId, false, 0, false);
 	dirstream = connection.ReceiveStream();
 	dir.ReadFromStream(*dirstream, connection.GetTimeout());
-	
+
 	BOXI_ASSERT(!SearchDir(dir, "excluded_1"));
 	BOXI_ASSERT(!SearchDir(dir, "excluded_2"));
 	BOXI_ASSERT(!SearchDir(dir, "exclude_dir"));
@@ -966,17 +969,17 @@ void TestBackup::TestReadErrors()
 	{
 		return;
 	}
-	
+
 	// Check that read errors are reported neatly
 	// Dir and file which can't be read
-	wxFileName unreadableDir = MakeAbsolutePath(mTestDataDir, 
+	wxFileName unreadableDir = MakeAbsolutePath(mTestDataDir,
 		_("sub23/read-fail-test-dir"));
 	BOXI_ASSERT(wxMkdir(unreadableDir.GetFullPath(), 0000));
-	
+
 	wxFileName unreadableFile = MakeAbsolutePath(mTestDataDir,
 		_("read-fail-test-file"));
 	wxFile f;
-	BOXI_ASSERT(f.Create(unreadableFile.GetFullPath(), false, 
+	BOXI_ASSERT(f.Create(unreadableFile.GetFullPath(), false,
 		0000));
 
 	CHECK_BACKUP_OK();
@@ -986,18 +989,18 @@ void TestBackup::TestReadErrors()
 	BOXI_ASSERT_EQUAL((unsigned int)3,
 		mpBackupErrorList->GetCount());
 	wxString msg;
-	
-	msg.Printf(_("Failed to send file '%s': Access denied"), 
+
+	msg.Printf(_("Failed to send file '%s': Access denied"),
 		unreadableFile.GetFullPath().c_str());
 	BOXI_ASSERT_EQUAL(msg, mpBackupErrorList->GetString(0));
-	
-	msg.Printf(_("Failed to list directory '%s': Access denied"), 
+
+	msg.Printf(_("Failed to list directory '%s': Access denied"),
 		unreadableDir.GetFullPath().c_str());
 	BOXI_ASSERT_EQUAL(msg, mpBackupErrorList->GetString(1));
-	
-	BOXI_ASSERT_EQUAL(wxString(_("Backup Finished")), 
+
+	BOXI_ASSERT_EQUAL(wxString(_("Backup Finished")),
 		mpBackupErrorList->GetString(2));
-	
+
 	BOXI_ASSERT(wxRmdir(unreadableDir.GetFullPath()));
 	BOXI_ASSERT(wxRemoveFile(unreadableFile.GetFullPath()));
 	#endif
@@ -1008,19 +1011,19 @@ void TestBackup::TestReadErrors()
 void TestBackup::TestMinimumFileAge()
 {
 	mpConfig->MinimumFileAge.Set(5);
-	
+
 	wxFile f;
-	BOXI_ASSERT(f.Create(MakeAbsolutePath(mTestDataDir, 
+	BOXI_ASSERT(f.Create(MakeAbsolutePath(mTestDataDir,
 		_("continuous-update")).GetFullPath()));
-	
+
 	// too new
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_FAILS(1, 1, 0, 3, 4);
-	
+
 	sleep(5);
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(3, 4);
-	
+
 	mpConfig->MinimumFileAge.Set(0);
 }
 
@@ -1029,22 +1032,22 @@ void TestBackup::TestBackupOfAttributes()
 {
 	// Delete a directory
 	DeleteRecursive(MakeAbsolutePath(mTestDataDir, _("x1")));
-	
+
 	// Change attributes on an original file.
 	{
 		wxCharBuffer buf = MakeAbsolutePath(mTestDataDir, _("df9834.dsf"))
 			.GetFullPath().mb_str(wxConvBoxi);
 		BOXI_ASSERT(::chmod(buf.data(), 0423) == 0);
 	}
-	
+
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(3, 4);
 
-	wxFileName testFileName = MakeAbsolutePath(mTestDataDir, 
+	wxFileName testFileName = MakeAbsolutePath(mTestDataDir,
 		_("f1.dat"));
 	wxCharBuffer buf = testFileName.GetFullPath().mb_str(wxConvBoxi);
 
-	#ifndef WIN32		
+	#ifndef WIN32
 	// make one of the files unreadable, expect a compare failure
 	struct stat st;
 	BOXI_ASSERT(stat(buf.data(), &st) == 0);
@@ -1052,7 +1055,7 @@ void TestBackup::TestBackupOfAttributes()
 	// different attribs, and not checked because local file unreadable
 	CHECK_COMPARE_LOC_FAILS(1, 0, 1, 3, 4);
 	#endif
-	
+
 	// make one of the files read-only, expect a compare failure
 	#ifdef WIN32
 	wxString cmd = _("attrib +r ");
@@ -1063,7 +1066,7 @@ void TestBackup::TestBackupOfAttributes()
 	#else
 	BOXI_ASSERT_EQUAL(0, chmod(buf.data(), 0444));
 	#endif
-	
+
 	CHECK_COMPARE_LOC_FAILS(1, 0, 0, 3, 4);
 
 	// set it back, expect no failures
@@ -1076,7 +1079,7 @@ void TestBackup::TestBackupOfAttributes()
 	#else
 	BOXI_ASSERT_EQUAL(0, chmod(buf.data(), st.st_mode));
 	#endif
-	
+
 	CHECK_COMPARE_LOC_OK(3, 4);
 
 	// change the timestamp on a file, expect a compare failure
@@ -1084,14 +1087,14 @@ void TestBackup::TestBackupOfAttributes()
 	HANDLE handle = openfile(buf.data(), O_RDWR, 0);
 	BOXI_ASSERT(handle != INVALID_HANDLE_VALUE);
 	FILETIME creationTime, lastModTime, lastAccessTime;
-	BOXI_ASSERT(GetFileTime(handle, &creationTime, &lastAccessTime, 
+	BOXI_ASSERT(GetFileTime(handle, &creationTime, &lastAccessTime,
 		&lastModTime) != 0);
 	BOXI_ASSERT(CloseHandle(handle));
 	FILETIME dummyTime = lastModTime;
 	dummyTime.dwHighDateTime -= 100;
 	#else
-	time_t creationTime = st.st_ctime, 
-		lastModTime = st.st_mtime, 
+	time_t creationTime = st.st_ctime,
+		lastModTime = st.st_mtime,
 		lastAccessTime = st.st_atime,
 		dummyTime = lastModTime - 10000;
 	#endif
@@ -1104,12 +1107,12 @@ void TestBackup::TestBackupOfAttributes()
 	#else
 	// inode change time is backed up, but not restored or compared
 	CHECK_COMPARE_LOC_OK(3, 4);
-	#endif		
+	#endif
 
 	// last access time is not backed up, so it cannot be compared
 	SetFileTime(buf.data(), creationTime, lastModTime, dummyTime);
 	CHECK_COMPARE_LOC_OK(3, 4);
-	
+
 	// last modified time is backed up, so changing it should cause
 	// a compare failure
 	SetFileTime(buf.data(), creationTime, dummyTime, lastAccessTime);
@@ -1123,7 +1126,7 @@ void TestBackup::TestBackupOfAttributes()
 void TestBackup::TestAddMoreFiles()
 {
 	// Add some more files and modify others
-	// Don't use the timestamp flag this time, so they have 
+	// Don't use the timestamp flag this time, so they have
 	// a recent modification time.
 	wxFileName zipTest3(MakeAbsolutePath(_("../test/data/test3.zip")));
 	Unzip(zipTest3, mTestDataDir, false);
@@ -1139,19 +1142,19 @@ void TestBackup::TestRenameDir()
 		_("sub23/dhsfdss"));
 	wxFileName to = MakeAbsolutePath(mTestDataDir,
 		_("renamed-dir"));
-	BOXI_ASSERT(wxRenameFile(from.GetFullPath(), 
+	BOXI_ASSERT(wxRenameFile(from.GetFullPath(),
 		to.GetFullPath()));
-	
+
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(3, 4);
-	
+
 	// Rename some files -- one under the threshold, others above
 	/*
 	from = MakeAbsolutePath(mTestDataDir,
 		_("continousupdate"));
 	to = MakeAbsolutePath(mTestDataDir,
 		_("continousupdate-ren"));
-	BOXI_ASSERT(wxRenameFile(from.GetFullPath(), 
+	BOXI_ASSERT(wxRenameFile(from.GetFullPath(),
 		to.GetFullPath()));
 	*/
 
@@ -1159,24 +1162,24 @@ void TestBackup::TestRenameDir()
 		_("df324"));
 	to = MakeAbsolutePath(mTestDataDir,
 		_("df324-ren"));
-	BOXI_ASSERT(wxRenameFile(from.GetFullPath(), 
+	BOXI_ASSERT(wxRenameFile(from.GetFullPath(),
 		to.GetFullPath()));
 
 	from = MakeAbsolutePath(mTestDataDir,
 		_("sub23/find2perl"));
 	to = MakeAbsolutePath(mTestDataDir,
 		_("find2perl-ren"));
-	BOXI_ASSERT(wxRenameFile(from.GetFullPath(), 
+	BOXI_ASSERT(wxRenameFile(from.GetFullPath(),
 		to.GetFullPath()));
 
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(3, 4);
 
-	// Check that modifying files with madly in the future 
+	// Check that modifying files with madly in the future
 	// timestamps still get added
 
 	// Create a new file
-	wxFileName fn = MakeAbsolutePath(mTestDataDir, 
+	wxFileName fn = MakeAbsolutePath(mTestDataDir,
 		_("sub23/in-the-future"));
 	wxFile f;
 	BOXI_ASSERT(f.Create(fn.GetFullPath()));
@@ -1185,8 +1188,8 @@ void TestBackup::TestRenameDir()
 
 	// and then move the time forwards!
 	struct timeval times[2];
-	BoxTimeToTimeval(GetCurrentBoxTime() + 
-		SecondsToBoxTime((time_t)(365*24*60*60)), 
+	BoxTimeToTimeval(GetCurrentBoxTime() +
+		SecondsToBoxTime((time_t)(365*24*60*60)),
 		times[1]);
 	times[0] = times[1];
 	wxCharBuffer buf = fn.GetFullPath().mb_str(wxConvBoxi);
@@ -1212,27 +1215,27 @@ void TestBackup::TestRestore()
 	remStoreDir.AppendDir(_("restore"));
 	BOXI_ASSERT(!remStoreDir.DirExists());
 	// BOXI_ASSERT(wxMkdir(remStoreDir.GetFullPath()));
-	
+
 	wxCharBuffer buf = remStoreDir.GetPath().mb_str();
 	BOXI_ASSERT_EQUAL((int)Restore_Complete, mapConn->Restore(
 		testId, buf.data(), NULL, NULL, false, false, false));
 
 	mapConn->Disconnect();
-	
-	CompareExpectNoDifferences(mpConfig->GetBoxConfig(), mTlsContext, 
+
+	CompareExpectNoDifferences(mpConfig->GetBoxConfig(), mTlsContext,
 		_("testdata"), remStoreDir);
-		
+
 	DeleteRecursive(remStoreDir);
 }
 
 void TestBackup::CleanUp()
-{	
+{
 	// clean up
 	DeleteRecursive(mTestDataDir);
 	BOXI_ASSERT(wxRemoveFile(mStoreConfigFileName.GetFullPath()));
 	BOXI_ASSERT(wxRemoveFile(mAccountsFile.GetFullPath()));
 	BOXI_ASSERT(wxRemoveFile(mRaidConfigFile.GetFullPath()));
-	BOXI_ASSERT(wxRemoveFile(mClientConfigFile.GetFullPath()));		
+	BOXI_ASSERT(wxRemoveFile(mClientConfigFile.GetFullPath()));
 	BOXI_ASSERT(mConfDir.Rmdir());
 	DeleteRecursive(mStoreDir);
 	BOXI_ASSERT(mBaseDir.Rmdir());
