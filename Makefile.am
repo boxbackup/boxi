@@ -7,12 +7,11 @@ SUBDIRS = boxbackup src po
 
 boxidocdir = ${prefix}/doc/boxi
 boxidoc_DATA = \
-	README\
+	README.md\
 	COPYING\
 	AUTHORS\
 	ChangeLog\
 	INSTALL\
-	NEWS\
 	TODO
 
 EXTRA_DIST = config.rpath  config.rpath  $(boxidoc_DATA)
