@@ -1,0 +1,35 @@
+language: cpp
+
+compiler:
+  - gcc
+  - clang
+
+cache:
+  - apt
+  - ccache
+
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - autopoint
+      - libcppunit-dev
+      - libdb-dev
+      - libreadline-dev
+      - libssl-dev
+      - libwww-perl
+      - libwxgtk2.8-dev
+      - xsltproc
+      - zlib1g-dev
+
+before_script:
+  - ccache -s
+  - ./autogen.sh
+  - ./configure CC="ccache $CC" CXX="ccache $CXX"
+  - grep CXX config.status
+  - make
+
+script:
+  - make test
+  - ccache -s
