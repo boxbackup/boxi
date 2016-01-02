@@ -2,10 +2,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Boxi\n"
 "Report-Msgid-Bugs-To: Chris Wilson <chris-boxisource@qwirx.com>\n"
-"POT-Creation-Date: 2011-09-20 23:33+0100\n"
+"POT-Creation-Date: 2016-01-02 21:00+0000\n"
 "PO-Revision-Date: 2011-01-18 13:10+0100\n"
 "Last-Translator: Achim <achim@qustodium.net>\n"
 "Language-Team: Achim J. Latz <achim.latz@qustodium.net>\n"
+"Language: es_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -28,7 +29,7 @@ msgstr ""
 msgid "<bbackupd-config-file>"
 msgstr ""
 
-#: src/main.cc:108 src/main.cc:202 src/main.cc:327
+#: src/main.cc:108 src/main.cc:156 src/main.cc:328
 msgid "t"
 msgstr ""
 
@@ -40,7 +41,7 @@ msgstr ""
 msgid "run the specified unit test, or ALL"
 msgstr ""
 
-#: src/main.cc:111 src/main.cc:160
+#: src/main.cc:111 src/main.cc:274
 msgid "l"
 msgstr ""
 
@@ -64,40 +65,40 @@ msgstr ""
 msgid "displays this help text"
 msgstr ""
 
-#: src/main.cc:166
-#, c-format
-msgid "Locale \"%s\" is unknown."
-msgstr ""
-
-#: src/main.cc:178
-#, c-format
-msgid "Language is not supported by the system: %s (%d)"
-msgstr ""
-
-#: src/main.cc:192
-#, c-format
-msgid "Couldn't find/load the catalog for locale '%s'."
-msgstr ""
-
-#: src/main.cc:193
-msgid "unknown"
-msgstr ""
-
-#: src/main.cc:234
+#: src/main.cc:188
 #, c-format
 msgid "Test not found: %s. Available tests are: "
 msgstr ""
 
-#: src/main.cc:238
+#: src/main.cc:192
 msgid "all"
 msgstr ""
 
-#: src/main.cc:250 src/BackupLocationsPanel.cc:368 src/TestWithServer.cc:597
+#: src/main.cc:204 src/BackupLocationsPanel.cc:368 src/TestWithServer.cc:599
 msgid ", "
 msgstr ""
 
-#: src/main.cc:254
+#: src/main.cc:208
 msgid "all."
+msgstr ""
+
+#: src/main.cc:280
+#, c-format
+msgid "Locale \"%s\" is unknown."
+msgstr ""
+
+#: src/main.cc:292
+#, c-format
+msgid "Language is not supported by the system: %s (%d)"
+msgstr ""
+
+#: src/main.cc:306
+#, c-format
+msgid "Couldn't find/load the catalog for locale '%s'."
+msgstr ""
+
+#: src/main.cc:308
+msgid "unknown"
 msgstr ""
 
 #: src/ClientConfig.cc:138
@@ -176,7 +177,7 @@ msgstr ""
 msgid "\t}\n"
 msgstr ""
 
-#: src/ClientConfig.cc:553 src/TestWithServer.cc:307 src/TestWithServer.cc:369
+#: src/ClientConfig.cc:553 src/TestWithServer.cc:309 src/TestWithServer.cc:371
 msgid "}\n"
 msgstr ""
 
@@ -227,7 +228,7 @@ msgstr ""
 msgid "The store hostname is not valid"
 msgstr ""
 
-#: src/ClientConfig.cc:876 src/ClientConfig.cc:991 src/ServerConnection.cc:65
+#: src/ClientConfig.cc:876 src/ClientConfig.cc:991 src/ServerConnection.cc:64
 #: src/SetupWizard.cc:100
 msgid ": "
 msgstr ""
@@ -581,9 +582,9 @@ msgstr ""
 #: src/BackupLocationsPanel.cc:578 src/BackupLocationsPanel.cc:871
 #: src/BackupLocationsPanel.cc:892 src/BackupLocationsPanel.cc:901
 #: src/BackupLocationsPanel.cc:909 src/BackupLocationsPanel.cc:929
-#: src/ServerConnection.cc:78 src/SetupWizard.cc:86 src/RestorePanel.cc:195
+#: src/ServerConnection.cc:77 src/SetupWizard.cc:86 src/RestorePanel.cc:195
 #: src/RestorePanel.cc:203 src/MainFrame.cc:184 src/MainFrame.cc:195
-#: src/TestWithServer.cc:185 src/ProgressPanel.cc:208
+#: src/TestWithServer.cc:187 src/ProgressPanel.cc:208
 msgid "Boxi Error"
 msgstr "Boxi Error"
 
@@ -609,7 +610,7 @@ msgstr ""
 msgid " ("
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:372 src/ServerConnection.cc:153
+#: src/BackupLocationsPanel.cc:372 src/ServerConnection.cc:152
 #: src/TestFrame.cc:459 src/TestBackupConfig.cc:883
 #: src/TestBackupConfig.cc:1052 src/TestBackupConfig.cc:1108
 #: src/TestBackupConfig2.cc:203 src/TestBackupConfig2.cc:366
@@ -675,7 +676,7 @@ msgstr ""
 #: src/TestBackupConfig.cc:930 src/TestBackupConfig.cc:936
 #: src/TestBackupConfig.cc:958 src/TestBackupConfig.cc:964
 #: src/TestRestore.cc:90 src/TestRestore.cc:676 src/RestoreProgressPanel.cc:81
-#: src/RestoreProgressPanel.cc:105 src/TestWithServer.cc:532
+#: src/RestoreProgressPanel.cc:105 src/TestWithServer.cc:534
 #: src/TestCompare.cc:92
 msgid "/"
 msgstr ""
@@ -734,74 +735,74 @@ msgstr ""
 msgid "In restore, directory name collision with file %s"
 msgstr ""
 
-#: src/ServerConnection.cc:99
+#: src/ServerConnection.cc:98
 #, fuzzy
 msgid "Error connecting to server"
 msgstr "Verbinde mit dem Server"
 
-#: src/ServerConnection.cc:111
+#: src/ServerConnection.cc:110
 #, fuzzy
 msgid "Error connecting to server: "
 msgstr "Verbinde mit dem Server"
 
-#: src/ServerConnection.cc:125
+#: src/ServerConnection.cc:124
 msgid "You have not configured the Certificate File!"
 msgstr ""
 
-#: src/ServerConnection.cc:133
+#: src/ServerConnection.cc:132
 msgid "You have not configured the Private Key File!"
 msgstr ""
 
-#: src/ServerConnection.cc:141
+#: src/ServerConnection.cc:140
 msgid "You have not configured the Trusted CAs File!"
 msgstr ""
 
-#: src/ServerConnection.cc:150
+#: src/ServerConnection.cc:149
 msgid ""
 "There is something wrong with your Certificate File, Private Key File, or "
 "Trusted CAs File. ("
 msgstr ""
 
-#: src/ServerConnection.cc:166
+#: src/ServerConnection.cc:165
 msgid "You have not configured the Store Hostname!"
 msgstr ""
 
-#: src/ServerConnection.cc:174
+#: src/ServerConnection.cc:173
 msgid "You have not configured the Keys File!"
 msgstr ""
 
-#: src/ServerConnection.cc:202
+#: src/ServerConnection.cc:205
 #, c-format
 msgid "Wrong server version: expected %d but found %d"
 msgstr ""
 
-#: src/ServerConnection.cc:267
+#: src/ServerConnection.cc:261
 msgid "Error retrieving file from server: "
 msgstr ""
 
-#: src/ServerConnection.cc:300
+#: src/ServerConnection.cc:294
 msgid "Error listing directory on server"
 msgstr ""
 
-#: src/ServerConnection.cc:318
+#: src/ServerConnection.cc:312
 msgid "Error getting account information from server"
 msgstr ""
 
-#: src/ServerConnection.cc:336
+#: src/ServerConnection.cc:330
 #, fuzzy
 msgid "Error undeleting directory on server"
 msgstr "Verbinde mit dem Server"
 
-#: src/ServerConnection.cc:352
+#: src/ServerConnection.cc:346
 msgid "Error deleting directory on server"
 msgstr ""
 
-#: src/ServerConnection.cc:395
+#: src/ServerConnection.cc:389
 #, c-format
 msgid "Unknown protocol error: %d/%d"
 msgstr ""
 
-#: src/ServerConnection.cc:403
+#: src/ServerConnection.cc:397
 #, c-format
 msgid "Unknown error: %d/%d"
 msgstr ""
@@ -1085,7 +1086,7 @@ msgid "Backup Failed"
 msgstr ""
 
 #: src/BackupProgressPanel.cc:131 src/BackupProgressPanel.cc:132
-#: src/TestBackup.cc:998
+#: src/TestBackup.cc:1001
 msgid "Backup Finished"
 msgstr ""
 
@@ -1872,7 +1873,7 @@ msgid "Open file"
 msgstr "Abrir fichero"
 
 #: src/MainFrame.cc:149 src/MainFrame.cc:259 src/TestConfig.cc:71
-#: src/TestWithServer.cc:452 src/TestBackupConfig2.cc:857
+#: src/TestWithServer.cc:454 src/TestBackupConfig2.cc:857
 msgid "bbackupd.conf"
 msgstr ""
 
@@ -1947,11 +1948,11 @@ msgid "("
 msgstr ""
 
 #: src/TestFrame.cc:464 src/TestFrame.cc:477 src/TestFrame.cc:511
-#: src/TestWithServer.cc:297 src/TestWithServer.cc:301
-#: src/TestWithServer.cc:305 src/TestWithServer.cc:330
-#: src/TestWithServer.cc:336 src/TestWithServer.cc:345
-#: src/TestWithServer.cc:354 src/TestWithServer.cc:361
-#: src/TestWithServer.cc:368
+#: src/TestWithServer.cc:299 src/TestWithServer.cc:303
+#: src/TestWithServer.cc:307 src/TestWithServer.cc:332
+#: src/TestWithServer.cc:338 src/TestWithServer.cc:347
+#: src/TestWithServer.cc:356 src/TestWithServer.cc:363
+#: src/TestWithServer.cc:370
 msgid "\n"
 msgstr ""
 
@@ -2204,172 +2205,172 @@ msgstr ""
 msgid "Clearing "
 msgstr "Aviso: "
 
-#: src/TestBackup.cc:558 src/TestRestore.cc:164 src/TestCompare.cc:309
+#: src/TestBackup.cc:559 src/TestRestore.cc:164 src/TestCompare.cc:309
 msgid "../test/data/spacetest1.zip"
 msgstr ""
 
-#: src/TestBackup.cc:587 src/TestBackup.cc:595 src/TestBackupConfig.cc:680
+#: src/TestBackup.cc:588 src/TestBackup.cc:596 src/TestBackupConfig.cc:680
 #: src/TestBackupConfig.cc:689 src/TestBackupConfig2.cc:884
 #: src/TestBackupConfig2.cc:885
 msgid ".*"
 msgstr ""
 
-#: src/TestBackup.cc:604 src/TestRestore.cc:253
+#: src/TestBackup.cc:605 src/TestRestore.cc:253
 msgid "spacetest"
 msgstr ""
 
-#: src/TestBackup.cc:645
+#: src/TestBackup.cc:646
 msgid "../test/data/spacetest2.zip"
 msgstr ""
 
-#: src/TestBackup.cc:651
+#: src/TestBackup.cc:652
 msgid "spacetest/d1/f3"
 msgstr ""
 
-#: src/TestBackup.cc:653
+#: src/TestBackup.cc:654
 msgid "spacetest/d3/d4/"
 msgstr ""
 
-#: src/TestBackup.cc:680 src/TestRestore.cc:171 src/TestCompare.cc:316
+#: src/TestBackup.cc:681 src/TestRestore.cc:171 src/TestCompare.cc:316
 msgid "../test/data/test_base.zip"
 msgstr ""
 
-#: src/TestBackup.cc:693 src/TestBackup.cc:839
+#: src/TestBackup.cc:694 src/TestBackup.cc:840
 msgid "x1/dsfdsfs98.fd"
 msgstr ""
 
-#: src/TestBackup.cc:699 src/TestBackup.cc:728 src/TestBackup.cc:734
+#: src/TestBackup.cc:700 src/TestBackup.cc:729 src/TestBackup.cc:735
 msgid "symlink-to-dir"
 msgstr ""
 
-#: src/TestBackup.cc:708 src/TestRestore.cc:263
+#: src/TestBackup.cc:709 src/TestRestore.cc:263
 msgid "f45.df"
 msgstr ""
 
-#: src/TestBackup.cc:715
+#: src/TestBackup.cc:716
 msgid "EXTRA STUFF"
 msgstr ""
 
-#: src/TestBackup.cc:736
+#: src/TestBackup.cc:737
 msgid "x1/dir-to-file"
 msgstr ""
 
-#: src/TestBackup.cc:740
+#: src/TestBackup.cc:741
 msgid "contents"
 msgstr ""
 
-#: src/TestBackup.cc:781
+#: src/TestBackup.cc:782
 msgid "contents2"
 msgstr ""
 
-#: src/TestBackup.cc:837 src/TestBackup.cc:1035 src/TestRestore.cc:260
+#: src/TestBackup.cc:838 src/TestBackup.cc:1038 src/TestRestore.cc:260
 #: src/TestRestore.cc:288 src/TestRestore.cc:365 src/TestRestore.cc:368
 #: src/TestRestore.cc:407
 msgid "df9834.dsf"
 msgstr ""
 
-#: src/TestBackup.cc:859 src/TestRestore.cc:176 src/TestCompare.cc:321
+#: src/TestBackup.cc:860 src/TestRestore.cc:176 src/TestCompare.cc:321
 msgid "../test/data/test2.zip"
 msgstr ""
 
-#: src/TestBackup.cc:871
+#: src/TestBackup.cc:872
 msgid "sub23/rand.h"
 msgstr ""
 
-#: src/TestBackup.cc:875
+#: src/TestBackup.cc:876
 msgid "MODIFIED!\n"
 msgstr ""
 
-#: src/TestBackup.cc:895 src/TestRestore.cc:185 src/TestCompare.cc:330
+#: src/TestBackup.cc:896 src/TestRestore.cc:185 src/TestCompare.cc:330
 msgid "../test/data/testexclude.zip"
 msgstr ""
 
-#: src/TestBackup.cc:973
+#: src/TestBackup.cc:976
 msgid "sub23/read-fail-test-dir"
 msgstr ""
 
-#: src/TestBackup.cc:977
+#: src/TestBackup.cc:980
 msgid "read-fail-test-file"
 msgstr ""
 
-#: src/TestBackup.cc:990
+#: src/TestBackup.cc:993
 #, c-format
 msgid "Failed to send file '%s': Access denied"
 msgstr ""
 
-#: src/TestBackup.cc:994
+#: src/TestBackup.cc:997
 #, c-format
 msgid "Failed to list directory '%s': Access denied"
 msgstr ""
 
-#: src/TestBackup.cc:1014
+#: src/TestBackup.cc:1017
 msgid "continuous-update"
 msgstr ""
 
-#: src/TestBackup.cc:1031 src/TestRestore.cc:255
+#: src/TestBackup.cc:1034 src/TestRestore.cc:255
 msgid "x1"
 msgstr ""
 
-#: src/TestBackup.cc:1044 src/TestRestore.cc:262
+#: src/TestBackup.cc:1047 src/TestRestore.cc:262
 msgid "f1.dat"
 msgstr ""
 
-#: src/TestBackup.cc:1058
+#: src/TestBackup.cc:1061
 msgid "attrib +r "
 msgstr ""
 
-#: src/TestBackup.cc:1071
+#: src/TestBackup.cc:1074
 msgid "attrib -r "
 msgstr ""
 
-#: src/TestBackup.cc:1128 src/TestRestore.cc:190 src/TestCompare.cc:335
+#: src/TestBackup.cc:1131 src/TestRestore.cc:190 src/TestCompare.cc:335
 msgid "../test/data/test3.zip"
 msgstr ""
 
-#: src/TestBackup.cc:1139 src/TestRestore.cc:458
+#: src/TestBackup.cc:1142 src/TestRestore.cc:458
 msgid "sub23/dhsfdss"
 msgstr ""
 
-#: src/TestBackup.cc:1141
+#: src/TestBackup.cc:1144
 msgid "renamed-dir"
 msgstr ""
 
-#: src/TestBackup.cc:1159 src/TestRestore.cc:259
+#: src/TestBackup.cc:1162 src/TestRestore.cc:259
 msgid "df324"
 msgstr ""
 
-#: src/TestBackup.cc:1161
+#: src/TestBackup.cc:1164
 msgid "df324-ren"
 msgstr ""
 
-#: src/TestBackup.cc:1166
+#: src/TestBackup.cc:1169
 msgid "sub23/find2perl"
 msgstr ""
 
-#: src/TestBackup.cc:1168
+#: src/TestBackup.cc:1171
 msgid "find2perl-ren"
 msgstr ""
 
-#: src/TestBackup.cc:1180
+#: src/TestBackup.cc:1183
 msgid "sub23/in-the-future"
 msgstr ""
 
-#: src/TestBackup.cc:1183
+#: src/TestBackup.cc:1186
 msgid "Back to the future!\n"
 msgstr ""
 
-#: src/TestBackup.cc:1212 src/TestRestore.cc:348
+#: src/TestBackup.cc:1215 src/TestRestore.cc:348
 msgid "restore"
 msgstr ""
 
-#: src/TestBackup.cc:1223 src/TestBackupConfig.cc:341
+#: src/TestBackup.cc:1226 src/TestBackupConfig.cc:341
 #: src/TestBackupConfig.cc:865 src/TestRestore.cc:245 src/TestRestore.cc:362
-#: src/TestRestore.cc:688 src/TestRestore.cc:853 src/TestWithServer.cc:394
-#: src/TestWithServer.cc:772 src/TestBackupConfig2.cc:858
+#: src/TestRestore.cc:688 src/TestRestore.cc:853 src/TestWithServer.cc:396
+#: src/TestWithServer.cc:774 src/TestBackupConfig2.cc:858
 msgid "testdata"
 msgstr ""
 
-#: src/TestBackupConfig.cc:156 src/TestWithServer.cc:407
+#: src/TestBackupConfig.cc:156 src/TestWithServer.cc:409
 msgid "../test/config/bbackupd.conf"
 msgstr ""
 
@@ -2739,188 +2740,188 @@ msgstr ""
 msgid "Restoring %s"
 msgstr ""
 
-#: src/TestWithServer.cc:182
+#: src/TestWithServer.cc:184
 #, c-format
 msgid "Failed to wait for server thread: error %d"
 msgstr ""
 
-#: src/TestWithServer.cc:249
+#: src/TestWithServer.cc:251
 msgid "boxi-test-tempdir-"
 msgstr ""
 
-#: src/TestWithServer.cc:259
+#: src/TestWithServer.cc:261
 msgid "conf"
 msgstr ""
 
-#: src/TestWithServer.cc:265
+#: src/TestWithServer.cc:267
 #, fuzzy
 msgid "store"
 msgstr "Wiederherstellung"
 
-#: src/TestWithServer.cc:271
+#: src/TestWithServer.cc:273
 msgid "raidfile.conf"
 msgstr ""
 
-#: src/TestWithServer.cc:275
+#: src/TestWithServer.cc:277
 msgid "0_0"
 msgstr ""
 
-#: src/TestWithServer.cc:279
+#: src/TestWithServer.cc:281
 msgid "0_1"
 msgstr ""
 
-#: src/TestWithServer.cc:283
+#: src/TestWithServer.cc:285
 msgid "0_2"
 msgstr ""
 
-#: src/TestWithServer.cc:290
+#: src/TestWithServer.cc:292
 msgid "disc0\n"
 msgstr ""
 
-#: src/TestWithServer.cc:291 src/TestWithServer.cc:340
+#: src/TestWithServer.cc:293 src/TestWithServer.cc:342
 msgid "{\n"
 msgstr ""
 
-#: src/TestWithServer.cc:292
+#: src/TestWithServer.cc:294
 msgid "\tSetNumber = 0\n"
 msgstr ""
 
-#: src/TestWithServer.cc:293
+#: src/TestWithServer.cc:295
 msgid "\tBlockSize = 2048\n"
 msgstr ""
 
-#: src/TestWithServer.cc:295
+#: src/TestWithServer.cc:297
 msgid "\tDir0 = "
 msgstr ""
 
-#: src/TestWithServer.cc:299
+#: src/TestWithServer.cc:301
 msgid "\tDir1 = "
 msgstr ""
 
-#: src/TestWithServer.cc:303
+#: src/TestWithServer.cc:305
 msgid "\tDir2 = "
 msgstr ""
 
-#: src/TestWithServer.cc:312 src/TestWithServer.cc:332
+#: src/TestWithServer.cc:314 src/TestWithServer.cc:334
 msgid "accounts.txt"
 msgstr ""
 
-#: src/TestWithServer.cc:321
+#: src/TestWithServer.cc:323
 msgid "bbstored.conf"
 msgstr ""
 
-#: src/TestWithServer.cc:328
+#: src/TestWithServer.cc:330
 msgid "RaidFileConf = "
 msgstr ""
 
-#: src/TestWithServer.cc:334
+#: src/TestWithServer.cc:336
 msgid "AccountDatabase = "
 msgstr ""
 
-#: src/TestWithServer.cc:338
+#: src/TestWithServer.cc:340
 msgid "TimeBetweenHousekeeping = 900\n"
 msgstr ""
 
-#: src/TestWithServer.cc:339
+#: src/TestWithServer.cc:341
 msgid "Server\n"
 msgstr ""
 
-#: src/TestWithServer.cc:342
+#: src/TestWithServer.cc:344
 msgid "bbstored.pid"
 msgstr ""
 
-#: src/TestWithServer.cc:343
+#: src/TestWithServer.cc:345
 msgid "\tPidFile = "
 msgstr ""
 
-#: src/TestWithServer.cc:347
+#: src/TestWithServer.cc:349
 msgid "\tListenAddresses = inet:127.0.0.1\n"
 msgstr ""
 
-#: src/TestWithServer.cc:350
+#: src/TestWithServer.cc:352
 msgid "../test/config/bbstored/server-cert.pem"
 msgstr ""
 
-#: src/TestWithServer.cc:352
+#: src/TestWithServer.cc:354
 msgid "\tCertificateFile = "
 msgstr ""
 
-#: src/TestWithServer.cc:357
+#: src/TestWithServer.cc:359
 msgid "../test/config/bbstored/server-key.pem"
 msgstr ""
 
-#: src/TestWithServer.cc:359
+#: src/TestWithServer.cc:361
 msgid "\tPrivateKeyFile = "
 msgstr ""
 
-#: src/TestWithServer.cc:364
+#: src/TestWithServer.cc:366
 msgid "../test/config/bbstored/client-ca.pem"
 msgstr ""
 
-#: src/TestWithServer.cc:366
+#: src/TestWithServer.cc:368
 msgid "\tTrustedCAsFile = "
 msgstr ""
 
-#: src/TestWithServer.cc:377
+#: src/TestWithServer.cc:379
 msgid "../boxbackup/release/bin/bbstoreaccounts/bbstoreaccounts -c "
 msgstr ""
 
-#: src/TestWithServer.cc:380
+#: src/TestWithServer.cc:382
 msgid " create 2 0 100M 200M"
 msgstr ""
 
-#: src/TestWithServer.cc:575 src/TestWithServer.cc:579
+#: src/TestWithServer.cc:577 src/TestWithServer.cc:581
 #, c-format
 msgid "%s must exist"
 msgstr ""
 
-#: src/TestWithServer.cc:591
+#: src/TestWithServer.cc:593
 msgid "Differences are: "
 msgstr ""
 
-#: src/TestWithServer.cc:617
+#: src/TestWithServer.cc:619
 #, c-format
 msgid "%s is not a file"
 msgstr ""
 
-#: src/TestWithServer.cc:626
+#: src/TestWithServer.cc:628
 #, c-format
 msgid "%s is not a directory"
 msgstr ""
 
-#: src/TestWithServer.cc:640
+#: src/TestWithServer.cc:642
 #, c-format
 msgid "%s has wrong length (expected %d, found %d)"
 msgstr ""
 
-#: src/TestWithServer.cc:666
+#: src/TestWithServer.cc:668
 #, c-format
 msgid "%s has wrong data at byte %d (expected %d, found %d)"
 msgstr ""
 
-#: src/TestWithServer.cc:708
+#: src/TestWithServer.cc:710
 #, c-format
 msgid "%s was not expected"
 msgstr ""
 
-#: src/TestWithServer.cc:724
+#: src/TestWithServer.cc:726
 #, c-format
 msgid "%s was not found"
 msgstr "%s no encontrado"
 
-#: src/TestWithServer.cc:787
+#: src/TestWithServer.cc:789
 msgid "\\.excludethis$"
 msgstr ""
 
-#: src/TestWithServer.cc:788 src/TestBackupConfig2.cc:962
+#: src/TestWithServer.cc:790 src/TestBackupConfig2.cc:962
 msgid "EXCLUDE"
 msgstr ""
 
-#: src/TestWithServer.cc:792 src/TestBackupConfig2.cc:966
+#: src/TestWithServer.cc:794 src/TestBackupConfig2.cc:966
 msgid "not_this_dir"
 msgstr ""
 
-#: src/TestWithServer.cc:793 src/TestBackupConfig2.cc:967
+#: src/TestWithServer.cc:795 src/TestBackupConfig2.cc:967
 msgid "ALWAYSINCLUDE"
 msgstr ""
 
