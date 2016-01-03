@@ -89,7 +89,7 @@ xlc )
   am_opt=--include-deps;;
 esac
 
-for coin in configure.ac boxbackup/configure.ac; do
+for coin in configure.ac; do
   dr=`dirname $coin`
   if test -f $dr/NO-AUTO-GEN; then
     echo skipping $dr -- flagged as no auto-gen
@@ -145,7 +145,7 @@ for coin in configure.ac boxbackup/configure.ac; do
 	echo "Running autoheader..."
 	autoheader
       fi
-      echo "Running automake --gnu $am_opt ..."
+      echo "Running automake --add-missing --gnu $am_opt in $dr..."
       automake --add-missing --gnu $am_opt
       echo "Running autoconf ..."
       autoconf
