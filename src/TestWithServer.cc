@@ -103,19 +103,19 @@ void TestBackupStoreDaemon::SetupInInitialProcess()
 	// Ready to go!
 }
 
-void TestBackupStoreDaemon::Setup() 
-{ 
-	SetupInInitialProcess(); 
+void TestBackupStoreDaemon::Setup()
+{
+	SetupInInitialProcess();
 }
 
-bool TestBackupStoreDaemon::Load(const std::string& file) 
-{ 
-	return Configure(file); 
+bool TestBackupStoreDaemon::Load(const std::string& file)
+{
+	return Configure(file);
 }
 
 void TestBackupStoreDaemon::Run()
-{ 
-	ServerTLS<BOX_PORT_BBSTORED, 1, false>::Run(); 
+{
+	ServerTLS<BOX_PORT_BBSTORED, 1, false>::Run();
 }
 
 void TestBackupStoreDaemon::Connection(std::auto_ptr<SocketStreamTLS> apStream)
@@ -212,7 +212,7 @@ StoreServerThread::ExitCode StoreServerThread::Entry()
 
 void StoreServer::Start()
 {
-	if (mapThread.get()) 
+	if (mapThread.get())
 	{
 		throw "already running";
 	}
@@ -223,7 +223,7 @@ void StoreServer::Start()
 
 void StoreServer::Stop()
 {
-	if (!mapThread.get()) 
+	if (!mapThread.get())
 	{
 		throw "not running";
 	}
@@ -441,7 +441,7 @@ void TestWithServer::setUp()
 	while((en = i.Next()) != 0)
 	{
 		BackupStoreFilenameClear clear(en->GetName());
-		printf("Unexpected dir entry: %s\n", 
+		printf("Unexpected dir entry: %s\n",
 			clear.GetClearFilename().c_str());
 		hasEntries = true;
 	}
@@ -481,7 +481,7 @@ void TestWithServer::setUp()
 
 	mpBackupErrorList = wxDynamicCast
 	(
-		mpBackupProgressPanel->FindWindow(ID_BackupProgress_ErrorList), 
+		mpBackupProgressPanel->FindWindow(ID_BackupProgress_ErrorList),
 		wxListBox
 	);
 	CPPUNIT_ASSERT(mpBackupErrorList);
@@ -503,7 +503,7 @@ void TestWithServer::setUp()
 	mpConfig->MinimumFileAge.Set(0);
 }
 
-void TestWithServer::CompareFiles(const wxFileName& first, 
+void TestWithServer::CompareFiles(const wxFileName& first,
 	const wxFileName& second)
 {
 	wxFile a(first.GetFullPath());
@@ -525,7 +525,7 @@ void TestWithServer::CompareFiles(const wxFileName& first,
 	}
 }
 
-static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root, 
+static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root,
 	wxString path)
 {
 	wxTreeItemId none;
@@ -570,7 +570,7 @@ static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root,
 	return none;
 }
 
-void TestWithServer::CompareDirs(wxFileName file1, wxFileName file2, 
+void TestWithServer::CompareDirs(wxFileName file1, wxFileName file2,
 	size_t diffsExpected)
 {
 	wxString msg;
@@ -603,11 +603,11 @@ void TestWithServer::CompareDirs(wxFileName file1, wxFileName file2,
 	}
 	
 	buf = msg.mb_str();
-	CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(), (size_t)diffsExpected, 
+	CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(), (size_t)diffsExpected,
 		diffs.Count());
 }
 
-void TestWithServer::CompareDirsInternal(wxFileName file1, wxFileName file2, 
+void TestWithServer::CompareDirsInternal(wxFileName file1, wxFileName file2,
 	wxArrayString& rDiffs)
 {
 	CPPUNIT_ASSERT(file1.FileExists() || file1.DirExists());
@@ -616,7 +616,7 @@ void TestWithServer::CompareDirsInternal(wxFileName file1, wxFileName file2,
 	if (file1.FileExists() && ! file2.FileExists())
 	{
 		wxString msg;
-		msg.Printf(_("%s is not a file"), 
+		msg.Printf(_("%s is not a file"),
 			file2.GetFullPath().c_str());
 		rDiffs.Add(msg);
 		return;
@@ -625,7 +625,7 @@ void TestWithServer::CompareDirsInternal(wxFileName file1, wxFileName file2,
 	if (file1.DirExists() && ! file2.DirExists())
 	{
 		wxString msg;
-		msg.Printf(_("%s is not a directory"), 
+		msg.Printf(_("%s is not a directory"),
 			file2.GetFullPath().c_str());
 		rDiffs.Add(msg);
 		return;
@@ -648,7 +648,7 @@ void TestWithServer::CompareDirsInternal(wxFileName file1, wxFileName file2,
 		
 		char b1[4096], b2[sizeof(b1)];
 		
-		for (size_t offset = 0; offset < f1.Length(); 
+		for (size_t offset = 0; offset < f1.Length();
 			offset += sizeof(b1))
 		{
 			ssize_t toread = sizeof(b1);
@@ -666,7 +666,7 @@ void TestWithServer::CompareDirsInternal(wxFileName file1, wxFileName file2,
 				{
 					wxString msg;
 					msg.Printf(_("%s has wrong data at byte %d "
-						"(expected %d, found %d)"), 
+						"(expected %d, found %d)"),
 						file2.GetFullPath().c_str(),
 						offset + i, (int)b1[i], (int)b2[i]);					
 					rDiffs.Add(msg);
@@ -707,7 +707,7 @@ void TestWithServer::CompareDirsInternal(wxFileName file1, wxFileName file2,
 			if (expectedEntries.Index(file) == wxNOT_FOUND)
 			{
 				wxString msg;
-				msg.Printf(_("%s was not expected"), 
+				msg.Printf(_("%s was not expected"),
 					f2full.GetFullPath().c_str());
 				rDiffs.Add(msg);
 			}
@@ -720,10 +720,10 @@ void TestWithServer::CompareDirsInternal(wxFileName file1, wxFileName file2,
 		
 		for (size_t i = 0; i < expectedEntries.Count(); i++)
 		{
-			wxFileName f2full(file2.GetFullPath(), 
+			wxFileName f2full(file2.GetFullPath(),
 				expectedEntries.Item(i));
 			wxString msg;
-			msg.Printf(_("%s was not found"), 
+			msg.Printf(_("%s was not found"),
 				f2full.GetFullPath().c_str());
 			rDiffs.Add(msg);
 		}
