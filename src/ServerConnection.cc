@@ -46,7 +46,6 @@
 ServerConnection::ServerConnection(ClientConfig* pConfig)
 {
 	mpConfig = pConfig;
-	mpSocket = NULL;
 	mpConnection = NULL;
 	mIsConnected = FALSE;
 	mIsWritable = FALSE;
@@ -183,12 +182,16 @@ bool ServerConnection::Connect2(bool Writable)
 	BackupClientCryptoKeys_Setup(keysFile.c_str());
 
 	// 2. Connect to server
-	mpSocket = new SocketStreamTLS();
-	int storePort = BOX_PORT_BBSTORED; 
-	mpSocket->Open(tlsContext, Socket::TypeINET, storeHost.c_str(), storePort);
-	
-	// 3. Make a protocol, and handshake
-	mpConnection = new BackupProtocolClient(*mpSocket);
+	{
+		SocketStreamTLS *pSocket = new SocketStreamTLS();
+		std::auto_ptr<SocketStream> apSocket(pSocket);
+		int storePort = BOX_PORT_BBSTORED;
+		pSocket->Open(tlsContext, Socket::TypeINET, storeHost.c_str(), storePort);
+
+		// 3. Make a protocol, and handshake
+		mpConnection = new BackupProtocolClient(apSocket);
+	}
+
 	mpConnection->Handshake();
 	
 	// Check the version of the server
@@ -228,17 +231,7 @@ void ServerConnection::Disconnect() {
 		delete mpConnection;
 		mpConnection = NULL;
 	}
-	
-	if (mpSocket != NULL) {
-		try {
-			mpSocket->Close();
-		} catch (BoxException &e) {
-			// ignore exceptions - may be disconnected from server
-		}
-		delete mpSocket;
-		mpSocket = NULL;
-	}
-	
+
 	mIsConnected = FALSE;
 }
 

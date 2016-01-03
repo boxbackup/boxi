@@ -71,6 +71,8 @@
 
 #undef TLS_CLASS_IMPLEMENTATION_CPP
 
+// TODO FIXME: TestBackupStoreDaemon should really inherit from BackupStoreDaemon.
+
 const ConfigurationVerify *TestBackupStoreDaemon::GetConfigVerify() const
 {
 	return &BackupConfigFileVerify;
@@ -116,10 +118,10 @@ void TestBackupStoreDaemon::Run()
 	ServerTLS<BOX_PORT_BBSTORED, 1, false>::Run(); 
 }
 
-void TestBackupStoreDaemon::Connection(SocketStreamTLS &rStream)
+void TestBackupStoreDaemon::Connection(std::auto_ptr<SocketStreamTLS> apStream)
 {
 	// Get the common name from the certificate
-	std::string clientCommonName(rStream.GetPeerCommonName());
+	std::string clientCommonName(apStream->GetPeerCommonName());
 	
 	// Log the name
 	// ::syslog(LOG_INFO, "Certificate CN: %s\n", clientCommonName.c_str());
@@ -136,7 +138,7 @@ void TestBackupStoreDaemon::Connection(SocketStreamTLS &rStream)
 	// SetProcessTitle("client %08x", id);
 
 	// Create a context, using this ID
-	BackupStoreContext context(id, *this, "TestWithServer");
+	BackupStoreContext context(id, this, "TestWithServer");
 	
 	// See if the client has an account?
 	if(mapAccounts->AccountExists(id))
@@ -148,7 +150,7 @@ void TestBackupStoreDaemon::Connection(SocketStreamTLS &rStream)
 	}
 
 	// Handle a connection with the backup protocol
-	BackupProtocolServer server(rStream);
+	BackupProtocolServer server(static_cast<std::auto_ptr<SocketStream> >(apStream));
 	server.SetLogToSysLog(false);
 	server.SetTimeout(BACKUP_STORE_TIMEOUT);
 	server.DoServer(context);

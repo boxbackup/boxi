@@ -328,13 +328,14 @@ void CompareBackup(const Configuration& rClientConfig, TLSContext& rTlsContext,
 	const wxFileName& rLocalPath)
 {
 	// Connect to server
-	SocketStreamTLS socket;
-	socket.Open(rTlsContext, Socket::TypeINET, 
-		rClientConfig.GetKeyValue("StoreHostname").c_str(), 
+	SocketStreamTLS* pSocket;
+	pSocket->Open(rTlsContext, Socket::TypeINET,
+		rClientConfig.GetKeyValue("StoreHostname").c_str(),
 		BOX_PORT_BBSTORED);
 	
 	// Make a protocol, and handshake
-	BackupProtocolClient connection(socket);
+	std::auto_ptr<SocketStream> apSocket(pSocket);
+	BackupProtocolClient connection(apSocket);
 	connection.Handshake();
 	
 	// Check the version of the server
@@ -904,10 +905,12 @@ void TestBackup::TestExclusions()
 	// compare directly (without exclude lists) should fail
 	CHECK_COMPARE_FAILS(7, 0);
 
-	SocketStreamTLS socket;
-	socket.Open(mTlsContext, Socket::TypeINET,
+	SocketStreamTLS* pSocket;
+	pSocket->Open(mTlsContext, Socket::TypeINET,
 		mpConfig->StoreHostname.GetString(), BOX_PORT_BBSTORED);
-	BackupProtocolClient connection(socket);
+
+	std::auto_ptr<SocketStream> apSocket(pSocket);
+	BackupProtocolClient connection(apSocket);
 	connection.Handshake();
 	std::auto_ptr<BackupProtocolVersion> 
 		serverVersion(connection.QueryVersion(
