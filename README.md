@@ -57,6 +57,7 @@ theory to compile Boxi on Windows, Macintosh and most UNIX systems,
 although so far only the following systems have been tested:
 
 - Fedora Core 2 (Linux, development platform)
+- openSUSE Leap 42.1 (Linux) Jan 2016
 - SuSE Professional 9.1 (Linux)
 - Ubuntu 5.04 (Linux, thanks to Scott Langley)
 - Ubuntu 5.10 (Linux, development platform)
@@ -67,20 +68,7 @@ most welcome.
 
 ## Download
 
-<!--- The latest stable version of Boxi is 0.1.0.
-
-- Source code for all platforms (version 0.1.0)
-
-    [http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz?download](http://prdownloads.sourceforge.net/boxi/boxi-0.1.0.tar.gz?download)
-
-- Compiled executable for Windows/Cygwin (version 0.0.7)
-
-    [http://prdownloads.sourceforge.net/boxi/boxi-0\_0\_7.zip?download](http://prdownloads.sourceforge.net/boxi/boxi-0_0_7.zip?download)
-
-- Latest source code from Github
--->
-
-Download the source code in the usual way and then downlowd the dependent boxbackup source code as a submodule
+Download the source code in the usual way and then download the dependent boxbackup source code as a submodule
 
 ```shell
 git clone git@github.com:boxbackup/boxi.git
@@ -120,39 +108,32 @@ You may find the this document helpful:
 In addition, you will also need to compile and install CppUnit and wxMSW.
 Please see the document [cygwin-mingw-build.txt](https://metacpan.org/pod/cygwin-mingw-build.txt) for instructions.
 
-<!--- If you downloaded a release version, just extract the contents of the
-archive, and change into the directory it creates (e.g. boxi-0.1.0). -->
 
 To compile, run the following commands in the downloaded boxi source directory:
 
 ```shell
 ./autogen.sh
-./configure
 make
 ```
 
-Don't even think about installing it yet! There really isn't any point.
-Run "src/boxi \[-c\] \[&lt;config-file>\]" to start the GUI.
 
-The "-c" option is ignored if present, and provided to comfort those
-more familiar with the Box Backup command-line tools.
+## Running
 
-<!--- ## Documentation
-This Readme.md markdown page was generated from the docs/README.pod file
-through the command:
+To run type the following command into the main download directory (i.e. boxi):
 
-    perl -MPod::Markdown -e 'Pod::Markdown->new->filter(@ARGV)' docs/README.pod > Readme.md
+```shell
+src/boxi \[-c\] \[&lt;config-file>\]
 
-A text version of this document can be generated with the command:
+# Example:
+src/boxi -c /etc/boxbackup/bbackupd.conf
+```
 
-    pod2text docs/README.pod > README.txt
+If you supply the -c option boxi will read your configuration file and populate the configuration for you.
+If you don't supply this click on the Wizard or Advanced Button to supply the values directly.
+You can also load the configuration file with the File > Open menu and write back changes.
 
-Or an HTML version can be generated with the command:
 
-    pod2html docs/README.pod -t "Boxi README" --noindex > README.html
--->
-
-## Screenshots
+## Old Screenshots
 
 ![Backup Process](http://boxi.sourceforge.net/daemonctrl.png "Backup Process")
 
