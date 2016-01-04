@@ -122,15 +122,22 @@ make
 To run type the following command into the main download directory (i.e. boxi):
 
 ```shell
-src/boxi \[-c\] \[&lt;config-file>\]
-
-# Example:
 src/boxi -c /etc/boxbackup/bbackupd.conf
+
+Usage: boxi \[-c\] \[-t &lt;str>\] \[-l &lt;str>\] \[-h\] \[&lt;bbackupd-config-file>\]
+  -c                    ignored for compatibility with boxbackup command-line tools
+  -t, --test=&lt;str>      run the specified unit test, or ALL
+  -l, --lang=&lt;str>      load the specified language or translation
+  -h, --help            displays this help text
 ```
 
-If you supply the -c option boxi will read your configuration file and populate the configuration for you.
-If you don't supply this click on the Wizard or Advanced Button to supply the values directly.
-You can also load the configuration file with the File > Open menu and write back changes.
+Boxi reads the environment variable LANG and can pick up Spanish (es) and German (de) translations. (needs work)
+
+If you supply the -c option and a bbackupd-config-file boxi will read your configuration file and populate the configuration for you. (The -c strictly is not required but you will be familiar with the option after having set up BoxBackup.) If you don't supply this click on the Wizard or Advanced Button to supply the values directly. You can also load the configuration file with the File > Open menu and write back changes.
+
+-t Offers TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all.
+
+-l offers de_DE and es_ES capabilities
 
 
 ## Old Screenshots
