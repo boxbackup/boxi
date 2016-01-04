@@ -3,6 +3,8 @@
 A graphical user interface for Box Backup, the online encrypted backup
 system by Ben Summers.
 
+![Travis CI](https://travis-ci.org/boxbackup/boxi.svg?branch=master)
+
 ## Summary
 
 Boxi is a graphical user interface to configure, manage, and administer
