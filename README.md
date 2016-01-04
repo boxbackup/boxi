@@ -83,8 +83,7 @@ Download the source code in the usual way and then downlowd the dependent boxbac
 ```shell
 git clone git@github.com:boxbackup/boxi.git
 cd boxi
-git submodule init
-git submodule update
+git submodule update --init
 ```
 
 ## Compiling
@@ -102,7 +101,7 @@ The following programs and libraries are required to compile Boxi:
 - wxWidgets (version 2.6.x or later, with development libraries)
 - CppUnit (version 1.10.2 or later, with development libraries)
 
-If you are working from a CVS checkout, you will also need:
+If you are working from a Git checkout, you will also need:
 
 - m4 (version 1.4.1 or higher)
 - autoconf (version 2.59 or higher)

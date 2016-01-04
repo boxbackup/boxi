@@ -4,11 +4,13 @@ dnl Created by Anjuta application wizard.
 AC_INIT(Boxi, 0.1.0, http://boxi.sourceforge.net)
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
+AC_CONFIG_AUX_DIR([infrastructure/automake])
 AC_CANONICAL_SYSTEM
 
-AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
-AM_CONFIG_HEADER([config.h])
-AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_MACRO_DIR([infrastructure/automake/m4])
+
+AM_CONFIG_HEADER([include/BoxiConfig.h])
+AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
 if test -z "$CFLAGS"; then
@@ -96,8 +98,12 @@ AC_CONFIG_SUBDIRS(wxchart)
 dnl Custom macros end here
 
 PKG_CHECK_MODULES(All, cppunit)
+
+# We are using *external* gettext, via AM_GNU_GETTEXT([external]), so there
+# should be NO intl directory and we should NOT try to compile in it, and no
+# intl/* files should appear in the AC_OUTPUT list below:
 AC_OUTPUT([
-Makefile
-src/Makefile
-po/Makefile.in
+	po/Makefile.in
+	Makefile
+	src/Makefile
 ])

@@ -112,7 +112,6 @@ class ServerConnection {
 	bool                  mIsConnected;
 	int                   mConnectionIndex;
 	bool                  mIsWritable;
-	SocketStreamTLS*      mpSocket;
 	BackupProtocolClient* mpConnection;
 	ClientConfig*         mpConfig;
 	

@@ -37,7 +37,7 @@ then
   LIBTOOL=glibtool
 fi
 
-(grep "^AM_PROG_LIBTOOL" $srcdir/configure.in >/dev/null) && {
+(grep "^AM_PROG_LIBTOOL" $srcdir/configure.ac >/dev/null) && {
   ($LIBTOOL --version) < /dev/null > /dev/null 2>&1 || {
     echo
     echo "**Error**: You must have \`libtool' installed."
@@ -66,6 +66,13 @@ test -n "$NO_AUTOMAKE" || (aclocal --version) < /dev/null > /dev/null 2>&1 || {
   DIE=1
 }
 
+autopoint --version < /dev/null > /dev/null 2>&1 || {
+  echo
+  echo "**Error**: Missing \`autopoint'.  Please install autopoint unless you want "
+  echo "to go through a painful forced manual run of gettextize."
+  DIE=1
+}
+
 if test "$DIE" -eq 1; then
   exit 1
 fi
@@ -82,8 +89,7 @@ xlc )
   am_opt=--include-deps;;
 esac
 
-for coin in `find $srcdir -name configure.in -print`
-do 
+for coin in configure.ac; do
   dr=`dirname $coin`
   if test -f $dr/NO-AUTO-GEN; then
     echo skipping $dr -- flagged as no auto-gen
@@ -101,23 +107,23 @@ do
         fi
       done
       aclocalinclude="$aclocalinclude"
-      if grep "^AM_GNU_GETTEXT" configure.in >/dev/null; then
-	if grep "sed.*POTFILES" configure.in >/dev/null; then
-	  : do nothing -- we still have an old unmodified configure.in
+      if grep "^AM_GNU_GETTEXT" configure.ac >/dev/null; then
+	if grep "sed.*POTFILES" configure.ac >/dev/null; then
+	  : do nothing -- we still have an old unmodified configure.ac
 	else
 	  echo "Creating $dr/aclocal.m4 ..."
 	  test -r $dr/aclocal.m4 || touch $dr/aclocal.m4
 	  echo "Running gettextize...  Ignore non-fatal messages."
-	  ./setup-gettext
+	  $dr/infrastructure/setup-gettext
 	  echo "Making $dr/aclocal.m4 writable ..."
 	  test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
         fi
       fi
-      if grep "^(AC)|(IT)_PROG_INTLTOOL" configure.in >/dev/null; then
+      if grep "^(AC)|(IT)_PROG_INTLTOOL" configure.ac >/dev/null; then
         echo "Running intltoolize..."
         intltoolize --copy --force --automake
       fi
-      if grep "^AM_GNOME_GETTEXT" configure.in >/dev/null; then
+      if grep "^AM_GNOME_GETTEXT" configure.ac >/dev/null; then
 	echo "Creating $dr/aclocal.m4 ..."
 	test -r $dr/aclocal.m4 || touch $dr/aclocal.m4
 	echo "Running gettextize...  Ignore non-fatal messages."
@@ -125,7 +131,7 @@ do
 	echo "Making $dr/aclocal.m4 writable ..."
 	test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
       fi
-      if grep "^AM_PROG_LIBTOOL" configure.in >/dev/null; then
+      if grep "^AM_PROG_LIBTOOL" configure.ac >/dev/null; then
 	echo "Running $LIBTOOLIZE..."
 	$LIBTOOLIZE --force --copy
       fi
@@ -135,11 +141,11 @@ do
         echo "Error: aclocal failed, aborting." >&2
         exit 2
       fi
-      if grep "^AM_CONFIG_HEADER" configure.in >/dev/null; then
+      if grep "^AM_CONFIG_HEADER" configure.ac >/dev/null; then
 	echo "Running autoheader..."
 	autoheader
       fi
-      echo "Running automake --gnu $am_opt ..."
+      echo "Running automake --add-missing --gnu $am_opt in $dr..."
       automake --add-missing --gnu $am_opt
       echo "Running autoconf ..."
       autoconf
@@ -147,11 +153,11 @@ do
   fi
 done
 
-./make-image-headers.pl
+./infrastructure/make-image-headers.pl
 
 #conf_flags="--enable-maintainer-mode --enable-compile-warnings" #--enable-iso-c
 
-./update-main-h.sh
+./infrastructure/update-main-h.sh
 
 if test x$NOCONFIGURE = x; then
   echo Running $srcdir/configure $conf_flags "$@" ...

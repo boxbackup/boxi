@@ -38,6 +38,7 @@
 
 #include "TestFrame.h"
 
+// TODO FIXME: TestBackupStoreDaemon should really inherit from BackupStoreDaemon.
 class TestBackupStoreDaemon
 : public ServerTLS<BOX_PORT_BBSTORED, 1, false>,
   public HousekeepingInterface
@@ -63,7 +64,7 @@ class TestBackupStoreDaemon
 
 	protected:
 	virtual void NotifyListenerIsReady();
-	virtual void Connection(SocketStreamTLS &rStream);
+	virtual void Connection(std::auto_ptr<SocketStreamTLS> apStream);
 	virtual const ConfigurationVerify *GetConfigVerify() const;
 
 	private:
