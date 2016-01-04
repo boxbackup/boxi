@@ -124,10 +124,10 @@ To run type the following command into the main download directory (i.e. boxi):
 ```shell
 src/boxi -c /etc/boxbackup/bbackupd.conf
 
-Usage: boxi \[-c\] \[-t &lt;str>\] \[-l &lt;str>\] \[-h\] \[&lt;bbackupd-config-file>\]
+Usage: boxi [-c] [-t <str>] [-l <str>] [-h] [<bbackupd-config-file>]
   -c                    ignored for compatibility with boxbackup command-line tools
-  -t, --test=&lt;str>      run the specified unit test, or ALL
-  -l, --lang=&lt;str>      load the specified language or translation
+  -t, --test=<str>      run the specified unit test, or ALL
+  -l, --lang=<str>      load the specified language or translation
   -h, --help            displays this help text
 ```
 
