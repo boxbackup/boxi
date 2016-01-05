@@ -78,8 +78,7 @@ git submodule update --init
 
 ## Compiling
 
-Boxi is distributed as source code, and binaries for Windows/Cygwin.
-Source code must be compiled before use.
+Boxi is distributed as source code, and binaries for Windows/Cygwin (eventually).
 
 The following programs and libraries are required to compile Boxi:
 
@@ -90,15 +89,13 @@ The following programs and libraries are required to compile Boxi:
 - gcc, g++ and libstdc++-devel
 - wxWidgets (version 2.6.x or later, with development libraries)
 - CppUnit (version 1.10.2 or later, with development libraries)
-
-If you are working from a Git checkout, you will also need:
-
 - m4 (version 1.4.1 or higher)
 - autoconf (version 2.59 or higher)
 - automake (version 1.6 or higher)
 - libtool (version 1.5.6 or higher)
 - gettext-devel
 - pkg-config
+- ccache (strictly optional)
 
 To compile on Windows, you must satisfy the requirements of Box Backup.
 You may find the this document helpful:
@@ -107,7 +104,6 @@ You may find the this document helpful:
 
 In addition, you will also need to compile and install CppUnit and wxMSW.
 Please see the document [cygwin-mingw-build.txt](https://metacpan.org/pod/cygwin-mingw-build.txt) for instructions.
-
 
 To compile, run the following commands in the downloaded boxi source directory:
 
