@@ -106,7 +106,7 @@ static wxCmdLineEntryDesc theCmdLineParams[] =
 		_("<bbackupd-config-file>"),
 		wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
 	{ wxCMD_LINE_OPTION, _("t"), _("test"), 
-		_("run the specified unit test, or ALL"),
+		_("run the specified unit test.\n\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all"),
 		wxCMD_LINE_VAL_STRING, 0 },
 	{ wxCMD_LINE_OPTION, _("l"), _("lang"), 
 		_("load the specified language or translation"),
@@ -277,7 +277,7 @@ bool BoxiApp::OnInit()
 
 		if (!pLangInfo)
 		{
-			wxLogFatalError(_("Locale \"%s\" is unknown."),
+			wxLogFatalError(_("Command line argument for -l \"%s\" is not recognized by wxWidgets.\nRecognized languages are documented here:\nhttp://docs.wxwidgets.org/trunk/language_8h.html"),
 				langName.c_str());
 			return 2; // invalid command line
 		}
@@ -287,7 +287,11 @@ bool BoxiApp::OnInit()
 
 	wxLocale locale;
 
-	if (!locale.Init(lang, wxLOCALE_CONV_ENCODING))
+        // wxLOCALE_CONV_ENCODING deprecated see
+        // https://groups.google.com/forum/#!topic/wx-commits-diffs/relrPv7kK90
+        // http://stackoverflow.com/questions/15681952/wxwidgets-2-8-to-wxwidgets-2-9-wxlocale-problems
+	//if (!locale.Init(lang, wxLOCALE_CONV_ENCODING))
+	if (!locale.Init(lang))
 	{
 		wxLogWarning(_("Language is not supported by the system: "
 			"%s (%d)"), langName.c_str(), lang);
