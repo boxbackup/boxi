@@ -98,21 +98,21 @@ void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor,
 
 static wxCmdLineEntryDesc theCmdLineParams[] = 
 {
-	{ wxCMD_LINE_SWITCH, _("c"), NULL, 
-		_("ignored for compatibility with "
+	{ wxCMD_LINE_SWITCH, wxS("c"), NULL, 
+		wxS("ignored for compatibility with "
 		    "boxbackup command-line tools"),
 		wxCMD_LINE_VAL_NONE, 0 },
-	{ wxCMD_LINE_PARAM, wxT(""), wxT(""), 
-		_("<bbackupd-config-file>"),
+	{ wxCMD_LINE_PARAM, wxS(""), wxS(""), 
+		wxS("<bbackupd-config-file>"),
 		wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
-	{ wxCMD_LINE_OPTION, _("t"), _("test"), 
+	{ wxCMD_LINE_OPTION, wxS("t"), wxS("test"), 
 		_("run the specified unit test.\n\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all"),
 		wxCMD_LINE_VAL_STRING, 0 },
-	{ wxCMD_LINE_OPTION, _("l"), _("lang"), 
+	{ wxCMD_LINE_OPTION, wxS("l"), wxS("lang"), 
 		_("load the specified language or translation"),
 		wxCMD_LINE_VAL_STRING, 0 },
-	{ wxCMD_LINE_SWITCH, _("h"), _("help"), 
-		_("displays this help text"),
+	{ wxCMD_LINE_SWITCH, wxS("h"), wxS("help"), 
+		wxS("displays this help text"),
 		wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
 	{ wxCMD_LINE_NONE },
 };
@@ -153,7 +153,7 @@ int main(int argc, char **argv)
 	}
 
 	wxString testName;
-	if (cmdParser.Found(_("t"), &testName))
+	if (cmdParser.Found(wxS("t"), &testName))
 	{
 		g_argc = argc;
 		g_argv = argv;
@@ -185,7 +185,7 @@ int main(int argc, char **argv)
 
 		bool foundNamedTest = false;
 		wxString errorMsg;
-		errorMsg.Printf(_("Test not found: %s. Available "
+		errorMsg.Printf(wxS("Test not found: %s. Available "
 			"tests are: "), testName.c_str());
 
 		#define ADD_IF_SELECTED(TestClass) \
@@ -271,13 +271,15 @@ bool BoxiApp::OnInit()
 	wxString langName;
 	const wxLanguageInfo * pLangInfo = NULL;
 
-	if (cmdParser.Found(_("l"), &langName))
+	if (cmdParser.Found(wxS("l"), &langName))
 	{
 		pLangInfo = wxLocale::FindLanguageInfo(langName);
 
 		if (!pLangInfo)
 		{
-			wxLogFatalError(_("Command line argument for -l \"%s\" is not recognized by wxWidgets.\nRecognized languages are documented here:\nhttp://docs.wxwidgets.org/trunk/language_8h.html"),
+			wxLogFatalError(wxS("Command line argument for -l \"%s\" is not recognized by wxWidgets.\n"
+                                "Recognized languages are documented here:\n"
+                                "http://docs.wxwidgets.org/trunk/language_8h.html"),
 				langName.c_str());
 			return 2; // invalid command line
 		}
@@ -303,6 +305,7 @@ bool BoxiApp::OnInit()
 	// installed, the catalogs are in the build directory where we
 	// wouldn't find them by default.
 	wxLocale::AddCatalogLookupPathPrefix(wxT("../po")); 
+	wxLocale::AddCatalogLookupPathPrefix(wxT("po")); 
 
 	// Initialize the catalogs we'll be using
 	if (!locale.AddCatalog(locale.GetCanonicalName()))
@@ -329,7 +332,7 @@ bool BoxiApp::OnInit()
 	signal(SIGPIPE, sigpipe_handler);	
 	#endif
 
-	if (cmdParser.Found(_("t")))
+	if (cmdParser.Found(wxS("t")))
 	{
 		mTesting = true;
 	}
