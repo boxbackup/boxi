@@ -4,6 +4,10 @@ compiler:
   - gcc
   - clang
 
+env:
+  - LANG=$LANG
+  - LANG=de_DE
+  
 cache:
   - apt
   - ccache
@@ -24,6 +28,7 @@ addons:
       - zlib1g-dev
 
 before_script:
+  - echo LANG=$LANG
   - ccache -s
   - ./autogen.sh
   - ./configure CC="ccache $CC" CXX="ccache $CXX"
