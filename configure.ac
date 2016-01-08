@@ -11,7 +11,7 @@ AC_CANONICAL_BUILD
 
 AC_CONFIG_MACRO_DIR([infrastructure/automake/m4])
 
-AM_CONFIG_HEADER([include/BoxiConfig.h])
+#AM_CONFIG_HEADER([include/BoxiConfig.h]) # no such file
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
