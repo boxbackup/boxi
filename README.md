@@ -118,7 +118,8 @@ make
 To run type the following command into the main download directory (i.e. boxi):
 
 ```shell
-src/boxi -c /etc/boxbackup/bbackupd.conf
+cd src          #needed for the internationalization
+./boxi -c /etc/boxbackup/bbackupd.conf
 
 Usage: boxi [-c] [-t <str>] [-l <str>] [-h] [<bbackupd-config-file>]
   -c                    ignored for compatibility with boxbackup command-line tools
