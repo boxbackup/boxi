@@ -1,15 +1,16 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl Created by Anjuta application wizard.
 
-AC_INIT(Boxi, 0.1.0, http://boxi.sourceforge.net)
+AC_INIT(Boxi, 0.1.1, https://github.com/boxbackup/boxi)
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
-AC_CANONICAL_SYSTEM
+dnl AC_CANONICAL_SYSTEM #deprecated
+AC_CANONICAL_BUILD
 
 AC_CONFIG_MACRO_DIR([infrastructure/m4])
 AC_CONFIG_AUX_DIR([infrastructure/automake])
 
-AM_CONFIG_HEADER([include/BoxiConfig.h])
+#AM_CONFIG_HEADER([include/BoxiConfig.h]) # no such file
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
@@ -43,11 +44,11 @@ else
     AC_MSG_RESULT([not found])
     AC_MSG_ERROR([wxWidgets is required. Try --with-wx-config.])
 fi
- 
+
 WX_CPPFLAGS="`$WXCONFIG --cppflags`"
 WX_CXXFLAGS="`$WXCONFIG --cxxflags`"
 WX_LIBS="`$WXCONFIG --libs`"
- 
+
 AC_SUBST(WX_CPPFLAGS)
 AC_SUBST(WX_CXXFLAGS)
 AC_SUBST(WX_LIBS)
