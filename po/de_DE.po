@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Boxi\n"
 "Report-Msgid-Bugs-To: Chris Wilson <chris-boxisource@qwirx.com>\n"
-"POT-Creation-Date: 2016-01-02 21:00+0000\n"
-"PO-Revision-Date: 2011-01-15 01:21+0100\n"
+"POT-Creation-Date: 2016-01-09 00:30+0100\n"
+"PO-Revision-Date: 2016-01-09 00:30+0100\n"
 "Last-Translator: Achim <achim@qustodium.net>\n"
 "Language-Team: Achim J. Latz <achim.latz@qustodium.net>\n"
 "Language: de_DE\n"
@@ -12,140 +12,480 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-KeywordsList: _\n"
 "X-Poedit-Basepath: .\n"
-"X-Poedit-Language: German\n"
-"X-Poedit-Country: GERMANY\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Poedit-SearchPath-0: /Users/ajl/src/boxi/src\n"
+"X-Generator: Poedit 1.8.5\n"
+"X-Poedit-SearchPath-0: ../src\n"
 
-#: src/main.cc:101
-msgid "c"
+#: ../src/BackupDaemonPanel.cc:66
+msgid "Client Location:"
 msgstr ""
 
-#: src/main.cc:102
-msgid "ignored for compatibility with boxbackup command-line tools"
+#: ../src/BackupDaemonPanel.cc:71
+msgid "Connection to Client:"
 msgstr ""
 
-#: src/main.cc:106
-msgid "<bbackupd-config-file>"
+#: ../src/BackupDaemonPanel.cc:76
+msgid "Connection Error:"
 msgstr ""
 
-#: src/main.cc:108 src/main.cc:156 src/main.cc:328
-msgid "t"
+#: ../src/BackupDaemonPanel.cc:81
+msgid "Client State:"
 msgstr ""
 
-#: src/main.cc:108
-msgid "test"
+#: ../src/BackupDaemonPanel.cc:98
+msgid "Start"
 msgstr ""
 
-#: src/main.cc:109
-msgid "run the specified unit test, or ALL"
+#: ../src/BackupDaemonPanel.cc:101
+msgid "Stop"
 msgstr ""
 
-#: src/main.cc:111 src/main.cc:274
-msgid "l"
+#: ../src/BackupDaemonPanel.cc:104
+msgid "Restart"
 msgstr ""
 
-#: src/main.cc:111
-msgid "lang"
+#: ../src/BackupDaemonPanel.cc:107
+msgid "Kill"
 msgstr ""
 
-#: src/main.cc:112
-msgid "load the specified language or translation"
+#: ../src/BackupDaemonPanel.cc:110
+msgid "Sync"
 msgstr ""
 
-#: src/main.cc:114
-msgid "h"
+#: ../src/BackupDaemonPanel.cc:113
+msgid "Reload"
 msgstr ""
 
-#: src/main.cc:114
-msgid "help"
-msgstr ""
-
-#: src/main.cc:115
-msgid "displays this help text"
-msgstr ""
-
-#: src/main.cc:188
+#: ../src/BackupDaemonPanel.cc:138
 #, c-format
-msgid "Test not found: %s. Available tests are: "
+msgid "%s (pid %ld)"
 msgstr ""
 
-#: src/main.cc:192
-msgid "all"
+#: ../src/BackupFilesPanel.cc:228
+msgid "(none)"
 msgstr ""
 
-#: src/main.cc:204 src/BackupLocationsPanel.cc:368 src/TestWithServer.cc:599
+#: ../src/BackupFilesPanel.cc:266 ../src/BackupLocationsPanel.cc:357
+msgid " ("
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:268 ../src/BackupLocationsPanel.cc:372
+#: ../src/ServerConnection.cc:152 ../src/TestBackupConfig.cc:883
+#: ../src/TestBackupConfig.cc:1052 ../src/TestBackupConfig.cc:1108
+#: ../src/TestBackupConfig2.cc:203 ../src/TestBackupConfig2.cc:366
+#: ../src/TestBackupConfig2.cc:399 ../src/TestFrame.cc:459
+msgid ")"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:275 ../src/BackupLocationsPanel.cc:132
+msgid "Full path does not start with location path!"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:276 ../src/BackupFilesPanel.cc:747
+#: ../src/BackupLocationsPanel.cc:133 ../src/BackupLocationsPanel.cc:563
+#: ../src/BackupLocationsPanel.cc:578 ../src/BackupLocationsPanel.cc:871
+#: ../src/BackupLocationsPanel.cc:892 ../src/BackupLocationsPanel.cc:901
+#: ../src/BackupLocationsPanel.cc:909 ../src/BackupLocationsPanel.cc:929
+#: ../src/MainFrame.cc:184 ../src/MainFrame.cc:195 ../src/ProgressPanel.cc:208
+#: ../src/RestorePanel.cc:195 ../src/RestorePanel.cc:203
+#: ../src/ServerConnection.cc:77 ../src/SetupWizard.cc:86
+#: ../src/TestWithServer.cc:187
+msgid "Boxi Error"
+msgstr "Boxi Fehler"
+
+#: ../src/BackupFilesPanel.cc:345 ../src/Location.cc:306
+#, c-format
+msgid "Regular expression compile failed (%s)"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:518
+msgid "Full Path:"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:522
+msgid "Location:"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:526
+msgid "Excluded By:"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:530
+msgid "Included By:"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:534
+msgid "Result:"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:538
+msgid "Local Version:"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:542
+msgid "Remote Version:"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:547
+msgid "Connect to Server"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:548
+msgid "Status on Server:"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:569
+msgid "c:\\"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:571 ../src/BackupFilesPanel.cc:693
+#: ../src/BackupLocationsPanel.cc:995 ../src/BackupLocationsPanel.cc:1101
+#: ../src/BackupLocationsPanel.cc:1213 ../src/BackupLocationsPanel.cc:1224
+#: ../src/RestoreFilesPanel.cc:286 ../src/RestoreFilesPanel.cc:288
+#: ../src/RestoreProgressPanel.cc:81 ../src/RestoreProgressPanel.cc:105
+#: ../src/TestBackupConfig.cc:930 ../src/TestBackupConfig.cc:936
+#: ../src/TestBackupConfig.cc:958 ../src/TestBackupConfig.cc:964
+#: ../src/TestCompare.cc:92 ../src/TestRestore.cc:90 ../src/TestRestore.cc:676
+#: ../src/TestWithServer.cc:534
+msgid "/"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:578
+#, c-format
+msgid "%s (local root)"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:649
+msgid "Excluded"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:649
+msgid "Included"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:662 ../src/BackupFilesPanel.cc:663
+msgid "Not connected"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:683
+msgid "Backed up OK!"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:689
+#, c-format
+msgid "Version on server is out of date (file %lld)"
+msgstr ""
+
+#: ../src/BackupFilesPanel.cc:744
+#, c-format
+msgid ""
+"Error getting information about local file %s:\n"
+"\n"
+"%s"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:311
+msgid "Add"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:315
+msgid "Edit"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:319
+msgid "Remove"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:350 ../src/ComparePanel.cc:193
+#: ../src/TestCompare.cc:217
+#, c-format
+msgid "%s -> %s"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:368 ../src/TestWithServer.cc:599
+#: ../src/main.cc:204
 msgid ", "
 msgstr ""
 
-#: src/main.cc:208
-msgid "all."
+#: ../src/BackupLocationsPanel.cc:429 ../src/BackupLocationsPanel.cc:633
+msgid "&Locations"
 msgstr ""
 
-#: src/main.cc:280
+#: ../src/BackupLocationsPanel.cc:430
+msgid "&Selected or New Location"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:433
+msgid "Location &Name:"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:436
+msgid "Location &Path:"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:563 ../src/BackupLocationsPanel.cc:892
+msgid "Editing nonexistant location!"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:578 ../src/BackupLocationsPanel.cc:929
+msgid "Removing nonexistant location!"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:640
+msgid "&Exclusions"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:641
+msgid "&Selected or New Exclusion"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:660
+msgid "Exclude Type:"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:665
+msgid "Exclude Path:"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:871 ../src/BackupLocationsPanel.cc:909
+msgid "No type selected!"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:901
+msgid "No exclude entry selected!"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:986 ../src/ClientInfoPanel.cc:100
+msgid "Basic"
+msgstr "Einfach"
+
+#: ../src/BackupLocationsPanel.cc:993 ../src/TestBackupConfig.cc:201
+msgid "My Computer"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:996 ../src/TestBackupConfig.cc:203
+msgid "/ (local root)"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:1004
+msgid "Locations"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:1007
+msgid "Exclusions"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:1013 ../src/BackupProgressPanel.cc:184
+#: ../src/ClientInfoPanel.cc:202 ../src/ComparePanel.cc:158
+#: ../src/CompareProgressPanel.cc:321 ../src/FunctionPanel.cc:82
+#: ../src/ProgressPanel.cc:135 ../src/RestoreFilesPanel.cc:479
+#: ../src/RestoreProgressPanel.cc:377
+msgid "Close"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:1099 ../src/BackupLocationsPanel.cc:1211
+#: ../src/BackupLocationsPanel.cc:1222 ../src/TestBackupConfig.cc:730
+#: ../src/TestBackupConfig.cc:928 ../src/TestBackupConfig.cc:934
+#: ../src/TestBackupConfig.cc:956 ../src/TestBackupConfig.cc:962
+msgid "^"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:1124
 #, c-format
-msgid "Locale \"%s\" is unknown."
+msgid ""
+"To exclude this item, you will have to exclude all of %s. Do you really want "
+"to do this?"
 msgstr ""
 
-#: src/main.cc:292
+#: ../src/BackupLocationsPanel.cc:1132 ../src/BackupLocationsPanel.cc:1260
+#: ../src/MainFrame.cc:222 ../src/MainFrame.cc:247 ../src/MainFrame.cc:283
+#: ../src/SetupWizard.cc:438 ../src/SetupWizard.cc:566
+#, fuzzy
+msgid "Boxi Warning"
+msgstr "Warnung"
+
+#: ../src/BackupLocationsPanel.cc:1253
 #, c-format
-msgid "Language is not supported by the system: %s (%d)"
+msgid ""
+"Are you sure you want to delete the location %s from the server, and remove "
+"its configuration?"
 msgstr ""
 
-#: src/main.cc:306
+#: ../src/BackupLocationsPanel.cc:1292
+msgid "root"
+msgstr ""
+
+#: ../src/BackupLocationsPanel.cc:1316
 #, c-format
-msgid "Couldn't find/load the catalog for locale '%s'."
+msgid "%s_%d"
 msgstr ""
 
-#: src/main.cc:308
-msgid "unknown"
+#: ../src/BackupPanel.cc:49
+msgid "Backup Panel"
 msgstr ""
 
-#: src/ClientConfig.cc:138
-#, fuzzy, c-format
+#: ../src/BackupPanel.cc:60
+msgid "&Files to back up"
+msgstr ""
+
+#: ../src/BackupPanel.cc:61
+msgid "Backup &Destination"
+msgstr ""
+
+#: ../src/BackupPanel.cc:71
+msgid "&Change Server"
+msgstr ""
+
+#: ../src/BackupPanel.cc:74
+msgid "&Edit List"
+msgstr ""
+
+#: ../src/BackupPanel.cc:75
+#, fuzzy
+msgid "&Start Backup"
+msgstr "Beginne Backup"
+
+#: ../src/BackupPanel.cc:82 ../src/GeneralPanel.cc:110
+msgid "Backup"
+msgstr "Backup"
+
+#: ../src/BackupPanel.cc:83
+msgid "Backup Files"
+msgstr "Dateiauswahl"
+
+#: ../src/BackupPanel.cc:84
+msgid "Backup Progress"
+msgstr "Backupfortschritt"
+
+#: ../src/BackupPanel.cc:102
+#, c-format
+msgid "Account 0x%08x"
+msgstr ""
+
+#: ../src/BackupPanel.cc:104
+msgid "Unknown account number"
+msgstr ""
+
+#: ../src/BackupPanel.cc:107
+msgid " on "
+msgstr ""
+
+#: ../src/BackupPanel.cc:111
+#, c-format
+msgid "server %s"
+msgstr ""
+
+#: ../src/BackupPanel.cc:114
+msgid "unknown server"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:73
+msgid "Backup Progress Panel"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:93
+msgid "Starting Backup"
+msgstr "Beginne Backup"
+
+#: ../src/BackupProgressPanel.cc:94
+msgid "Stop Backup"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:125
+msgid "Error: cannot finish backup: out of space on server"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:127 ../src/BackupProgressPanel.cc:138
+#: ../src/BackupProgressPanel.cc:155 ../src/BackupProgressPanel.cc:164
+#: ../src/BackupProgressPanel.cc:172
+msgid "Backup Failed"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:131 ../src/BackupProgressPanel.cc:132
+#: ../src/TestBackup.cc:1001
+msgid "Backup Finished"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:140
+#, c-format
+msgid ""
+"Error: cannot start backup: Failed to connect to server\n"
+"\n"
+"%s"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:149
+msgid "Backup Interrupted"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:151
+msgid "Backup interrupted by user"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:157 ../src/BackupProgressPanel.cc:166
+#, c-format
+msgid "Backup Failed: %s"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:173
+msgid "Backup Failed: caught unknown exception"
+msgstr ""
+
+#: ../src/BackupProgressPanel.cc:183 ../src/CompareProgressPanel.cc:318
+#: ../src/ProgressPanel.cc:74 ../src/RestoreProgressPanel.cc:374
+msgid "Idle (nothing to do)"
+msgstr "Leerlauf"
+
+#: ../src/BackupProgressPanel.cc:233
+msgid "Backing up files"
+msgstr "Sichere Dateien"
+
+#: ../src/ClientConfig.cc:138
+#, c-format
 msgid ""
 "Invalid configuration file:\n"
 "%s"
 msgstr ""
-"Konnte Konfigurationsdatei nicht ??ffnen (%s):\n"
-"\n"
+"Konnte Konfigurationsdatei nicht öffnen:\n"
+"%s"
 
-#: src/ClientConfig.cc:224 src/Property.cc:265 src/Property.cc:276
-#: src/ProgressPanel.cc:151
+#: ../src/ClientConfig.cc:224 ../src/ProgressPanel.cc:151
+#: ../src/Property.cc:265 ../src/Property.cc:276
 #, c-format
 msgid "%d"
 msgstr ""
 
-#: src/ClientConfig.cc:451
+#: ../src/ClientConfig.cc:451
 msgid ""
 "# This Box Backup configuration file was written by Boxi\n"
 "# This file is automatically generated. Do not edit by hand!\n"
 "\n"
 msgstr ""
 
-#: src/ClientConfig.cc:459 src/ClientConfig.cc:466 src/ClientConfig.cc:485
+#: ../src/ClientConfig.cc:459 ../src/ClientConfig.cc:466
+#: ../src/ClientConfig.cc:485
 #, c-format
 msgid " = %s\n"
 msgstr ""
 
-#: src/ClientConfig.cc:473
+#: ../src/ClientConfig.cc:473
 msgid " = "
 msgstr ""
 
-#: src/ClientConfig.cc:479
+#: ../src/ClientConfig.cc:479
 #, c-format
 msgid " = %d\n"
 msgstr ""
 
-#: src/ClientConfig.cc:486
+#: ../src/ClientConfig.cc:486
 msgid "yes"
 msgstr ""
 
-#: src/ClientConfig.cc:486
+#: ../src/ClientConfig.cc:486
 msgid "no"
 msgstr ""
 
-#: src/ClientConfig.cc:523
+#: ../src/ClientConfig.cc:523
 #, c-format
 msgid ""
 "Server\n"
@@ -154,13 +494,13 @@ msgid ""
 "}\n"
 msgstr ""
 
-#: src/ClientConfig.cc:528
+#: ../src/ClientConfig.cc:528
 msgid ""
 "BackupLocations\n"
 "{\n"
 msgstr ""
 
-#: src/ClientConfig.cc:533
+#: ../src/ClientConfig.cc:533
 #, c-format
 msgid ""
 "\t%s\n"
@@ -168,1026 +508,1235 @@ msgid ""
 "\t\tPath = %s\n"
 msgstr ""
 
-#: src/ClientConfig.cc:545
+#: ../src/ClientConfig.cc:545
 #, c-format
 msgid "\t\t%s\n"
 msgstr ""
 
-#: src/ClientConfig.cc:550
+#: ../src/ClientConfig.cc:550
 msgid "\t}\n"
 msgstr ""
 
-#: src/ClientConfig.cc:553 src/TestWithServer.cc:309 src/TestWithServer.cc:371
+#: ../src/ClientConfig.cc:553 ../src/TestWithServer.cc:309
+#: ../src/TestWithServer.cc:371
 msgid "}\n"
 msgstr ""
 
-#: src/ClientConfig.cc:659 src/ClientConfig.cc:668 src/ClientConfig.cc:677
+#: ../src/ClientConfig.cc:659 ../src/ClientConfig.cc:668
+#: ../src/ClientConfig.cc:677
 #, c-format
 msgid "The %s is not set"
 msgstr ""
 
-#: src/ClientConfig.cc:692
+#: ../src/ClientConfig.cc:692
 #, c-format
 msgid "The %s is not a directory (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:698 src/ClientConfig.cc:713
+#: ../src/ClientConfig.cc:698 ../src/ClientConfig.cc:713
 #, c-format
 msgid "The %s does not exist (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:707
+#: ../src/ClientConfig.cc:707
 #, c-format
 msgid "The %s is not a file (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:733
+#: ../src/ClientConfig.cc:733
 #, c-format
 msgid "The %s cannot be written (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:745
+#: ../src/ClientConfig.cc:745
 #, c-format
 msgid "The %s parent directory does not exist (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:752
+#: ../src/ClientConfig.cc:752
 #, c-format
 msgid "The %s parent directory cannot be written (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:840
+#: ../src/ClientConfig.cc:840
 msgid "The account number is empty or not valid"
 msgstr ""
 
-#: src/ClientConfig.cc:852
+#: ../src/ClientConfig.cc:852
 msgid "The store hostname is not configured"
 msgstr ""
 
-#: src/ClientConfig.cc:859
+#: ../src/ClientConfig.cc:859
 msgid "The store hostname is not valid"
 msgstr ""
 
-#: src/ClientConfig.cc:876 src/ClientConfig.cc:991 src/ServerConnection.cc:64
-#: src/SetupWizard.cc:100
+#: ../src/ClientConfig.cc:876 ../src/ClientConfig.cc:991
+#: ../src/ServerConnection.cc:64 ../src/SetupWizard.cc:100
 msgid ": "
 msgstr ""
 
-#: src/ClientConfig.cc:891
+#: ../src/ClientConfig.cc:891
 msgid "The private key filename is not configured"
 msgstr ""
 
-#: src/ClientConfig.cc:898 src/ClientConfig.cc:1052 src/SetupWizard.cc:866
+#: ../src/ClientConfig.cc:898 ../src/ClientConfig.cc:1052
+#: ../src/SetupWizard.cc:866
 msgid "Failed to create an OpenSSL BIO"
 msgstr ""
 
-#: src/ClientConfig.cc:918 src/ClientConfig.cc:933
+#: ../src/ClientConfig.cc:918 ../src/ClientConfig.cc:933
 msgid "Failed to read key file"
 msgstr ""
 
-#: src/ClientConfig.cc:962
+#: ../src/ClientConfig.cc:962
 msgid "Failed to decipher key file"
 msgstr ""
 
-#: src/ClientConfig.cc:968
+#: ../src/ClientConfig.cc:968
 msgid ""
 "This private key is protected with a passphrase. It cannot be used with Box "
 "Backup."
 msgstr ""
 
-#: src/ClientConfig.cc:1061
+#: ../src/ClientConfig.cc:1061
 #, c-format
 msgid "Failed to set the certificate file name (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:1073
+#: ../src/ClientConfig.cc:1073
 #, c-format
 msgid "Failed to read the certificate file (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:1094
+#: ../src/ClientConfig.cc:1094
 msgid "Failed to create an OpenSSL certificate store"
 msgstr ""
 
-#: src/ClientConfig.cc:1105
+#: ../src/ClientConfig.cc:1105
 msgid "Failed to create an OpenSSL certificate lookup"
 msgstr ""
 
-#: src/ClientConfig.cc:1115
+#: ../src/ClientConfig.cc:1115
 #, c-format
 msgid "Failed to load the expected issuer's certificate file (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:1135
+#: ../src/ClientConfig.cc:1135
 msgid "Failed to create an OpenSSL X.509 context"
 msgstr ""
 
-#: src/ClientConfig.cc:1143
+#: ../src/ClientConfig.cc:1143
 msgid "Failed to initialise the OpenSSL X.509 context"
 msgstr ""
 
-#: src/ClientConfig.cc:1151
+#: ../src/ClientConfig.cc:1151
 #, c-format
 msgid "Certificate problem: %s (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:1169
+#: ../src/ClientConfig.cc:1169
 msgid "The certificate file name is not configured"
 msgstr ""
 
-#: src/ClientConfig.cc:1176
+#: ../src/ClientConfig.cc:1176
 msgid "The account number is not configured, but it should be!"
 msgstr ""
 
-#: src/ClientConfig.cc:1184
+#: ../src/ClientConfig.cc:1184
 msgid "The private key file is not configured, but it should be!"
 msgstr ""
 
-#: src/ClientConfig.cc:1192
+#: ../src/ClientConfig.cc:1192
 msgid "Failed to create an OpenSSL BIO to read the certificate"
 msgstr ""
 
-#: src/ClientConfig.cc:1215
+#: ../src/ClientConfig.cc:1215
 msgid "Failed to set the BIO filename to the certificate file"
 msgstr ""
 
-#: src/ClientConfig.cc:1223
+#: ../src/ClientConfig.cc:1223
 msgid "Failed to read the certificate file"
 msgstr ""
 
-#: src/ClientConfig.cc:1248 src/SetupWizard.cc:774 src/SetupWizard.cc:922
+#: ../src/ClientConfig.cc:1248 ../src/SetupWizard.cc:774
+#: ../src/SetupWizard.cc:922
 #, c-format
 msgid "BACKUP-%x"
 msgstr ""
 
-#: src/ClientConfig.cc:1253
+#: ../src/ClientConfig.cc:1253
 #, c-format
 msgid ""
 "The certificate does not match the account number. The common name of the "
 "certificate should be '%s', but is actually '%s'."
 msgstr ""
 
-#: src/ClientConfig.cc:1264
+#: ../src/ClientConfig.cc:1264
 msgid "Failed to extract the subject's public keyfrom the certificate"
 msgstr ""
 
-#: src/ClientConfig.cc:1293 src/ClientConfig.cc:1300
+#: ../src/ClientConfig.cc:1293 ../src/ClientConfig.cc:1300
 msgid "Failed to allocate BIO for key data"
 msgstr ""
 
-#: src/ClientConfig.cc:1323 src/ClientConfig.cc:1329
+#: ../src/ClientConfig.cc:1323 ../src/ClientConfig.cc:1329
 msgid "Failed to write public key to memory buffer"
 msgstr ""
 
-#: src/ClientConfig.cc:1338 src/ClientConfig.cc:1385
+#: ../src/ClientConfig.cc:1338 ../src/ClientConfig.cc:1385
 msgid "The certificate file does not match your private key."
 msgstr ""
 
-#: src/ClientConfig.cc:1346 src/ClientConfig.cc:1353
+#: ../src/ClientConfig.cc:1346 ../src/ClientConfig.cc:1353
 msgid "Failed to allocate space for private key data"
 msgstr ""
 
-#: src/ClientConfig.cc:1373 src/ClientConfig.cc:1379
+#: ../src/ClientConfig.cc:1373 ../src/ClientConfig.cc:1379
 msgid "Failed to read enough key data"
 msgstr ""
 
-#: src/ClientConfig.cc:1397
+#: ../src/ClientConfig.cc:1397
 msgid "The Trusted CAs file is not configured"
 msgstr ""
 
-#: src/ClientConfig.cc:1459
+#: ../src/ClientConfig.cc:1459
 msgid "openssl.cnf"
 msgstr ""
 
-#: src/ClientConfig.cc:1468
+#: ../src/ClientConfig.cc:1468
 msgid "Failed to create an OpenSSL configuration object"
 msgstr ""
 
-#: src/ClientConfig.cc:1481
+#: ../src/ClientConfig.cc:1481
 #, c-format
 msgid ""
 "Failed to initialise OpenSSL. Perhaps the configuration file could not be "
 "found or read? %s"
 msgstr ""
 
-#: src/ClientConfig.cc:1492
+#: ../src/ClientConfig.cc:1492
 msgid "Failed to configure OpenSSL"
 msgstr ""
 
-#: src/ClientConfig.cc:1505
+#: ../src/ClientConfig.cc:1505
 msgid "Failed to find NID of X.509 CommonName attribute"
 msgstr ""
 
-#: src/ClientConfig.cc:1527
+#: ../src/ClientConfig.cc:1527
 msgid "Failed to create an OpenSSL BIO to read the private key"
 msgstr ""
 
-#: src/ClientConfig.cc:1537
+#: ../src/ClientConfig.cc:1537
 #, c-format
 msgid "Failed to read the private key file (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:1551
+#: ../src/ClientConfig.cc:1551
 #, c-format
 msgid "Failed to read the private key (%s)"
 msgstr ""
 
-#: src/ClientConfig.cc:1570
+#: ../src/ClientConfig.cc:1570
 msgid "The Keys File is not configured"
 msgstr ""
 
-#: src/ClientConfig.cc:1576
+#: ../src/ClientConfig.cc:1576
 msgid "The Keys File is a directory."
 msgstr ""
 
-#: src/ClientConfig.cc:1582
+#: ../src/ClientConfig.cc:1582
 msgid "The Keys File was not found."
 msgstr ""
 
-#: src/ClientConfig.cc:1588
+#: ../src/ClientConfig.cc:1588
 msgid "The Keys File is not readable."
 msgstr ""
 
-#: src/ClientConfig.cc:1595
+#: ../src/ClientConfig.cc:1595
 msgid ""
 "The specified encryption key file is not valid (should be 1024 bytes long)"
 msgstr ""
 
-#: src/Location.cc:306
+#: ../src/ClientConnection.cc:200
 #, c-format
-msgid "Regular expression compile failed (%s)"
+msgid "PID file not found (%s)"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:84
+#: ../src/ClientConnection.cc:208
+#, c-format
+msgid "Unable to read PID file (%s)"
+msgstr ""
+
+#: ../src/ClientConnection.cc:217
+#, c-format
+msgid "Out of memory reading PID file (%s)"
+msgstr ""
+
+#: ../src/ClientConnection.cc:226
+#, c-format
+msgid "Short read on PID file (%s)"
+msgstr ""
+
+#: ../src/ClientConnection.cc:236
+#, c-format
+msgid "Invalid character code %d in PID file (%s)"
+msgstr ""
+
+#: ../src/ClientConnection.cc:253 ../src/ClientConnection.cc:750
+msgid "No such signal wxSIGTERM?"
+msgstr ""
+
+#: ../src/ClientConnection.cc:268
+#, c-format
+msgid "Failed to kill process %ld: unspecified error"
+msgstr ""
+
+#: ../src/ClientConnection.cc:293
+msgid "Client connect interrupted"
+msgstr ""
+
+#: ../src/ClientConnection.cc:336
+#, fuzzy
+msgid "DoConnect interrupted"
+msgstr "Verbinde mit dem Server"
+
+#: ../src/ClientConnection.cc:349
+msgid "Failed to read status from client"
+msgstr ""
+
+#: ../src/ClientConnection.cc:353
+msgid "Exception while reading status from client"
+msgstr ""
+
+#: ../src/ClientConnection.cc:360
+msgid "GetLine interrupted"
+msgstr ""
+
+#: ../src/ClientConnection.cc:397
+msgid "state "
+msgstr ""
+
+#: ../src/ClientConnection.cc:413
+#, c-format
+msgid "read from daemon: '%s'"
+msgstr ""
+
+#: ../src/ClientConnection.cc:660
+msgid "Client terminated, releasing process"
+msgstr ""
+
+#: ../src/ClientConnection.cc:663
+msgid "Client terminated but process already released!"
+msgstr ""
+
+#: ../src/ClientConnection.cc:671
+#, c-format
+msgid "Unexpected start notification while in state %s"
+msgstr ""
+
+#: ../src/ClientConnection.cc:688
+#, c-format
+msgid "Failed to start client process: exit code %d"
+msgstr ""
+
+#: ../src/ClientConnection.cc:701
+#, c-format
+msgid "Wrong state for %s: should be '%s' (%d) but currently '%s' (%d)"
+msgstr ""
+
+#: ../src/ClientConnection.cc:738
+msgid "Failed to get client PID"
+msgstr ""
+
+#: ../src/ClientConnection.cc:754
+msgid "Failed to kill process: permission denied"
+msgstr ""
+
+#: ../src/ClientConnection.cc:759
+#, c-format
+msgid "Failed to kill process: no such process %ld"
+msgstr ""
+
+#: ../src/ClientConnection.cc:764
+msgid "Failed to kill process: unspecified error"
+msgstr ""
+
+#: ../src/ClientConnection.cc:769
+msgid "Unknown error while trying to kill process"
+msgstr ""
+
+#: ../src/ClientInfoPanel.cc:84
 msgid "Unknown state"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:100 src/BackupLocationsPanel.cc:986
-msgid "Basic"
-msgstr "Einfach"
-
-#: src/ClientInfoPanel.cc:103
+#: ../src/ClientInfoPanel.cc:103
 msgid "Advanced"
 msgstr "Fortgeschritten"
 
-#: src/ClientInfoPanel.cc:106
+#: ../src/ClientInfoPanel.cc:106
 msgid "Store Host:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:110
+#: ../src/ClientInfoPanel.cc:110
 msgid "Account Number:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:114
+#: ../src/ClientInfoPanel.cc:114
 msgid "Keys File:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:116
+#: ../src/ClientInfoPanel.cc:116
 msgid "Encryption key files (*-FileEncKeys.raw)|*-FileEncKeys.raw"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:117
+#: ../src/ClientInfoPanel.cc:117
 msgid "-FileEncKeys.raw"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:120
+#: ../src/ClientInfoPanel.cc:120
 msgid "Certificate File:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:122 src/SetupWizard.cc:1052
+#: ../src/ClientInfoPanel.cc:122 ../src/SetupWizard.cc:1052
 msgid "Certificate files (*-cert.pem)|*-cert.pem"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:123 src/SetupWizard.cc:1053
+#: ../src/ClientInfoPanel.cc:123 ../src/SetupWizard.cc:1053
 msgid "-cert.pem"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:126
+#: ../src/ClientInfoPanel.cc:126
 msgid "Private Key File:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:128
+#: ../src/ClientInfoPanel.cc:128
 msgid "Private key files (*-key.pem)|*-key.pem"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:129 src/SetupWizard.cc:668 src/SetupWizard.cc:1300
+#: ../src/ClientInfoPanel.cc:129 ../src/SetupWizard.cc:668
+#: ../src/SetupWizard.cc:1300
 msgid "-key.pem"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:132
+#: ../src/ClientInfoPanel.cc:132
 msgid "Trusted CAs File:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:134
+#: ../src/ClientInfoPanel.cc:134
 msgid "Server CA certificate (serverCA.pem)|serverCA.pem"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:135 src/SetupWizard.cc:1066
+#: ../src/ClientInfoPanel.cc:135 ../src/SetupWizard.cc:1066
 msgid "serverCA.pem"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:138
-#, fuzzy
+#: ../src/ClientInfoPanel.cc:138
 msgid "Data Directory:"
-msgstr "Bitte w??hlen Sie ein Verzeichnis"
+msgstr "Bitte wählen Sie ein Verzeichnis"
 
-#: src/ClientInfoPanel.cc:142
+#: ../src/ClientInfoPanel.cc:142
 msgid "Command Socket:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:144
+#: ../src/ClientInfoPanel.cc:144
 msgid "Command socket (bbackupd.sock)|bbackupd.sock"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:145 src/SetupWizard.cc:1510 src/TestWizard.cc:1234
+#: ../src/ClientInfoPanel.cc:145 ../src/SetupWizard.cc:1510
+#: ../src/TestWizard.cc:1234
 msgid "bbackupd.sock"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:148
+#: ../src/ClientInfoPanel.cc:148
 msgid "Extended Logging:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:152
+#: ../src/ClientInfoPanel.cc:152
 msgid "Update Store Interval:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:156
+#: ../src/ClientInfoPanel.cc:156
 msgid "Minimum File Age:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:160
+#: ../src/ClientInfoPanel.cc:160
 msgid "Maximum Upload Wait:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:164
+#: ../src/ClientInfoPanel.cc:164
 msgid "File Tracking Size Threshold:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:169
+#: ../src/ClientInfoPanel.cc:169
 msgid "Diffing Upload Size Threshold:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:174
+#: ../src/ClientInfoPanel.cc:174
 msgid "Maximum Diffing Time:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:178
+#: ../src/ClientInfoPanel.cc:178
 msgid "Keep-Alive Time:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:182
+#: ../src/ClientInfoPanel.cc:182
 msgid "Notify Script:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:184
+#: ../src/ClientInfoPanel.cc:184
 msgid "Default script (NotifySysadmin.sh)|NotifySysadmin.sh|All files (*)|*"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:188
+#: ../src/ClientInfoPanel.cc:188
 msgid "Sync Allow Script:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:190
+#: ../src/ClientInfoPanel.cc:190
 msgid "All files (*)|*"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:192
+#: ../src/ClientInfoPanel.cc:192
 msgid "Process ID File:"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:194
+#: ../src/ClientInfoPanel.cc:194
 msgid "Client PID files (bbackupd.pid)|bbackupd.pid"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:195 src/SetupWizard.cc:1511 src/TestWizard.cc:1235
+#: ../src/ClientInfoPanel.cc:195 ../src/SetupWizard.cc:1511
+#: ../src/TestWizard.cc:1235
 msgid "bbackupd.pid"
 msgstr ""
 
-#: src/ClientInfoPanel.cc:202 src/BackupLocationsPanel.cc:1013
-#: src/ComparePanel.cc:158 src/BackupProgressPanel.cc:184
-#: src/FunctionPanel.cc:82 src/RestoreFilesPanel.cc:479
-#: src/RestoreProgressPanel.cc:377 src/ProgressPanel.cc:135
-msgid "Close"
-msgstr ""
-
-#: src/ClientInfoPanel.cc:249
+#: ../src/ClientInfoPanel.cc:249
 msgid "Configuration looks OK"
 msgstr "Konfiguration scheint OK."
 
-#: src/BackupLocationsPanel.cc:132
-msgid "Full path does not start with location path!"
+#: ../src/CompareFilesPanel.cc:260
+msgid "CompareFilesPanel"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:133 src/BackupLocationsPanel.cc:563
-#: src/BackupLocationsPanel.cc:578 src/BackupLocationsPanel.cc:871
-#: src/BackupLocationsPanel.cc:892 src/BackupLocationsPanel.cc:901
-#: src/BackupLocationsPanel.cc:909 src/BackupLocationsPanel.cc:929
-#: src/ServerConnection.cc:77 src/SetupWizard.cc:86 src/RestorePanel.cc:195
-#: src/RestorePanel.cc:203 src/MainFrame.cc:184 src/MainFrame.cc:195
-#: src/TestWithServer.cc:187 src/ProgressPanel.cc:208
-msgid "Boxi Error"
-msgstr "Boxi Fehler"
-
-#: src/BackupLocationsPanel.cc:311
-msgid "Add"
+#: ../src/ComparePanel.cc:54
+msgid "Compare Panel"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:315
-msgid "Edit"
+#: ../src/ComparePanel.cc:78
+msgid "Files to compare"
+msgstr "Zu vergleichende Dateien"
+
+#: ../src/ComparePanel.cc:82
+msgid "&All Locations"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:319
-msgid "Remove"
+#: ../src/ComparePanel.cc:87
+msgid "&One Location:"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:350 src/ComparePanel.cc:193
-#: src/TestCompare.cc:217
+#: ../src/ComparePanel.cc:98
+msgid "&Specified Directory:"
+msgstr ""
+
+#: ../src/ComparePanel.cc:155
+msgid "Start &Compare"
+msgstr ""
+
+#: ../src/ComparePanel.cc:231 ../src/GeneralPanel.cc:159
+msgid "Compare"
+msgstr "Vergleichen"
+
+#: ../src/ComparePanel.cc:233
+msgid "Compare Progress"
+msgstr "Vergleichsfortschritt"
+
+#: ../src/CompareProgressPanel.cc:211
+msgid "Compare Progress Panel"
+msgstr ""
+
+#: ../src/CompareProgressPanel.cc:230
+msgid "Starting Compare"
+msgstr "Beginne Vergleich"
+
+#: ../src/CompareProgressPanel.cc:231
+msgid "Stop Compare"
+msgstr "Beende Vergleich"
+
+#: ../src/CompareProgressPanel.cc:238 ../src/RestoreProgressPanel.cc:220
+msgid "Connecting to server"
+msgstr "Verbinde mit dem Server"
+
+#: ../src/CompareProgressPanel.cc:249
+msgid "Counting Files to Compare"
+msgstr ""
+
+#: ../src/CompareProgressPanel.cc:278
+msgid "Comparing files"
+msgstr ""
+
+#: ../src/CompareProgressPanel.cc:289 ../src/CompareProgressPanel.cc:290
+#: ../src/TestCompare.cc:143
+msgid "Compare Finished"
+msgstr ""
+
+#: ../src/CompareProgressPanel.cc:296 ../src/CompareProgressPanel.cc:305
+#: ../src/CompareProgressPanel.cc:313
+msgid "Compare Failed"
+msgstr ""
+
+#: ../src/CompareProgressPanel.cc:298
 #, c-format
-msgid "%s -> %s"
+msgid "Error: cannot start compare: Failed to connect to server: %s"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:357
-msgid " ("
+#: ../src/CompareProgressPanel.cc:307
+#, c-format
+msgid "Error: failed to finish compare: %s"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:372 src/ServerConnection.cc:152
-#: src/TestFrame.cc:459 src/TestBackupConfig.cc:883
-#: src/TestBackupConfig.cc:1052 src/TestBackupConfig.cc:1108
-#: src/TestBackupConfig2.cc:203 src/TestBackupConfig2.cc:366
-#: src/TestBackupConfig2.cc:399
-msgid ")"
+#: ../src/CompareProgressPanel.cc:315
+msgid "Error: failed to finish compare: unknown error"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:429 src/BackupLocationsPanel.cc:633
-msgid "&Locations"
+#: ../src/FileTree.cc:80
+#, fuzzy
+msgid "FileTree"
+msgstr "&Datei"
+
+#: ../src/FileTree.cc:149 ../src/TestBackupConfig.cc:419
+msgid ":\\"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:430
-msgid "&Selected or New Location"
+#: ../src/GeneralPanel.cc:61
+msgid "General Panel"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:433
-msgid "Location &Name:"
+#: ../src/GeneralPanel.cc:80
+msgid "Setup"
+msgstr "Konfiguration"
+
+#: ../src/GeneralPanel.cc:84
+msgid "Configure Boxi for a backup store provider"
+msgstr "Boxi für einen Backupanbieter konfigurieren"
+
+#: ../src/GeneralPanel.cc:88
+msgid "&Wizard..."
+msgstr "Assistent..."
+
+#: ../src/GeneralPanel.cc:93
+msgid "&Advanced..."
+msgstr "Details..."
+
+#: ../src/GeneralPanel.cc:114
+msgid "Copy files from this computer to the backup server"
+msgstr "Dateien auf einem Backupserver sichern"
+
+#: ../src/GeneralPanel.cc:118
+msgid "&Backup"
+msgstr "Backup"
+
+#: ../src/GeneralPanel.cc:135 ../src/RestorePanel.cc:176
+msgid "Restore"
+msgstr "Wiederherstellung"
+
+#: ../src/GeneralPanel.cc:139
+msgid "Copy files from the backup server to this computer"
+msgstr "Dateien von einem Backupserver auf diesen Rechner zur??ckspielen"
+
+#: ../src/GeneralPanel.cc:143
+msgid "&Restore"
+msgstr "Wiederherstellung"
+
+#: ../src/GeneralPanel.cc:163
+msgid "Compare files on the backup server with this computer"
+msgstr "Dateien mit dem Backupserver vergleichen"
+
+#: ../src/GeneralPanel.cc:167
+msgid "&Compare"
+msgstr "Vergleich"
+
+#: ../src/GeneralPanel.cc:174
+msgid "General"
+msgstr "Allgemein"
+
+#: ../src/MainFrame.cc:63
+msgid "Boxi"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:436
-msgid "Location &Path:"
+#: ../src/MainFrame.cc:88
+msgid "&New...\tCtrl-N"
+msgstr "&Neu\tCtrl-N"
+
+#: ../src/MainFrame.cc:89
+msgid "New client config file"
+msgstr "Neue Client-Konfiguration anlegen"
+
+#: ../src/MainFrame.cc:90
+msgid "&Open...\tCtrl-O"
+msgstr "&Oeffnen...\tCtrl-O"
+
+#: ../src/MainFrame.cc:91
+msgid "Open client config file"
+msgstr "Client-Konfigurationsdatei ??ffnen"
+
+#: ../src/MainFrame.cc:92
+msgid "&Save...\tCtrl-S"
+msgstr "&Speichern\tCtrl-S"
+
+#: ../src/MainFrame.cc:93
+msgid "Save current configuration"
+msgstr "Aktuelle Client-Konfiguration speichern"
+
+#: ../src/MainFrame.cc:94
+msgid "Save &As...\tCtrl-A"
+msgstr "Speichern &unter...\tCtrl-A"
+
+#: ../src/MainFrame.cc:95
+msgid "Save current config file with a new name"
+msgstr "Aktuelle Client-Konfiguration unter neuem Namen speichern"
+
+#: ../src/MainFrame.cc:96
+msgid "E&xit\tAlt-F4"
+msgstr "Be&enden\tAlt-F4"
+
+#: ../src/MainFrame.cc:97
+msgid "Quit Boxi"
+msgstr "Boxi beenden"
+
+#: ../src/MainFrame.cc:101
+msgid "Show &Old Files\tCtrl-L"
+msgstr "A&lte Dateien anzeigen\tCtrl-L"
+
+#: ../src/MainFrame.cc:102
+msgid "Show old versions of files"
+msgstr ""
+"Auch alte Versionen der Dateien anzeigen, die noch auf dem Backup-Server "
+"existieren"
+
+#: ../src/MainFrame.cc:104
+msgid "Show &Deleted Files\tCtrl-D"
+msgstr "Gelöschte &Dateien anzeigen\tCtrl-D"
+
+#: ../src/MainFrame.cc:105
+msgid "Show deleted files"
+msgstr ""
+"Auch lokal gel??schte Dateien anzeigen, die aber noch auf dem Backup-Server "
+"existieren"
+
+#: ../src/MainFrame.cc:110
+msgid "&About...\tF1"
+msgstr "&über Boxi...\tF1"
+
+#: ../src/MainFrame.cc:111
+msgid "Show information about Boxi"
+msgstr "Informationen ??ber Boxi anzeigen"
+
+#: ../src/MainFrame.cc:114
+msgid "&File"
+msgstr "&Datei"
+
+#: ../src/MainFrame.cc:115
+msgid "&View"
+msgstr "&Ansicht"
+
+#: ../src/MainFrame.cc:116
+msgid "&Help"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:563 src/BackupLocationsPanel.cc:892
-msgid "Editing nonexistant location!"
+#: ../src/MainFrame.cc:141
+msgid ""
+"Box Backup client configuration file|bbackupd.conf|Configuration files|*."
+"conf|All files|*.*"
+msgstr ""
+"Client-Konfigurationsdatei|bbackupd.conf|Konfigurationsdateien|*.conf|Alle "
+"Dateien|*.*"
+
+#: ../src/MainFrame.cc:149
+msgid "Open file"
+msgstr "Datei Oeffnen"
+
+#: ../src/MainFrame.cc:149 ../src/MainFrame.cc:259
+#: ../src/TestBackupConfig2.cc:857 ../src/TestConfig.cc:71
+#: ../src/TestWithServer.cc:454
+msgid "bbackupd.conf"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:578 src/BackupLocationsPanel.cc:929
-msgid "Removing nonexistant location!"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:640
-msgid "&Exclusions"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:641
-msgid "&Selected or New Exclusion"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:660
-msgid "Exclude Type:"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:665
-msgid "Exclude Path:"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:871 src/BackupLocationsPanel.cc:909
-msgid "No type selected!"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:901
-msgid "No exclude entry selected!"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:993 src/TestBackupConfig.cc:201
-msgid "My Computer"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:995 src/BackupLocationsPanel.cc:1101
-#: src/BackupLocationsPanel.cc:1213 src/BackupLocationsPanel.cc:1224
-#: src/RestoreFilesPanel.cc:286 src/RestoreFilesPanel.cc:288
-#: src/TestBackupConfig.cc:930 src/TestBackupConfig.cc:936
-#: src/TestBackupConfig.cc:958 src/TestBackupConfig.cc:964
-#: src/TestRestore.cc:90 src/TestRestore.cc:676 src/RestoreProgressPanel.cc:81
-#: src/RestoreProgressPanel.cc:105 src/TestWithServer.cc:534
-#: src/TestCompare.cc:92
-msgid "/"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:996 src/TestBackupConfig.cc:203
-msgid "/ (local root)"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:1004
-msgid "Locations"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:1007
-msgid "Exclusions"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:1099 src/BackupLocationsPanel.cc:1211
-#: src/BackupLocationsPanel.cc:1222 src/TestBackupConfig.cc:730
-#: src/TestBackupConfig.cc:928 src/TestBackupConfig.cc:934
-#: src/TestBackupConfig.cc:956 src/TestBackupConfig.cc:962
-msgid "^"
-msgstr ""
-
-#: src/BackupLocationsPanel.cc:1124
+#: ../src/MainFrame.cc:180
 #, c-format
 msgid ""
-"To exclude this item, you will have to exclude all of %s. Do you really want "
-"to do this?"
+"Failed to load configuration file (%s):\n"
+"\n"
+msgstr ""
+"Konnte Konfigurationsdatei nicht ??ffnen (%s):\n"
+"\n"
+
+#: ../src/MainFrame.cc:192
+#, c-format
+msgid ""
+"Failed to load configuration file (%s):\n"
+"\n"
+"%s"
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:1132 src/BackupLocationsPanel.cc:1260
-#: src/SetupWizard.cc:438 src/SetupWizard.cc:566 src/MainFrame.cc:222
-#: src/MainFrame.cc:247 src/MainFrame.cc:283
+#: ../src/MainFrame.cc:220 ../src/MainFrame.cc:245
+msgid ""
+"The configuration file has errors.\n"
+"Are you sure you want to save it?"
+msgstr ""
+"Die Konfigurationsdatei ist fehlerhaft.\n"
+"Wollen Sie sie trotzdem speichern?"
+
+#: ../src/MainFrame.cc:259 ../src/TestConfig.cc:71
+msgid "Save file"
+msgstr "Datei speichern"
+
+#: ../src/MainFrame.cc:281
+msgid ""
+"The configuration file has not been saved.\n"
+"Do you want to save your changes?"
+msgstr ""
+"Die Konfigurationsdatei wurde noch nicht gespeichert.\n"
+"Wollen Sie Ihre ??nderungen speichern?"
+
+#: ../src/MainFrame.cc:326
+msgid "Choose a Directory"
+msgstr "Bitte wählen Sie ein Verzeichnis"
+
+#: ../src/MainFrame.cc:336 ../src/MainFrame.cc:380
+msgid "Boxi "
+msgstr "Boxi"
+
+#: ../src/MainFrame.cc:347
+msgid "About Boxi"
+msgstr "&über Boxi...\tF1"
+
+#: ../src/MainFrame.cc:354
+#, c-format
+msgid "%d x %d"
+msgstr ""
+
+#: ../src/MainFrame.cc:372
+msgid "[untitled]"
+msgstr "[unbenannt]"
+
+#: ../src/MainFrame.cc:381
+msgid "*"
+msgstr ""
+
+#: ../src/ParamPanel.cc:100 ../src/ParamPanel.cc:155 ../src/Property.cc:225
+msgid "0x"
+msgstr ""
+
+#: ../src/ParamPanel.cc:280
+msgid "|All Files|*"
+msgstr ""
+
+#: ../src/ParamPanel.cc:308
+msgid "Set Property"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:54
+msgid "Summary"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:61
+msgid "Restore not started yet"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:70
 #, fuzzy
-msgid "Boxi Warning"
+msgid "Current Action"
+msgstr "Aktuelle Client-Konfiguration speichern"
+
+#: ../src/ProgressPanel.cc:79
+#, fuzzy
+msgid "Errors"
+msgstr "Fehler"
+
+#: ../src/ProgressPanel.cc:87
+msgid "Statistics"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:99
+msgid "Elapsed"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:100
+#, fuzzy
+msgid "Remaining"
 msgstr "Warnung"
 
-#: src/BackupLocationsPanel.cc:1253
+#: ../src/ProgressPanel.cc:101
+msgid "Total"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:103
+#, fuzzy
+msgid "Files"
+msgstr "&Datei"
+
+#: ../src/ProgressPanel.cc:117
+msgid "Bytes"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:164 ../src/ProgressPanel.cc:171
+#: ../src/ProgressPanel.cc:202
+msgid "%"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:181
+msgid "B"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:186
+msgid "kB"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:192
+msgid "MB"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:198
+msgid "GB"
+msgstr ""
+
+#: ../src/ProgressPanel.cc:221 ../src/TestFrame.cc:490
+msgid "Fatal: "
+msgstr ""
+
+#: ../src/ProgressPanel.cc:223 ../src/TestFrame.cc:492
+msgid "Error: "
+msgstr "Fehler"
+
+#: ../src/ProgressPanel.cc:225 ../src/TestFrame.cc:494
+msgid "Warning: "
+msgstr "Warnung: "
+
+#: ../src/ProgressPanel.cc:227 ../src/TestFrame.cc:496
+msgid "Message: "
+msgstr ""
+
+#: ../src/ProgressPanel.cc:229 ../src/TestFrame.cc:498
+msgid "Status: "
+msgstr ""
+
+#: ../src/ProgressPanel.cc:231 ../src/TestFrame.cc:500
+msgid "Info: "
+msgstr "Info:"
+
+#: ../src/ProgressPanel.cc:233 ../src/TestFrame.cc:502
+msgid "Debug: "
+msgstr ""
+
+#: ../src/ProgressPanel.cc:235 ../src/TestFrame.cc:504
+msgid "Trace: "
+msgstr ""
+
+#: ../src/ProgressPanel.cc:237 ../src/TestFrame.cc:506
 #, c-format
-msgid ""
-"Are you sure you want to delete the location %s from the server, and remove "
-"its configuration?"
+msgid "Unknown (level %d): "
 msgstr ""
 
-#: src/BackupLocationsPanel.cc:1292
-msgid "root"
-msgstr ""
+#: ../src/ProgressPanel.cc:371
+#, fuzzy, c-format
+msgid "Error counting files in '%s': %s"
+msgstr "Verbinde mit dem Server"
 
-#: src/BackupLocationsPanel.cc:1316
-#, c-format
-msgid "%s_%d"
-msgstr ""
-
-#: src/Restore.cc:282
+#: ../src/Restore.cc:282
 #, c-format
 msgid "In restore, directory name collision with file %s"
 msgstr ""
 
-#: src/ServerConnection.cc:98
+#: ../src/RestoreFilesPanel.cc:338 ../src/TestRestore.cc:236
+msgid "/ (server root)"
+msgstr ""
+
+#: ../src/RestoreFilesPanel.cc:399
+#, fuzzy
+msgid "RestoreFilesPanel"
+msgstr "Stelle Dateien wieder her"
+
+#: ../src/RestoreFilesPanel.cc:519
+#, c-format
+msgid "Click at %d,%d"
+msgstr ""
+
+#: ../src/RestoreFilesPanel.cc:528
+msgid "Icon clicked"
+msgstr ""
+
+#: ../src/RestoreFilesPanel.cc:535
+#, c-format
+msgid "Flags are: %d"
+msgstr ""
+
+#: ../src/RestorePanel.cc:69
+#, fuzzy
+msgid "Restore Panel"
+msgstr "Wiederherstellung"
+
+#: ../src/RestorePanel.cc:76
+#, fuzzy
+msgid "&Files to restore"
+msgstr "Zu vergleichende Dateien"
+
+#: ../src/RestorePanel.cc:77
+msgid "Restore &destination"
+msgstr ""
+
+#: ../src/RestorePanel.cc:90
+msgid "&New location:"
+msgstr ""
+
+#: ../src/RestorePanel.cc:104
+msgid "Restore &to date:"
+msgstr ""
+
+#: ../src/RestorePanel.cc:111
+msgid "&at"
+msgstr ""
+
+#: ../src/RestorePanel.cc:120
+msgid "&:"
+msgstr ""
+
+#: ../src/RestorePanel.cc:138
+msgid "&Select Files"
+msgstr ""
+"Auch lokal gelöschte Dateien anzeigen, die aber noch auf dem Backup-Server "
+"existieren"
+
+#: ../src/RestorePanel.cc:139
+#, fuzzy
+msgid "Start &Restore"
+msgstr "Beginne Wiederherstellung"
+
+#: ../src/RestorePanel.cc:168
+#, c-format
+msgid "%s %s"
+msgstr ""
+
+#: ../src/RestorePanel.cc:168
+msgid "+"
+msgstr ""
+
+#: ../src/RestorePanel.cc:168
+msgid "-"
+msgstr ""
+
+#: ../src/RestorePanel.cc:177
+msgid "Restore Files"
+msgstr "Dateiauswahl"
+
+#: ../src/RestorePanel.cc:178
+msgid "Restore Progress"
+msgstr "Wiederherstellungsfortschritt"
+
+#: ../src/RestorePanel.cc:194
+msgid "Cannot start restore: the destination path is not set"
+msgstr ""
+
+#: ../src/RestorePanel.cc:202
+msgid "Cannot start restore: the destination path already exists"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:69
+msgid "Restore Progress Panel"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:160
+#, c-format
+msgid "Error: cannot start restore: %s"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:171
+msgid ""
+"Error: cannot start restore: You have not configured the Store Hostname!"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:182
+msgid "Error: cannot start restore: you have not configured the Keys File"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:191
+msgid "Error: cannot start restore: you have not configured the Account Number"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:202
+msgid "Error: cannot start restore: cannot create the destination directory"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:212
+msgid "Starting Restore"
+msgstr "Beginne Wiederherstellung"
+
+#: ../src/RestoreProgressPanel.cc:213
+msgid "Stop Restore"
+msgstr "Beende Wiederherstellung"
+
+#: ../src/RestoreProgressPanel.cc:223
+msgid "Checking account details"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:233
+msgid ""
+"Warning: failed to get account information from server, file size will not "
+"be reported"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:238
+msgid "Counting Files to Restore"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:279
+msgid "Restoring files"
+msgstr "Stelle Dateien wieder her"
+
+#: ../src/RestoreProgressPanel.cc:332
+msgid "Restore Interrupted"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:334
+msgid "Restore interrupted by user"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:338 ../src/RestoreProgressPanel.cc:339
+#: ../src/RestoreProgressPanel.cc:351 ../src/RestoreProgressPanel.cc:360
+#: ../src/RestoreProgressPanel.cc:368
+msgid "Restore Failed"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:343 ../src/RestoreProgressPanel.cc:344
+#: ../src/RestoreProgressPanel.cc:373 ../src/TestRestore.cc:134
+msgid "Restore Finished"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:353
+#, c-format
+msgid "Error: cannot start restore: Failed to connect to server: %s"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:362
+#, c-format
+msgid "Error: failed to finish restore: %s"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:370
+msgid "Error: failed to finish restore: unknown error"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:459
+#, c-format
+msgid "Counting files in %s"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:521
+#, c-format
+msgid "Failed to restore '%s': not found on server"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:542
+#, c-format
+msgid "Error: failed to finish restore: object already exists: '%s'"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:562
+#, c-format
+msgid "Reading %s"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:571
+#, c-format
+msgid "Error: failed to finish restore: cannot create directory: '%s'"
+msgstr ""
+
+#: ../src/RestoreProgressPanel.cc:609
+#, c-format
+msgid "Restoring %s"
+msgstr ""
+
+#: ../src/ServerConnection.cc:98
 #, fuzzy
 msgid "Error connecting to server"
 msgstr "Verbinde mit dem Server"
 
-#: src/ServerConnection.cc:110
+#: ../src/ServerConnection.cc:110
 #, fuzzy
 msgid "Error connecting to server: "
 msgstr "Verbinde mit dem Server"
 
-#: src/ServerConnection.cc:124
+#: ../src/ServerConnection.cc:124
 msgid "You have not configured the Certificate File!"
 msgstr ""
 
-#: src/ServerConnection.cc:132
+#: ../src/ServerConnection.cc:132
 msgid "You have not configured the Private Key File!"
 msgstr ""
 
-#: src/ServerConnection.cc:140
+#: ../src/ServerConnection.cc:140
 msgid "You have not configured the Trusted CAs File!"
 msgstr ""
 
-#: src/ServerConnection.cc:149
+#: ../src/ServerConnection.cc:149
 msgid ""
 "There is something wrong with your Certificate File, Private Key File, or "
 "Trusted CAs File. ("
 msgstr ""
 
-#: src/ServerConnection.cc:165
+#: ../src/ServerConnection.cc:165
 msgid "You have not configured the Store Hostname!"
 msgstr ""
 
-#: src/ServerConnection.cc:173
+#: ../src/ServerConnection.cc:173
 msgid "You have not configured the Keys File!"
 msgstr ""
 
-#: src/ServerConnection.cc:205
+#: ../src/ServerConnection.cc:205
 #, c-format
 msgid "Wrong server version: expected %d but found %d"
 msgstr ""
 
-#: src/ServerConnection.cc:261
+#: ../src/ServerConnection.cc:261
 msgid "Error retrieving file from server: "
 msgstr ""
 
-#: src/ServerConnection.cc:294
+#: ../src/ServerConnection.cc:294
 msgid "Error listing directory on server"
 msgstr ""
 
-#: src/ServerConnection.cc:312
+#: ../src/ServerConnection.cc:312
 msgid "Error getting account information from server"
 msgstr ""
 
-#: src/ServerConnection.cc:330
+#: ../src/ServerConnection.cc:330
 #, fuzzy
 msgid "Error undeleting directory on server"
 msgstr "Verbinde mit dem Server"
 
-#: src/ServerConnection.cc:346
+#: ../src/ServerConnection.cc:346
 msgid "Error deleting directory on server"
 msgstr ""
 
-#: src/ServerConnection.cc:389
+#: ../src/ServerConnection.cc:389
 #, c-format
 msgid "Unknown protocol error: %d/%d"
 msgstr ""
 
-#: src/ServerConnection.cc:397
+#: ../src/ServerConnection.cc:397
 #, c-format
 msgid "Unknown error: %d/%d"
 msgstr ""
 
-#: src/BackupDaemonPanel.cc:66
-msgid "Client Location:"
-msgstr ""
-
-#: src/BackupDaemonPanel.cc:71
-msgid "Connection to Client:"
-msgstr ""
-
-#: src/BackupDaemonPanel.cc:76
-msgid "Connection Error:"
-msgstr ""
-
-#: src/BackupDaemonPanel.cc:81
-msgid "Client State:"
-msgstr ""
-
-#: src/BackupDaemonPanel.cc:98
-msgid "Start"
-msgstr ""
-
-#: src/BackupDaemonPanel.cc:101
-msgid "Stop"
-msgstr ""
-
-#: src/BackupDaemonPanel.cc:104
-msgid "Restart"
-msgstr ""
-
-#: src/BackupDaemonPanel.cc:107
-msgid "Kill"
-msgstr ""
-
-#: src/BackupDaemonPanel.cc:110
-msgid "Sync"
-msgstr ""
-
-#: src/BackupDaemonPanel.cc:113
-msgid "Reload"
-msgstr ""
-
-#: src/BackupDaemonPanel.cc:138
-#, c-format
-msgid "%s (pid %ld)"
-msgstr ""
-
-#: src/ClientConnection.cc:200
-#, c-format
-msgid "PID file not found (%s)"
-msgstr ""
-
-#: src/ClientConnection.cc:208
-#, c-format
-msgid "Unable to read PID file (%s)"
-msgstr ""
-
-#: src/ClientConnection.cc:217
-#, c-format
-msgid "Out of memory reading PID file (%s)"
-msgstr ""
-
-#: src/ClientConnection.cc:226
-#, c-format
-msgid "Short read on PID file (%s)"
-msgstr ""
-
-#: src/ClientConnection.cc:236
-#, c-format
-msgid "Invalid character code %d in PID file (%s)"
-msgstr ""
-
-#: src/ClientConnection.cc:253 src/ClientConnection.cc:750
-msgid "No such signal wxSIGTERM?"
-msgstr ""
-
-#: src/ClientConnection.cc:268
-#, c-format
-msgid "Failed to kill process %ld: unspecified error"
-msgstr ""
-
-#: src/ClientConnection.cc:293
-msgid "Client connect interrupted"
-msgstr ""
-
-#: src/ClientConnection.cc:336
-#, fuzzy
-msgid "DoConnect interrupted"
-msgstr "Verbinde mit dem Server"
-
-#: src/ClientConnection.cc:349
-msgid "Failed to read status from client"
-msgstr ""
-
-#: src/ClientConnection.cc:353
-msgid "Exception while reading status from client"
-msgstr ""
-
-#: src/ClientConnection.cc:360
-msgid "GetLine interrupted"
-msgstr ""
-
-#: src/ClientConnection.cc:397
-msgid "state "
-msgstr ""
-
-#: src/ClientConnection.cc:413
-#, c-format
-msgid "read from daemon: '%s'"
-msgstr ""
-
-#: src/ClientConnection.cc:660
-msgid "Client terminated, releasing process"
-msgstr ""
-
-#: src/ClientConnection.cc:663
-msgid "Client terminated but process already released!"
-msgstr ""
-
-#: src/ClientConnection.cc:671
-#, c-format
-msgid "Unexpected start notification while in state %s"
-msgstr ""
-
-#: src/ClientConnection.cc:688
-#, c-format
-msgid "Failed to start client process: exit code %d"
-msgstr ""
-
-#: src/ClientConnection.cc:701
-#, c-format
-msgid "Wrong state for %s: should be '%s' (%d) but currently '%s' (%d)"
-msgstr ""
-
-#: src/ClientConnection.cc:738
-msgid "Failed to get client PID"
-msgstr ""
-
-#: src/ClientConnection.cc:754
-msgid "Failed to kill process: permission denied"
-msgstr ""
-
-#: src/ClientConnection.cc:759
-#, c-format
-msgid "Failed to kill process: no such process %ld"
-msgstr ""
-
-#: src/ClientConnection.cc:764
-msgid "Failed to kill process: unspecified error"
-msgstr ""
-
-#: src/ClientConnection.cc:769
-msgid "Unknown error while trying to kill process"
-msgstr ""
-
-#: src/ComparePanel.cc:54
-msgid "Compare Panel"
-msgstr ""
-
-#: src/ComparePanel.cc:78
-msgid "Files to compare"
-msgstr "Zu vergleichende Dateien"
-
-#: src/ComparePanel.cc:82
-msgid "&All Locations"
-msgstr ""
-
-#: src/ComparePanel.cc:87
-msgid "&One Location:"
-msgstr ""
-
-#: src/ComparePanel.cc:98
-msgid "&Specified Directory:"
-msgstr ""
-
-#: src/ComparePanel.cc:155
-msgid "Start &Compare"
-msgstr ""
-
-#: src/ComparePanel.cc:231 src/GeneralPanel.cc:159
-msgid "Compare"
-msgstr "Vergleichen"
-
-#: src/ComparePanel.cc:233
-msgid "Compare Progress"
-msgstr "Vergleichsfortschritt"
-
-#: src/ParamPanel.cc:100 src/ParamPanel.cc:155 src/Property.cc:225
-msgid "0x"
-msgstr ""
-
-#: src/ParamPanel.cc:280
-msgid "|All Files|*"
-msgstr ""
-
-#: src/ParamPanel.cc:308
-msgid "Set Property"
-msgstr ""
-
-#: src/BackupPanel.cc:49
-msgid "Backup Panel"
-msgstr ""
-
-#: src/BackupPanel.cc:60
-msgid "&Files to back up"
-msgstr ""
-
-#: src/BackupPanel.cc:61
-msgid "Backup &Destination"
-msgstr ""
-
-#: src/BackupPanel.cc:71
-msgid "&Change Server"
-msgstr ""
-
-#: src/BackupPanel.cc:74
-msgid "&Edit List"
-msgstr ""
-
-#: src/BackupPanel.cc:75
-#, fuzzy
-msgid "&Start Backup"
-msgstr "Beginne Backup"
-
-#: src/BackupPanel.cc:82 src/GeneralPanel.cc:110
-msgid "Backup"
-msgstr "Backup"
-
-#: src/BackupPanel.cc:83
-msgid "Backup Files"
-msgstr "Dateiauswahl"
-
-#: src/BackupPanel.cc:84
-msgid "Backup Progress"
-msgstr "Backupfortschritt"
-
-#: src/BackupPanel.cc:102
-#, c-format
-msgid "Account 0x%08x"
-msgstr ""
-
-#: src/BackupPanel.cc:104
-msgid "Unknown account number"
-msgstr ""
-
-#: src/BackupPanel.cc:107
-msgid " on "
-msgstr ""
-
-#: src/BackupPanel.cc:111
-#, c-format
-msgid "server %s"
-msgstr ""
-
-#: src/BackupPanel.cc:114
-msgid "unknown server"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:73
-msgid "Backup Progress Panel"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:93
-msgid "Starting Backup"
-msgstr "Beginne Backup"
-
-#: src/BackupProgressPanel.cc:94
-msgid "Stop Backup"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:125
-msgid "Error: cannot finish backup: out of space on server"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:127 src/BackupProgressPanel.cc:138
-#: src/BackupProgressPanel.cc:155 src/BackupProgressPanel.cc:164
-#: src/BackupProgressPanel.cc:172
-msgid "Backup Failed"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:131 src/BackupProgressPanel.cc:132
-#: src/TestBackup.cc:1001
-msgid "Backup Finished"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:140
-#, c-format
-msgid ""
-"Error: cannot start backup: Failed to connect to server\n"
-"\n"
-"%s"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:149
-msgid "Backup Interrupted"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:151
-msgid "Backup interrupted by user"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:157 src/BackupProgressPanel.cc:166
-#, c-format
-msgid "Backup Failed: %s"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:173
-msgid "Backup Failed: caught unknown exception"
-msgstr ""
-
-#: src/BackupProgressPanel.cc:183 src/RestoreProgressPanel.cc:374
-#: src/ProgressPanel.cc:74
-msgid "Idle (nothing to do)"
-msgstr "Leerlauf"
-
-#: src/BackupProgressPanel.cc:233
-msgid "Backing up files"
-msgstr "Sichere Dateien"
-
-#: src/GeneralPanel.cc:61
-msgid "General Panel"
-msgstr ""
-
-#: src/GeneralPanel.cc:80
-msgid "Setup"
-msgstr "Konfiguration"
-
-#: src/GeneralPanel.cc:84
-msgid "Configure Boxi for a backup store provider"
-msgstr "Boxi f??r einen Backupanbieter konfigurieren"
-
-#: src/GeneralPanel.cc:88
-msgid "&Wizard..."
-msgstr "Assistent..."
-
-#: src/GeneralPanel.cc:93
-msgid "&Advanced..."
-msgstr "Details..."
-
-#: src/GeneralPanel.cc:114
-msgid "Copy files from this computer to the backup server"
-msgstr "Dateien auf einem Backupserver sichern"
-
-#: src/GeneralPanel.cc:118
-msgid "&Backup"
-msgstr "Backup"
-
-#: src/GeneralPanel.cc:135 src/RestorePanel.cc:176
-msgid "Restore"
-msgstr "Wiederherstellung"
-
-#: src/GeneralPanel.cc:139
-msgid "Copy files from the backup server to this computer"
-msgstr "Dateien von einem Backupserver auf diesen Rechner zur??ckspielen"
-
-#: src/GeneralPanel.cc:143
-msgid "&Restore"
-msgstr "Wiederherstellung"
-
-#: src/GeneralPanel.cc:163
-msgid "Compare files on the backup server with this computer"
-msgstr "Dateien mit dem Backupserver vergleichen"
-
-#: src/GeneralPanel.cc:167
-msgid "&Compare"
-msgstr "Vergleich"
-
-#: src/GeneralPanel.cc:174
-msgid "General"
-msgstr "Allgemein"
-
-#: src/SetupWizard.cc:54
+#: ../src/SetupWizard.cc:54
 msgid "No page text defined"
 msgstr ""
 
-#: src/SetupWizard.cc:104
+#: ../src/SetupWizard.cc:104
 msgid ""
 "\n"
 "\n"
 "The full error code is: "
 msgstr ""
 
-#: src/SetupWizard.cc:115
+#: ../src/SetupWizard.cc:115
 msgid ""
 "<html><body><h1>Boxi Setup Wizard</h1><p>This wizard can help you configure "
 "Boxi for a new server, or change your settings, as simply as possible.</"
@@ -1195,7 +1744,7 @@ msgid ""
 "b> if you don't want to reconfigure Boxi.</p></body></html>"
 msgstr ""
 
-#: src/SetupWizard.cc:135
+#: ../src/SetupWizard.cc:135
 msgid ""
 "<html><body><h1>Account Details</h1><p>To use a particular server, you must "
 "contact the server's operator and ask them for an account. If they accept, "
@@ -1203,15 +1752,15 @@ msgid ""
 "here.</p></body></html>"
 msgstr ""
 
-#: src/SetupWizard.cc:145
+#: ../src/SetupWizard.cc:145
 msgid "Store hostname:"
 msgstr ""
 
-#: src/SetupWizard.cc:154
+#: ../src/SetupWizard.cc:154
 msgid "Account number:"
 msgstr ""
 
-#: src/SetupWizard.cc:208
+#: ../src/SetupWizard.cc:208
 #, c-format
 msgid ""
 "Generating your new private key (2048 bits).\n"
@@ -1220,59 +1769,58 @@ msgid ""
 "(%d potential primes checked)"
 msgstr ""
 
-#: src/SetupWizard.cc:299
+#: ../src/SetupWizard.cc:299
 #, c-format
 msgid "Existing %s"
 msgstr ""
 
-#: src/SetupWizard.cc:305
+#: ../src/SetupWizard.cc:305
 #, c-format
 msgid "New %s"
 msgstr ""
 
-#: src/SetupWizard.cc:314
+#: ../src/SetupWizard.cc:314
 #, c-format
 msgid "%s file location:"
 msgstr ""
 
-#: src/SetupWizard.cc:324
+#: ../src/SetupWizard.cc:324
 #, c-format
 msgid "%s (%s)|%s"
 msgstr ""
 
-#: src/SetupWizard.cc:328
-#, fuzzy, c-format
+#: ../src/SetupWizard.cc:328
+#, c-format
 msgid "Open %s File"
-msgstr "Datei ??ffnen"
+msgstr "Datei %s öffnen"
 
-#: src/SetupWizard.cc:362
+#: ../src/SetupWizard.cc:362
 msgid "You must specify a location for the file!"
 msgstr ""
 
-#: src/SetupWizard.cc:367
+#: ../src/SetupWizard.cc:367
 msgid "The specified file is a directory."
 msgstr ""
 
-#: src/SetupWizard.cc:394
-#, fuzzy
+#: ../src/SetupWizard.cc:394
 msgid "The specified file was not found."
-msgstr "%s nicht gefunden"
+msgstr "Datei nicht gefunden"
 
-#: src/SetupWizard.cc:401
+#: ../src/SetupWizard.cc:401
 msgid "The specified file is not readable."
 msgstr ""
 
-#: src/SetupWizard.cc:413
+#: ../src/SetupWizard.cc:413
 msgid ""
 "The directory where you want to create the file does not exist, so the file "
 "cannot be created."
 msgstr ""
 
-#: src/SetupWizard.cc:423
+#: ../src/SetupWizard.cc:423
 msgid "The specified file is not writable."
 msgstr ""
 
-#: src/SetupWizard.cc:431
+#: ../src/SetupWizard.cc:431
 msgid ""
 "The specified file already exists!\n"
 "\n"
@@ -1282,13 +1830,13 @@ msgid ""
 "This operation CANNOT be undone!"
 msgstr ""
 
-#: src/SetupWizard.cc:449
+#: ../src/SetupWizard.cc:449
 msgid ""
 "The directory where you want to create the file is read-only, so the file "
 "cannot be created."
 msgstr ""
 
-#: src/SetupWizard.cc:464
+#: ../src/SetupWizard.cc:464
 msgid ""
 "<html><body><h1>Private Key</h1><p>You need a private key to prove your "
 "identity to the server. The private key is stored in a file on your hard "
@@ -1300,54 +1848,54 @@ msgid ""
 "tell Boxi where the new key file should be stored.</p></body></html>"
 msgstr ""
 
-#: src/SetupWizard.cc:476
+#: ../src/SetupWizard.cc:476
 msgid "Private Key"
 msgstr ""
 
-#: src/SetupWizard.cc:476
+#: ../src/SetupWizard.cc:476
 msgid "*-key.pem"
 msgstr ""
 
-#: src/SetupWizard.cc:496
+#: ../src/SetupWizard.cc:496
 msgid "Failed to create an OpenSSL BN object"
 msgstr ""
 
-#: src/SetupWizard.cc:504
+#: ../src/SetupWizard.cc:504
 msgid "Failed to create an OpenSSL RSA object"
 msgstr ""
 
-#: src/SetupWizard.cc:533
+#: ../src/SetupWizard.cc:533
 msgid "Failed to create an OpenSSL BIO object for key output"
 msgstr ""
 
-#: src/SetupWizard.cc:553
+#: ../src/SetupWizard.cc:553
 msgid "Failed to open key file using an OpenSSL BIO"
 msgstr ""
 
-#: src/SetupWizard.cc:562
+#: ../src/SetupWizard.cc:562
 msgid ""
 "Your system is not configured with a random number generator. It may be "
 "possible for an attacker to guess your keys and gain access to your data. Do "
 "you want to continue anyway?"
 msgstr ""
 
-#: src/SetupWizard.cc:575
+#: ../src/SetupWizard.cc:575
 msgid "Failed to set key type to RSA F4"
 msgstr ""
 
-#: src/SetupWizard.cc:580
+#: ../src/SetupWizard.cc:580
 msgid "Boxi: Generating Private Key"
 msgstr ""
 
-#: src/SetupWizard.cc:590
+#: ../src/SetupWizard.cc:590
 msgid "Failed to generate an RSA key"
 msgstr ""
 
-#: src/SetupWizard.cc:600
+#: ../src/SetupWizard.cc:600
 msgid "Failed to write the key to the specified file"
 msgstr ""
 
-#: src/SetupWizard.cc:621
+#: ../src/SetupWizard.cc:621
 msgid ""
 "<html><body><h1>Certificate Request</h1><p>You must send a certificate "
 "request to the server operator.</p><p>If you already have a certificate "
@@ -1359,117 +1907,117 @@ msgid ""
 "stored.</p></body></html>"
 msgstr ""
 
-#: src/SetupWizard.cc:632
+#: ../src/SetupWizard.cc:632
 msgid "Certificate Request"
 msgstr ""
 
-#: src/SetupWizard.cc:632
+#: ../src/SetupWizard.cc:632
 msgid "*-csr.pem"
 msgstr ""
 
-#: src/SetupWizard.cc:648
+#: ../src/SetupWizard.cc:648
 msgid "The account number is not set, but it should be!"
 msgstr ""
 
-#: src/SetupWizard.cc:662
+#: ../src/SetupWizard.cc:662
 msgid "The private key filename is not set, but it should be!"
 msgstr ""
 
-#: src/SetupWizard.cc:669
+#: ../src/SetupWizard.cc:669
 msgid ".pem"
 msgstr ""
 
-#: src/SetupWizard.cc:684
+#: ../src/SetupWizard.cc:684
 #, c-format
 msgid "%s-csr.pem"
 msgstr ""
 
-#: src/SetupWizard.cc:694
+#: ../src/SetupWizard.cc:694
 msgid "Failed to create an OpenSSL BIO to read the certificate request"
 msgstr ""
 
-#: src/SetupWizard.cc:713
+#: ../src/SetupWizard.cc:713
 msgid "Failed to set the BIO filename to the certificate request file"
 msgstr ""
 
-#: src/SetupWizard.cc:722
+#: ../src/SetupWizard.cc:722
 msgid "Failed to read the certificate request file"
 msgstr ""
 
-#: src/SetupWizard.cc:740
+#: ../src/SetupWizard.cc:740
 msgid "The private key filename is not set, but it should be"
 msgstr ""
 
-#: src/SetupWizard.cc:779
+#: ../src/SetupWizard.cc:779
 #, c-format
 msgid ""
 "The certificate request does not match your account number. The common name "
 "of the certificate request should be '%s', but is actually '%s'."
 msgstr ""
 
-#: src/SetupWizard.cc:794
+#: ../src/SetupWizard.cc:794
 msgid ""
 "Failed to verify signature on certificate request. Perhaps the private key "
 "does not match the certificate request?"
 msgstr ""
 
-#: src/SetupWizard.cc:849
+#: ../src/SetupWizard.cc:849
 msgid "Failed to set the OpenSSL string mask to 'nombstr'"
 msgstr ""
 
-#: src/SetupWizard.cc:887
+#: ../src/SetupWizard.cc:887
 msgid "Failed to create a new OpenSSL request object"
 msgstr ""
 
-#: src/SetupWizard.cc:906
+#: ../src/SetupWizard.cc:906
 msgid "Failed to set version in OpenSSL request object"
 msgstr ""
 
-#: src/SetupWizard.cc:915
+#: ../src/SetupWizard.cc:915
 msgid "Failed to find node ID of X.509 CommonName attribute"
 msgstr ""
 
-#: src/SetupWizard.cc:935
+#: ../src/SetupWizard.cc:935
 msgid "Failed to add common name to certificate request"
 msgstr ""
 
-#: src/SetupWizard.cc:943
+#: ../src/SetupWizard.cc:943
 msgid "Failed to set public key of certificate request"
 msgstr ""
 
-#: src/SetupWizard.cc:983
+#: ../src/SetupWizard.cc:983
 msgid "Failed to find OpenSSL digest algorithm SHA1"
 msgstr ""
 
-#: src/SetupWizard.cc:990
+#: ../src/SetupWizard.cc:990
 msgid "Failed to sign certificate request"
 msgstr ""
 
-#: src/SetupWizard.cc:997
+#: ../src/SetupWizard.cc:997
 msgid "Failed to verify signature on certificate request"
 msgstr ""
 
-#: src/SetupWizard.cc:1008
+#: ../src/SetupWizard.cc:1008
 msgid "Failed to set certificate request output filename"
 msgstr ""
 
-#: src/SetupWizard.cc:1015
+#: ../src/SetupWizard.cc:1015
 msgid "Failed to write certificate request file"
 msgstr ""
 
-#: src/SetupWizard.cc:1042
+#: ../src/SetupWizard.cc:1042
 msgid "Certificate file:"
 msgstr ""
 
-#: src/SetupWizard.cc:1056
+#: ../src/SetupWizard.cc:1056
 msgid "CA file:"
 msgstr ""
 
-#: src/SetupWizard.cc:1065
+#: ../src/SetupWizard.cc:1065
 msgid "CA files (serverCA.pem)|serverCA.pem"
 msgstr ""
 
-#: src/SetupWizard.cc:1093
+#: ../src/SetupWizard.cc:1093
 #, c-format
 msgid ""
 "<html><body><h1>Certificate File</h1><p>You need a certificate to connect to "
@@ -1482,31 +2030,31 @@ msgid ""
 "using the boxes below.</p>"
 msgstr ""
 
-#: src/SetupWizard.cc:1127
+#: ../src/SetupWizard.cc:1127
 msgid "The certificate file is not set"
 msgstr ""
 
-#: src/SetupWizard.cc:1134
+#: ../src/SetupWizard.cc:1134
 msgid "The certificate file does not exist"
 msgstr ""
 
-#: src/SetupWizard.cc:1141
+#: ../src/SetupWizard.cc:1141
 msgid "The certificate file is not readable"
 msgstr ""
 
-#: src/SetupWizard.cc:1156
+#: ../src/SetupWizard.cc:1156
 msgid "The CA file is not set"
 msgstr ""
 
-#: src/SetupWizard.cc:1163
+#: ../src/SetupWizard.cc:1163
 msgid "The CA file does not exist"
 msgstr ""
 
-#: src/SetupWizard.cc:1170
+#: ../src/SetupWizard.cc:1170
 msgid "The CA file is not readable"
 msgstr ""
 
-#: src/SetupWizard.cc:1203
+#: ../src/SetupWizard.cc:1203
 msgid ""
 "<html><body><h1>Certificate</h1><p>You must have a certificate to tell the "
 "server operator who you are. The certificate contains your account number "
@@ -1522,15 +2070,15 @@ msgid ""
 "body></html>"
 msgstr ""
 
-#: src/SetupWizard.cc:1225
+#: ../src/SetupWizard.cc:1225
 msgid "Existing Certificate"
 msgstr ""
 
-#: src/SetupWizard.cc:1231
+#: ../src/SetupWizard.cc:1231
 msgid "New Certificate Request"
 msgstr ""
 
-#: src/SetupWizard.cc:1260
+#: ../src/SetupWizard.cc:1260
 msgid ""
 "<html><body><h1>Encryption Key</h1><p>You need an encryption key to protect "
 "your backups. The encryption key is stored in a file on your hard disk.</"
@@ -1544,37 +2092,37 @@ msgid ""
 "tell Boxi where the new key file should be stored.</p></body></html>"
 msgstr ""
 
-#: src/SetupWizard.cc:1275
+#: ../src/SetupWizard.cc:1275
 msgid "Encryption Key"
 msgstr ""
 
-#: src/SetupWizard.cc:1275
+#: ../src/SetupWizard.cc:1275
 msgid "*-FileEncKeys.raw"
 msgstr ""
 
-#: src/SetupWizard.cc:1310
+#: ../src/SetupWizard.cc:1310
 #, c-format
 msgid "%s-FileEncKeys.raw"
 msgstr ""
 
-#: src/SetupWizard.cc:1333
+#: ../src/SetupWizard.cc:1333
 msgid "Failed to create an OpenSSL BIO to write the new encryption key"
 msgstr ""
 
-#: src/SetupWizard.cc:1344
+#: ../src/SetupWizard.cc:1344
 msgid ""
 "Failed to set the filename of the OpenSSL BIO to write the new encryption key"
 msgstr ""
 
-#: src/SetupWizard.cc:1354
+#: ../src/SetupWizard.cc:1354
 msgid "Failed to generate random data for the new encryption key"
 msgstr ""
 
-#: src/SetupWizard.cc:1363
+#: ../src/SetupWizard.cc:1363
 msgid "Failed to write random data to the new encryption key file"
 msgstr ""
 
-#: src/SetupWizard.cc:1387
+#: ../src/SetupWizard.cc:1387
 msgid ""
 "<html><body><h1>Back Up Your Keys</h1><p>Your backups will be protected by "
 "<strong>strong encryption</strong>. Without the key, <strong>nobody</strong> "
@@ -1588,17 +2136,17 @@ msgid ""
 "strong></p></body></html>"
 msgstr ""
 
-#: src/SetupWizard.cc:1404
+#: ../src/SetupWizard.cc:1404
 msgid "I have backed up my keys in two locations."
 msgstr ""
 
-#: src/SetupWizard.cc:1421
+#: ../src/SetupWizard.cc:1421
 msgid ""
 "You must check the box to say that you have backed up your keys before "
 "proceeding"
 msgstr ""
 
-#: src/SetupWizard.cc:1443
+#: ../src/SetupWizard.cc:1443
 msgid ""
 "<html><body><h1>Data Directory</h1><p>You must choose a directory where Box "
 "Backup and Boxi can keep temporary files with information about their state, "
@@ -1610,37 +2158,36 @@ msgid ""
 "p></body></html>"
 msgstr ""
 
-#: src/SetupWizard.cc:1460
-#, fuzzy
+#: ../src/SetupWizard.cc:1460
 msgid "Data directory:"
-msgstr "Bitte w??hlen Sie ein Verzeichnis"
+msgstr "Bitte wählen Sie ein Verzeichnis"
 
-#: src/SetupWizard.cc:1503 src/SetupWizard.cc:1526
+#: ../src/SetupWizard.cc:1503 ../src/SetupWizard.cc:1526
 msgid "The data directory is not set"
 msgstr ""
 
-#: src/SetupWizard.cc:1533
+#: ../src/SetupWizard.cc:1533
 msgid "The specified data directory already exists as a file"
 msgstr ""
 
-#: src/SetupWizard.cc:1542
+#: ../src/SetupWizard.cc:1542
 msgid ""
 "The specified data directory already exists and is not readable. Please make "
 "it readable and writable, or choose another one."
 msgstr ""
 
-#: src/SetupWizard.cc:1552
+#: ../src/SetupWizard.cc:1552
 msgid ""
 "The specified data directory already exists and is not writable. Please make "
 "it writable, or choose another one."
 msgstr ""
 
-#: src/SetupWizard.cc:1573 src/SetupWizard.cc:1655
+#: ../src/SetupWizard.cc:1573 ../src/SetupWizard.cc:1655
 #, c-format
 msgid "The specified data directory (%s) is not accessible (%s)"
 msgstr ""
 
-#: src/SetupWizard.cc:1583 src/SetupWizard.cc:1665
+#: ../src/SetupWizard.cc:1583 ../src/SetupWizard.cc:1665
 #, c-format
 msgid ""
 "The specified data directory (%s) already exists, and is accessible to other "
@@ -1650,418 +2197,836 @@ msgid ""
 "or choose a different one"
 msgstr ""
 
-#: src/SetupWizard.cc:1604
+#: ../src/SetupWizard.cc:1604
 #, c-format
 msgid ""
 "The specified data directory (%s) does not exist, and cannot be created, "
 "because the parent directory (%s) does not exist"
 msgstr ""
 
-#: src/SetupWizard.cc:1636
+#: ../src/SetupWizard.cc:1636
 #, c-format
 msgid ""
 "The specified data directory (%s) does not exist, and cannot be created, "
 "because you do not have permission to write to the parent directory (%s)"
 msgstr ""
 
-#: src/SetupWizard.cc:1681
+#: ../src/SetupWizard.cc:1681
 msgid "The specified data directory does not exist, and could not be created"
 msgstr ""
 
-#: src/SetupWizard.cc:1692
+#: ../src/SetupWizard.cc:1692
 msgid "Boxi Setup Wizard"
 msgstr "Assistent"
 
-#: src/RestorePanel.cc:69
-#, fuzzy
-msgid "Restore Panel"
-msgstr "Wiederherstellung"
-
-#: src/RestorePanel.cc:76
-#, fuzzy
-msgid "&Files to restore"
-msgstr "Zu vergleichende Dateien"
-
-#: src/RestorePanel.cc:77
-msgid "Restore &destination"
+#: ../src/TestBackup.cc:559 ../src/TestCompare.cc:309
+#: ../src/TestRestore.cc:164
+msgid "../test/data/spacetest1.zip"
 msgstr ""
 
-#: src/RestorePanel.cc:90
-msgid "&New location:"
+#: ../src/TestBackup.cc:588 ../src/TestBackup.cc:596
+#: ../src/TestBackupConfig.cc:680 ../src/TestBackupConfig.cc:689
+#: ../src/TestBackupConfig2.cc:884 ../src/TestBackupConfig2.cc:885
+msgid ".*"
 msgstr ""
 
-#: src/RestorePanel.cc:104
-msgid "Restore &to date:"
+#: ../src/TestBackup.cc:605 ../src/TestRestore.cc:253
+msgid "spacetest"
 msgstr ""
 
-#: src/RestorePanel.cc:111
-msgid "&at"
+#: ../src/TestBackup.cc:646
+msgid "../test/data/spacetest2.zip"
 msgstr ""
 
-#: src/RestorePanel.cc:120
-msgid "&:"
+#: ../src/TestBackup.cc:652
+msgid "spacetest/d1/f3"
 msgstr ""
 
-#: src/RestorePanel.cc:138
-#, fuzzy
-msgid "&Select Files"
+#: ../src/TestBackup.cc:654
+msgid "spacetest/d3/d4/"
 msgstr ""
-"Auch lokal gel??schte Dateien anzeigen, die aber noch auf dem Backup-Server "
-"existieren"
 
-#: src/RestorePanel.cc:139
-#, fuzzy
-msgid "Start &Restore"
-msgstr "Beginne Wiederherstellung"
+#: ../src/TestBackup.cc:681 ../src/TestCompare.cc:316
+#: ../src/TestRestore.cc:171
+msgid "../test/data/test_base.zip"
+msgstr ""
 
-#: src/RestorePanel.cc:168
+#: ../src/TestBackup.cc:694 ../src/TestBackup.cc:840
+msgid "x1/dsfdsfs98.fd"
+msgstr ""
+
+#: ../src/TestBackup.cc:700 ../src/TestBackup.cc:729 ../src/TestBackup.cc:735
+msgid "symlink-to-dir"
+msgstr ""
+
+#: ../src/TestBackup.cc:709 ../src/TestRestore.cc:263
+msgid "f45.df"
+msgstr ""
+
+#: ../src/TestBackup.cc:716
+msgid "EXTRA STUFF"
+msgstr ""
+
+#: ../src/TestBackup.cc:737
+msgid "x1/dir-to-file"
+msgstr ""
+
+#: ../src/TestBackup.cc:741
+msgid "contents"
+msgstr ""
+
+#: ../src/TestBackup.cc:782
+msgid "contents2"
+msgstr ""
+
+#: ../src/TestBackup.cc:838 ../src/TestBackup.cc:1038
+#: ../src/TestRestore.cc:260 ../src/TestRestore.cc:288
+#: ../src/TestRestore.cc:365 ../src/TestRestore.cc:368
+#: ../src/TestRestore.cc:407
+msgid "df9834.dsf"
+msgstr ""
+
+#: ../src/TestBackup.cc:860 ../src/TestCompare.cc:321
+#: ../src/TestRestore.cc:176
+msgid "../test/data/test2.zip"
+msgstr ""
+
+#: ../src/TestBackup.cc:872
+msgid "sub23/rand.h"
+msgstr ""
+
+#: ../src/TestBackup.cc:876
+msgid "MODIFIED!\n"
+msgstr ""
+
+#: ../src/TestBackup.cc:896 ../src/TestCompare.cc:330
+#: ../src/TestRestore.cc:185
+msgid "../test/data/testexclude.zip"
+msgstr ""
+
+#: ../src/TestBackup.cc:976
+msgid "sub23/read-fail-test-dir"
+msgstr ""
+
+#: ../src/TestBackup.cc:980
+msgid "read-fail-test-file"
+msgstr ""
+
+#: ../src/TestBackup.cc:993
 #, c-format
-msgid "%s %s"
+msgid "Failed to send file '%s': Access denied"
 msgstr ""
 
-#: src/RestorePanel.cc:168
-msgid "+"
-msgstr ""
-
-#: src/RestorePanel.cc:168
-msgid "-"
-msgstr ""
-
-#: src/RestorePanel.cc:177
-msgid "Restore Files"
-msgstr "Dateiauswahl"
-
-#: src/RestorePanel.cc:178
-msgid "Restore Progress"
-msgstr "Wiederherstellungsfortschritt"
-
-#: src/RestorePanel.cc:194
-msgid "Cannot start restore: the destination path is not set"
-msgstr ""
-
-#: src/RestorePanel.cc:202
-msgid "Cannot start restore: the destination path already exists"
-msgstr ""
-
-#: src/RestoreFilesPanel.cc:338 src/TestRestore.cc:236
-msgid "/ (server root)"
-msgstr ""
-
-#: src/RestoreFilesPanel.cc:399
-#, fuzzy
-msgid "RestoreFilesPanel"
-msgstr "Stelle Dateien wieder her"
-
-#: src/RestoreFilesPanel.cc:519
+#: ../src/TestBackup.cc:997
 #, c-format
-msgid "Click at %d,%d"
+msgid "Failed to list directory '%s': Access denied"
 msgstr ""
 
-#: src/RestoreFilesPanel.cc:528
-msgid "Icon clicked"
+#: ../src/TestBackup.cc:1017
+msgid "continuous-update"
 msgstr ""
 
-#: src/RestoreFilesPanel.cc:535
-#, c-format
-msgid "Flags are: %d"
+#: ../src/TestBackup.cc:1034 ../src/TestRestore.cc:255
+msgid "x1"
 msgstr ""
 
-#: src/FileTree.cc:80
-#, fuzzy
-msgid "FileTree"
-msgstr "&Datei"
-
-#: src/FileTree.cc:149 src/TestBackupConfig.cc:419
-msgid ":\\"
+#: ../src/TestBackup.cc:1047 ../src/TestRestore.cc:262
+msgid "f1.dat"
 msgstr ""
 
-#: src/MainFrame.cc:63
-msgid "Boxi"
+#: ../src/TestBackup.cc:1061
+msgid "attrib +r "
 msgstr ""
 
-#: src/MainFrame.cc:88
-msgid "&New...\tCtrl-N"
-msgstr "&Neu\tCtrl-N"
-
-#: src/MainFrame.cc:89
-msgid "New client config file"
-msgstr "Neue Client-Konfiguration anlegen"
-
-#: src/MainFrame.cc:90
-msgid "&Open...\tCtrl-O"
-msgstr "&??ffnen...\tCtrl-O"
-
-#: src/MainFrame.cc:91
-msgid "Open client config file"
-msgstr "Client-Konfigurationsdatei ??ffnen"
-
-#: src/MainFrame.cc:92
-msgid "&Save...\tCtrl-S"
-msgstr "&Speichern\tCtrl-S"
-
-#: src/MainFrame.cc:93
-msgid "Save current configuration"
-msgstr "Aktuelle Client-Konfiguration speichern"
-
-#: src/MainFrame.cc:94
-msgid "Save &As...\tCtrl-A"
-msgstr "Speichern &unter...\tCtrl-A"
-
-#: src/MainFrame.cc:95
-msgid "Save current config file with a new name"
-msgstr "Aktuelle Client-Konfiguration unter neuem Namen speichern"
-
-#: src/MainFrame.cc:96
-msgid "E&xit\tAlt-F4"
-msgstr "Be&enden\tAlt-F4"
-
-#: src/MainFrame.cc:97
-msgid "Quit Boxi"
-msgstr "Boxi beenden"
-
-#: src/MainFrame.cc:101
-msgid "Show &Old Files\tCtrl-L"
-msgstr "A&lte Dateien anzeigen\tCtrl-L"
-
-#: src/MainFrame.cc:102
-msgid "Show old versions of files"
-msgstr ""
-"Auch alte Versionen der Dateien anzeigen, die noch auf dem Backup-Server "
-"existieren"
-
-#: src/MainFrame.cc:104
-msgid "Show &Deleted Files\tCtrl-D"
-msgstr "Gel??schte &Dateien anzeigen\tCtrl-D"
-
-#: src/MainFrame.cc:105
-msgid "Show deleted files"
-msgstr ""
-"Auch lokal gel??schte Dateien anzeigen, die aber noch auf dem Backup-Server "
-"existieren"
-
-#: src/MainFrame.cc:110
-#, fuzzy
-msgid "&About...\tF1"
-msgstr "&??ber Boxi...\tF1"
-
-#: src/MainFrame.cc:111
-msgid "Show information about Boxi"
-msgstr "Informationen ??ber Boxi anzeigen"
-
-#: src/MainFrame.cc:114
-msgid "&File"
-msgstr "&Datei"
-
-#: src/MainFrame.cc:115
-msgid "&View"
-msgstr "&Ansicht"
-
-#: src/MainFrame.cc:116
-msgid "&Help"
+#: ../src/TestBackup.cc:1074
+msgid "attrib -r "
 msgstr ""
 
-#: src/MainFrame.cc:141
-msgid ""
-"Box Backup client configuration file|bbackupd.conf|Configuration files|*."
-"conf|All files|*.*"
-msgstr ""
-"Client-Konfigurationsdatei|bbackupd.conf|Konfigurationsdateien|*.conf|Alle "
-"Dateien|*.*"
-
-#: src/MainFrame.cc:149
-msgid "Open file"
-msgstr "Datei ??ffnen"
-
-#: src/MainFrame.cc:149 src/MainFrame.cc:259 src/TestConfig.cc:71
-#: src/TestWithServer.cc:454 src/TestBackupConfig2.cc:857
-msgid "bbackupd.conf"
+#: ../src/TestBackup.cc:1131 ../src/TestCompare.cc:335
+#: ../src/TestRestore.cc:190
+msgid "../test/data/test3.zip"
 msgstr ""
 
-#: src/MainFrame.cc:180
-#, c-format
-msgid ""
-"Failed to load configuration file (%s):\n"
-"\n"
-msgstr ""
-"Konnte Konfigurationsdatei nicht ??ffnen (%s):\n"
-"\n"
-
-#: src/MainFrame.cc:192
-#, c-format
-msgid ""
-"Failed to load configuration file (%s):\n"
-"\n"
-"%s"
+#: ../src/TestBackup.cc:1142 ../src/TestRestore.cc:458
+msgid "sub23/dhsfdss"
 msgstr ""
 
-#: src/MainFrame.cc:220 src/MainFrame.cc:245
-msgid ""
-"The configuration file has errors.\n"
-"Are you sure you want to save it?"
-msgstr ""
-"Die Konfigurationsdatei ist fehlerhaft.\n"
-"Wollen Sie sie trotzdem speichern?"
-
-#: src/MainFrame.cc:259 src/TestConfig.cc:71
-msgid "Save file"
-msgstr "Datei speichern"
-
-#: src/MainFrame.cc:281
-msgid ""
-"The configuration file has not been saved.\n"
-"Do you want to save your changes?"
-msgstr ""
-"Die Konfigurationsdatei wurde noch nicht gespeichert.\n"
-"Wollen Sie Ihre ??nderungen speichern?"
-
-#: src/MainFrame.cc:326
-msgid "Choose a Directory"
-msgstr "Bitte w??hlen Sie ein Verzeichnis"
-
-#: src/MainFrame.cc:336 src/MainFrame.cc:380
-msgid "Boxi "
-msgstr "Boxi"
-
-#: src/MainFrame.cc:347
-msgid "About Boxi"
-msgstr "&??ber Boxi...\tF1"
-
-#: src/MainFrame.cc:354
-#, c-format
-msgid "%d x %d"
+#: ../src/TestBackup.cc:1144
+msgid "renamed-dir"
 msgstr ""
 
-#: src/MainFrame.cc:372
-msgid "[untitled]"
-msgstr "[unbenannt]"
-
-#: src/MainFrame.cc:381
-msgid "*"
+#: ../src/TestBackup.cc:1162 ../src/TestRestore.cc:259
+msgid "df324"
 msgstr ""
 
-#: src/TestFrame.cc:451
-msgid ":"
+#: ../src/TestBackup.cc:1164
+msgid "df324-ren"
 msgstr ""
 
-#: src/TestFrame.cc:457
-msgid "("
+#: ../src/TestBackup.cc:1169
+msgid "sub23/find2perl"
 msgstr ""
 
-#: src/TestFrame.cc:464 src/TestFrame.cc:477 src/TestFrame.cc:511
-#: src/TestWithServer.cc:299 src/TestWithServer.cc:303
-#: src/TestWithServer.cc:307 src/TestWithServer.cc:332
-#: src/TestWithServer.cc:338 src/TestWithServer.cc:347
-#: src/TestWithServer.cc:356 src/TestWithServer.cc:363
-#: src/TestWithServer.cc:370
-msgid "\n"
+#: ../src/TestBackup.cc:1171
+msgid "find2perl-ren"
 msgstr ""
 
-#: src/TestFrame.cc:490 src/ProgressPanel.cc:221
-msgid "Fatal: "
+#: ../src/TestBackup.cc:1183
+msgid "sub23/in-the-future"
 msgstr ""
 
-#: src/TestFrame.cc:492 src/ProgressPanel.cc:223
-msgid "Error: "
-msgstr "Fehler"
-
-#: src/TestFrame.cc:494 src/ProgressPanel.cc:225
-msgid "Warning: "
-msgstr "Warnung: "
-
-#: src/TestFrame.cc:496 src/ProgressPanel.cc:227
-msgid "Message: "
+#: ../src/TestBackup.cc:1186
+msgid "Back to the future!\n"
 msgstr ""
 
-#: src/TestFrame.cc:498 src/ProgressPanel.cc:229
-msgid "Status: "
+#: ../src/TestBackup.cc:1215 ../src/TestRestore.cc:348
+msgid "restore"
 msgstr ""
 
-#: src/TestFrame.cc:500 src/ProgressPanel.cc:231
-msgid "Info: "
-msgstr "Info:"
-
-#: src/TestFrame.cc:502 src/ProgressPanel.cc:233
-msgid "Debug: "
+#: ../src/TestBackup.cc:1226 ../src/TestBackupConfig.cc:341
+#: ../src/TestBackupConfig.cc:865 ../src/TestBackupConfig2.cc:858
+#: ../src/TestRestore.cc:245 ../src/TestRestore.cc:362
+#: ../src/TestRestore.cc:688 ../src/TestRestore.cc:853
+#: ../src/TestWithServer.cc:396 ../src/TestWithServer.cc:774
+msgid "testdata"
 msgstr ""
 
-#: src/TestFrame.cc:504 src/ProgressPanel.cc:235
-msgid "Trace: "
+#: ../src/TestBackupConfig.cc:137 ../src/TestWizard.cc:440
+msgid "boxi-tempdir-"
 msgstr ""
 
-#: src/TestFrame.cc:506 src/ProgressPanel.cc:237
-#, c-format
-msgid "Unknown (level %d): "
+#: ../src/TestBackupConfig.cc:156 ../src/TestWithServer.cc:409
+msgid "../test/config/bbackupd.conf"
 msgstr ""
 
-#: src/TestConfig.cc:56 src/TestWizard.cc:435
+#: ../src/TestBackupConfig.cc:321 ../src/TestBackupConfig.cc:323
+msgid "/ -> root"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:349 ../src/TestBackupConfig.cc:466
+msgid "depth1"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:353 ../src/TestBackupConfig.cc:462
+msgid "another"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:357 ../src/TestBackupConfig.cc:482
+msgid "file1"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:360 ../src/TestBackupConfig.cc:478
+msgid "dir1"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:364 ../src/TestBackupConfig.cc:474
+msgid "depth2"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:368 ../src/TestBackupConfig.cc:498
+msgid "file2"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:370 ../src/TestBackupConfig.cc:494
+msgid "dir2"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:373 ../src/TestBackupConfig.cc:490
+msgid "depth3"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:377 ../src/TestBackupConfig.cc:506
+msgid "depth4"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:381 ../src/TestBackupConfig.cc:514
+msgid "depth5"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:385 ../src/TestBackupConfig.cc:530
+msgid "file3"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:387 ../src/TestBackupConfig.cc:526
+msgid "dir3"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:390 ../src/TestBackupConfig.cc:522
+msgid "depth6"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:394 ../src/TestBackupConfig.cc:542
+msgid "file4"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:396 ../src/TestBackupConfig.cc:538
+msgid "dir4"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:400 ../src/TestBackupConfig.cc:554
+msgid "file5"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:402 ../src/TestBackupConfig.cc:550
+msgid "dir5"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:406 ../src/TestBackupConfig.cc:566
+msgid "file6"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:408 ../src/TestBackupConfig.cc:562
+msgid "dir6"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:732
+msgid "/de...2$"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:859
+msgid " -> testdata"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:881 ../src/TestBackupConfig2.cc:228
+#: ../src/TestBackupConfig2.cc:269
+msgid " -> testdata (ExcludeDir = "
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:1035 ../src/TestBackupConfig.cc:1093
+#: ../src/TestBackupConfig2.cc:59 ../src/TestBackupConfig2.cc:146
+#: ../src/TestBackupConfig2.cc:200
+msgid " -> testdata ("
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:1036 ../src/TestBackupConfig.cc:1094
+#: ../src/TestBackupConfig2.cc:60 ../src/TestBackupConfig2.cc:147
+#: ../src/TestBackupConfig2.cc:201
+msgid "ExcludeDir = "
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:1038 ../src/TestBackupConfig.cc:1096
+#: ../src/TestBackupConfig2.cc:62 ../src/TestBackupConfig2.cc:149
+#: ../src/TestBackupConfig2.cc:230
+msgid ", ExcludeDirsRegex = ^"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:1040 ../src/TestBackupConfig.cc:1098
+#: ../src/TestBackupConfig2.cc:64 ../src/TestBackupConfig2.cc:151
+#: ../src/TestBackupConfig2.cc:232
+msgid "/, ExcludeFilesRegex = ^"
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:1042 ../src/TestBackupConfig.cc:1100
+#: ../src/TestBackupConfig2.cc:66 ../src/TestBackupConfig2.cc:153
+#: ../src/TestBackupConfig2.cc:234
+msgid "/, AlwaysIncludeDir = "
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:1044 ../src/TestBackupConfig.cc:1046
+#: ../src/TestBackupConfig.cc:1048 ../src/TestBackupConfig.cc:1102
+#: ../src/TestBackupConfig.cc:1104 ../src/TestBackupConfig.cc:1106
+#: ../src/TestBackupConfig2.cc:68 ../src/TestBackupConfig2.cc:70
+#: ../src/TestBackupConfig2.cc:72 ../src/TestBackupConfig2.cc:74
+#: ../src/TestBackupConfig2.cc:155 ../src/TestBackupConfig2.cc:157
+#: ../src/TestBackupConfig2.cc:159 ../src/TestBackupConfig2.cc:161
+#: ../src/TestBackupConfig2.cc:236 ../src/TestBackupConfig2.cc:238
+#: ../src/TestBackupConfig2.cc:271 ../src/TestBackupConfig2.cc:273
+#: ../src/TestBackupConfig2.cc:294
+msgid ", AlwaysIncludeDir = "
+msgstr ""
+
+#: ../src/TestBackupConfig.cc:1050
+msgid ", AlwaysIncludeFile = "
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:76 ../src/TestBackupConfig2.cc:240
+#: ../src/TestBackupConfig2.cc:275 ../src/TestBackupConfig2.cc:296
+#: ../src/TestBackupConfig2.cc:328 ../src/TestBackupConfig2.cc:360
+#: ../src/TestBackupConfig2.cc:391
+msgid ", AlwaysIncludeDirsRegex = ^"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:78 ../src/TestBackupConfig2.cc:242
+#: ../src/TestBackupConfig2.cc:277 ../src/TestBackupConfig2.cc:298
+#: ../src/TestBackupConfig2.cc:330 ../src/TestBackupConfig2.cc:362
+#: ../src/TestBackupConfig2.cc:393
+msgid "/, AlwaysIncludeFilesRegex = ^"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:80 ../src/TestBackupConfig2.cc:165
+#: ../src/TestBackupConfig2.cc:244 ../src/TestBackupConfig2.cc:279
+#: ../src/TestBackupConfig2.cc:300 ../src/TestBackupConfig2.cc:332
+msgid "/)"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:163
+msgid ", AlwaysIncludeFilesRegex = ^"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:292 ../src/TestBackupConfig2.cc:326
+#: ../src/TestBackupConfig2.cc:358 ../src/TestBackupConfig2.cc:389
+msgid " -> testdata (AlwaysIncludeDir = "
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:364 ../src/TestBackupConfig2.cc:395
+msgid "/, ExcludeDir = "
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:397
+msgid ", ExcludeDir = "
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:449 ../src/TestBackupConfig2.cc:454
+#: ../src/TestBackupConfig2.cc:725 ../src/TestBackupConfig2.cc:749
+#: ../src/TestBackupConfig2.cc:776
+msgid "tmp"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:450 ../src/TestBackupConfig2.cc:456
+#: ../src/TestBackupConfig2.cc:723 ../src/TestBackupConfig2.cc:747
+#: ../src/TestBackupConfig2.cc:774
+msgid "/tmp"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:459 ../src/TestBackupConfig2.cc:464
+#: ../src/TestBackupConfig2.cc:757 ../src/TestBackupConfig2.cc:784
+#: ../src/TestBackupConfig2.cc:798
+msgid "etc"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:460 ../src/TestBackupConfig2.cc:466
+#: ../src/TestBackupConfig2.cc:755 ../src/TestBackupConfig2.cc:782
+#: ../src/TestBackupConfig2.cc:796
+msgid "/etc"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:480 ../src/TestBackupConfig2.cc:487
+#: ../src/TestBackupConfig2.cc:515 ../src/TestBackupConfig2.cc:530
+#: ../src/TestBackupConfig2.cc:574 ../src/TestBackupConfig2.cc:579
+#: ../src/TestBackupConfig2.cc:679
+msgid "/tmp/foo"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:498 ../src/TestBackupConfig2.cc:505
+#: ../src/TestBackupConfig2.cc:520 ../src/TestBackupConfig2.cc:542
+msgid "/tmp/bar"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:533 ../src/TestBackupConfig2.cc:537
+#: ../src/TestBackupConfig2.cc:554 ../src/TestBackupConfig2.cc:570
+#: ../src/TestBackupConfig2.cc:585 ../src/TestBackupConfig2.cc:594
+#: ../src/TestBackupConfig2.cc:600 ../src/TestBackupConfig2.cc:614
+#: ../src/TestBackupConfig2.cc:634 ../src/TestBackupConfig2.cc:655
+#: ../src/TestBackupConfig2.cc:666 ../src/TestBackupConfig2.cc:672
+#: ../src/TestBackupConfig2.cc:685 ../src/TestBackupConfig2.cc:698
+#: ../src/TestBackupConfig2.cc:705
+msgid "/tmp/baz"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:545 ../src/TestBackupConfig2.cc:549
+#: ../src/TestBackupConfig2.cc:559 ../src/TestBackupConfig2.cc:692
+msgid "/tmp/whee"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:623 ../src/TestBackupConfig2.cc:642
+msgid "fubar"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:728 ../src/TestBackupConfig2.cc:736
+#: ../src/TestBackupConfig2.cc:765 ../src/TestBackupConfig2.cc:790
+msgid "foobar"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:729 ../src/TestBackupConfig2.cc:734
+#: ../src/TestBackupConfig2.cc:763 ../src/TestBackupConfig2.cc:788
+msgid "whee"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:961
+msgid "_excludethis$"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:962 ../src/TestWithServer.cc:790
+msgid "EXCLUDE"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:966 ../src/TestWithServer.cc:794
+msgid "not_this_dir"
+msgstr ""
+
+#: ../src/TestBackupConfig2.cc:967 ../src/TestWithServer.cc:795
+msgid "ALWAYSINCLUDE"
+msgstr ""
+
+#: ../src/TestCompare.cc:162 ../src/TestRestore.cc:148
+msgid "0"
+msgstr ""
+
+#: ../src/TestCompare.cc:164 ../src/TestRestore.cc:150
+msgid "0 B"
+msgstr ""
+
+#: ../src/TestConfig.cc:56 ../src/TestWizard.cc:435
 msgid "boxi-configTestDir-"
 msgstr ""
 
-#: src/TestConfig.cc:65 src/TestWizard.cc:1248
+#: ../src/TestConfig.cc:65 ../src/TestWizard.cc:1248
 msgid "config.foo"
 msgstr ""
 
-#: src/TestConfig.cc:72
+#: ../src/TestConfig.cc:72
 msgid "Box Backup client configuration file|bbackupd.conf"
 msgstr ""
 
-#: src/TestConfig.cc:140 src/TestConfig.cc:169
+#: ../src/TestConfig.cc:140 ../src/TestConfig.cc:169
 msgid "/foo/req.foo"
 msgstr ""
 
-#: src/TestConfig.cc:142 src/TestConfig.cc:336
+#: ../src/TestConfig.cc:142 ../src/TestConfig.cc:336
 msgid "/foo/cert.foo"
 msgstr ""
 
-#: src/TestConfig.cc:144 src/TestConfig.cc:337
+#: ../src/TestConfig.cc:144 ../src/TestConfig.cc:337
 msgid "/foo/privatekey.foo"
 msgstr ""
 
-#: src/TestConfig.cc:145 src/TestConfig.cc:338
+#: ../src/TestConfig.cc:145 ../src/TestConfig.cc:338
 msgid "/var/bbackupd/foo"
 msgstr ""
 
-#: src/TestConfig.cc:146 src/TestConfig.cc:339
+#: ../src/TestConfig.cc:146 ../src/TestConfig.cc:339
 msgid "/foo/foo.sh"
 msgstr ""
 
-#: src/TestConfig.cc:147 src/TestConfig.cc:340
+#: ../src/TestConfig.cc:147 ../src/TestConfig.cc:340
 msgid "/foo/serverCA.foo"
 msgstr ""
 
-#: src/TestConfig.cc:148 src/TestConfig.cc:341
+#: ../src/TestConfig.cc:148 ../src/TestConfig.cc:341
 msgid "/foo/keysfile.foo"
 msgstr ""
 
-#: src/TestConfig.cc:149 src/TestConfig.cc:342
+#: ../src/TestConfig.cc:149 ../src/TestConfig.cc:342
 msgid "host.foo.bar"
 msgstr ""
 
-#: src/TestConfig.cc:150 src/TestConfig.cc:343
+#: ../src/TestConfig.cc:150 ../src/TestConfig.cc:343
 msgid "/foo/sync.sh"
 msgstr ""
 
-#: src/TestConfig.cc:151 src/TestConfig.cc:344
+#: ../src/TestConfig.cc:151 ../src/TestConfig.cc:344
 msgid "/foo/socket.foo"
 msgstr ""
 
-#: src/TestConfig.cc:152 src/TestConfig.cc:345
+#: ../src/TestConfig.cc:152 ../src/TestConfig.cc:345
 msgid "/foo/pid.foo"
 msgstr ""
 
-#: src/TestConfig.cc:153 src/TestConfig.cc:346
+#: ../src/TestConfig.cc:153 ../src/TestConfig.cc:346
 msgid "/foo/cache.foo"
 msgstr ""
 
-#: src/TestConfig.cc:166 src/TestConfig.cc:364
+#: ../src/TestConfig.cc:166 ../src/TestConfig.cc:364
 msgid "hello"
 msgstr ""
 
-#: src/TestConfig.cc:166 src/TestConfig.cc:365
-msgid "test\\u00e6\\u00f8\\u00e5test"
+#: ../src/TestConfig.cc:166 ../src/TestConfig.cc:365
+msgid "testæøåtest"
 msgstr ""
 
-#: src/TestWizard.cc:65
+#: ../src/TestFrame.cc:451
+msgid ":"
+msgstr ""
+
+#: ../src/TestFrame.cc:457
+msgid "("
+msgstr ""
+
+#: ../src/TestFrame.cc:464 ../src/TestFrame.cc:477 ../src/TestFrame.cc:511
+#: ../src/TestWithServer.cc:299 ../src/TestWithServer.cc:303
+#: ../src/TestWithServer.cc:307 ../src/TestWithServer.cc:332
+#: ../src/TestWithServer.cc:338 ../src/TestWithServer.cc:347
+#: ../src/TestWithServer.cc:356 ../src/TestWithServer.cc:363
+#: ../src/TestWithServer.cc:370
+msgid "\n"
+msgstr ""
+
+#: ../src/TestRestore.cc:251
+msgid "anotehr"
+msgstr ""
+
+#: ../src/TestRestore.cc:252
+msgid "dir23"
+msgstr ""
+
+#: ../src/TestRestore.cc:254 ../src/TestRestore.cc:401
+#: ../src/TestRestore.cc:452
+msgid "sub23"
+msgstr ""
+
+#: ../src/TestRestore.cc:256
+msgid "xx_not_this_dir_ALWAYSINCLUDE"
+msgstr ""
+
+#: ../src/TestRestore.cc:257 ../src/TestRestore.cc:804
+msgid "apropos"
+msgstr ""
+
+#: ../src/TestRestore.cc:258
+msgid "chsh"
+msgstr ""
+
+#: ../src/TestRestore.cc:261
+msgid "dont.excludethis"
+msgstr ""
+
+#: ../src/TestRestore.cc:264
+msgid "symlink1"
+msgstr ""
+
+#: ../src/TestRestore.cc:265
+msgid "symlink3"
+msgstr ""
+
+#: ../src/TestRestore.cc:266
+msgid "xx_not_this_dir_22"
+msgstr ""
+
+#: ../src/TestRestore.cc:308 ../src/TestRestore.cc:441
+msgid "/testdata/df9834.dsf"
+msgstr ""
+
+#: ../src/TestRestore.cc:319
+msgid "+ /testdata/df9834.dsf"
+msgstr ""
+
+#: ../src/TestRestore.cc:422 ../src/TestRestore.cc:427
+#: ../src/TestRestore.cc:507 ../src/TestRestore.cc:548
+#: ../src/TestRestore.cc:621
+msgid "testdata/sub23"
+msgstr ""
+
+#: ../src/TestRestore.cc:444 ../src/TestRestore.cc:492
+#: ../src/TestRestore.cc:530 ../src/TestRestore.cc:596
+msgid "/testdata/sub23"
+msgstr ""
+
+#: ../src/TestRestore.cc:495 ../src/TestRestore.cc:533
+#: ../src/TestRestore.cc:536 ../src/TestRestore.cc:599
+#: ../src/TestRestore.cc:602
+msgid "/testdata/sub23/dhsfdss"
+msgstr ""
+
+#: ../src/TestRestore.cc:554
+msgid "bfdlink.h"
+msgstr ""
+
+#: ../src/TestRestore.cc:558
+msgid "dfsfd"
+msgstr ""
+
+#: ../src/TestRestore.cc:561
+msgid "a.out.h"
+msgstr ""
+
+#: ../src/TestRestore.cc:606
+msgid "/testdata/sub23/dhsfdss/bfdlink.h"
+msgstr ""
+
+#: ../src/TestRestore.cc:610
+msgid "/testdata/sub23/dhsfdss/dfsfd"
+msgstr ""
+
+#: ../src/TestRestore.cc:799
+msgid "sub23/dhsfdss/bfdlink.h"
+msgstr ""
+
+#: ../src/TestRestore.cc:850
+msgid "expected"
+msgstr ""
+
+#: ../src/TestRestore.cc:862
+msgid "testdata/sub23/dhsfdss/bfdlink.h"
+msgstr ""
+
+#: ../src/TestRestore.cc:869
+msgid "testdata/sub23/ping!"
+msgstr ""
+
+#: ../src/TestWithServer.cc:184
+#, c-format
+msgid "Failed to wait for server thread: error %d"
+msgstr ""
+
+#: ../src/TestWithServer.cc:251
+msgid "boxi-test-tempdir-"
+msgstr ""
+
+#: ../src/TestWithServer.cc:261
+msgid "conf"
+msgstr ""
+
+#: ../src/TestWithServer.cc:267
+#, fuzzy
+msgid "store"
+msgstr "Wiederherstellung"
+
+#: ../src/TestWithServer.cc:273
+msgid "raidfile.conf"
+msgstr ""
+
+#: ../src/TestWithServer.cc:277
+msgid "0_0"
+msgstr ""
+
+#: ../src/TestWithServer.cc:281
+msgid "0_1"
+msgstr ""
+
+#: ../src/TestWithServer.cc:285
+msgid "0_2"
+msgstr ""
+
+#: ../src/TestWithServer.cc:292
+msgid "disc0\n"
+msgstr ""
+
+#: ../src/TestWithServer.cc:293 ../src/TestWithServer.cc:342
+msgid "{\n"
+msgstr ""
+
+#: ../src/TestWithServer.cc:294
+msgid "\tSetNumber = 0\n"
+msgstr ""
+
+#: ../src/TestWithServer.cc:295
+msgid "\tBlockSize = 2048\n"
+msgstr ""
+
+#: ../src/TestWithServer.cc:297
+msgid "\tDir0 = "
+msgstr ""
+
+#: ../src/TestWithServer.cc:301
+msgid "\tDir1 = "
+msgstr ""
+
+#: ../src/TestWithServer.cc:305
+msgid "\tDir2 = "
+msgstr ""
+
+#: ../src/TestWithServer.cc:314 ../src/TestWithServer.cc:334
+msgid "accounts.txt"
+msgstr ""
+
+#: ../src/TestWithServer.cc:323
+msgid "bbstored.conf"
+msgstr ""
+
+#: ../src/TestWithServer.cc:330
+msgid "RaidFileConf = "
+msgstr ""
+
+#: ../src/TestWithServer.cc:336
+msgid "AccountDatabase = "
+msgstr ""
+
+#: ../src/TestWithServer.cc:340
+msgid "TimeBetweenHousekeeping = 900\n"
+msgstr ""
+
+#: ../src/TestWithServer.cc:341
+msgid "Server\n"
+msgstr ""
+
+#: ../src/TestWithServer.cc:344
+msgid "bbstored.pid"
+msgstr ""
+
+#: ../src/TestWithServer.cc:345
+msgid "\tPidFile = "
+msgstr ""
+
+#: ../src/TestWithServer.cc:349
+msgid "\tListenAddresses = inet:127.0.0.1\n"
+msgstr ""
+
+#: ../src/TestWithServer.cc:352
+msgid "../test/config/bbstored/server-cert.pem"
+msgstr ""
+
+#: ../src/TestWithServer.cc:354
+msgid "\tCertificateFile = "
+msgstr ""
+
+#: ../src/TestWithServer.cc:359
+msgid "../test/config/bbstored/server-key.pem"
+msgstr ""
+
+#: ../src/TestWithServer.cc:361
+msgid "\tPrivateKeyFile = "
+msgstr ""
+
+#: ../src/TestWithServer.cc:366
+msgid "../test/config/bbstored/client-ca.pem"
+msgstr ""
+
+#: ../src/TestWithServer.cc:368
+msgid "\tTrustedCAsFile = "
+msgstr ""
+
+#: ../src/TestWithServer.cc:379
+msgid "../boxbackup/release/bin/bbstoreaccounts/bbstoreaccounts -c "
+msgstr ""
+
+#: ../src/TestWithServer.cc:382
+msgid " create 2 0 100M 200M"
+msgstr ""
+
+#: ../src/TestWithServer.cc:577 ../src/TestWithServer.cc:581
+#, c-format
+msgid "%s must exist"
+msgstr ""
+
+#: ../src/TestWithServer.cc:593
+msgid "Differences are: "
+msgstr ""
+
+#: ../src/TestWithServer.cc:619
+#, c-format
+msgid "%s is not a file"
+msgstr ""
+
+#: ../src/TestWithServer.cc:628
+#, c-format
+msgid "%s is not a directory"
+msgstr ""
+
+#: ../src/TestWithServer.cc:642
+#, c-format
+msgid "%s has wrong length (expected %d, found %d)"
+msgstr ""
+
+#: ../src/TestWithServer.cc:668
+#, c-format
+msgid "%s has wrong data at byte %d (expected %d, found %d)"
+msgstr ""
+
+#: ../src/TestWithServer.cc:710
+#, c-format
+msgid "%s was not expected"
+msgstr ""
+
+#: ../src/TestWithServer.cc:726
+#, c-format
+msgid "%s was not found"
+msgstr "%s nicht gefunden"
+
+#: ../src/TestWithServer.cc:789
+msgid "\\.excludethis$"
+msgstr ""
+
+#: ../src/TestWizard.cc:65
 #, c-format
 msgid ""
 "Generating a fake server private key (2048 bits).\n"
@@ -2070,1043 +3035,166 @@ msgid ""
 "(%d potential primes checked)"
 msgstr ""
 
-#: src/TestWizard.cc:298
+#: ../src/TestWizard.cc:298
 #, c-format
 msgid "Expected error message was not shown: %s"
 msgstr ""
 
-#: src/TestWizard.cc:368 src/TestWizard.cc:373
+#: ../src/TestWizard.cc:368 ../src/TestWizard.cc:373
 msgid "no-such-host"
 msgstr ""
 
-#: src/TestWizard.cc:376 src/TestWizard.cc:378 src/TestWizard.cc:381
-#: src/TestWizard.cc:384 src/TestWizard.cc:422 src/TestWizard.cc:423
+#: ../src/TestWizard.cc:376 ../src/TestWizard.cc:378 ../src/TestWizard.cc:381
+#: ../src/TestWizard.cc:384 ../src/TestWizard.cc:422 ../src/TestWizard.cc:423
 msgid "localhost"
 msgstr ""
 
-#: src/TestWizard.cc:387
+#: ../src/TestWizard.cc:387
 msgid "-1"
 msgstr ""
 
-#: src/TestWizard.cc:391
+#: ../src/TestWizard.cc:391
 msgid "ffffffff"
 msgstr ""
 
-#: src/TestWizard.cc:400 src/TestWizard.cc:403
+#: ../src/TestWizard.cc:400 ../src/TestWizard.cc:403
 msgid "12ag"
 msgstr ""
 
-#: src/TestWizard.cc:405 src/TestWizard.cc:410
+#: ../src/TestWizard.cc:405 ../src/TestWizard.cc:410
 msgid "12345678"
 msgstr ""
 
-#: src/TestWizard.cc:416 src/TestWizard.cc:428
+#: ../src/TestWizard.cc:416 ../src/TestWizard.cc:428
 msgid "12ab"
 msgstr ""
 
-#: src/TestWizard.cc:440 src/TestBackupConfig.cc:137
-msgid "boxi-tempdir-"
-msgstr ""
-
-#: src/TestWizard.cc:444
+#: ../src/TestWizard.cc:444
 msgid "12ab-key.pem"
 msgstr ""
 
-#: src/TestWizard.cc:460
+#: ../src/TestWizard.cc:460
 msgid "Private Key (*-key.pem)|*-key.pem"
 msgstr ""
 
-#: src/TestWizard.cc:466
+#: ../src/TestWizard.cc:466
 msgid "Private Key (*-key.pem)|*-key.pem|All Files|*"
 msgstr ""
 
-#: src/TestWizard.cc:473 src/TestWizard.cc:989
+#: ../src/TestWizard.cc:473 ../src/TestWizard.cc:989
 msgid "nonexistant"
 msgstr ""
 
-#: src/TestWizard.cc:505
+#: ../src/TestWizard.cc:505
 msgid "existing"
 msgstr ""
 
-#: src/TestWizard.cc:566
+#: ../src/TestWizard.cc:566
 msgid "/foo/bar"
 msgstr ""
 
-#: src/TestWizard.cc:573 src/TestWizard.cc:998
+#: ../src/TestWizard.cc:573 ../src/TestWizard.cc:998
 msgid "2"
 msgstr ""
 
-#: src/TestWizard.cc:624
+#: ../src/TestWizard.cc:624
 msgid "12ab-csr.pem"
 msgstr ""
 
-#: src/TestWizard.cc:647 src/TestWizard.cc:1093
+#: ../src/TestWizard.cc:647 ../src/TestWizard.cc:1093
 msgid "nosuchfile"
 msgstr ""
 
-#: src/TestWizard.cc:674
+#: ../src/TestWizard.cc:674
 msgid "/foobar/29a.pem"
 msgstr ""
 
-#: src/TestWizard.cc:681
+#: ../src/TestWizard.cc:681
 msgid "/foobar/29a-csr.pem"
 msgstr ""
 
-#: src/TestWizard.cc:685 src/TestWizard.cc:691 src/TestWizard.cc:693
+#: ../src/TestWizard.cc:685 ../src/TestWizard.cc:691 ../src/TestWizard.cc:693
 msgid "/whee/xxx"
 msgstr ""
 
-#: src/TestWizard.cc:746
+#: ../src/TestWizard.cc:746
 msgid "12ab-cert.pem"
 msgstr ""
 
-#: src/TestWizard.cc:750 src/TestWizard.cc:935
+#: ../src/TestWizard.cc:750 ../src/TestWizard.cc:935
 msgid "client-ca-cert.pem"
 msgstr ""
 
-#: src/TestWizard.cc:754
+#: ../src/TestWizard.cc:754
 msgid "12ab-cert-badsig.pem"
 msgstr ""
 
-#: src/TestWizard.cc:758
+#: ../src/TestWizard.cc:758
 msgid "12ab-cert-selfsig.pem"
 msgstr ""
 
-#: src/TestWizard.cc:764
+#: ../src/TestWizard.cc:764
 msgid "client-ca-key.pem"
 msgstr ""
 
-#: src/TestWizard.cc:788
+#: ../src/TestWizard.cc:788
 msgid "Boxi: Generating Server Key"
 msgstr ""
 
-#: src/TestWizard.cc:814
+#: ../src/TestWizard.cc:814
 msgid "client-ca-csr.pem"
 msgstr ""
 
-#: src/TestWizard.cc:863
+#: ../src/TestWizard.cc:863
 msgid "Backup system client root"
 msgstr ""
 
-#: src/TestWizard.cc:1069
+#: ../src/TestWizard.cc:1069
 msgid "12ab-FileEncKeys.raw"
 msgstr ""
 
-#: src/TestWizard.cc:1151
+#: ../src/TestWizard.cc:1151
 msgid ".invalid"
 msgstr ""
 
-#: src/TestWizard.cc:1218
+#: ../src/TestWizard.cc:1218
 msgid "foo"
 msgstr ""
 
-#: src/TestWizard.cc:1266
+#: ../src/TestWizard.cc:1266
 #, fuzzy
 msgid "Clearing "
 msgstr "Warnung: "
 
-#: src/TestBackup.cc:559 src/TestRestore.cc:164 src/TestCompare.cc:309
-msgid "../test/data/spacetest1.zip"
-msgstr ""
-
-#: src/TestBackup.cc:588 src/TestBackup.cc:596 src/TestBackupConfig.cc:680
-#: src/TestBackupConfig.cc:689 src/TestBackupConfig2.cc:884
-#: src/TestBackupConfig2.cc:885
-msgid ".*"
-msgstr ""
-
-#: src/TestBackup.cc:605 src/TestRestore.cc:253
-msgid "spacetest"
-msgstr ""
-
-#: src/TestBackup.cc:646
-msgid "../test/data/spacetest2.zip"
-msgstr ""
-
-#: src/TestBackup.cc:652
-msgid "spacetest/d1/f3"
-msgstr ""
-
-#: src/TestBackup.cc:654
-msgid "spacetest/d3/d4/"
-msgstr ""
-
-#: src/TestBackup.cc:681 src/TestRestore.cc:171 src/TestCompare.cc:316
-msgid "../test/data/test_base.zip"
-msgstr ""
-
-#: src/TestBackup.cc:694 src/TestBackup.cc:840
-msgid "x1/dsfdsfs98.fd"
-msgstr ""
-
-#: src/TestBackup.cc:700 src/TestBackup.cc:729 src/TestBackup.cc:735
-msgid "symlink-to-dir"
-msgstr ""
-
-#: src/TestBackup.cc:709 src/TestRestore.cc:263
-msgid "f45.df"
-msgstr ""
-
-#: src/TestBackup.cc:716
-msgid "EXTRA STUFF"
-msgstr ""
-
-#: src/TestBackup.cc:737
-msgid "x1/dir-to-file"
-msgstr ""
-
-#: src/TestBackup.cc:741
-msgid "contents"
-msgstr ""
-
-#: src/TestBackup.cc:782
-msgid "contents2"
-msgstr ""
-
-#: src/TestBackup.cc:838 src/TestBackup.cc:1038 src/TestRestore.cc:260
-#: src/TestRestore.cc:288 src/TestRestore.cc:365 src/TestRestore.cc:368
-#: src/TestRestore.cc:407
-msgid "df9834.dsf"
-msgstr ""
-
-#: src/TestBackup.cc:860 src/TestRestore.cc:176 src/TestCompare.cc:321
-msgid "../test/data/test2.zip"
-msgstr ""
-
-#: src/TestBackup.cc:872
-msgid "sub23/rand.h"
-msgstr ""
-
-#: src/TestBackup.cc:876
-msgid "MODIFIED!\n"
-msgstr ""
-
-#: src/TestBackup.cc:896 src/TestRestore.cc:185 src/TestCompare.cc:330
-msgid "../test/data/testexclude.zip"
-msgstr ""
-
-#: src/TestBackup.cc:976
-msgid "sub23/read-fail-test-dir"
-msgstr ""
-
-#: src/TestBackup.cc:980
-msgid "read-fail-test-file"
-msgstr ""
-
-#: src/TestBackup.cc:993
-#, c-format
-msgid "Failed to send file '%s': Access denied"
-msgstr ""
-
-#: src/TestBackup.cc:997
-#, c-format
-msgid "Failed to list directory '%s': Access denied"
-msgstr ""
-
-#: src/TestBackup.cc:1017
-msgid "continuous-update"
-msgstr ""
-
-#: src/TestBackup.cc:1034 src/TestRestore.cc:255
-msgid "x1"
-msgstr ""
-
-#: src/TestBackup.cc:1047 src/TestRestore.cc:262
-msgid "f1.dat"
-msgstr ""
-
-#: src/TestBackup.cc:1061
-msgid "attrib +r "
-msgstr ""
-
-#: src/TestBackup.cc:1074
-msgid "attrib -r "
-msgstr ""
-
-#: src/TestBackup.cc:1131 src/TestRestore.cc:190 src/TestCompare.cc:335
-msgid "../test/data/test3.zip"
-msgstr ""
-
-#: src/TestBackup.cc:1142 src/TestRestore.cc:458
-msgid "sub23/dhsfdss"
-msgstr ""
-
-#: src/TestBackup.cc:1144
-msgid "renamed-dir"
-msgstr ""
-
-#: src/TestBackup.cc:1162 src/TestRestore.cc:259
-msgid "df324"
-msgstr ""
-
-#: src/TestBackup.cc:1164
-msgid "df324-ren"
-msgstr ""
-
-#: src/TestBackup.cc:1169
-msgid "sub23/find2perl"
-msgstr ""
-
-#: src/TestBackup.cc:1171
-msgid "find2perl-ren"
-msgstr ""
-
-#: src/TestBackup.cc:1183
-msgid "sub23/in-the-future"
-msgstr ""
-
-#: src/TestBackup.cc:1186
-msgid "Back to the future!\n"
-msgstr ""
-
-#: src/TestBackup.cc:1215 src/TestRestore.cc:348
-msgid "restore"
-msgstr ""
-
-#: src/TestBackup.cc:1226 src/TestBackupConfig.cc:341
-#: src/TestBackupConfig.cc:865 src/TestRestore.cc:245 src/TestRestore.cc:362
-#: src/TestRestore.cc:688 src/TestRestore.cc:853 src/TestWithServer.cc:396
-#: src/TestWithServer.cc:774 src/TestBackupConfig2.cc:858
-msgid "testdata"
-msgstr ""
-
-#: src/TestBackupConfig.cc:156 src/TestWithServer.cc:409
-msgid "../test/config/bbackupd.conf"
-msgstr ""
-
-#: src/TestBackupConfig.cc:321 src/TestBackupConfig.cc:323
-msgid "/ -> root"
-msgstr ""
-
-#: src/TestBackupConfig.cc:349 src/TestBackupConfig.cc:466
-msgid "depth1"
-msgstr ""
-
-#: src/TestBackupConfig.cc:353 src/TestBackupConfig.cc:462
-msgid "another"
-msgstr ""
-
-#: src/TestBackupConfig.cc:357 src/TestBackupConfig.cc:482
-msgid "file1"
-msgstr ""
-
-#: src/TestBackupConfig.cc:360 src/TestBackupConfig.cc:478
-msgid "dir1"
-msgstr ""
-
-#: src/TestBackupConfig.cc:364 src/TestBackupConfig.cc:474
-msgid "depth2"
-msgstr ""
-
-#: src/TestBackupConfig.cc:368 src/TestBackupConfig.cc:498
-msgid "file2"
-msgstr ""
-
-#: src/TestBackupConfig.cc:370 src/TestBackupConfig.cc:494
-msgid "dir2"
-msgstr ""
-
-#: src/TestBackupConfig.cc:373 src/TestBackupConfig.cc:490
-msgid "depth3"
-msgstr ""
-
-#: src/TestBackupConfig.cc:377 src/TestBackupConfig.cc:506
-msgid "depth4"
-msgstr ""
-
-#: src/TestBackupConfig.cc:381 src/TestBackupConfig.cc:514
-msgid "depth5"
-msgstr ""
-
-#: src/TestBackupConfig.cc:385 src/TestBackupConfig.cc:530
-msgid "file3"
-msgstr ""
-
-#: src/TestBackupConfig.cc:387 src/TestBackupConfig.cc:526
-msgid "dir3"
-msgstr ""
-
-#: src/TestBackupConfig.cc:390 src/TestBackupConfig.cc:522
-msgid "depth6"
-msgstr ""
-
-#: src/TestBackupConfig.cc:394 src/TestBackupConfig.cc:542
-msgid "file4"
-msgstr ""
-
-#: src/TestBackupConfig.cc:396 src/TestBackupConfig.cc:538
-msgid "dir4"
-msgstr ""
-
-#: src/TestBackupConfig.cc:400 src/TestBackupConfig.cc:554
-msgid "file5"
-msgstr ""
-
-#: src/TestBackupConfig.cc:402 src/TestBackupConfig.cc:550
-msgid "dir5"
-msgstr ""
-
-#: src/TestBackupConfig.cc:406 src/TestBackupConfig.cc:566
-msgid "file6"
-msgstr ""
-
-#: src/TestBackupConfig.cc:408 src/TestBackupConfig.cc:562
-msgid "dir6"
-msgstr ""
-
-#: src/TestBackupConfig.cc:732
-msgid "/de...2$"
-msgstr ""
-
-#: src/TestBackupConfig.cc:859
-msgid " -> testdata"
-msgstr ""
-
-#: src/TestBackupConfig.cc:881 src/TestBackupConfig2.cc:228
-#: src/TestBackupConfig2.cc:269
-msgid " -> testdata (ExcludeDir = "
-msgstr ""
-
-#: src/TestBackupConfig.cc:1035 src/TestBackupConfig.cc:1093
-#: src/TestBackupConfig2.cc:59 src/TestBackupConfig2.cc:146
-#: src/TestBackupConfig2.cc:200
-msgid " -> testdata ("
-msgstr ""
-
-#: src/TestBackupConfig.cc:1036 src/TestBackupConfig.cc:1094
-#: src/TestBackupConfig2.cc:60 src/TestBackupConfig2.cc:147
-#: src/TestBackupConfig2.cc:201
-msgid "ExcludeDir = "
-msgstr ""
-
-#: src/TestBackupConfig.cc:1038 src/TestBackupConfig.cc:1096
-#: src/TestBackupConfig2.cc:62 src/TestBackupConfig2.cc:149
-#: src/TestBackupConfig2.cc:230
-msgid ", ExcludeDirsRegex = ^"
-msgstr ""
-
-#: src/TestBackupConfig.cc:1040 src/TestBackupConfig.cc:1098
-#: src/TestBackupConfig2.cc:64 src/TestBackupConfig2.cc:151
-#: src/TestBackupConfig2.cc:232
-msgid "/, ExcludeFilesRegex = ^"
-msgstr ""
-
-#: src/TestBackupConfig.cc:1042 src/TestBackupConfig.cc:1100
-#: src/TestBackupConfig2.cc:66 src/TestBackupConfig2.cc:153
-#: src/TestBackupConfig2.cc:234
-msgid "/, AlwaysIncludeDir = "
-msgstr ""
-
-#: src/TestBackupConfig.cc:1044 src/TestBackupConfig.cc:1046
-#: src/TestBackupConfig.cc:1048 src/TestBackupConfig.cc:1102
-#: src/TestBackupConfig.cc:1104 src/TestBackupConfig.cc:1106
-#: src/TestBackupConfig2.cc:68 src/TestBackupConfig2.cc:70
-#: src/TestBackupConfig2.cc:72 src/TestBackupConfig2.cc:74
-#: src/TestBackupConfig2.cc:155 src/TestBackupConfig2.cc:157
-#: src/TestBackupConfig2.cc:159 src/TestBackupConfig2.cc:161
-#: src/TestBackupConfig2.cc:236 src/TestBackupConfig2.cc:238
-#: src/TestBackupConfig2.cc:271 src/TestBackupConfig2.cc:273
-#: src/TestBackupConfig2.cc:294
-msgid ", AlwaysIncludeDir = "
-msgstr ""
-
-#: src/TestBackupConfig.cc:1050
-msgid ", AlwaysIncludeFile = "
-msgstr ""
-
-#: src/TestRestore.cc:134 src/RestoreProgressPanel.cc:343
-#: src/RestoreProgressPanel.cc:344 src/RestoreProgressPanel.cc:373
-msgid "Restore Finished"
-msgstr ""
-
-#: src/TestRestore.cc:148 src/TestCompare.cc:162
-msgid "0"
-msgstr ""
-
-#: src/TestRestore.cc:150 src/TestCompare.cc:164
-msgid "0 B"
-msgstr ""
-
-#: src/TestRestore.cc:251
-msgid "anotehr"
-msgstr ""
-
-#: src/TestRestore.cc:252
-msgid "dir23"
-msgstr ""
-
-#: src/TestRestore.cc:254 src/TestRestore.cc:401 src/TestRestore.cc:452
-msgid "sub23"
-msgstr ""
-
-#: src/TestRestore.cc:256
-msgid "xx_not_this_dir_ALWAYSINCLUDE"
-msgstr ""
-
-#: src/TestRestore.cc:257 src/TestRestore.cc:804
-msgid "apropos"
-msgstr ""
-
-#: src/TestRestore.cc:258
-msgid "chsh"
-msgstr ""
-
-#: src/TestRestore.cc:261
-msgid "dont.excludethis"
-msgstr ""
-
-#: src/TestRestore.cc:264
-msgid "symlink1"
-msgstr ""
-
-#: src/TestRestore.cc:265
-msgid "symlink3"
-msgstr ""
-
-#: src/TestRestore.cc:266
-msgid "xx_not_this_dir_22"
-msgstr ""
-
-#: src/TestRestore.cc:308 src/TestRestore.cc:441
-msgid "/testdata/df9834.dsf"
-msgstr ""
-
-#: src/TestRestore.cc:319
-msgid "+ /testdata/df9834.dsf"
-msgstr ""
-
-#: src/TestRestore.cc:422 src/TestRestore.cc:427 src/TestRestore.cc:507
-#: src/TestRestore.cc:548 src/TestRestore.cc:621
-msgid "testdata/sub23"
-msgstr ""
-
-#: src/TestRestore.cc:444 src/TestRestore.cc:492 src/TestRestore.cc:530
-#: src/TestRestore.cc:596
-msgid "/testdata/sub23"
-msgstr ""
-
-#: src/TestRestore.cc:495 src/TestRestore.cc:533 src/TestRestore.cc:536
-#: src/TestRestore.cc:599 src/TestRestore.cc:602
-msgid "/testdata/sub23/dhsfdss"
-msgstr ""
-
-#: src/TestRestore.cc:554
-msgid "bfdlink.h"
-msgstr ""
-
-#: src/TestRestore.cc:558
-msgid "dfsfd"
-msgstr ""
-
-#: src/TestRestore.cc:561
-msgid "a.out.h"
-msgstr ""
-
-#: src/TestRestore.cc:606
-msgid "/testdata/sub23/dhsfdss/bfdlink.h"
-msgstr ""
-
-#: src/TestRestore.cc:610
-msgid "/testdata/sub23/dhsfdss/dfsfd"
-msgstr ""
-
-#: src/TestRestore.cc:799
-msgid "sub23/dhsfdss/bfdlink.h"
-msgstr ""
-
-#: src/TestRestore.cc:850
-msgid "expected"
-msgstr ""
-
-#: src/TestRestore.cc:862
-msgid "testdata/sub23/dhsfdss/bfdlink.h"
-msgstr ""
-
-#: src/TestRestore.cc:869
-msgid "testdata/sub23/ping!"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:69
-msgid "Restore Progress Panel"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:160
-#, c-format
-msgid "Error: cannot start restore: %s"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:171
+#: ../src/main.cc:109
 msgid ""
-"Error: cannot start restore: You have not configured the Store Hostname!"
+"run the specified unit test.\n"
+"\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, "
+"TestConfig, TestRestore, TestCompare, all"
 msgstr ""
 
-#: src/RestoreProgressPanel.cc:182
-msgid "Error: cannot start restore: you have not configured the Keys File"
+#: ../src/main.cc:112
+msgid "load the specified language or translation"
 msgstr ""
 
-#: src/RestoreProgressPanel.cc:191
-msgid "Error: cannot start restore: you have not configured the Account Number"
+#: ../src/main.cc:192
+msgid "all"
 msgstr ""
 
-#: src/RestoreProgressPanel.cc:202
-msgid "Error: cannot start restore: cannot create the destination directory"
+#: ../src/main.cc:208
+msgid "all."
 msgstr ""
 
-#: src/RestoreProgressPanel.cc:212
-msgid "Starting Restore"
-msgstr "Beginne Wiederherstellung"
-
-#: src/RestoreProgressPanel.cc:213
-msgid "Stop Restore"
-msgstr "Beende Wiederherstellung"
-
-#: src/RestoreProgressPanel.cc:220
-msgid "Connecting to server"
-msgstr "Verbinde mit dem Server"
-
-#: src/RestoreProgressPanel.cc:223
-msgid "Checking account details"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:233
-msgid ""
-"Warning: failed to get account information from server, file size will not "
-"be reported"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:238
-msgid "Counting Files to Restore"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:279
-msgid "Restoring files"
-msgstr "Stelle Dateien wieder her"
-
-#: src/RestoreProgressPanel.cc:332
-msgid "Restore Interrupted"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:334
-msgid "Restore interrupted by user"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:338 src/RestoreProgressPanel.cc:339
-#: src/RestoreProgressPanel.cc:351 src/RestoreProgressPanel.cc:360
-#: src/RestoreProgressPanel.cc:368
-msgid "Restore Failed"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:353
+#: ../src/main.cc:298
 #, c-format
-msgid "Error: cannot start restore: Failed to connect to server: %s"
-msgstr ""
+msgid "Language is not supported by the system: %s (%d)"
+msgstr "Sprache ist nicht unterstützt: %s (%d)"
 
-#: src/RestoreProgressPanel.cc:362
+#: ../src/main.cc:313
 #, c-format
-msgid "Error: failed to finish restore: %s"
+msgid "Couldn't find/load the catalog for locale '%s'."
 msgstr ""
 
-#: src/RestoreProgressPanel.cc:370
-msgid "Error: failed to finish restore: unknown error"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:459
-#, c-format
-msgid "Counting files in %s"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:521
-#, c-format
-msgid "Failed to restore '%s': not found on server"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:542
-#, c-format
-msgid "Error: failed to finish restore: object already exists: '%s'"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:562
-#, c-format
-msgid "Reading %s"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:571
-#, c-format
-msgid "Error: failed to finish restore: cannot create directory: '%s'"
-msgstr ""
-
-#: src/RestoreProgressPanel.cc:609
-#, c-format
-msgid "Restoring %s"
-msgstr ""
-
-#: src/TestWithServer.cc:184
-#, c-format
-msgid "Failed to wait for server thread: error %d"
-msgstr ""
-
-#: src/TestWithServer.cc:251
-msgid "boxi-test-tempdir-"
-msgstr ""
-
-#: src/TestWithServer.cc:261
-msgid "conf"
-msgstr ""
-
-#: src/TestWithServer.cc:267
-#, fuzzy
-msgid "store"
-msgstr "Wiederherstellung"
-
-#: src/TestWithServer.cc:273
-msgid "raidfile.conf"
-msgstr ""
-
-#: src/TestWithServer.cc:277
-msgid "0_0"
-msgstr ""
-
-#: src/TestWithServer.cc:281
-msgid "0_1"
-msgstr ""
-
-#: src/TestWithServer.cc:285
-msgid "0_2"
-msgstr ""
-
-#: src/TestWithServer.cc:292
-msgid "disc0\n"
-msgstr ""
-
-#: src/TestWithServer.cc:293 src/TestWithServer.cc:342
-msgid "{\n"
-msgstr ""
-
-#: src/TestWithServer.cc:294
-msgid "\tSetNumber = 0\n"
-msgstr ""
-
-#: src/TestWithServer.cc:295
-msgid "\tBlockSize = 2048\n"
-msgstr ""
-
-#: src/TestWithServer.cc:297
-msgid "\tDir0 = "
-msgstr ""
-
-#: src/TestWithServer.cc:301
-msgid "\tDir1 = "
-msgstr ""
-
-#: src/TestWithServer.cc:305
-msgid "\tDir2 = "
-msgstr ""
-
-#: src/TestWithServer.cc:314 src/TestWithServer.cc:334
-msgid "accounts.txt"
-msgstr ""
-
-#: src/TestWithServer.cc:323
-msgid "bbstored.conf"
-msgstr ""
-
-#: src/TestWithServer.cc:330
-msgid "RaidFileConf = "
-msgstr ""
-
-#: src/TestWithServer.cc:336
-msgid "AccountDatabase = "
-msgstr ""
-
-#: src/TestWithServer.cc:340
-msgid "TimeBetweenHousekeeping = 900\n"
-msgstr ""
-
-#: src/TestWithServer.cc:341
-msgid "Server\n"
-msgstr ""
-
-#: src/TestWithServer.cc:344
-msgid "bbstored.pid"
-msgstr ""
-
-#: src/TestWithServer.cc:345
-msgid "\tPidFile = "
-msgstr ""
-
-#: src/TestWithServer.cc:349
-msgid "\tListenAddresses = inet:127.0.0.1\n"
-msgstr ""
-
-#: src/TestWithServer.cc:352
-msgid "../test/config/bbstored/server-cert.pem"
-msgstr ""
-
-#: src/TestWithServer.cc:354
-msgid "\tCertificateFile = "
-msgstr ""
-
-#: src/TestWithServer.cc:359
-msgid "../test/config/bbstored/server-key.pem"
-msgstr ""
-
-#: src/TestWithServer.cc:361
-msgid "\tPrivateKeyFile = "
-msgstr ""
-
-#: src/TestWithServer.cc:366
-msgid "../test/config/bbstored/client-ca.pem"
-msgstr ""
-
-#: src/TestWithServer.cc:368
-msgid "\tTrustedCAsFile = "
-msgstr ""
-
-#: src/TestWithServer.cc:379
-msgid "../boxbackup/release/bin/bbstoreaccounts/bbstoreaccounts -c "
-msgstr ""
-
-#: src/TestWithServer.cc:382
-msgid " create 2 0 100M 200M"
-msgstr ""
-
-#: src/TestWithServer.cc:577 src/TestWithServer.cc:581
-#, c-format
-msgid "%s must exist"
-msgstr ""
-
-#: src/TestWithServer.cc:593
-msgid "Differences are: "
-msgstr ""
-
-#: src/TestWithServer.cc:619
-#, c-format
-msgid "%s is not a file"
-msgstr ""
-
-#: src/TestWithServer.cc:628
-#, c-format
-msgid "%s is not a directory"
-msgstr ""
-
-#: src/TestWithServer.cc:642
-#, c-format
-msgid "%s has wrong length (expected %d, found %d)"
-msgstr ""
-
-#: src/TestWithServer.cc:668
-#, c-format
-msgid "%s has wrong data at byte %d (expected %d, found %d)"
-msgstr ""
-
-#: src/TestWithServer.cc:710
-#, c-format
-msgid "%s was not expected"
-msgstr ""
-
-#: src/TestWithServer.cc:726
-#, c-format
-msgid "%s was not found"
-msgstr "%s nicht gefunden"
-
-#: src/TestWithServer.cc:789
-msgid "\\.excludethis$"
-msgstr ""
-
-#: src/TestWithServer.cc:790 src/TestBackupConfig2.cc:962
-msgid "EXCLUDE"
-msgstr ""
-
-#: src/TestWithServer.cc:794 src/TestBackupConfig2.cc:966
-msgid "not_this_dir"
-msgstr ""
-
-#: src/TestWithServer.cc:795 src/TestBackupConfig2.cc:967
-msgid "ALWAYSINCLUDE"
-msgstr ""
-
-#: src/TestCompare.cc:143
-msgid "Compare Finished"
-msgstr ""
-
-#: src/ProgressPanel.cc:54
-msgid "Summary"
-msgstr ""
-
-#: src/ProgressPanel.cc:61
-msgid "Restore not started yet"
-msgstr ""
-
-#: src/ProgressPanel.cc:70
-#, fuzzy
-msgid "Current Action"
-msgstr "Aktuelle Client-Konfiguration speichern"
-
-#: src/ProgressPanel.cc:79
-#, fuzzy
-msgid "Errors"
-msgstr "Fehler"
-
-#: src/ProgressPanel.cc:87
-msgid "Statistics"
-msgstr ""
-
-#: src/ProgressPanel.cc:99
-msgid "Elapsed"
-msgstr ""
-
-#: src/ProgressPanel.cc:100
-#, fuzzy
-msgid "Remaining"
-msgstr "Warnung"
-
-#: src/ProgressPanel.cc:101
-msgid "Total"
-msgstr ""
-
-#: src/ProgressPanel.cc:103
-#, fuzzy
-msgid "Files"
-msgstr "&Datei"
-
-#: src/ProgressPanel.cc:117
-msgid "Bytes"
-msgstr ""
-
-#: src/ProgressPanel.cc:164 src/ProgressPanel.cc:171 src/ProgressPanel.cc:202
-msgid "%"
-msgstr ""
-
-#: src/ProgressPanel.cc:181
-msgid "B"
-msgstr ""
-
-#: src/ProgressPanel.cc:186
-msgid "kB"
-msgstr ""
-
-#: src/ProgressPanel.cc:192
-msgid "MB"
-msgstr ""
-
-#: src/ProgressPanel.cc:198
-msgid "GB"
-msgstr ""
-
-#: src/ProgressPanel.cc:371
-#, fuzzy, c-format
-msgid "Error counting files in '%s': %s"
-msgstr "Verbinde mit dem Server"
-
-#: src/TestBackupConfig2.cc:76 src/TestBackupConfig2.cc:240
-#: src/TestBackupConfig2.cc:275 src/TestBackupConfig2.cc:296
-#: src/TestBackupConfig2.cc:328 src/TestBackupConfig2.cc:360
-#: src/TestBackupConfig2.cc:391
-msgid ", AlwaysIncludeDirsRegex = ^"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:78 src/TestBackupConfig2.cc:242
-#: src/TestBackupConfig2.cc:277 src/TestBackupConfig2.cc:298
-#: src/TestBackupConfig2.cc:330 src/TestBackupConfig2.cc:362
-#: src/TestBackupConfig2.cc:393
-msgid "/, AlwaysIncludeFilesRegex = ^"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:80 src/TestBackupConfig2.cc:165
-#: src/TestBackupConfig2.cc:244 src/TestBackupConfig2.cc:279
-#: src/TestBackupConfig2.cc:300 src/TestBackupConfig2.cc:332
-msgid "/)"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:163
-msgid ", AlwaysIncludeFilesRegex = ^"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:292 src/TestBackupConfig2.cc:326
-#: src/TestBackupConfig2.cc:358 src/TestBackupConfig2.cc:389
-msgid " -> testdata (AlwaysIncludeDir = "
-msgstr ""
-
-#: src/TestBackupConfig2.cc:364 src/TestBackupConfig2.cc:395
-msgid "/, ExcludeDir = "
-msgstr ""
-
-#: src/TestBackupConfig2.cc:397
-msgid ", ExcludeDir = "
-msgstr ""
-
-#: src/TestBackupConfig2.cc:449 src/TestBackupConfig2.cc:454
-#: src/TestBackupConfig2.cc:725 src/TestBackupConfig2.cc:749
-#: src/TestBackupConfig2.cc:776
-msgid "tmp"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:450 src/TestBackupConfig2.cc:456
-#: src/TestBackupConfig2.cc:723 src/TestBackupConfig2.cc:747
-#: src/TestBackupConfig2.cc:774
-msgid "/tmp"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:459 src/TestBackupConfig2.cc:464
-#: src/TestBackupConfig2.cc:757 src/TestBackupConfig2.cc:784
-#: src/TestBackupConfig2.cc:798
-msgid "etc"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:460 src/TestBackupConfig2.cc:466
-#: src/TestBackupConfig2.cc:755 src/TestBackupConfig2.cc:782
-#: src/TestBackupConfig2.cc:796
-msgid "/etc"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:480 src/TestBackupConfig2.cc:487
-#: src/TestBackupConfig2.cc:515 src/TestBackupConfig2.cc:530
-#: src/TestBackupConfig2.cc:574 src/TestBackupConfig2.cc:579
-#: src/TestBackupConfig2.cc:679
-msgid "/tmp/foo"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:498 src/TestBackupConfig2.cc:505
-#: src/TestBackupConfig2.cc:520 src/TestBackupConfig2.cc:542
-msgid "/tmp/bar"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:533 src/TestBackupConfig2.cc:537
-#: src/TestBackupConfig2.cc:554 src/TestBackupConfig2.cc:570
-#: src/TestBackupConfig2.cc:585 src/TestBackupConfig2.cc:594
-#: src/TestBackupConfig2.cc:600 src/TestBackupConfig2.cc:614
-#: src/TestBackupConfig2.cc:634 src/TestBackupConfig2.cc:655
-#: src/TestBackupConfig2.cc:666 src/TestBackupConfig2.cc:672
-#: src/TestBackupConfig2.cc:685 src/TestBackupConfig2.cc:698
-#: src/TestBackupConfig2.cc:705
-msgid "/tmp/baz"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:545 src/TestBackupConfig2.cc:549
-#: src/TestBackupConfig2.cc:559 src/TestBackupConfig2.cc:692
-msgid "/tmp/whee"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:623 src/TestBackupConfig2.cc:642
-msgid "fubar"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:728 src/TestBackupConfig2.cc:736
-#: src/TestBackupConfig2.cc:765 src/TestBackupConfig2.cc:790
-msgid "foobar"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:729 src/TestBackupConfig2.cc:734
-#: src/TestBackupConfig2.cc:763 src/TestBackupConfig2.cc:788
-msgid "whee"
-msgstr ""
-
-#: src/TestBackupConfig2.cc:961
-msgid "_excludethis$"
-msgstr ""
-
-#~ msgid "Starting Compare"
-#~ msgstr "Beginne Vergleich"
-
-#~ msgid "Stop Compare"
-#~ msgstr "Beende Vergleich"
+#: ../src/main.cc:315
+msgid "unknown"
+msgstr "unbekannt"
