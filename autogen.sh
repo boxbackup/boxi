@@ -102,7 +102,7 @@ for coin in configure.ac boxbackup/configure.ac; do
       for k in $macrodirs; do
   	    if test -d $k; then
           aclocalinclude="$aclocalinclude -I $k"
-  	  ##else 
+  	  ##else
 	    ##  echo "**Warning**: No such directory \`$k'.  Ignored."
         fi
       done
@@ -114,7 +114,7 @@ for coin in configure.ac boxbackup/configure.ac; do
 	  echo "Creating $dr/aclocal.m4 ..."
 	  test -r $dr/aclocal.m4 || touch $dr/aclocal.m4
 	  echo "Running gettextize...  Ignore non-fatal messages."
-	  ./setup-gettext
+	  $dr/infrastructure/setup-gettext
 	  echo "Making $dr/aclocal.m4 writable ..."
 	  test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
         fi
@@ -145,7 +145,7 @@ for coin in configure.ac boxbackup/configure.ac; do
 	echo "Running autoheader..."
 	autoheader
       fi
-      echo "Running automake --gnu $am_opt ..."
+      echo "Running automake --add-missing --gnu $am_opt in $dr..."
       automake --add-missing --gnu $am_opt
       echo "Running autoconf ..."
       autoconf
