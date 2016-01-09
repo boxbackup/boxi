@@ -10,3 +10,5 @@ en@quot.header
 insert-header.sin
 quot.sed
 remove-potcdate.sin
+*gmo
+*mo
