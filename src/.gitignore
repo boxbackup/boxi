@@ -3,3 +3,4 @@
 .libs
 Makefile
 Makefile.in
+*.o
