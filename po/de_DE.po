@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Boxi\n"
 "Report-Msgid-Bugs-To: Chris Wilson <chris-boxisource@qwirx.com>\n"
-"POT-Creation-Date: 2016-01-09 13:46+0100\n"
-"PO-Revision-Date: 2016-01-09 13:49+0100\n"
+"POT-Creation-Date: 2016-01-09 14:10+0100\n"
+"PO-Revision-Date: 2016-01-09 14:11+0100\n"
 "Last-Translator: Achim <achim@qustodium.net>\n"
 "Language-Team: Achim J. Latz <achim.latz@qustodium.net>\n"
 "Language: de_DE\n"
@@ -1468,57 +1468,33 @@ msgstr ""
 msgid "Flags are: %d"
 msgstr ""
 
-#: ../src/RestorePanel.cc:69
-#, fuzzy
-msgid "Restore Panel"
-msgstr "Wiederherstellung"
-
 #: ../src/RestorePanel.cc:76
-#, fuzzy
 msgid "&Files to restore"
-msgstr "Zu vergleichende Dateien"
+msgstr "Dateiauswahl"
 
 #: ../src/RestorePanel.cc:77
 msgid "Restore &destination"
-msgstr ""
+msgstr "Zielverzeichnis"
 
 #: ../src/RestorePanel.cc:90
-msgid "&New location:"
-msgstr ""
+msgid "&Directory:"
+msgstr "&Verzeichnis:"
 
 #: ../src/RestorePanel.cc:104
 msgid "Restore &to date:"
-msgstr ""
+msgstr "Wiederherstellungs&zeitpunkt:"
 
 #: ../src/RestorePanel.cc:111
 msgid "&at"
-msgstr ""
-
-#: ../src/RestorePanel.cc:120
-msgid "&:"
-msgstr ""
+msgstr "&um"
 
 #: ../src/RestorePanel.cc:138
 msgid "&Select Files"
 msgstr "Dateien Auswählen"
 
 #: ../src/RestorePanel.cc:139
-#, fuzzy
 msgid "Start &Restore"
-msgstr "Beginne Wiederherstellung"
-
-#: ../src/RestorePanel.cc:168
-#, c-format
-msgid "%s %s"
-msgstr ""
-
-#: ../src/RestorePanel.cc:168
-msgid "+"
-msgstr ""
-
-#: ../src/RestorePanel.cc:168
-msgid "-"
-msgstr ""
+msgstr "Wiederherstellung starten"
 
 #: ../src/RestorePanel.cc:177
 msgid "Restore Files"
@@ -1529,12 +1505,15 @@ msgid "Restore Progress"
 msgstr "Wiederherstellungsfortschritt"
 
 #: ../src/RestorePanel.cc:194
-msgid "Cannot start restore: the destination path is not set"
-msgstr ""
+msgid "Cannot start restore: Please pick the the destination path first"
+msgstr "Bitte geben Sie das Zielverzeichnis an"
 
 #: ../src/RestorePanel.cc:202
-msgid "Cannot start restore: the destination path already exists"
+msgid ""
+"Cannot start restore: The destination path already exists. Please pick a new "
+"directory name."
 msgstr ""
+"Das Zielverzeichnis existiert bereits. Bitte geben Sie einen neuen Namen ein."
 
 #: ../src/RestoreProgressPanel.cc:69
 msgid "Restore Progress Panel"
@@ -3196,3 +3175,6 @@ msgstr ""
 #: ../src/main.cc:315
 msgid "unknown"
 msgstr "unbekannt"
+
+#~ msgid "Restore Panel"
+#~ msgstr "Wiederherstellung"
