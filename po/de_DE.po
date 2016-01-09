@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Boxi\n"
 "Report-Msgid-Bugs-To: Chris Wilson <chris-boxisource@qwirx.com>\n"
-"POT-Creation-Date: 2016-01-09 00:30+0100\n"
-"PO-Revision-Date: 2016-01-09 00:30+0100\n"
+"POT-Creation-Date: 2016-01-09 13:46+0100\n"
+"PO-Revision-Date: 2016-01-09 13:49+0100\n"
 "Last-Translator: Achim <achim@qustodium.net>\n"
 "Language-Team: Achim J. Latz <achim.latz@qustodium.net>\n"
 "Language: de_DE\n"
@@ -1139,7 +1139,7 @@ msgstr "Wiederherstellung"
 
 #: ../src/GeneralPanel.cc:139
 msgid "Copy files from the backup server to this computer"
-msgstr "Dateien von einem Backupserver auf diesen Rechner zur??ckspielen"
+msgstr "Dateien von einem Backupserver auf diesen Rechner kopieren"
 
 #: ../src/GeneralPanel.cc:143
 msgid "&Restore"
@@ -1500,9 +1500,7 @@ msgstr ""
 
 #: ../src/RestorePanel.cc:138
 msgid "&Select Files"
-msgstr ""
-"Auch lokal gelöschte Dateien anzeigen, die aber noch auf dem Backup-Server "
-"existieren"
+msgstr "Dateien Auswählen"
 
 #: ../src/RestorePanel.cc:139
 #, fuzzy
