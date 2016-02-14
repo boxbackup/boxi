@@ -112,6 +112,12 @@ To compile, run the following commands in the downloaded boxi source directory:
 make
 ```
 
+All in one Line:
+
+```bash
+git clone git@github.com:boxbackup/boxi.git && cd boxi && git submodule update --init && ./autogen.sh && make
+```
+
 
 ## Running
 
@@ -135,6 +141,17 @@ If you supply the -c option and a bbackupd-config-file boxi will read your confi
 -t Offers TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all.
 
 -l offers de_DE and es_ES capabilities
+
+
+## Doxygen documentation
+The tool Doxygen can be used to build a web page with the classes of the project. To build this documentation you need to have Doxygen installed. You can then:
+```bash
+cd boxi/docs
+mkdir -p ../build/doxygen   # ensure that the target dir exists
+doxygen Doxyfile            # writes the documentation to boxi/build/doxygen
+```
+You then need to point your browser to the location of the index file:
+    file:///your/source/code/directory/boxi/build/doxygen/html/index.html
 
 
 ## Old Screenshots
