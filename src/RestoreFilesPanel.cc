@@ -854,7 +854,7 @@ ServerCacheNode::SafeVector* ServerCacheNode::GetChildren()
 	{
 		pChild->mVersions.clear();
 		pChild->mpMostRecent = NULL;
-		lFileTable[pChild->GetFileName()] = &(*pChild);
+                lFileTable[pChild->GetFileName()] = &(*pChild);
 	}
 	
 	// create new nodes for all unique names that did not exist before,
@@ -871,7 +871,11 @@ ServerCacheNode::SafeVector* ServerCacheNode::GetChildren()
 			ServerCacheNode newChildNode(*this, en);
 			mChildren.push_back(newChildNode);
 			pChildNode = &(mChildren.back());
-			lFileTable[name] = pChildNode;
+                        // stop the segfault when there are duplicate directories with the same name
+                        // ToDo: Improve the logic. We should show all directories even if they have the same name
+                        if ( lFileTable.find(name) == lFileTable.end() ) {
+                            lFileTable[name] = pChildNode;
+                        }
 		}
 		pChildNode->mVersions.push_back(ServerFileVersion(en));
 	}
