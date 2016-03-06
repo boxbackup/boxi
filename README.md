@@ -76,7 +76,7 @@ cd boxi
 git submodule update --init
 ```
 
-## Compiling
+## Compiling (on Linux)
 
 Boxi is distributed as source code, and binaries for Windows/Cygwin (eventually).
 
@@ -87,7 +87,7 @@ The following programs and libraries are required to compile Boxi:
 - openssl (version 0.9.7a or higher, with development libraries)
 - libncurses-devel (version 5, for boxbackup)
 - gcc, g++ and libstdc++-devel
-- wxWidgets (version 2.6.x or later, with development libraries)
+- wxWidgets (version 2.6.x or later, with development libraries) (> 3.0 needs code changes on separate branch)
 - CppUnit (version 1.10.2 or later, with development libraries)
 - m4 (version 1.4.1 or higher)
 - autoconf (version 2.59 or higher)
@@ -96,14 +96,6 @@ The following programs and libraries are required to compile Boxi:
 - gettext-devel
 - pkg-config
 - ccache (strictly optional)
-
-To compile on Windows, you must satisfy the requirements of Box Backup.
-You may find the this document helpful:
-
-[http://www.boxbackup.org/svn/box/trunk/docs/api-notes/win32\_build\_on\_cygwin\_using\_mingw.txt](http://www.boxbackup.org/svn/box/trunk/docs/api-notes/win32_build_on_cygwin_using_mingw.txt).
-
-In addition, you will also need to compile and install CppUnit and wxMSW.
-Please see the document [cygwin-mingw-build.txt](https://metacpan.org/pod/cygwin-mingw-build.txt) for instructions.
 
 To compile, run the following commands in the downloaded boxi source directory:
 
@@ -117,6 +109,15 @@ All in one Line:
 ```bash
 git clone git@github.com:boxbackup/boxi.git && cd boxi && git submodule update --init && ./autogen.sh && make
 ```
+
+## Building on Windows
+
+To compile on Windows, you must satisfy the requirements of Box Backup.
+You may find the this document helpful:
+
+[https://www.boxbackup.org/wiki/CompileWithCygwinMinGW](https://www.boxbackup.org/wiki/CompileWithCygwinMinGW).
+
+In addition, you will also need to compile and install CppUnit and wxMSW.
 
 
 ## Running
