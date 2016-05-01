@@ -143,6 +143,7 @@ If you supply the -c option and a bbackupd-config-file boxi will read your confi
 
 -l offers de_DE and es_ES capabilities
 
+**Note:** If you want to run the tests it is essential that you start boxi from the ./src directory. The tests expect to find their fixtures in the ../test/config directory (which is relative to the current directory).
 
 ## Doxygen documentation
 The tool Doxygen can be used to build a web page with the classes of the project. To build this documentation you need to have Doxygen installed. You can then:
