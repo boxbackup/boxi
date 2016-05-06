@@ -195,13 +195,16 @@ void GeneralPanel::OnCompareButtonClick(wxCommandEvent& event)
 
 void GeneralPanel::OnIdle(wxIdleEvent& event)
 {
-	if (mpWizard)
+    // This block of code causes a segfault when the wizard is closed
+    // Disabling it seems to fix this and gets the TestWizard Test to pass
+    /*
+        if (mpWizard)
 	{
 		if (mpWizard->IsShown())
 			return;
 		mpWizard->Destroy();
 		mpWizard = NULL;
-	}
+	}*/
 }
 
 void GeneralPanel::OnSetupWizardButtonClick(wxCommandEvent& event)
