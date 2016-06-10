@@ -66,7 +66,7 @@ RestorePanel::RestorePanel
 	ServerConnection*     pServerConnection,
 	wxWindow*             pParent
 )
-:	FunctionPanel(_("Restore Panel"), pConfig, pClientConfigPanel, 
+:	FunctionPanel(wxS("Restore Panel"), pConfig, pClientConfigPanel, 
 		pMainFrame, pParent, ID_Restore_Panel)
 {
 	mpProgressPanel = new RestoreProgressPanel(pConfig, pServerConnection,
@@ -87,7 +87,7 @@ RestorePanel::RestorePanel
 	mpDestBox->Add(mpNewDestSizer, 0, wxGROW | wxALL, 8);
 	
 	wxStaticText* pNewLocLabel = new wxStaticText(this, wxID_ANY, 
-		_("&New location:"), wxDefaultPosition, wxDefaultSize, 0);
+		_("&Directory:"), wxDefaultPosition, wxDefaultSize, 0);
 	mpNewDestSizer->Add(pNewLocLabel, 0, wxALIGN_CENTER, 0);
 
 	mpNewLocText = new wxTextCtrl(this, ID_Restore_Panel_New_Location_Text, 
@@ -117,7 +117,7 @@ RestorePanel::RestorePanel
 	pDateSelSizer->Add(mpHourSpin, 0, wxGROW | wxLEFT, 8);
 
 	wxStaticText* pColonLabel = new wxStaticText(this, wxID_ANY, 
-		_("&:"), wxDefaultPosition, wxDefaultSize, 0);
+		wxS("&:"), wxDefaultPosition, wxDefaultSize, 0);
 	pDateSelSizer->Add(pColonLabel, 0, wxALIGN_CENTER | wxLEFT, 4);
 
 	mpMinSpin = new wxSpinCtrl(this, ID_Restore_Panel_Min_Spin, 
@@ -165,7 +165,7 @@ void RestorePanel::Update()
 	{
 		wxString path = pEntry->GetNode().GetFullPath();
 		wxString entry;
-		entry.Printf(_("%s %s"), (pEntry->IsInclude() ? _("+") : _("-")),
+		entry.Printf(wxS("%s %s"), (pEntry->IsInclude() ? wxS("+") : wxS("-")),
 			path.c_str());
 		mpSourceList->Append(entry);
 	}
@@ -191,7 +191,7 @@ void RestorePanel::OnClickStartButton(wxCommandEvent& rEvent)
 	if (!dest.IsOk())
 	{
 		wxGetApp().ShowMessageBox(BM_RESTORE_FAILED_INVALID_DESTINATION_PATH,
-			_("Cannot start restore: the destination path is not set"),
+			_("Cannot start restore: Please pick the the destination path first"),
 			_("Boxi Error"), wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -199,7 +199,7 @@ void RestorePanel::OnClickStartButton(wxCommandEvent& rEvent)
 	if (wxFileName(dest.GetFullPath(), wxT("")).DirExists() || dest.FileExists())
 	{
 		wxGetApp().ShowMessageBox(BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS,
-			_("Cannot start restore: the destination path already exists"),
+			_("Cannot start restore: The destination path already exists. Please pick a new directory name."),
 			_("Boxi Error"), wxOK | wxICON_ERROR, this);
 		return;
 	}

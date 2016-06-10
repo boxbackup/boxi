@@ -76,7 +76,7 @@ cd boxi
 git submodule update --init
 ```
 
-## Compiling
+## Compiling (on Linux)
 
 Boxi is distributed as source code, and binaries for Windows/Cygwin (eventually).
 
@@ -87,7 +87,7 @@ The following programs and libraries are required to compile Boxi:
 - openssl (version 0.9.7a or higher, with development libraries)
 - libncurses-devel (version 5, for boxbackup)
 - gcc, g++ and libstdc++-devel
-- wxWidgets (version 2.6.x or later, with development libraries)
+- wxWidgets (version 2.6.x or later, with development libraries) (> 3.0 needs code changes on separate branch)
 - CppUnit (version 1.10.2 or later, with development libraries)
 - m4 (version 1.4.1 or higher)
 - autoconf (version 2.59 or higher)
@@ -97,14 +97,6 @@ The following programs and libraries are required to compile Boxi:
 - pkg-config
 - ccache (strictly optional)
 
-To compile on Windows, you must satisfy the requirements of Box Backup.
-You may find the this document helpful:
-
-[http://www.boxbackup.org/svn/box/trunk/docs/api-notes/win32\_build\_on\_cygwin\_using\_mingw.txt](http://www.boxbackup.org/svn/box/trunk/docs/api-notes/win32_build_on_cygwin_using_mingw.txt).
-
-In addition, you will also need to compile and install CppUnit and wxMSW.
-Please see the document [cygwin-mingw-build.txt](https://metacpan.org/pod/cygwin-mingw-build.txt) for instructions.
-
 To compile, run the following commands in the downloaded boxi source directory:
 
 ```shell
@@ -112,13 +104,29 @@ To compile, run the following commands in the downloaded boxi source directory:
 make
 ```
 
+All in one Line:
+
+```bash
+git clone git@github.com:boxbackup/boxi.git && cd boxi && git submodule update --init && ./autogen.sh && make
+```
+
+## Building on Windows
+
+To compile on Windows, you must satisfy the requirements of Box Backup.
+You may find the this document helpful:
+
+[https://www.boxbackup.org/wiki/CompileWithCygwinMinGW](https://www.boxbackup.org/wiki/CompileWithCygwinMinGW).
+
+In addition, you will also need to compile and install CppUnit and wxMSW.
+
 
 ## Running
 
 To run type the following command into the main download directory (i.e. boxi):
 
 ```shell
-src/boxi -c /etc/boxbackup/bbackupd.conf
+cd src          #needed for the internationalization
+./boxi -c /etc/boxbackup/bbackupd.conf
 
 Usage: boxi [-c] [-t <str>] [-l <str>] [-h] [<bbackupd-config-file>]
   -c                    ignored for compatibility with boxbackup command-line tools
@@ -134,6 +142,18 @@ If you supply the -c option and a bbackupd-config-file boxi will read your confi
 -t Offers TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all.
 
 -l offers de_DE and es_ES capabilities
+
+**Note:** If you want to run the tests it is essential that you start boxi from the ./src directory. The tests expect to find their fixtures in the ../test/config directory (which is relative to the current directory).
+
+## Doxygen documentation
+The tool Doxygen can be used to build a web page with the classes of the project. To build this documentation you need to have Doxygen installed. You can then:
+```bash
+cd boxi/docs
+mkdir -p ../build/doxygen   # ensure that the target dir exists
+doxygen Doxyfile            # writes the documentation to boxi/build/doxygen
+```
+You then need to point your browser to the location of the index file:
+    file:///your/source/code/directory/boxi/build/doxygen/html/index.html
 
 
 ## Old Screenshots

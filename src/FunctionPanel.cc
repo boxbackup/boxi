@@ -53,7 +53,7 @@ FunctionPanel::FunctionPanel(
 {
 	mpMainSizer = new wxBoxSizer(wxVERTICAL);
 
-	mpSourceBox = new wxStaticBoxSizer(wxVERTICAL, this, wxT(""));
+	mpSourceBox = new wxStaticBoxSizer(wxVERTICAL, this, wxS(""));
 	mpMainSizer->Add(mpSourceBox, 1, wxGROW | wxALL, 8);
 	
 	mpSourceList = new wxListBox(this, ID_Function_Source_List);
@@ -64,11 +64,11 @@ FunctionPanel::FunctionPanel(
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 	mpSourceEditButton = new wxButton(this, 
-		ID_Function_Source_Button, wxT(""));
+		ID_Function_Source_Button, wxS(""));
 	mpSourceCtrlSizer->Add(mpSourceEditButton, 0, wxGROW, 0);
 	
 	mpDestBox = new wxStaticBoxSizer(wxVERTICAL, 
-		this, wxT(""));
+		this, wxS(""));
 	mpMainSizer->Add(mpDestBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 	
 	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
