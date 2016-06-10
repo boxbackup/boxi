@@ -93,7 +93,6 @@ if ! (
 fi
 
 AC_CONFIG_SUBDIRS(boxbackup)
-AC_CONFIG_SUBDIRS(wxchart)
 
 dnl Custom macros end here
 
