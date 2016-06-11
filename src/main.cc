@@ -98,21 +98,20 @@ void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor,
 
 static wxCmdLineEntryDesc theCmdLineParams[] = 
 {
-	{ wxCMD_LINE_SWITCH, wxS("c"), NULL, 
-		wxS("ignored for compatibility with "
-		    "boxbackup command-line tools"),
+	{ wxCMD_LINE_SWITCH, _("c"), NULL, 
+		_("ignored for compatibility with boxbackup command-line tools"),
 		wxCMD_LINE_VAL_NONE, 0 },
-	{ wxCMD_LINE_PARAM, wxS(""), wxS(""), 
-		wxS("<bbackupd-config-file>"),
+	{ wxCMD_LINE_PARAM, _(""), _(""), 
+		_("<bbackupd-config-file>"),
 		wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
-	{ wxCMD_LINE_OPTION, wxS("t"), wxS("test"), 
+	{ wxCMD_LINE_OPTION, _("t"), _("test"), 
 		_("run the specified unit test.\n\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all"),
 		wxCMD_LINE_VAL_STRING, 0 },
-	{ wxCMD_LINE_OPTION, wxS("l"), wxS("lang"), 
+	{ wxCMD_LINE_OPTION, _("l"), _("lang"), 
 		_("load the specified language or translation"),
 		wxCMD_LINE_VAL_STRING, 0 },
-	{ wxCMD_LINE_SWITCH, wxS("h"), wxS("help"), 
-		wxS("displays this help text"),
+	{ wxCMD_LINE_SWITCH, _("h"), _("help"), 
+		_("displays this help text"),
 		wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
 	{ wxCMD_LINE_NONE },
 };
@@ -304,15 +303,22 @@ bool BoxiApp::OnInit()
 	// found in the default locations, but when the program is not
 	// installed, the catalogs are in the build directory where we
 	// wouldn't find them by default.
+	wxLocale::AddCatalogLookupPathPrefix(wxT("../../po")); 
 	wxLocale::AddCatalogLookupPathPrefix(wxT("../po")); 
 	wxLocale::AddCatalogLookupPathPrefix(wxT("po")); 
 
 	// Initialize the catalogs we'll be using
 	if (!locale.AddCatalog(locale.GetCanonicalName()))
 	{
+		wxString language_name = _("unknown");
+		if(pLangInfo != NULL)
+		{
+			language_name = pLangInfo->CanonicalName;
+		}
+		// wxWidgets 2 requires .c_str() to pass strings to varargs functions,
+		// wxWidgets 3 does not.
 		wxLogError(_("Couldn't find/load the catalog for locale '%s'."),
-			pLangInfo ? pLangInfo->CanonicalName.c_str()
-			: _("unknown"));
+			language_name.c_str());
 	} 
 
 	// Now try to add wxstd.mo so that loading nonexistent files will

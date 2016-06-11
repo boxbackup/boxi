@@ -70,7 +70,7 @@ void TestConfig::RunTest()
 		TestFileDialog dialog(
 			NULL, _("Save file"), wxT(""), _("bbackupd.conf"), 
 			_("Box Backup client configuration file|bbackupd.conf"), 
-			wxSAVE | wxOVERWRITE_PROMPT);
+			wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 		wxString in = mConfigFileName.GetFullPath();
 		wxGetApp().ExpectFileDialog(in);
 		CPPUNIT_ASSERT(wxGetApp().ShowFileDialog(dialog) == wxID_OK);

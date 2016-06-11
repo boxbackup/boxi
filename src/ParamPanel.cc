@@ -74,9 +74,7 @@ void IntCtrl::Reload()
 {
 	int value = mValue;
 	wxString ValueString;
-	ValueString.Printf(
-		wxString(mFormat.c_str(), wxConvBoxi), 
-		mValue);
+	ValueString.Printf(mFormat, mValue);
 	SetValue(ValueString);
 	// work around Windows bug
 	mValue = value;
@@ -125,8 +123,7 @@ void BoundIntCtrl::Reload()
 	if (ValuePtr)
 	{
 		wxString ValueString;
-		ValueString.Printf(wxString(mFormat.c_str(), wxConvBoxi), 
-			*ValuePtr);
+		ValueString.Printf(mFormat, *ValuePtr);
 		int ValueInt = *ValuePtr;
 		SetValue(ValueString);
 		// work around Windows bug
@@ -184,8 +181,7 @@ void BoundHexCtrl::Reload()
 	if (ValuePtr)
 	{
 		wxString ValueString;
-		ValueString.Printf(wxString(mFormat.c_str(), wxConvBoxi), 
-			*ValuePtr);
+		ValueString.Printf(mFormat, *ValuePtr);
 		SetValue(ValueString);
 
 		// work around Windows bug
@@ -276,12 +272,12 @@ void FileSelButton::OnClick(wxCommandEvent& event)
 	int flags = 0;
 	if (mFileMustExist)
 	{
-		flags = wxOPEN | wxFILE_MUST_EXIST;
+		flags = wxFD_OPEN | wxFD_FILE_MUST_EXIST;
 		fileSpec.Append(_("|All Files|*"));
 	}
 	else
 	{
-		flags = wxSAVE | wxOVERWRITE_PROMPT;
+		flags = wxFD_SAVE | wxFD_OVERWRITE_PROMPT;
 	}
 	
 	TestFileDialog selector(this, mFileSelectDialogTitle, 

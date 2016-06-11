@@ -73,7 +73,7 @@ class SafeWindowWrapper
 	public:
 	SafeWindowWrapper(wxWindow* pWindow) : mpWindow(pWindow) { }
 	wxWindowID GetId() { return mpWindow->GetId(); }
-	void AddPendingEvent(wxEvent& rEvent) { mpWindow->AddPendingEvent(rEvent); }
+	void AddPendingEvent(wxEvent& rEvent) { mpWindow->GetEventHandler()->AddPendingEvent(rEvent); }
 };
 
 /*
@@ -121,7 +121,7 @@ void* TestCase::Entry()
 	RunTest();
 	
 	wxCommandEvent fini(TEST_FINISHED_EVENT, mpTestFrame->GetId());
-	mpTestFrame->AddPendingEvent(fini);
+	mpTestFrame->GetEventHandler()->AddPendingEvent(fini);
 	
 	return 0;
 }
@@ -136,7 +136,7 @@ bool TestCase::WaitForMain()
 MainFrame* TestCase::OpenMainFrame()
 {
 	wxCommandEvent open(CREATE_WINDOW_COMMAND, mpTestFrame->GetId());
-	mpTestFrame->AddPendingEvent(open);	
+	mpTestFrame->GetEventHandler()->AddPendingEvent(open);	
 	assert(WaitForMain());
 	
 	MainFrame* pMainFrame = mpTestFrame->GetMainFrame();
@@ -157,7 +157,7 @@ void TestCase::CloseWindowWaitClosed(wxWindow* pWindow)
 	wxCloseEvent close(wxEVT_CLOSE_WINDOW, id);
 	close.SetEventObject(pTopLevelWindow);
 	
-	pTopLevelWindow->AddPendingEvent(close);
+	pTopLevelWindow->GetEventHandler()->AddPendingEvent(close);
 	assert(WaitForMain());
 	
 	while ( (pWindow = FindWindow(id)) )
@@ -183,7 +183,7 @@ wxCommandEvent TestCase::GetButtonClickEvent(wxWindow* pWindow)
 void TestCase::ClickButtonWaitIdle(wxWindow* pWindow)
 {
 	wxCommandEvent click = GetButtonClickEvent(pWindow);
-	pWindow->AddPendingEvent(click);
+	pWindow->GetEventHandler()->AddPendingEvent(click);
 	assert(WaitForMain());
 }
 
@@ -370,7 +370,7 @@ void TestFrame::OnTestFinishedEvent(wxCommandEvent& rEvent)
 void TestFrame::WaitForEvent(wxCommandEvent& rEvent)
 {
 	mMutex.Lock();
-	AddPendingEvent(rEvent);
+	GetEventHandler()->AddPendingEvent(rEvent);
 	assert(mEventHandlerFinished.Wait() == wxCOND_NO_ERROR);
 	mMutex.Unlock();
 }
@@ -383,7 +383,7 @@ void TestFrame::MainDoClickButton(wxCommandEvent& rEvent)
 	wxButton* pButton = wxDynamicCast(pObject, wxButton);
 	assert(pButton);
 
-	pButton->ProcessEvent(rEvent);	
+	pButton->GetEventHandler()->ProcessEvent(rEvent);	
 	wxMutexLocker lock(mMutex);
 	mEventHandlerFinished.Signal();
 }
@@ -417,7 +417,7 @@ void TestThread::Entry2()
 	wxCommandEvent wizard(wxEVT_COMMAND_BUTTON_CLICKED, 
 		ID_General_Setup_Wizard_Button);
 	wxWindow::FindWindowById(ID_General_Setup_Wizard_Button)->
-		AddPendingEvent(wizard);
+		GetEventHandler()->AddPendingEvent(wizard);
 	if (!WaitForMain()) return;
 	
 	CloseWindow(ID_Setup_Wizard_Frame);
@@ -667,7 +667,7 @@ wxCommandEvent GuiTestBase::GetButtonClickEvent(wxWindow* pWindow)
 void GuiTestBase::ClickButtonWaitIdle(wxWindow* pWindow)
 {
 	wxCommandEvent click = GetButtonClickEvent(pWindow);
-	pWindow->AddPendingEvent(click);
+	pWindow->GetEventHandler()->AddPendingEvent(click);
 	BOXI_ASSERT(WxGuiTestHelper::FlushEventQueue() == 0);
 }
 
@@ -698,7 +698,7 @@ void GuiTestBase::ClickButtonWaitEvent(wxButton* pButton)
 {
 	BOXI_ASSERT(pButton);	
 	wxCommandEvent click = GetButtonClickEvent(pButton);
-	pButton->ProcessEvent(click);
+	pButton->GetEventHandler()->ProcessEvent(click);
 }
 
 void GuiTestBase::ClickRadioWaitEvent(wxWindow* pWindow)
@@ -715,7 +715,7 @@ void GuiTestBase::ClickRadioWaitEvent(wxWindow* pWindow)
 	click.SetEventObject(pButton);
 	click.SetInt(1);
 
-	pWindow->ProcessEvent(click);
+	pWindow->GetEventHandler()->ProcessEvent(click);
 }
 
 void GuiTestBase::ClickRadioWaitEvent(wxWindowID ButtonID)
@@ -740,7 +740,7 @@ void GuiTestBase::CloseWindow(wxWindow* pWindow)
 	wxCloseEvent close(wxEVT_CLOSE_WINDOW, id);
 	close.SetEventObject(pTopLevelWindow);
 	
-	pTopLevelWindow->AddPendingEvent(close);
+	pTopLevelWindow->GetEventHandler()->AddPendingEvent(close);
 }
 
 void GuiTestBase::CloseWindowWaitClosed(wxWindow* pWindow)
@@ -766,7 +766,7 @@ void GuiTestBase::ActivateTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rIt
 	click.SetEventObject(pTree);
 	click.SetItem(rItem);
 	
-	pTree->ProcessEvent(click);
+	pTree->GetEventHandler()->ProcessEvent(click);
 }
 
 void GuiTestBase::ExpandTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem)
@@ -778,7 +778,7 @@ void GuiTestBase::ExpandTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem
 	click.SetEventObject(pTree);
 	click.SetItem(rItem);
 	
-	pTree->ProcessEvent(click);
+	pTree->GetEventHandler()->ProcessEvent(click);
 }
 
 void GuiTestBase::CollapseTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rItem)
@@ -790,7 +790,7 @@ void GuiTestBase::CollapseTreeItemWaitEvent(wxTreeCtrl* pTree, wxTreeItemId& rIt
 	click.SetEventObject(pTree);
 	click.SetItem(rItem);
 	
-	pTree->ProcessEvent(click);
+	pTree->GetEventHandler()->ProcessEvent(click);
 }
 
 void GuiTestBase::SetTextCtrlValue(wxTextCtrl* pTextCtrl, const wxString& rValue)
@@ -805,7 +805,7 @@ void GuiTestBase::SetValueAndDefocus(wxTextCtrl* pTextCtrl, const wxString& rVal
 	SetTextCtrlValue(pTextCtrl, rValue);
 	wxFocusEvent focus(wxEVT_KILL_FOCUS);
 	focus.SetEventObject(pTextCtrl);
-	pTextCtrl->ProcessEvent(focus);
+	pTextCtrl->GetEventHandler()->ProcessEvent(focus);
 }
 
 void GuiTestBase::SetValueDefocusCheck(wxTextCtrl* pTextCtrl, const wxString& rValue)
@@ -823,7 +823,7 @@ void GuiTestBase::SetSpinCtrlValue(wxSpinCtrl* pSpinCtrl, int newValue)
 	wxSpinEvent spin(wxEVT_COMMAND_SPINCTRL_UPDATED, pSpinCtrl->GetId());
 	spin.SetPosition(newValue);
 	spin.SetEventObject(pSpinCtrl);
-	pSpinCtrl->ProcessEvent(spin);
+	pSpinCtrl->GetEventHandler()->ProcessEvent(spin);
 }
 
 void GuiTestBase::SetDatePickerValue(wxDatePickerCtrl* pPicker, 
@@ -833,7 +833,7 @@ void GuiTestBase::SetDatePickerValue(wxDatePickerCtrl* pPicker,
 	BOXI_ASSERT(pPicker->IsEnabled());
 	pPicker->SetValue(rNewValue);
 	wxDateEvent pick(pPicker, rNewValue, wxEVT_DATE_CHANGED);
-	pPicker->ProcessEvent(pick);	
+	pPicker->GetEventHandler()->ProcessEvent(pick);	
 }
 
 void GuiTestBase::SetSelection(wxListBox* pListCtrl, int value)
@@ -844,7 +844,7 @@ void GuiTestBase::SetSelection(wxListBox* pListCtrl, int value)
 	wxCommandEvent click(wxEVT_COMMAND_LISTBOX_SELECTED, pListCtrl->GetId());
 	click.SetEventObject(pListCtrl);
 	click.SetInt(value);
-	pListCtrl->ProcessEvent(click);
+	pListCtrl->GetEventHandler()->ProcessEvent(click);
 }
 
 void GuiTestBase::SetSelection(wxChoice* pChoiceCtrl, int value)
@@ -855,7 +855,7 @@ void GuiTestBase::SetSelection(wxChoice* pChoiceCtrl, int value)
 	wxCommandEvent click(wxEVT_COMMAND_CHOICE_SELECTED, pChoiceCtrl->GetId());
 	click.SetEventObject(pChoiceCtrl);
 	click.SetInt(value);
-	pChoiceCtrl->ProcessEvent(click);
+	pChoiceCtrl->GetEventHandler()->ProcessEvent(click);
 }
 
 void GuiTestBase::CheckBoxWaitEvent(wxCheckBox* pCheckBox, bool newValue)
@@ -867,7 +867,7 @@ void GuiTestBase::CheckBoxWaitEvent(wxCheckBox* pCheckBox, bool newValue)
 	wxCommandEvent click(wxEVT_COMMAND_CHECKBOX_CLICKED, pCheckBox->GetId());
 	click.SetEventObject(pCheckBox);
 	click.SetInt(newValue);
-	pCheckBox->ProcessEvent(click);
+	pCheckBox->GetEventHandler()->ProcessEvent(click);
 	BOXI_ASSERT(pCheckBox->GetValue() == newValue);
 }
 

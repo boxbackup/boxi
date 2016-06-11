@@ -194,7 +194,7 @@ ClientConnection::Error ClientConnection::_GetClientPidSlow(long& rPid)
 		return ERR_NOPIDCONFIG;
 	wxString PidFilePath(PidFilePathStr.c_str(), wxConvBoxi);
 		
-	wxFileName DaemonPidFile(wxString(PidFilePath.c_str(), wxConvBoxi));
+	wxFileName DaemonPidFile(PidFilePath);
 	if (!wxFileName::FileExists(DaemonPidFile.GetFullPath()))
 	{
 		wxLogDebug(_("PID file not found (%s)"), 
