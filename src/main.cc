@@ -39,7 +39,6 @@
 #include <wx/image.h>
 #include <wx/intl.h>
 #include <wx/log.h>
-#include <wx/string.h>
 
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/CompilerOutputter.h>
@@ -97,27 +96,47 @@ void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor,
 	}
 }
 
+#if wxMAJOR_VERSION	< 3
 static wxCmdLineEntryDesc theCmdLineParams[] =
 {
-	// See http://docs.wxwidgets.org/3.0.0/overview_changes_since28.html
-	// inally, a few structure fields, notable wxCmdLineEntryDesc::shortName, longName and description fields have been changed to be of type const char* instead of const wxChar* so you will need to remove wxT() or _T() if you used it with their initializers.
+	{ wxCMD_LINE_SWITCH, _("c"), NULL,
+		_("ignored for compatibility with boxbackup command-line tools"),
+		wxCMD_LINE_VAL_NONE, 0 },
+	{ wxCMD_LINE_PARAM, _(""), _(""),
+		_("<bbackupd-config-file>"),
+		wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
+	{ wxCMD_LINE_OPTION, _("t"), _("test"),
+		_("run the specified unit test.\n\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all"),
+		wxCMD_LINE_VAL_STRING, 0 },
+	{ wxCMD_LINE_OPTION, _("l"), _("lang"),
+		_("load the specified language or translation"),
+		wxCMD_LINE_VAL_STRING, 0 },
+	{ wxCMD_LINE_SWITCH, _("h"), _("help"),
+		_("displays this help text"),
+		wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
+	{ wxCMD_LINE_NONE },
+};
+#else
+static wxCmdLineEntryDesc theCmdLineParams[] =
+{
 	{ wxCMD_LINE_SWITCH, "c", NULL,
-		(char *)(const char *)_("ignored for compatibility with boxbackup command-line tools").c_str(),
+		"ignored for compatibility with boxbackup command-line tools",
 		wxCMD_LINE_VAL_NONE, 0 },
 	{ wxCMD_LINE_PARAM, "", "",
-		(char *)(const char *)_("<bbackupd-config-file>").c_str(),
+		"<bbackupd-config-file>",
 		wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
 	{ wxCMD_LINE_OPTION, "t", "test",
-		(char *)(const char *)_("run the specified unit test.\n\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all").c_str(),
+		"run the specified unit test.\n\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all",
 		wxCMD_LINE_VAL_STRING, 0 },
 	{ wxCMD_LINE_OPTION, "l", "lang",
-		(char *)(const char *)_("load the specified language or translation").c_str(),
+		"load the specified language or translation",
 		wxCMD_LINE_VAL_STRING, 0 },
 	{ wxCMD_LINE_SWITCH, "h", "help",
-		(char *)(const char *)_("displays this help text").c_str(),
+		"displays this help text",
 		wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
-	{ wxCMD_LINE_NONE }
+	{ wxCMD_LINE_NONE },
 };
+#endif
 
 int    g_argc = 0;
 char** g_argv = NULL;
