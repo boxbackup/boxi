@@ -39,6 +39,7 @@
 #include <wx/image.h>
 #include <wx/intl.h>
 #include <wx/log.h>
+#include <wx/string.h>
 
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/CompilerOutputter.h>
@@ -98,20 +99,22 @@ void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor,
 
 static wxCmdLineEntryDesc theCmdLineParams[] =
 {
+	// See http://docs.wxwidgets.org/3.0.0/overview_changes_since28.html
+	// inally, a few structure fields, notable wxCmdLineEntryDesc::shortName, longName and description fields have been changed to be of type const char* instead of const wxChar* so you will need to remove wxT() or _T() if you used it with their initializers.
 	{ wxCMD_LINE_SWITCH, "c", NULL,
-		_("ignored for compatibility with boxbackup command-line tools").mb_str(),
+		"ignored for compatibility with boxbackup command-line tools",
 		wxCMD_LINE_VAL_NONE, 0 },
 	{ wxCMD_LINE_PARAM, "", "",
-		_("<bbackupd-config-file>").mb_str(),
+		"<bbackupd-config-file>",
 		wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
 	{ wxCMD_LINE_OPTION, "t", "test",
-		_("run the specified unit test.\n\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all").mb_str(),
+		"run the specified unit test.\n\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all",
 		wxCMD_LINE_VAL_STRING, 0 },
 	{ wxCMD_LINE_OPTION, "l", "lang",
-		_("load the specified language or translation").mb_str(),
+		"load the specified language or translation",
 		wxCMD_LINE_VAL_STRING, 0 },
 	{ wxCMD_LINE_SWITCH, "h", "help",
-		_("displays this help text").mb_str(),
+		"displays this help text",
 		wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
 	{ wxCMD_LINE_NONE }
 };
