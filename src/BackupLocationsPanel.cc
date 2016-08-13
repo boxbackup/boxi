@@ -428,12 +428,19 @@ LocationsPanel::LocationsPanel(wxWindow* pParent, ClientConfig *pConfig)
 {
 	mpListBoxSizer   ->GetStaticBox()->SetLabel(_("&Locations"));
 	mpDetailsBoxSizer->GetStaticBox()->SetLabel(_("&Selected or New Location"));
+#if wxMAJOR_VERSION	< 3
+	mpNameText = new wxTextCtrl(this, ID_Backup_LocationNameCtrl, wxT(""));
+	AddParam(this, _("Location &Name:"), mpNameText, true, mpDetailsParamSizer);
 
+	mpPathText = new wxTextCtrl(this, ID_Backup_LocationPathCtrl, wxT(""));
+	AddParam(this, _("Location &Path:"), mpPathText, true, mpDetailsParamSizer);
+#else
 	mpNameText = new wxTextCtrl(this, ID_Backup_LocationNameCtrl, wxT(""));
 	AddParam(this, _("Location &Name:").wx_str(), mpNameText, true, mpDetailsParamSizer);
 
 	mpPathText = new wxTextCtrl(this, ID_Backup_LocationPathCtrl, wxT(""));
 	AddParam(this, _("Location &Path:").wx_str(), mpPathText, true, mpDetailsParamSizer);
+#endif
 
 	NotifyChange();
 }
@@ -657,6 +664,15 @@ ExclusionsPanel::ExclusionsPanel(wxWindow* pParent, ClientConfig *pConfig)
 		mpTypeList->SetClientData(i, &(theExcludeTypes[i]));
 	}
 
+#if wxMAJOR_VERSION	< 3
+	AddParam(this, _("Exclude Type:"), mpTypeList, true,
+		mpDetailsParamSizer);
+	mpTypeList->SetSelection(0);
+
+	mpValueText = new wxTextCtrl(this, ID_BackupLoc_ExcludePathCtrl, wxT(""));
+	AddParam(this, _("Exclude Path:"), mpValueText, true,
+		mpDetailsParamSizer);
+#else
 	AddParam(this, _("Exclude Type:").wx_str(), mpTypeList, true,
 		mpDetailsParamSizer);
 	mpTypeList->SetSelection(0);
@@ -664,6 +680,7 @@ ExclusionsPanel::ExclusionsPanel(wxWindow* pParent, ClientConfig *pConfig)
 	mpValueText = new wxTextCtrl(this, ID_BackupLoc_ExcludePathCtrl, wxT(""));
 	AddParam(this, _("Exclude Path:").wx_str(), mpValueText, true,
 		mpDetailsParamSizer);
+#endif
 
 	NotifyChange();
 }

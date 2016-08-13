@@ -62,6 +62,26 @@ BackupDaemonPanel::BackupDaemonPanel(
 
 	wxSizer* pParamSizer = new wxGridSizer(2, 4, 4);
 
+#if wxMAJOR_VERSION	< 3
+	wxTextCtrl* pBoxLocationCtrl = new wxTextCtrl(this, -1);
+	AddParam(this, _("Client Location:"), pBoxLocationCtrl, TRUE,
+		pParamSizer);
+
+	mpClientConnStatus = new wxTextCtrl(this, -1, wxT(""),
+		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	AddParam(this, _("Connection to Client:"), mpClientConnStatus, TRUE,
+		pParamSizer);
+
+	mpClientError = new wxTextCtrl(this, -1, wxT(""),
+		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	AddParam(this, _("Connection Error:"), mpClientError , TRUE,
+		pParamSizer);
+
+	mpClientState = new wxTextCtrl(this, -1, wxT(""),
+		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	AddParam(this, _("Client State:"), mpClientState, TRUE,
+		pParamSizer);
+#else
 	wxTextCtrl* pBoxLocationCtrl = new wxTextCtrl(this, -1);
 	AddParam(this, _("Client Location:").wx_str(), pBoxLocationCtrl, TRUE,
 		pParamSizer);
@@ -80,7 +100,7 @@ BackupDaemonPanel::BackupDaemonPanel(
 		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 	AddParam(this, _("Client State:").wx_str(), mpClientState, TRUE,
 		pParamSizer);
-
+#endif
 	pMainSizer->Add(pParamSizer, 0, wxGROW | wxALL, 8);
 
 	// wxFlexGridSizer* pButtonSizer = new wxFlexGridSizer(2, 4, 4);

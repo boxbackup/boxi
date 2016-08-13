@@ -137,11 +137,19 @@ void MainFrame::DoFileNew()
 	UpdateTitle();
 }
 
+#if wxMAJOR_VERSION	< 3
+static const wxChar *FILETYPES = _(
+	"Box Backup client configuration file|bbackupd.conf|"
+	"Configuration files|*.conf|"
+	"All files|*.*"
+);
+#else
 static const wxChar *FILETYPES = _(
 	"Box Backup client configuration file|bbackupd.conf|"
 	"Configuration files|*.conf|"
 	"All files|*.*"
 ).wx_str();
+#endif
 
 void MainFrame::OnFileOpen(wxCommandEvent& event)
 {

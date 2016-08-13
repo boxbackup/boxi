@@ -102,6 +102,99 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 	ParamPanel *pAdvancedPanel = new ParamPanel(pClientPropsNotebook);
 	pClientPropsNotebook->AddPage(pAdvancedPanel, _("Advanced"));
 
+#if wxMAJOR_VERSION	< 3
+	mpStoreHostnameCtrl = pBasicPanel->AddParam(
+		_("Store Host:"), pConfig->StoreHostname,
+		wxID_ANY, FALSE, FALSE);
+
+	mpAccountNumberCtrl = pBasicPanel->AddParam(
+		_("Account Number:"), pConfig->AccountNumber,
+		"0x%x", wxID_ANY);
+
+	mpKeysFileCtrl = pBasicPanel->AddParam(
+		_("Keys File:"), pConfig->KeysFile,
+		wxID_ANY, TRUE, FALSE,
+		_("Encryption key files (*-FileEncKeys.raw)|"
+			"*-FileEncKeys.raw"), _("-FileEncKeys.raw"));
+
+		mpCertificateFileCtrl = pBasicPanel->AddParam(
+		_("Certificate File:"), pConfig->CertificateFile,
+		wxID_ANY, TRUE, FALSE,
+		_("Certificate files (*-cert.pem)|*-cert.pem"),
+		_("-cert.pem"));
+
+	mpPrivateKeyFileCtrl = pBasicPanel->AddParam(
+		_("Private Key File:"), pConfig->PrivateKeyFile,
+		wxID_ANY, TRUE, FALSE,
+		_("Private key files (*-key.pem)|*-key.pem"),
+		_("-key.pem"));
+
+	mpTrustedCAsFileCtrl = pBasicPanel->AddParam(
+		_("Trusted CAs File:"), pConfig->TrustedCAsFile,
+		wxID_ANY, TRUE, FALSE,
+		_("Server CA certificate (serverCA.pem)|serverCA.pem"),
+		_("serverCA.pem"));
+
+	mpDataDirectoryCtrl = pBasicPanel->AddParam(
+		_("Data Directory:"), pConfig->DataDirectory,
+		wxID_ANY, FALSE, TRUE);
+
+	mpCommandSocketCtrl = pBasicPanel->AddParam(
+		_("Command Socket:"), pConfig->CommandSocket,
+		wxID_ANY, TRUE, FALSE,
+		_("Command socket (bbackupd.sock)|bbackupd.sock"),
+		_("bbackupd.sock"));
+
+	mpExtendedLoggingCtrl = pBasicPanel->AddParam(
+		_("Extended Logging:"), pConfig->ExtendedLogging,
+		wxID_ANY);
+
+	mpUpdateStoreIntervalCtrl = pAdvancedPanel->AddParam(
+		_("Update Store Interval:"), pConfig->UpdateStoreInterval,
+		"%d", wxID_ANY);
+
+	mpMinimumFileAgeCtrl = pAdvancedPanel->AddParam(
+		_("Minimum File Age:"), pConfig->MinimumFileAge,
+		"%d", wxID_ANY);
+
+	mpMaxUploadWaitCtrl = pAdvancedPanel->AddParam(
+		_("Maximum Upload Wait:"),
+		pConfig->MaxUploadWait, "%d", wxID_ANY);
+
+	mpFileTrackingSizeThresholdCtrl = pAdvancedPanel->AddParam(
+		_("File Tracking Size Threshold:"),
+		pConfig->FileTrackingSizeThreshold,
+		"%d", wxID_ANY);
+
+	mpDiffingUploadSizeThresholdCtrl = pAdvancedPanel->AddParam(
+		_("Diffing Upload Size Threshold:"),
+		pConfig->DiffingUploadSizeThreshold,
+		"%d", wxID_ANY);
+
+	mpMaximumDiffingTimeCtrl = pAdvancedPanel->AddParam(
+		_("Maximum Diffing Time:"), pConfig->MaximumDiffingTime,
+		"%d", wxID_ANY);
+
+	mpKeepAliveTimeCtrl = pAdvancedPanel->AddParam(
+		_("Keep-Alive Time:"), pConfig->KeepAliveTime,
+		"%d", wxID_ANY);
+
+	mpNotifyScriptCtrl = pAdvancedPanel->AddParam(
+		_("Notify Script:"), pConfig->NotifyScript,
+		wxID_ANY, TRUE, FALSE,
+		_("Default script (NotifySysadmin.sh)|NotifySysadmin.sh|"
+			"All files (*)|*"));
+
+		mpSyncAllowScriptCtrl = pAdvancedPanel->AddParam(
+		_("Sync Allow Script:"), pConfig->SyncAllowScript,
+		wxID_ANY, TRUE, FALSE,
+		_("All files (*)|*"));
+
+	mpPidFileCtrl = pAdvancedPanel->AddParam(_("Process ID File:"),
+		pConfig->PidFile, wxID_ANY, TRUE, FALSE,
+		_("Client PID files (bbackupd.pid)|bbackupd.pid"),
+		_("bbackupd.pid"));
+#else
 	mpStoreHostnameCtrl = pBasicPanel->AddParam(
 		_("Store Host:").wx_str(), pConfig->StoreHostname,
 		wxID_ANY, FALSE, FALSE);
@@ -193,6 +286,7 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 		pConfig->PidFile, wxID_ANY, TRUE, FALSE,
 		_("Client PID files (bbackupd.pid)|bbackupd.pid").wx_str(),
 		_("bbackupd.pid").wx_str() );
+#endif
 
 	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
 	pTabSizer->Add(pActionCtrlSizer, 0,

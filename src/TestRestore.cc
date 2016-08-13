@@ -246,6 +246,28 @@ void TestRestore::RunTest()
 		mpRestoreTree->GetItemText(mLocationId));
 	mpRestoreTree->Expand(mLocationId);
 
+#if wxMAJOR_VERSION	< 3
+	const wxChar* labels[] =
+	{
+		_("another"),
+		_("dir23"),
+		_("spacetest"),
+		_("sub23"),
+		_("x1"),
+		_("xx_not_this_dir_ALWAYSINCLUDE"),
+		_("apropos"),
+		_("chsh"),
+		_("df324"),
+		_("df9834.dsf"),
+		_("dont.excludethis"),
+		_("f1.dat"),
+		_("f45.df"),
+		_("symlink1"),
+		_("symlink3"),
+		_("xx_not_this_dir_22"),
+		NULL
+	};
+#else
 	const wxChar* labels[] =
 	{
 		_("another").wx_str(),
@@ -266,6 +288,7 @@ void TestRestore::RunTest()
 		_("xx_not_this_dir_22").wx_str(),
 		NULL
 	};
+#endif
 	const wxChar** pLabel = labels;
 
 	// select a single file to restore
