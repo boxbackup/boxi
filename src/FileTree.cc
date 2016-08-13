@@ -47,36 +47,36 @@ FileImageList::FileImageList()
 
 IMPLEMENT_DYNAMIC_CLASS(FileTree, wxTreeCtrl)
 
-bool FileNode::AddChildren(wxTreeCtrl* pTreeCtrl, bool recurse) 
+bool FileNode::AddChildren(wxTreeCtrl* pTreeCtrl, bool recurse)
 {
 	pTreeCtrl->SetCursor(*wxHOURGLASS_CURSOR);
 	wxSafeYield();
-	
+
 	bool result;
-	
-	try 
+
+	try
 	{
 		result = _AddChildrenSlow(pTreeCtrl, recurse);
-	} 
-	catch (...) 
+	}
+	catch (...)
 	{
 		pTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
 		throw;
 	}
-	
+
 	pTreeCtrl->SetCursor(*wxSTANDARD_CURSOR);
 	return result;
 }
 
 FileTree::FileTree
 (
-	wxWindow* pParent, 
+	wxWindow* pParent,
 	wxWindowID id,
 	FileNode* pRootNode,
 	const wxString& rRootLabel
 )
-:	wxTreeCtrl(pParent, id, wxDefaultPosition, wxDefaultSize, 
-		wxTR_DEFAULT_STYLE | wxTR_HAS_BUTTONS | wxSUNKEN_BORDER, 
+:	wxTreeCtrl(pParent, id, wxDefaultPosition, wxDefaultSize,
+		wxTR_DEFAULT_STYLE | wxTR_HAS_BUTTONS | wxSUNKEN_BORDER,
 		wxDefaultValidator, _("FileTree"))
 {
 	SetImageList(&mImages);
@@ -87,9 +87,9 @@ FileTree::FileTree
 	UpdateStateIcon(pRootNode, false, false);
 }
 
-void FileTree::UpdateStateIcon(FileNode* pNode, bool updateParents, 
-	bool updateChildren) 
-{	
+void FileTree::UpdateStateIcon(FileNode* pNode, bool updateParents,
+	bool updateChildren)
+{
 	int iconId = pNode->UpdateState(mImages, updateParents);
 	SetItemImage(pNode->GetId(), iconId, wxTreeItemIcon_Normal);
 
@@ -97,12 +97,12 @@ void FileTree::UpdateStateIcon(FileNode* pNode, bool updateParents,
 	{
 		UpdateStateIcon(pNode->GetParentNode(), TRUE, FALSE);
 	}
-	
+
 	if (updateChildren)
 	{
 		wxTreeItemId thisId = pNode->GetId();
 		wxTreeItemIdValue cookie;
-		
+
 		for (wxTreeItemId childId = GetFirstChild(thisId, cookie);
 			childId.IsOk(); childId = GetNextChild(thisId, cookie))
 		{
@@ -120,7 +120,7 @@ void FileTree::OnTreeNodeExpand(wxTreeEvent& event)
 {
 	wxTreeItemId item = event.GetItem();
 	FileNode *pNode = (FileNode *)GetItemData(item);
-	
+
 	if (pNode->AddChildren(this, false))
 	{
 		UpdateStateIcon(pNode, false, true);
@@ -139,13 +139,13 @@ LocalFileNode::LocalFileNode(const wxString& path)
   mIsDirectory (wxFileName::DirExists(mFullPath))
 { }
 
-LocalFileNode::LocalFileNode(LocalFileNode* pParent, const wxString& path) 
+LocalFileNode::LocalFileNode(LocalFileNode* pParent, const wxString& path)
 : FileNode     (pParent),
   mFileName    (wxFileName(path).GetFullName()),
   mFullPath    (path),
   mIsRoot      (false),
   mIsDirectory (wxFileName::DirExists(mFullPath))
-{ 
+{
 	if (path.Length() == 3 && path.Mid(1, 2).IsSameAs(_(":\\")))
 	{
 		mIsDirectory = true;
@@ -156,7 +156,7 @@ LocalFileNode::LocalFileNode(LocalFileNode* pParent, const wxString& path)
 	}
 }
 
-LocalFileNode* LocalFileNode::CreateChildNode(LocalFileNode* pParent, 
+LocalFileNode* LocalFileNode::CreateChildNode(LocalFileNode* pParent,
 	const wxString& rPath)
 {
 	return new LocalFileNode(pParent, rPath);
@@ -166,7 +166,7 @@ WX_DECLARE_OBJARRAY(wxFileName, FileNameArray);
 #include <wx/arrimpl.cpp>
 WX_DEFINE_OBJARRAY(FileNameArray);
 
-bool LocalFileNode::_AddChildrenSlow(LocalFileTree* pTreeCtrl, bool recursive) 
+bool LocalFileNode::_AddChildrenSlow(LocalFileTree* pTreeCtrl, bool recursive)
 {
 	// delete any existing children of the parent
 	pTreeCtrl->DeleteChildren(GetId());
@@ -192,21 +192,21 @@ bool LocalFileNode::_AddChildrenSlow(LocalFileTree* pTreeCtrl, bool recursive)
 	{
 #endif // WIN32
 		wxDir dir(mFullPath);
-		
+
 		if (!dir.IsOpened())
 		{
-			// wxDir would already show an error message explaining the 
-			// exact reason of the failure, and the user can always click 
+			// wxDir would already show an error message explaining the
+			// exact reason of the failure, and the user can always click
 			// [+] another time :-)
 			return false;
 		}
 
 		wxString theCurrentFileName;
-		
+
 		bool doContinue = dir.GetFirst(&theCurrentFileName);
 		while (doContinue)
 		{
-			wxFileName fn = wxFileName(mFullPath, 
+			wxFileName fn = wxFileName(mFullPath,
 				theCurrentFileName);
 			entries.Add(fn);
 			doContinue = dir.GetNext(&theCurrentFileName);
@@ -222,7 +222,7 @@ bool LocalFileNode::_AddChildrenSlow(LocalFileTree* pTreeCtrl, bool recursive)
 		// add to the tree
 		LocalFileNode *pNewNode = CreateChildNode(this,
 			fileNameObject.GetFullPath());
-		
+
 		wxString label = fileNameObject.GetFullName();
 
 		#ifdef WIN32
@@ -235,48 +235,48 @@ bool LocalFileNode::_AddChildrenSlow(LocalFileTree* pTreeCtrl, bool recursive)
 
 		wxTreeItemId newId = pTreeCtrl->AppendItem(GetId(),
 			label, -1, -1, pNewNode);
-		
+
 		pNewNode->SetId(newId);
 
 		if (pNewNode->IsDirectory())
 		{
-			if (recursive) 
+			if (recursive)
 			{
-				if (!pNewNode->_AddChildrenSlow(pTreeCtrl, 
+				if (!pNewNode->_AddChildrenSlow(pTreeCtrl,
 					false))
 				{
 					return false;
 				}
-			} 
-			else 
+			}
+			else
 			{
 				pTreeCtrl->SetItemHasChildren(pNewNode->GetId(),
 					true);
 			}
 		}
 	}
-	
+
 	// sort out the kids
 	pTreeCtrl->SortChildren(GetId());
-	
+
 	return true;
 }
 
-int LocalFileNode::UpdateState(FileImageList& rImageList, bool updateParents) 
+int LocalFileNode::UpdateState(FileImageList& rImageList, bool updateParents)
 {
 	LocalFileNode* pParentNode = (LocalFileNode*)GetParentNode();
-	
+
 	if (updateParents && pParentNode != NULL)
 	{
 		pParentNode->UpdateState(rImageList, true);
 	}
-	
+
 	return rImageList.GetEmptyImageId();
 }
 
 LocalFileTree::LocalFileTree
 (
-	wxWindow* pParent, 
+	wxWindow* pParent,
 	wxWindowID id,
 	LocalFileNode* pRootNode,
 	const wxString& rRootLabel
@@ -286,7 +286,7 @@ LocalFileTree::LocalFileTree
 
 int LocalFileTree::OnCompareItems
 (
-	const wxTreeItemId& item1, 
+	const wxTreeItemId& item1,
 	const wxTreeItemId& item2
 )
 {
@@ -296,20 +296,20 @@ int LocalFileTree::OnCompareItems
 	{
 		bool dir1 = pNode1->IsDirectory();
 		bool dir2 = pNode2->IsDirectory();
-		
+
 		if ( dir1 && !dir2 )
 		{
 			return -1;
 		}
-		
-		if ( dir2 && !dir1 ) 
+
+		if ( dir2 && !dir1 )
 		{
 			return 1;
 		}
 	}
-	
+
 	wxString name1 = pNode1->GetFullPath();
 	wxString name2 = pNode2->GetFullPath();
-	
-	return name1.CompareTo(name2);
+
+	return name1.CompareTo(name2.wx_str() );
 }

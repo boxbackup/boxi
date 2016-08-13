@@ -48,11 +48,11 @@ END_EVENT_TABLE()
 BackupDaemonPanel::BackupDaemonPanel(
 	ClientConfig *pConfig,
 	const wxString& rExecutablePath,
-	wxWindow* parent, 
+	wxWindow* parent,
 	wxWindowID id,
-	const wxPoint& pos, 
+	const wxPoint& pos,
 	const wxSize& size,
-	long style, 
+	long style,
 	const wxString& name)
 	: wxPanel(parent, id, pos, size, style, name),
 	  mpConfig(pConfig),
@@ -61,35 +61,35 @@ BackupDaemonPanel::BackupDaemonPanel(
 	wxSizer* pMainSizer = new wxBoxSizer( wxVERTICAL );
 
 	wxSizer* pParamSizer = new wxGridSizer(2, 4, 4);
-	
+
 	wxTextCtrl* pBoxLocationCtrl = new wxTextCtrl(this, -1);
-	AddParam(this, _("Client Location:"), pBoxLocationCtrl, TRUE,
-		pParamSizer);
-	
-	mpClientConnStatus = new wxTextCtrl(this, -1, wxT(""), 
-		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	AddParam(this, _("Connection to Client:"), mpClientConnStatus, TRUE,
+	AddParam(this, _("Client Location:").wx_str(), pBoxLocationCtrl, TRUE,
 		pParamSizer);
 
-	mpClientError = new wxTextCtrl(this, -1, wxT(""), 
+	mpClientConnStatus = new wxTextCtrl(this, -1, wxT(""),
 		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	AddParam(this, _("Connection Error:"), mpClientError , TRUE,
+	AddParam(this, _("Connection to Client:").wx_str(), mpClientConnStatus, TRUE,
 		pParamSizer);
 
-	mpClientState = new wxTextCtrl(this, -1, wxT(""), 
+	mpClientError = new wxTextCtrl(this, -1, wxT(""),
 		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	AddParam(this, _("Client State:"), mpClientState, TRUE,
+	AddParam(this, _("Connection Error:").wx_str(), mpClientError , TRUE,
+		pParamSizer);
+
+	mpClientState = new wxTextCtrl(this, -1, wxT(""),
+		wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	AddParam(this, _("Client State:").wx_str(), mpClientState, TRUE,
 		pParamSizer);
 
 	pMainSizer->Add(pParamSizer, 0, wxGROW | wxALL, 8);
-	
+
 	// wxFlexGridSizer* pButtonSizer = new wxFlexGridSizer(2, 4, 4);
 	// pButtonSizer->AddGrowableCol(1);
 
 	wxSizer* pButtonSizer = new wxGridSizer(6, 4, 4);
 
 	/*
-	wxHtmlWindow* pStartText = new wxHtmlWindow(this, -1, 
+	wxHtmlWindow* pStartText = new wxHtmlWindow(this, -1,
 		wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_NEVER);
 	pStartText->SetPage("Start the Backup Client");
 	pMainSizer->Add(pStartText, 0, wxGROW, 0);
@@ -97,10 +97,10 @@ BackupDaemonPanel::BackupDaemonPanel(
 
 	mpStartButton = new wxButton(this, ID_Daemon_Start, _("Start"));
 	pButtonSizer->Add(mpStartButton, 0, wxGROW, 0);
-	
+
 	mpStopButton = new wxButton(this, ID_Daemon_Stop, _("Stop"));
 	pButtonSizer->Add(mpStopButton, 0, wxGROW);
-	
+
 	mpRestartButton = new wxButton(this, ID_Daemon_Restart, _("Restart"));
 	pButtonSizer->Add(mpRestartButton, 0, wxGROW);
 
@@ -117,7 +117,7 @@ BackupDaemonPanel::BackupDaemonPanel(
 
 	SetSizer( pMainSizer );
 	pMainSizer->SetSizeHints( this );
-	
+
 	wxString DaemonPath;
 	/*
 	if (mClientConn.GetClientBinaryPath(DaemonPath))
@@ -135,7 +135,7 @@ void BackupDaemonPanel::HandleClientEvent() {
 	mpClientError->SetValue(mClientConn.GetLastErrorMsg());
 
 	wxString ClientState;
-	ClientState.Printf(_("%s (pid %ld)"), 
+	ClientState.Printf(_("%s (pid %ld)"),
 		mClientConn.GetClientStateString(),
 		mClientConn.GetClientPidFast());
 	mpClientState->SetValue(ClientState);

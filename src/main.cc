@@ -4,7 +4,7 @@
  *  Main source code file for Boxi, a graphical user interface for
  *  Box Backup (software developed by Ben Summers).
  *
- *  Copyright 2005-2011 Chris Wilson <chris-boxisource@qwirx.com>
+ *  Copyright 2005-2016 Chris Wilson <chris-boxisource@qwirx.com>
  ****************************************************************************/
 
 /*
@@ -80,40 +80,40 @@
 
 bool ViewDeleted = true;
 
-void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor, 
-	bool growToFit, wxSizer *sizer) 
+void AddParam(wxPanel* panel, const wxChar* label, wxWindow* editor,
+	bool growToFit, wxSizer *sizer)
 {
-	sizer->Add(new wxStaticText(panel, -1, wxString(label, wxConvBoxi), 
+	sizer->Add(new wxStaticText(panel, -1, wxString(label, wxConvBoxi),
 		wxDefaultPosition), 0, wxALIGN_CENTER_VERTICAL);
 
-	if (growToFit) 
+	if (growToFit)
 	{
 		sizer->Add(editor, 1, wxGROW);
-	} 
-	else 
+	}
+	else
 	{
 		sizer->Add(editor, 1, wxALIGN_CENTER_VERTICAL);
 	}
 }
 
-static wxCmdLineEntryDesc theCmdLineParams[] = 
+static wxCmdLineEntryDesc theCmdLineParams[] =
 {
-	{ wxCMD_LINE_SWITCH, _("c"), NULL, 
-		_("ignored for compatibility with boxbackup command-line tools"),
+	{ wxCMD_LINE_SWITCH, "c", NULL,
+		_("ignored for compatibility with boxbackup command-line tools").mb_str(),
 		wxCMD_LINE_VAL_NONE, 0 },
-	{ wxCMD_LINE_PARAM, _(""), _(""), 
-		_("<bbackupd-config-file>"),
+	{ wxCMD_LINE_PARAM, "", "",
+		_("<bbackupd-config-file>").mb_str(),
 		wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
-	{ wxCMD_LINE_OPTION, _("t"), _("test"), 
-		_("run the specified unit test.\n\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all"),
+	{ wxCMD_LINE_OPTION, "t", "test",
+		_("run the specified unit test.\n\t\t\tAvailable tests are: TestWizard, TestBackupConfig, TestBackup, TestConfig, TestRestore, TestCompare, all").mb_str(),
 		wxCMD_LINE_VAL_STRING, 0 },
-	{ wxCMD_LINE_OPTION, _("l"), _("lang"), 
-		_("load the specified language or translation"),
+	{ wxCMD_LINE_OPTION, "l", "lang",
+		_("load the specified language or translation").mb_str(),
 		wxCMD_LINE_VAL_STRING, 0 },
-	{ wxCMD_LINE_SWITCH, _("h"), _("help"), 
-		_("displays this help text"),
+	{ wxCMD_LINE_SWITCH, "h", "help",
+		_("displays this help text").mb_str(),
 		wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
-	{ wxCMD_LINE_NONE },
+	{ wxCMD_LINE_NONE }
 };
 
 int    g_argc = 0;
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 		delete pOldMsg;
 	}
 	// wxLogStderr logger;
-	// wxLog::SetActiveTarget(&logger); 
+	// wxLog::SetActiveTarget(&logger);
 
 	wxCmdLineParser cmdParser(theCmdLineParams, argc, argv);
 	int result = cmdParser.Parse();
@@ -171,15 +171,15 @@ int main(int argc, char **argv)
 			return 1;
 		}
 		#endif
-		
+
 		CppUnit::TestResult controller;
-		
+
 		CppUnit::TestResultCollector result;
 		controller.addListener(&result);
-		
+
 		CppUnit::BriefTestProgressListener progress;
 		controller.addListener(&progress);
-	
+
 		CppUnit::TestSuite *suite = new CppUnit::TestSuite("selected tests");
 
 		bool foundNamedTest = false;
@@ -210,15 +210,15 @@ int main(int argc, char **argv)
 			wxLogFatalError(errorMsg);
 			return 2;
 		}
-		
+
 		CppUnit::TestRunner runner;
 		runner.addTest(new GuiStarter(suite));
-		
+
 		/*
 		runner.setOutputter(new CppUnit::CompilerOutputter(
 			&runner.result(), std::cerr));
 		*/
-		
+
 		CppUnit::CompilerOutputter outputter(&result, std::cerr);
 		runner.run(controller, "");
 		outputter.write();
@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 		#ifdef WIN32
 		WSACleanup();
 		#endif
-		
+
 		return result.wasSuccessful() ? 0 : 1;
 	}
 	else
@@ -256,16 +256,16 @@ bool BoxiApp::OnInit()
 	#endif
 
 	wxInitAllImageHandlers();
-	
+
 	wxCmdLineParser cmdParser(theCmdLineParams, argc, argv);
 	int result = cmdParser.Parse();
-	
+
 	if (result != 0)
 	{
 		return false;
 	}
-	
-	// Copied from wxWidgets internat sample by Vadim Zeitlin/Julian Smart 
+
+	// Copied from wxWidgets internat sample by Vadim Zeitlin/Julian Smart
 	wxLanguage lang = wxLANGUAGE_DEFAULT;
 	wxString langName;
 	const wxLanguageInfo * pLangInfo = NULL;
@@ -282,7 +282,7 @@ bool BoxiApp::OnInit()
 				langName.c_str());
 			return 2; // invalid command line
 		}
-	
+
 		lang = static_cast<wxLanguage>(pLangInfo->Language);
 	}
 
@@ -303,9 +303,9 @@ bool BoxiApp::OnInit()
 	// found in the default locations, but when the program is not
 	// installed, the catalogs are in the build directory where we
 	// wouldn't find them by default.
-	wxLocale::AddCatalogLookupPathPrefix(wxT("../../po")); 
-	wxLocale::AddCatalogLookupPathPrefix(wxT("../po")); 
-	wxLocale::AddCatalogLookupPathPrefix(wxT("po")); 
+	wxLocale::AddCatalogLookupPathPrefix(wxT("../../po"));
+	wxLocale::AddCatalogLookupPathPrefix(wxT("../po"));
+	wxLocale::AddCatalogLookupPathPrefix(wxT("po"));
 
 	// Initialize the catalogs we'll be using
 	if (!locale.AddCatalog(locale.GetCanonicalName()))
@@ -319,23 +319,23 @@ bool BoxiApp::OnInit()
 		// wxWidgets 3 does not.
 		wxLogError(_("Couldn't find/load the catalog for locale '%s'."),
 			language_name.c_str());
-	} 
+	}
 
 	// Now try to add wxstd.mo so that loading nonexistent files will
 	// produce a localized error message:
 	locale.AddCatalog(wxT("wxstd"));
-	// NOTE: it's not an error if we couldn't find it! 
-	
+	// NOTE: it's not an error if we couldn't find it!
+
 	mHaveConfigFile = false;
-	
-	if (cmdParser.GetParamCount() == 1) 
+
+	if (cmdParser.GetParamCount() == 1)
 	{
 		mHaveConfigFile = true;
 		mConfigFileName = cmdParser.GetParam();
 	}
 
 	#ifndef WIN32
-	signal(SIGPIPE, sigpipe_handler);	
+	signal(SIGPIPE, sigpipe_handler);
 	#endif
 
 	if (cmdParser.Found(wxS("t")))
@@ -344,7 +344,7 @@ bool BoxiApp::OnInit()
 	}
 	else
 	{
-		wxFrame *frame = new MainFrame 
+		wxFrame *frame = new MainFrame
 		(
 			mHaveConfigFile ? &mConfigFileName : NULL,
 			wxString(argv[0]),
@@ -355,50 +355,51 @@ bool BoxiApp::OnInit()
 //		frame->SetIcon(wxICON(WXICON_AAA));
 		frame->Show(TRUE);
 	}
-	
+
   	return TRUE;
 }
 
 int BoxiApp::OnRun()
 {
-	// see the comment in wxApp::wxApp(): if the initial value 
+	// see the comment in wxApp::wxApp(): if the initial value
 	// hasn't been changed, use the default Yes from now on.
-	if (m_exitOnFrameDelete == Later) 
+	if (m_exitOnFrameDelete == Later)
 	{
 		m_exitOnFrameDelete = Yes;
 	}
-	
+
 	WxGuiTestHelper::SetUseExitMainLoopOnIdleFlag(false);
 	WxGuiTestHelper::SetExitMainLoopOnIdleFlag(false);
 
 	if (mpTestRunner)
 	{
 		mpTestRunner->RunAsDecorator();
-		
-		if (wxTheApp->GetTopWindow()) 
+
+		if (wxTheApp->GetTopWindow())
 		{
 			wxTheApp->GetTopWindow()->Close();
 		}
-		
+
 		// Finally process all pending events:
 		WxGuiTestHelper::SetUseExitMainLoopOnIdleFlag(false);
 	}
-	
+
 	// should do this, but it hangs on exit for no good reason
 	if (!mpTestRunner)
 	{
 		return wxTheApp->MainLoop();
 	}
-	
+
 	return 0;
 }
 
 void BoxiApp::OnIdle(wxIdleEvent& rEvent)
 {
-	this->wxApp::OnIdle(rEvent);
-	
+	// As of wxWidgets 3 it is no longer required to forward the Idle event to the wxApp
+	// this->wxApp::OnIdle(rEvent);
+
 	if (WxGuiTestHelper::GetUseExitMainLoopOnIdleFlag () &&
-		WxGuiTestHelper::GetExitMainLoopOnIdleFlag ()) 
+		WxGuiTestHelper::GetExitMainLoopOnIdleFlag ())
 	{
 		wxTheApp->ExitMainLoop ();
 	}
@@ -410,7 +411,7 @@ int BoxiApp::ShowFileDialog(TestFileDialog& rDialog)
 	{
 		return rDialog.ShowModal();
 	}
-	
+
 	wxASSERT(mExpectingFileDialog);
 	mExpectingFileDialog = false;
 
@@ -461,7 +462,7 @@ int BoxiApp::ShowMessageBox
 	{
 		return wxMessageBox(message, caption, style, parent);
 	}
-	
+
 	if (mExpectedMessageId != messageId)
 	{
 		#if wxUSE_STACKWALKER
@@ -471,10 +472,10 @@ int BoxiApp::ShowMessageBox
 		#endif
 
 		wxCharBuffer buf = msg2.mb_str();
-		CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(), 
+		CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(),
 			mExpectedMessageId, messageId);
 	}
-	
+
 	mExpectedMessageId = BM_UNKNOWN;
 
 	int response = mExpectedMessageResponse;
@@ -483,7 +484,7 @@ int BoxiApp::ShowMessageBox
 	return response;
 }
 
-void BoxiApp::ExpectMessageBox(message_t messageId, int response, 
+void BoxiApp::ExpectMessageBox(message_t messageId, int response,
 	const CppUnit::SourceLine& rLine)
 {
 	CPPUNIT_ASSERT_MESSAGE_AT("There is already an expected message ID",
@@ -505,7 +506,7 @@ void BoxiApp::OnAssert(const wxChar *file, int line,
 		wxCharBuffer msgBuf  = wxString(msg).mb_str();
 		wxCharBuffer condBuf = wxString(cond).mb_str();
 		wxCharBuffer fileBuf = wxString(file).mb_str();
-		CPPUNIT_ASSERT_MESSAGE_AT_FILE_LINE(msgBuf.data(), 
+		CPPUNIT_ASSERT_MESSAGE_AT_FILE_LINE(msgBuf.data(),
 			condBuf.data(), fileBuf.data(), line);
 	}
 	else

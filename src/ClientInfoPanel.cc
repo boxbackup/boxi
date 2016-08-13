@@ -71,10 +71,10 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 {
 	mpConfig = pConfig;
 	mpConfig->AddListener(this);
-	
+
 	wxBoxSizer *pTabSizer = new wxBoxSizer( wxVERTICAL );
 	SetSizer(pTabSizer);
-	
+
 	wxBoxSizer* pStateSizer = new wxBoxSizer( wxHORIZONTAL );
 	pTabSizer->Add(pStateSizer, 0, wxGROW | wxALL, 4);
 
@@ -83,127 +83,127 @@ ClientInfoPanel::ClientInfoPanel(ClientConfig *pConfig,
 
 	mpConfigStateLabel = new WrappingLabel(this, -1, _("Unknown state"));
 	pStateSizer->Add(mpConfigStateLabel, 1, wxALIGN_CENTER_VERTICAL | wxALL, 4);
-	
+
 	wxScrolledWindow *pVisibleArea = new wxScrolledWindow(this, wxID_ANY,
 		wxDefaultPosition, wxDefaultSize, wxVSCROLL);
 	pTabSizer->Add(pVisibleArea, 1, wxGROW | wxALL, 4);
-	
+
 	wxBoxSizer *pScrollablePanelSizer = new wxBoxSizer( wxVERTICAL );
 	pVisibleArea->SetSizer(pScrollablePanelSizer);
 	pVisibleArea->SetScrollRate(0, 1);
-	
+
 	wxNotebook *pClientPropsNotebook = new wxNotebook(pVisibleArea, -1);
-	pScrollablePanelSizer->Add(pClientPropsNotebook, 1, 
+	pScrollablePanelSizer->Add(pClientPropsNotebook, 1,
 		wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-	
+
 	ParamPanel *pBasicPanel = new ParamPanel(pClientPropsNotebook);
 	pClientPropsNotebook->AddPage(pBasicPanel, _("Basic"));
-	
+
 	ParamPanel *pAdvancedPanel = new ParamPanel(pClientPropsNotebook);
 	pClientPropsNotebook->AddPage(pAdvancedPanel, _("Advanced"));
 
 	mpStoreHostnameCtrl = pBasicPanel->AddParam(
-		_("Store Host:"), pConfig->StoreHostname, 
+		_("Store Host:").wx_str(), pConfig->StoreHostname,
 		wxID_ANY, FALSE, FALSE);
 
 	mpAccountNumberCtrl = pBasicPanel->AddParam(
-		_("Account Number:"), pConfig->AccountNumber, 
+		_("Account Number:").wx_str(), pConfig->AccountNumber,
 		"0x%x", wxID_ANY);
-		
+
 	mpKeysFileCtrl = pBasicPanel->AddParam(
-		_("Keys File:"), pConfig->KeysFile, 
-		wxID_ANY, TRUE, FALSE, 
-		_("Encryption key files (*-FileEncKeys.raw)|"
-			"*-FileEncKeys.raw"), _("-FileEncKeys.raw"));
-		
-	mpCertificateFileCtrl = pBasicPanel->AddParam(
-		_("Certificate File:"), pConfig->CertificateFile, 
+		_("Keys File:").wx_str(), pConfig->KeysFile,
 		wxID_ANY, TRUE, FALSE,
-		_("Certificate files (*-cert.pem)|*-cert.pem"),
-		_("-cert.pem"));
+		_("Encryption key files (*-FileEncKeys.raw)|"
+			"*-FileEncKeys.raw").wx_str(), _("-FileEncKeys.raw").wx_str());
+
+	mpCertificateFileCtrl = pBasicPanel->AddParam(
+		_("Certificate File:").wx_str(), pConfig->CertificateFile,
+		wxID_ANY, TRUE, FALSE,
+		_("Certificate files (*-cert.pem)|*-cert.pem").wx_str(),
+		_("-cert.pem").wx_str());
 
 	mpPrivateKeyFileCtrl = pBasicPanel->AddParam(
-		_("Private Key File:"), pConfig->PrivateKeyFile, 
+		_("Private Key File:").wx_str(), pConfig->PrivateKeyFile,
 		wxID_ANY, TRUE, FALSE,
-		_("Private key files (*-key.pem)|*-key.pem"),
-		_("-key.pem"));
+		_("Private key files (*-key.pem)|*-key.pem").wx_str(),
+		_("-key.pem").wx_str());
 
 	mpTrustedCAsFileCtrl = pBasicPanel->AddParam(
-		_("Trusted CAs File:"), pConfig->TrustedCAsFile, 
+		_("Trusted CAs File:").wx_str(), pConfig->TrustedCAsFile,
 		wxID_ANY, TRUE, FALSE,
-		_("Server CA certificate (serverCA.pem)|serverCA.pem"),
-		_("serverCA.pem"));
+		_("Server CA certificate (serverCA.pem)|serverCA.pem").wx_str(),
+		_("serverCA.pem").wx_str());
 
 	mpDataDirectoryCtrl = pBasicPanel->AddParam(
-		_("Data Directory:"), pConfig->DataDirectory, 
+		_("Data Directory:").wx_str(), pConfig->DataDirectory,
 		wxID_ANY, FALSE, TRUE);
 
 	mpCommandSocketCtrl = pBasicPanel->AddParam(
-		_("Command Socket:"), pConfig->CommandSocket, 
-		wxID_ANY, TRUE, FALSE, 
-		_("Command socket (bbackupd.sock)|bbackupd.sock"),
-		_("bbackupd.sock"));
+		_("Command Socket:").wx_str(), pConfig->CommandSocket,
+		wxID_ANY, TRUE, FALSE,
+		_("Command socket (bbackupd.sock)|bbackupd.sock").wx_str(),
+		_("bbackupd.sock").wx_str());
 
 	mpExtendedLoggingCtrl = pBasicPanel->AddParam(
-		_("Extended Logging:"), pConfig->ExtendedLogging, 
+		_("Extended Logging:").wx_str(), pConfig->ExtendedLogging,
 		wxID_ANY);
 
 	mpUpdateStoreIntervalCtrl = pAdvancedPanel->AddParam(
-		_("Update Store Interval:"), pConfig->UpdateStoreInterval, 
+		_("Update Store Interval:").wx_str(), pConfig->UpdateStoreInterval,
 		"%d", wxID_ANY);
-		
+
 	mpMinimumFileAgeCtrl = pAdvancedPanel->AddParam(
-		_("Minimum File Age:"), pConfig->MinimumFileAge, 
+		_("Minimum File Age:").wx_str(), pConfig->MinimumFileAge,
 		"%d", wxID_ANY);
 
 	mpMaxUploadWaitCtrl = pAdvancedPanel->AddParam(
-		_("Maximum Upload Wait:"), 
+		_("Maximum Upload Wait:").wx_str(),
 		pConfig->MaxUploadWait, "%d", wxID_ANY);
 
 	mpFileTrackingSizeThresholdCtrl = pAdvancedPanel->AddParam(
-		_("File Tracking Size Threshold:"), 
-		pConfig->FileTrackingSizeThreshold, 
+		_("File Tracking Size Threshold:").wx_str(),
+		pConfig->FileTrackingSizeThreshold,
 		"%d", wxID_ANY);
-		
+
 	mpDiffingUploadSizeThresholdCtrl = pAdvancedPanel->AddParam(
-		_("Diffing Upload Size Threshold:"), 
-		pConfig->DiffingUploadSizeThreshold, 
+		_("Diffing Upload Size Threshold:").wx_str(),
+		pConfig->DiffingUploadSizeThreshold,
 		"%d", wxID_ANY);
 
 	mpMaximumDiffingTimeCtrl = pAdvancedPanel->AddParam(
-		_("Maximum Diffing Time:"), pConfig->MaximumDiffingTime, 
+		_("Maximum Diffing Time:").wx_str(), pConfig->MaximumDiffingTime,
 		"%d", wxID_ANY);
 
 	mpKeepAliveTimeCtrl = pAdvancedPanel->AddParam(
-		_("Keep-Alive Time:"), pConfig->KeepAliveTime, 
+		_("Keep-Alive Time:").wx_str(), pConfig->KeepAliveTime,
 		"%d", wxID_ANY);
 
 	mpNotifyScriptCtrl = pAdvancedPanel->AddParam(
-		_("Notify Script:"), pConfig->NotifyScript, 
+		_("Notify Script:").wx_str(), pConfig->NotifyScript,
 		wxID_ANY, TRUE, FALSE,
 		_("Default script (NotifySysadmin.sh)|NotifySysadmin.sh|"
-			"All files (*)|*"));
-	
-	mpSyncAllowScriptCtrl = pAdvancedPanel->AddParam(
-		_("Sync Allow Script:"), pConfig->SyncAllowScript, 
-		wxID_ANY, TRUE, FALSE,
-		_("All files (*)|*"));
+			"All files (*)|*").wx_str() );
 
-	mpPidFileCtrl = pAdvancedPanel->AddParam(_("Process ID File:"), 
+	mpSyncAllowScriptCtrl = pAdvancedPanel->AddParam(
+		_("Sync Allow Script:").wx_str(), pConfig->SyncAllowScript,
+		wxID_ANY, TRUE, FALSE,
+		_("All files (*)|*").wx_str() );
+
+	mpPidFileCtrl = pAdvancedPanel->AddParam(_("Process ID File:").wx_str(),
 		pConfig->PidFile, wxID_ANY, TRUE, FALSE,
-		_("Client PID files (bbackupd.pid)|bbackupd.pid"),
-		_("bbackupd.pid"));
-	
+		_("Client PID files (bbackupd.pid)|bbackupd.pid").wx_str(),
+		_("bbackupd.pid").wx_str() );
+
 	wxSizer* pActionCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
-	pTabSizer->Add(pActionCtrlSizer, 0, 
+	pTabSizer->Add(pActionCtrlSizer, 0,
 		wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-	wxButton* pCloseButton = new wxButton(this, 
+	wxButton* pCloseButton = new wxButton(this,
 		wxID_CANCEL, _("Close"));
 	pActionCtrlSizer->Add(pCloseButton, 0, wxGROW | wxLEFT, 8);
 
 	// pScrollablePanelSizer->SetSizeHints(this);
-	
+
 	UpdateConfigState();
 }
 
@@ -212,7 +212,7 @@ void ClientInfoPanel::OnClickCloseButton(wxCommandEvent& rEvent)
 	Hide();
 }
 
-void ClientInfoPanel::Reload() 
+void ClientInfoPanel::Reload()
 {
 	mpStoreHostnameCtrl             ->Reload();
 	mpAccountNumberCtrl             ->Reload();
@@ -248,7 +248,7 @@ void ClientInfoPanel::UpdateConfigState()
 		mpConfigStateBitmap->SetTicked(TRUE);
 		msg = _("Configuration looks OK");
 	}
-	else 
+	else
 	{
 		mpConfigStateBitmap->SetTicked(FALSE);
 	}

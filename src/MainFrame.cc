@@ -56,25 +56,25 @@ MainFrame::MainFrame
 (
 	const wxString* pConfigFileName,
 	const wxString& rBoxiExecutablePath,
-	const wxPoint& pos, 
-	const wxSize& size, 
+	const wxPoint& pos,
+	const wxSize& size,
 	long style
 )
 :	wxFrame(NULL, ID_Main_Frame, _("Boxi"), pos, size, style)
-{	
+{
 	mpConfig = new ClientConfig();
 
 	mpConfig->AddListener(this);
 
 	mpServerConnection = new ServerConnection(mpConfig);
 	mpStatusBar = CreateStatusBar(1);
-	
+
 	mpTopNotebook = new wxNotebook(this, ID_Top_Notebook);
 
-	mpGeneralPanel = new GeneralPanel(this, mpConfig, mpServerConnection, 
+	mpGeneralPanel = new GeneralPanel(this, mpConfig, mpServerConnection,
 		mpTopNotebook);
 	mpGeneralPanel->AddToNotebook(mpTopNotebook);
-	
+
 	/*
 	wxPanel* pBackupDaemonPanel = new BackupDaemonPanel(
 		mpConfig,
@@ -83,31 +83,31 @@ MainFrame::MainFrame
 		-1);
 	mpTopNotebook->AddPage(pBackupDaemonPanel, _("Backup Process"));
 	*/
-	
+
 	wxMenu *menuFile = new wxMenu;
-	menuFile->Append(ID_File_New,  _("&New...\tCtrl-N"), 
+	menuFile->Append(ID_File_New,  _("&New...\tCtrl-N"),
 		_("New client config file"));
-	menuFile->Append(ID_File_Open,  _("&Open...\tCtrl-O"), 
+	menuFile->Append(ID_File_Open,  _("&Open...\tCtrl-O"),
 		_("Open client config file"));
-	menuFile->Append(ID_File_Save,  _("&Save...\tCtrl-S"), 
+	menuFile->Append(ID_File_Save,  _("&Save...\tCtrl-S"),
 		_("Save current configuration"));
-	menuFile->Append(ID_File_SaveAs,  _("Save &As...\tCtrl-A"), 
+	menuFile->Append(ID_File_SaveAs,  _("Save &As...\tCtrl-A"),
 		_("Save current config file with a new name"));
-	menuFile->Append(wxID_EXIT,  _("E&xit\tAlt-F4"), 
+	menuFile->Append(wxID_EXIT,  _("E&xit\tAlt-F4"),
 		_("Quit Boxi"));
 
 	mpViewMenu = new wxMenu;
-	mpViewMenu->Append(ID_View_Old, 
-		_("Show &Old Files\tCtrl-L"), 
+	mpViewMenu->Append(ID_View_Old,
+		_("Show &Old Files\tCtrl-L"),
 		_("Show old versions of files"), wxITEM_CHECK);
-	mpViewMenu->Append(ID_View_Deleted, 
-		_("Show &Deleted Files\tCtrl-D"), 
+	mpViewMenu->Append(ID_View_Deleted,
+		_("Show &Deleted Files\tCtrl-D"),
 		_("Show deleted files"), wxITEM_CHECK);
 	mpViewMenu->Check(ID_View_Old,     TRUE);
 	mpViewMenu->Check(ID_View_Deleted, TRUE);
 
 	wxMenu *menuHelp = new wxMenu;
-	menuHelp->Append(wxID_ABOUT, _("&About...\tF1"), 
+	menuHelp->Append(wxID_ABOUT, _("&About...\tF1"),
 		_("Show information about Boxi"));
 
 	wxMenuBar *menuBar = new wxMenuBar;
@@ -116,37 +116,37 @@ MainFrame::MainFrame
 	menuBar->Append(menuHelp,   _("&Help"));
 	SetMenuBar(menuBar);
 
-	if (pConfigFileName) 
+	if (pConfigFileName)
 	{
 		DoFileOpen(*pConfigFileName);
-	} 
-	else 
+	}
+	else
 	{
 		DoFileNew();
 	}
 }
 
-void MainFrame::OnFileNew(wxCommandEvent& event) 
+void MainFrame::OnFileNew(wxCommandEvent& event)
 {
 	DoFileNew();
 }
 
-void MainFrame::DoFileNew() 
+void MainFrame::DoFileNew()
 {
 	mpConfig->Reset();
 	UpdateTitle();
 }
 
-static const wxChar *FILETYPES = _( 
+static const wxChar *FILETYPES = _(
 	"Box Backup client configuration file|bbackupd.conf|"
 	"Configuration files|*.conf|"
 	"All files|*.*"
-	);
+).wx_str();
 
-void MainFrame::OnFileOpen(wxCommandEvent& event) 
+void MainFrame::OnFileOpen(wxCommandEvent& event)
 {
 	TestFileDialog openFileDialog(
-		this, _("Open file"), wxT(""), _("bbackupd.conf"), 
+		this, _("Open file"), wxT(""), _("bbackupd.conf"),
 		FILETYPES, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (wxGetApp().ShowFileDialog(openFileDialog) != wxID_OK)
@@ -168,34 +168,34 @@ void MainFrame::OnFileOpen(wxCommandEvent& event)
 void MainFrame::DoFileOpen(const wxString& path)
 {
 	mpConfig->RemoveListener(this);
-	
-	try 
+
+	try
 	{
 		mpConfig->Load(path);
-	} 
-	catch (BoxException &e) 
+	}
+	catch (BoxException &e)
 	{
 		mpConfig->AddListener(this);
 		wxString str;
-		str.Printf(_("Failed to load configuration file (%s):\n\n"), 
+		str.Printf(_("Failed to load configuration file (%s):\n\n"),
 			path.c_str());
 		str.Append(wxString(e.what(), wxConvBoxi));
 		wxGetApp().ShowMessageBox(BM_MAIN_FRAME_CONFIG_LOAD_FAILED,
 			str, _("Boxi Error"), wxOK | wxICON_ERROR, NULL);
 		return;
-	} 
-	catch (wxString* e) 
+	}
+	catch (wxString* e)
 	{
 		mpConfig->AddListener(this);
 		wxString str;
 		str.Printf(
-			_("Failed to load configuration file (%s):\n\n%s"), 
+			_("Failed to load configuration file (%s):\n\n%s"),
 			path.c_str(), e->c_str());
 		wxGetApp().ShowMessageBox(BM_MAIN_FRAME_CONFIG_LOAD_FAILED,
 			str, _("Boxi Error"), wxOK | wxICON_ERROR, NULL);
 		return;
-	}		
-	
+	}
+
 	mpGeneralPanel->RefreshConfig();
 
 	UpdateTitle();
@@ -210,7 +210,7 @@ void MainFrame::OnFileSaveAs(wxCommandEvent& event) {
 	DoFileSaveAs();
 }
 
-void MainFrame::DoFileSave() 
+void MainFrame::DoFileSave()
 {
 	wxString msg;
 	if (!(mpConfig->Check(msg)))
@@ -220,12 +220,12 @@ void MainFrame::DoFileSave()
 			_("The configuration file has errors.\n"
 			"Are you sure you want to save it?"),
 			_("Boxi Warning"), wxYES_NO | wxICON_QUESTION, this);
-		
+
 		if (result == wxNO)
 			return;
 	}
 
-	if (mpConfig->GetFileName().Length() == 0) 
+	if (mpConfig->GetFileName().Length() == 0)
 	{
 		DoFileSaveAs2();
 	}
@@ -235,7 +235,7 @@ void MainFrame::DoFileSave()
 	}
 }
 
-void MainFrame::DoFileSaveAs() 
+void MainFrame::DoFileSaveAs()
 {
 	wxString msg;
 	if (!(mpConfig->Check(msg)))
@@ -245,7 +245,7 @@ void MainFrame::DoFileSaveAs()
 			_("The configuration file has errors.\n"
 			"Are you sure you want to save it?"),
 			_("Boxi Warning"), wxYES_NO | wxICON_QUESTION, this);
-		
+
 		if (result == wxNO)
 			return;
 	}
@@ -253,16 +253,16 @@ void MainFrame::DoFileSaveAs()
 	DoFileSaveAs2();
 }
 
-void MainFrame::DoFileSaveAs2() 
+void MainFrame::DoFileSaveAs2()
 {
 	TestFileDialog saveFileDialog(
-		this, _("Save file"), wxT(""), _("bbackupd.conf"), 
+		this, _("Save file"), wxT(""), _("bbackupd.conf"),
 		FILETYPES, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 
 	if (wxGetApp().ShowFileDialog(saveFileDialog) != wxID_OK)
 		return;
 
-	wxFileName fn(saveFileDialog.GetDirectory(), 
+	wxFileName fn(saveFileDialog.GetDirectory(),
 		saveFileDialog.GetFilename());
 	mpConfig->Save(fn.GetFullPath());
 }
@@ -271,7 +271,7 @@ void MainFrame::OnFileQuit(wxCommandEvent& event) {
 	Close();
 }
 
-void MainFrame::OnClose(wxCloseEvent& event) 
+void MainFrame::OnClose(wxCloseEvent& event)
 {
 	if (event.CanVeto() && !(mpConfig->IsClean()))
 	{
@@ -280,17 +280,17 @@ void MainFrame::OnClose(wxCloseEvent& event)
 			BM_MAIN_FRAME_CONFIG_CHANGED_ASK_TO_SAVE,
 			_("The configuration file has not been saved.\n"
 			"Do you want to save your changes?"),
-			_("Boxi Warning"), 
+			_("Boxi Warning"),
 			wxYES_NO | wxCANCEL | wxICON_QUESTION,
 			this
 		);
-		
+
 		if (result == wxCANCEL)
 		{
 			event.Veto();
 			return;
 		}
-		
+
 		if (result == wxYES)
 		{
 			DoFileSave();
@@ -301,11 +301,11 @@ void MainFrame::OnClose(wxCloseEvent& event)
 			}
 		}
 	}
-	
+
 	event.Skip();
 }
 
-void MainFrame::OnViewOld(wxCommandEvent& event) 
+void MainFrame::OnViewOld(wxCommandEvent& event)
 {
 	/*
 	mpRestorePanel->SetViewOldFlag(
@@ -313,7 +313,7 @@ void MainFrame::OnViewOld(wxCommandEvent& event)
 	*/
 }
 
-void MainFrame::OnViewDeleted(wxCommandEvent& event) 
+void MainFrame::OnViewDeleted(wxCommandEvent& event)
 {
 	/*
 	mpRestorePanel->SetViewDeletedFlag(
@@ -323,7 +323,7 @@ void MainFrame::OnViewDeleted(wxCommandEvent& event)
 
 void MainFrame::OnFileDir(wxCommandEvent& event) {
 	wxDirDialog *d = new wxDirDialog(
-		this, _("Choose a Directory"), 
+		this, _("Choose a Directory"),
 		wxGetCwd(), 0, wxDefaultPosition);
 
 	if (d->ShowModal() == wxID_OK)
@@ -347,27 +347,27 @@ void MainFrame::OnHelpAbout(wxCommandEvent& event)
 	wxMessageBox(msg, _("About Boxi"), wxOK | wxICON_INFORMATION, this);
 }
 
-void MainFrame::OnSize(wxSizeEvent& event) 
+void MainFrame::OnSize(wxSizeEvent& event)
 {
 	wxString theSizeText;
 	wxSize theNewSize = event.GetSize();
-	theSizeText.Printf(_("%d x %d"), theNewSize.GetWidth(), 
+	theSizeText.Printf(_("%d x %d"), theNewSize.GetWidth(),
 		theNewSize.GetHeight());
 	// theText->SetValue(theSizeText);
 	wxFrame::OnSize(event);
 }
 
-void MainFrame::NotifyChange() 
+void MainFrame::NotifyChange()
 {
 	UpdateTitle();
 }
 
-void MainFrame::UpdateTitle() 
+void MainFrame::UpdateTitle()
 {
 	wxString title;
 	wxString filename;
-	
-	if (mpConfig->GetFileName().Length() == 0) 
+
+	if (mpConfig->GetFileName().Length() == 0)
 	{
 		filename = _("[untitled]");
 	}
@@ -375,9 +375,9 @@ void MainFrame::UpdateTitle()
 	{
 		filename = mpConfig->GetFileName();
 	}
-	
+
 	bool clean = mpConfig->IsClean();
-	title.Printf(_("Boxi " BOXI_VERSION " - %s%s"), 
+	title.Printf(_("Boxi " BOXI_VERSION " - %s%s"),
 		filename.c_str(), clean ? wxT("") : _("*"));
 	SetTitle(title);
 }
