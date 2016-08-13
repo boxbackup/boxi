@@ -81,11 +81,11 @@ CppUnit::Test *TestRestore::suite()
 	return suiteOfTests;
 }
 
-static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root, 
+static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root,
 	wxString path)
 {
 	wxTreeItemId none;
-	
+
 	wxString pathComponent;
 	int indexOfSlash = path.Find(_("/"));
 	if (indexOfSlash == -1)
@@ -100,9 +100,9 @@ static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root,
 		path = path.Mid(indexOfSlash + 1);
 	}
 	CPPUNIT_ASSERT(pathComponent.Length() > 0);
-	
+
 	pTreeCtrl->Expand(root);
-	
+
 	wxTreeItemIdValue cookie;
 	for (wxTreeItemId entry = pTreeCtrl->GetFirstChild(root, cookie);
 		entry.IsOk(); entry = pTreeCtrl->GetNextChild(root, cookie))
@@ -122,7 +122,7 @@ static wxTreeItemId GetItemIdFromPath(wxTreeCtrl* pTreeCtrl, wxTreeItemId root,
 			}
 		}
 	}
-	
+
 	return none;
 }
 
@@ -156,10 +156,10 @@ void TestRestore::RunTest()
 {
 	mapImages.reset(new FileImageList());
 
-	CPPUNIT_ASSERT(!mpBackupPanel->IsShown());	
+	CPPUNIT_ASSERT(!mpBackupPanel->IsShown());
 	ClickButtonWaitEvent(ID_Main_Frame, ID_General_Backup_Button);
 	CPPUNIT_ASSERT(mpBackupPanel->IsShown());
-	
+
 	{
 		wxFileName testSpaceZipFile(_("../test/data/spacetest1.zip"));
 		CPPUNIT_ASSERT(testSpaceZipFile.FileExists());
@@ -186,7 +186,7 @@ void TestRestore::RunTest()
 		CPPUNIT_ASSERT(testExcludeZipFile.FileExists());
 		Unzip(testExcludeZipFile, mTestDataDir, true);
 	}
-	
+
 	mTest3ZipFile = MakeAbsolutePath(_("../test/data/test3.zip"));
 	{
 		// Add some more files and modify others
@@ -196,59 +196,60 @@ void TestRestore::RunTest()
 
 	CHECK_BACKUP_OK();
 	CHECK_COMPARE_LOC_OK(3, 4);
-	
+
 	mpRestorePanel = wxDynamicCast
 	(
 		mpMainFrame->FindWindow(ID_Restore_Panel), RestorePanel
 	);
 	CPPUNIT_ASSERT(mpRestorePanel);
 
-	CPPUNIT_ASSERT(!mpRestorePanel->IsShown());	
+	CPPUNIT_ASSERT(!mpRestorePanel->IsShown());
 	ClickButtonWaitEvent(ID_Main_Frame, ID_General_Restore_Button);
 	CPPUNIT_ASSERT(mpRestorePanel->IsShown());
-	
+
 	wxListBox* pLocsList = wxDynamicCast
 	(
 		mpRestorePanel->FindWindow(ID_Function_Source_List), wxListBox
 	);
 	CPPUNIT_ASSERT(pLocsList);
 	CPPUNIT_ASSERT_EQUAL(0, pLocsList->GetCount());
-	
+
 	wxPanel* pRestoreFilesPanel = wxDynamicCast
 	(
 		mpMainFrame->FindWindow(ID_Restore_Files_Panel), wxPanel
 	);
 	CPPUNIT_ASSERT(pRestoreFilesPanel);
 
-	CPPUNIT_ASSERT(!pRestoreFilesPanel->IsShown());	
+	CPPUNIT_ASSERT(!pRestoreFilesPanel->IsShown());
 	ClickButtonWaitEvent(ID_Restore_Panel, ID_Function_Source_Button);
 	CPPUNIT_ASSERT(pRestoreFilesPanel->IsShown());
-	
+
 	mpRestoreTree = wxDynamicCast
 	(
-		pRestoreFilesPanel->FindWindow(ID_Server_File_Tree), 
+		pRestoreFilesPanel->FindWindow(ID_Server_File_Tree),
 		wxTreeCtrl
 	);
 	CPPUNIT_ASSERT(mpRestoreTree);
-	
+
 	mRootId = mpRestoreTree->GetRootItem();
 	CPPUNIT_ASSERT(mRootId.IsOk());
 	CPPUNIT_ASSERT_EQUAL(wxString(_("/ (server root)")),
 		mpRestoreTree->GetItemText(mRootId));
 	mpRestoreTree->Expand(mRootId);
-	CPPUNIT_ASSERT_EQUAL((size_t)1, mpRestoreTree->GetChildrenCount(mRootId, 
+	CPPUNIT_ASSERT_EQUAL((size_t)1, mpRestoreTree->GetChildrenCount(mRootId,
 		false));
-		
+
 	wxTreeItemIdValue cookie;
 	mLocationId = mpRestoreTree->GetFirstChild(mRootId, cookie);
 	CPPUNIT_ASSERT(mLocationId.IsOk());
 	CPPUNIT_ASSERT_EQUAL(wxString(_("testdata")),
 		mpRestoreTree->GetItemText(mLocationId));
 	mpRestoreTree->Expand(mLocationId);
-	
+
+#if wxMAJOR_VERSION	< 3
 	const wxChar* labels[] =
 	{
-		_("anotehr"),
+		_("another"),
 		_("dir23"),
 		_("spacetest"),
 		_("sub23"),
@@ -266,8 +267,30 @@ void TestRestore::RunTest()
 		_("xx_not_this_dir_22"),
 		NULL
 	};
+#else
+	const wxChar* labels[] =
+	{
+		_("another").wx_str(),
+		_("dir23").wx_str(),
+		_("spacetest").wx_str(),
+		_("sub23").wx_str(),
+		_("x1").wx_str(),
+		_("xx_not_this_dir_ALWAYSINCLUDE").wx_str(),
+		_("apropos").wx_str(),
+		_("chsh").wx_str(),
+		_("df324").wx_str(),
+		_("df9834.dsf").wx_str(),
+		_("dont.excludethis").wx_str(),
+		_("f1.dat").wx_str(),
+		_("f45.df").wx_str(),
+		_("symlink1").wx_str(),
+		_("symlink3").wx_str(),
+		_("xx_not_this_dir_22").wx_str(),
+		NULL
+	};
+#endif
 	const wxChar** pLabel = labels;
-	
+
 	// select a single file to restore
 	for (wxTreeItemId entry = mpRestoreTree->GetFirstChild(mLocationId, cookie);
 		entry.IsOk(); entry = mpRestoreTree->GetNextChild(mLocationId, cookie))
@@ -276,15 +299,15 @@ void TestRestore::RunTest()
 		wxString expected = *pLabel;
 		wxCharBuffer buf = expected.mb_str();
 		CPPUNIT_ASSERT_EQUAL(expected, label);
-		CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(), 
+		CPPUNIT_ASSERT_EQUAL_MESSAGE(buf.data(),
 			mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(entry));
 		CPPUNIT_ASSERT_MESSAGE(buf.data(),
 			mpRestoreTree->GetItemTextColour(entry) ==
 			wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT));
-		
+
 		pLabel++;
-		
+
 		if (label.IsSameAs(_("df9834.dsf")))
 		{
 			ActivateTreeItemWaitEvent(mpRestoreTree, entry);
@@ -293,7 +316,7 @@ void TestRestore::RunTest()
 				mpRestoreTree->GetItemImage(entry));
 		}
 	}
-	
+
 	if (*pLabel != NULL)
 	{
 		wxCharBuffer buf = wxString(*pLabel).mb_str();
@@ -314,21 +337,21 @@ void TestRestore::RunTest()
 		mpRestoreTree->GetItemImage(mLocationId));
 	CPPUNIT_ASSERT_EQUAL(mapImages->GetPartialImageId(),
 		mpRestoreTree->GetItemImage(mRootId));
-	
+
 	CPPUNIT_ASSERT_EQUAL(1, pLocsList->GetCount());
 	CPPUNIT_ASSERT_EQUAL(wxString(_("+ /testdata/df9834.dsf")),
 		pLocsList->GetString(0));
-	
+
 	mpRestoreProgressPanel = wxDynamicCast
 	(
-		mpMainFrame->FindWindow(ID_Restore_Progress_Panel), 
+		mpMainFrame->FindWindow(ID_Restore_Progress_Panel),
 		RestoreProgressPanel
 	);
 	CPPUNIT_ASSERT(mpRestoreProgressPanel);
 
 	wxRadioButton* pNewLocRadio = wxDynamicCast
 	(
-		mpRestorePanel->FindWindow(ID_Restore_Panel_New_Location_Radio), 
+		mpRestorePanel->FindWindow(ID_Restore_Panel_New_Location_Radio),
 		wxRadioButton
 	);
 	CPPUNIT_ASSERT(!pNewLocRadio);
@@ -341,7 +364,7 @@ void TestRestore::RunTest()
 
 	wxTextCtrl* pNewLocText = wxDynamicCast
 	(
-		mpRestorePanel->FindWindow(ID_Restore_Panel_New_Location_Text), 
+		mpRestorePanel->FindWindow(ID_Restore_Panel_New_Location_Text),
 		wxTextCtrl
 	);
 	CPPUNIT_ASSERT(pNewLocText);
@@ -350,35 +373,35 @@ void TestRestore::RunTest()
 
 	mpRestoreErrorList = wxDynamicCast
 	(
-		mpRestoreProgressPanel->FindWindow(ID_BackupProgress_ErrorList), 
+		mpRestoreProgressPanel->FindWindow(ID_BackupProgress_ErrorList),
 		wxListBox
 	);
 	CPPUNIT_ASSERT(mpRestoreErrorList);
 	CPPUNIT_ASSERT_EQUAL(0, mpRestoreErrorList->GetCount());
-	
+
 	CHECK_RESTORE_OK(1, "18 kB");
-	
+
 	CPPUNIT_ASSERT(wxFileName::DirExists(mRestoreDest.GetFullPath()));
 	testdataRestored = MakeAbsolutePath(mRestoreDest, _("testdata"));
 	CPPUNIT_ASSERT(wxFileName::DirExists(testdataRestored.GetFullPath()));
-	
+
 	df9834_dsfRestored = MakeAbsolutePath(testdataRestored, _("df9834.dsf"));
 	CPPUNIT_ASSERT(df9834_dsfRestored.FileExists());
-	
+
 	df9834_dsfOriginal = MakeAbsolutePath(mTestDataDir, _("df9834.dsf"));
 	CompareFiles(df9834_dsfOriginal, df9834_dsfRestored);
-	
+
 	CPPUNIT_ASSERT(wxRemoveFile(df9834_dsfRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
-	
+
 	CPPUNIT_ASSERT(!mpRestoreProgressPanel->IsShown());
 	MessageBoxSetResponse(BM_RESTORE_FAILED_OBJECT_ALREADY_EXISTS, wxOK);
 	ClickButtonWaitEvent(ID_Restore_Panel, ID_Function_Start_Button);
 	MessageBoxCheckFired();
 	CPPUNIT_ASSERT(!mpRestoreProgressPanel->IsShown());
-	
+
 	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
-	
+
 	TestRestoreWholeDir();
 	TestRestoreSpec();
 	TestDoubleIncludes();
@@ -415,9 +438,9 @@ void TestRestore::TestRestoreWholeDir()
 				mpRestoreTree->GetItemImage(entry));
 		}
 	}
-	
+
 	CHECK_RESTORE_OK(13, "124 kB");
-	
+
 	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	mSub23 = MakeAbsolutePath(mRestoreDest, _("testdata/sub23"));
 	CPPUNIT_ASSERT(mSub23.DirExists());
@@ -445,16 +468,16 @@ void TestRestore::TestRestoreSpec()
 			entries[1].GetNode().GetFullPath());
 		CPPUNIT_ASSERT(entries[1].IsInclude());
 
-		// and remove the first one		
+		// and remove the first one
 		rRestoreSpec.Remove(entries[0]);
 	}
-	
+
 	sub23id = GetItemIdFromPath(mpRestoreTree, mLocationId, _("sub23"));
 	CPPUNIT_ASSERT(sub23id.IsOk());
 	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 		mpRestoreTree->GetItemImage(sub23id));
-	
-	dhsfdss = GetItemIdFromPath(mpRestoreTree, mLocationId, 
+
+	dhsfdss = GetItemIdFromPath(mpRestoreTree, mLocationId,
 		_("sub23/dhsfdss"));
 	CPPUNIT_ASSERT(dhsfdss.IsOk());
 	CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedGreyImageId(),
@@ -465,13 +488,13 @@ void TestRestore::TestDoubleIncludes()
 {
 	// create a weird configuration, with an item included under
 	// another included item (i.e. double included)
-	{		
+	{
 		ActivateTreeItemWaitEvent(mpRestoreTree, sub23id);
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(sub23id));
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
-		
+
 		ActivateTreeItemWaitEvent(mpRestoreTree, dhsfdss);
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetPartialImageId(),
 			mpRestoreTree->GetItemImage(sub23id));
@@ -496,10 +519,10 @@ void TestRestore::TestDoubleIncludes()
 			entries[1].GetNode().GetFullPath());
 		CPPUNIT_ASSERT(entries[1].IsInclude());
 	}
-	
+
 	// check that restore works as expected
 	CHECK_RESTORE_OK(12, "106 kB");
-	
+
 	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(mSub23.DirExists());
 	CPPUNIT_ASSERT(!df9834_dsfRestored.FileExists());
@@ -537,10 +560,10 @@ void TestRestore::TestDoubleAndConflictingIncludes()
 			entries[2].GetNode().GetFullPath());
 		CPPUNIT_ASSERT(!(entries[2].IsInclude()));
 	}
-	
+
 	// check that restore works as expected
 	CHECK_RESTORE_OK(8, "76 kB");
-	
+
 	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(mSub23.DirExists());
 	CPPUNIT_ASSERT(!df9834_dsfRestored.FileExists());
@@ -550,11 +573,11 @@ void TestRestore::TestDoubleAndConflictingIncludes()
 	CPPUNIT_ASSERT(wxRmdir(testdataRestored.GetFullPath()));
 	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
 
-	bfdlink_h = GetItemIdFromPath(mpRestoreTree, dhsfdss, 
+	bfdlink_h = GetItemIdFromPath(mpRestoreTree, dhsfdss,
 		_("bfdlink.h"));
 	CPPUNIT_ASSERT(bfdlink_h.IsOk());
 
-	dfsfd = GetItemIdFromPath(mpRestoreTree, dhsfdss, 
+	dfsfd = GetItemIdFromPath(mpRestoreTree, dhsfdss,
 		_("dfsfd"));
 	CPPUNIT_ASSERT(dfsfd.IsOk());
 
@@ -569,7 +592,7 @@ void TestRestore::TestIncludeInsideExclude()
 	{
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(),
 			mpRestoreTree->GetItemImage(bfdlink_h));
-	
+
 		ActivateTreeItemWaitEvent(mpRestoreTree, bfdlink_h);
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
@@ -578,7 +601,7 @@ void TestRestore::TestIncludeInsideExclude()
 
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedGreyImageId(),
 			mpRestoreTree->GetItemImage(dfsfd));
-	
+
 		ActivateTreeItemWaitEvent(mpRestoreTree, dfsfd);
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetCrossedImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
@@ -611,10 +634,10 @@ void TestRestore::TestIncludeInsideExclude()
 			entries[4].GetNode().GetFullPath());
 		CPPUNIT_ASSERT(entries[4].IsInclude());
 	}
-	
+
 	// check that restore works as expected
 	CHECK_RESTORE_OK(10, "96 kB");
-	
+
 	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(mSub23.DirExists());
 	CompareExpectDifferences(mpConfig->GetBoxConfig(), mTlsContext,
@@ -635,7 +658,7 @@ void TestRestore::TestRestoreServerRoot()
 			mpRestoreTree->GetItemImage(dhsfdss));
 
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
-			mpRestoreTree->GetItemImage(sub23id));		
+			mpRestoreTree->GetItemImage(sub23id));
 		ActivateTreeItemWaitEvent(mpRestoreTree, sub23id);
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetPartialImageId(),
 			mpRestoreTree->GetItemImage(sub23id));
@@ -645,19 +668,19 @@ void TestRestore::TestRestoreServerRoot()
 		ActivateTreeItemWaitEvent(mpRestoreTree, dhsfdss);
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetPartialImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
-		
+
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(bfdlink_h));
 		ActivateTreeItemWaitEvent(mpRestoreTree, bfdlink_h);
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(bfdlink_h));
-	
+
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetCheckedImageId(),
 			mpRestoreTree->GetItemImage(dfsfd));
 		ActivateTreeItemWaitEvent(mpRestoreTree, dfsfd);
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(dfsfd));
-	
+
 		CPPUNIT_ASSERT_EQUAL(mapImages->GetEmptyImageId(),
 			mpRestoreTree->GetItemImage(dhsfdss));
 
@@ -677,10 +700,10 @@ void TestRestore::TestRestoreServerRoot()
 			entries[0].GetNode().GetFullPath());
 		CPPUNIT_ASSERT(entries[0].IsInclude());
 	}
-	
+
 	// check that restore works as expected
 	CHECK_RESTORE_OK(32, "262 kB");
-	
+
 	CPPUNIT_ASSERT(mRestoreDest.DirExists());
 	CPPUNIT_ASSERT(testdataRestored.DirExists());
 	CPPUNIT_ASSERT(mSub23.DirExists());
@@ -688,14 +711,14 @@ void TestRestore::TestRestoreServerRoot()
 		_("testdata"), testdataRestored);
 	DeleteRecursive(testdataRestored);
 	CPPUNIT_ASSERT(wxRmdir(mRestoreDest.GetFullPath()));
-	
+
 	// check that connection index is being incremented with each connection
 	CPPUNIT_ASSERT_EQUAL(6, mpRestoreProgressPanel->GetConnectionIndex());
 }
 
 void TestRestore::TestOldAndDeletedFilesNotRestored()
 {
-	// check that old and deleted files are not restored, and that 
+	// check that old and deleted files are not restored, and that
 	// node cache is being invalidated when connection index changes
 	// (otherwise the restore will think that deleted files are not deleted)
 	DeleteRecursive(mTestDataDir);
@@ -728,29 +751,29 @@ void TestRestore::TestRestoreToDate()
 	// check restoring to a specified date
 	wxCheckBox* pToDateCheckBox = wxDynamicCast
 	(
-		mpRestorePanel->FindWindow(ID_Restore_Panel_To_Date_Checkbox), 
+		mpRestorePanel->FindWindow(ID_Restore_Panel_To_Date_Checkbox),
 		wxCheckBox
 	);
 	CPPUNIT_ASSERT(pToDateCheckBox);
 	CPPUNIT_ASSERT(!pToDateCheckBox->GetValue());
-	
+
 	wxDatePickerCtrl* pDatePicker = wxDynamicCast
 	(
-		mpRestorePanel->FindWindow(ID_Restore_Panel_Date_Picker), 
+		mpRestorePanel->FindWindow(ID_Restore_Panel_Date_Picker),
 		wxDatePickerCtrl
 	);
 	CPPUNIT_ASSERT(pDatePicker);
-	
+
 	wxSpinCtrl* pHourSpin = wxDynamicCast
 	(
-		mpRestorePanel->FindWindow(ID_Restore_Panel_Hour_Spin), 
+		mpRestorePanel->FindWindow(ID_Restore_Panel_Hour_Spin),
 		wxSpinCtrl
 	);
 	CPPUNIT_ASSERT(pHourSpin);
 
 	wxSpinCtrl* pMinSpin = wxDynamicCast
 	(
-		mpRestorePanel->FindWindow(ID_Restore_Panel_Min_Spin), 
+		mpRestorePanel->FindWindow(ID_Restore_Panel_Min_Spin),
 		wxSpinCtrl
 	);
 	CPPUNIT_ASSERT(pMinSpin);
@@ -764,7 +787,7 @@ void TestRestore::TestRestoreToDate()
 	CPPUNIT_ASSERT(pDatePicker->IsEnabled());
 	CPPUNIT_ASSERT(pHourSpin->IsEnabled());
 	CPPUNIT_ASSERT(pMinSpin->IsEnabled());
-	
+
 	{
 		wxDateTime picked = pDatePicker->GetValue();
 		CPPUNIT_ASSERT(picked.IsValid());
@@ -789,7 +812,7 @@ void TestRestore::TestRestoreToDate()
 		now.SetMillisecond(0);
 		CPPUNIT_ASSERT(picked.IsEqualTo(now));
 	}
-	
+
 	// Restore to a date just later than all the files in test2,
 	// but before all the files in test3. This date is calculated
 	// automatically as half-way between the latest file in test2,
@@ -805,7 +828,7 @@ void TestRestore::TestRestoreToDate()
 	CPPUNIT_ASSERT(afterEntry.get());
 	wxDateTime after = afterEntry->GetDateTime();
 	CPPUNIT_ASSERT(after.IsLaterThan(before));
-	
+
 	wxTimeSpan diff = after.Subtract(before);
 	CPPUNIT_ASSERT(diff.GetSeconds() > 2);
 	wxTimeSpan smalldiff = wxTimeSpan::Seconds(diff.GetSeconds().ToLong() / 2);
@@ -838,24 +861,24 @@ void TestRestore::TestRestoreToDate()
 	// be restored. Because we can't set the seconds of epoch,
 	// we can't get exactly the files in test2 with no files from test3.
 	//
-	// We use 2003-03-29 19:49:00, and one file from test2, 
+	// We use 2003-03-29 19:49:00, and one file from test2,
 	// sub23/dhsfdss/bfdlink.h, is later and will be excluded.
 	//
 	// Also, Box does not store timestamps for directories, so we
 	// will have restored one directory, sub23/ping!, which should
 	// not be here (but not its contents, sub23/ping!/apply).
-	// 
+	//
 	// So there should be 2 differences to start with.
-	
+
 	wxFileName expectedRestoreDir(mBaseDir.GetFullPath(), _("expected"));
 	CPPUNIT_ASSERT(wxMkdir(expectedRestoreDir.GetFullPath(), 0700));
-	wxFileName expectedTestDataDir(expectedRestoreDir.GetFullPath(), 
+	wxFileName expectedTestDataDir(expectedRestoreDir.GetFullPath(),
 		_("testdata"));
 	CPPUNIT_ASSERT(wxMkdir(expectedTestDataDir.GetFullPath(), 0700));
 	Unzip(mTest2ZipFile, expectedTestDataDir, true);
-	
+
 	CompareDirs(expectedRestoreDir, mRestoreDest, 2);
-	
+
 	// Now fix those differences.
 	{
 		wxFileName removeMe = MakeAbsolutePath(expectedRestoreDir,
@@ -870,10 +893,10 @@ void TestRestore::TestRestoreToDate()
 		CPPUNIT_ASSERT(!wxFileName::DirExists(createMe.GetFullPath()));
 		CPPUNIT_ASSERT(wxMkdir(createMe.GetFullPath()));
 	}
-	
+
 	// Now there should be no differences.
 	CompareDirs(expectedRestoreDir, mRestoreDest, 0);
-	
+
 	DeleteRecursive(mRestoreDest);
 	DeleteRecursive(expectedRestoreDir);
 }
@@ -885,7 +908,7 @@ void TestRestore::CleanUp()
 	CPPUNIT_ASSERT(wxRemoveFile(mStoreConfigFileName.GetFullPath()));
 	CPPUNIT_ASSERT(wxRemoveFile(mAccountsFile.GetFullPath()));
 	CPPUNIT_ASSERT(wxRemoveFile(mRaidConfigFile.GetFullPath()));
-	CPPUNIT_ASSERT(wxRemoveFile(mClientConfigFile.GetFullPath()));		
+	CPPUNIT_ASSERT(wxRemoveFile(mClientConfigFile.GetFullPath()));
 	CPPUNIT_ASSERT(mConfDir.Rmdir());
 	DeleteRecursive(mStoreDir);
 	CPPUNIT_ASSERT(mBaseDir.Rmdir());
