@@ -810,6 +810,11 @@ void TestWithServer::RemoveDefaultLocation()
 }
 
 void TestWithServer::StartServer() { mapServer->Start(); }
-void TestWithServer::StopServer()  { mapServer->Stop(); }
+void TestWithServer::StopServer() 
+{ 
+    // add a check that the auto_ptr is set before attempting to act on. Fixes segfault
+    if (!mapServer.get()) 
+        mapServer->Stop();
+}
 
 TestWithServer::~TestWithServer() { }
